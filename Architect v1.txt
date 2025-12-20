@@ -1,0 +1,1010 @@
+<!-- BUBBLE DATA CONFIGURATION - Bubble'dan dinamik doldurulacak -->
+<script type="application/json" id="gaia-last-response">
+{{last_response_json}}
+</script>
+<!-- Optional workspace context (Bubble'dan doldur) -->
+<script type="application/json" id="gaia-context">
+{{gaia_workspace_context}}
+</script>
+<!-- BUBBLE DATA CONFIGURATION END -->
+
+<div class="gaia-shell">
+  <div id="gaia-launcher" class="gaia-launcher" role="button" tabindex="0" aria-expanded="false">
+    <div class="gaia-launcher-avatar">G</div>
+    <div class="gaia-launcher-copy">
+      <div class="gaia-launcher-title">Gaia Assistant</div>
+      <div id="gaia-launcher-preview" class="gaia-launcher-preview">I can scope your automation—want me to draft it?</div>
+    </div>
+    <div id="gaia-launcher-unread" class="gaia-launcher-unread">New</div>
+  </div>
+
+  <div id="gaia-chat-wrapper" class="gaia-chat-wrapper is-hidden">
+    <div class="gaia-chat-container">
+      <div class="gaia-chat-header">
+        <div>
+          <div class="gaia-chat-title">Gaia Assistant</div>
+          <div class="gaia-chat-subtitle">Automation design copilot</div>
+        </div>
+        <button id="gaia-close" class="gaia-close-btn" type="button" aria-label="Minimize assistant">−</button>
+      </div>
+
+      <div id="gaia-chat-messages" class="gaia-chat-messages"></div>
+
+      <div class="gaia-chat-input-row">
+        <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
+        <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.gaia-shell {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  width: 520px;
+  max-width: calc(100% - 44px);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.gaia-launcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #0b1021;
+  color: #e2e8f0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  pointer-events: auto;
+}
+
+.gaia-launcher.is-hidden {
+  display: none;
+}
+
+.gaia-launcher:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+}
+
+.gaia-launcher:active {
+  transform: translateY(1px);
+}
+
+.gaia-launcher-text {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gaia-launcher-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: #f8fafc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+}
+
+.gaia-launcher-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.gaia-launcher-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gaia-launcher-preview {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.gaia-launcher-unread {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #22c55e;
+  color: #0b1021;
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.35);
+  display: none;
+}
+
+.gaia-launcher.has-unread .gaia-launcher-unread {
+  display: inline-block;
+}
+
+.gaia-chat-wrapper {
+  margin-top: 12px;
+  pointer-events: auto;
+}
+
+.gaia-chat-wrapper.is-hidden {
+  display: none;
+}
+
+.gaia-chat-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  height: 580px;
+  margin: 0;
+  padding: 16px;
+  background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.08), transparent 38%),
+              radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.08), transparent 32%),
+              #0b1021;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  font-family: "Inter", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.gaia-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gaia-close-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.gaia-close-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.gaia-close-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.gaia-chat-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
+}
+
+.gaia-chat-subtitle {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+
+.gaia-chat-messages {
+  flex: 1;
+  min-height: 240px;
+  max-height: 100%;
+  padding: 10px 6px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gaia-chat-message {
+  max-width: 84%;
+  padding: 11px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+}
+
+.gaia-chat-message.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  color: #e0f2fe;
+  border-bottom-right-radius: 6px;
+}
+
+.gaia-chat-message.assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom-left-radius: 6px;
+}
+
+.gaia-chat-message.loading {
+  opacity: 0.78;
+  font-style: italic;
+}
+
+.gaia-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gaia-chat-input {
+  flex: 1;
+  resize: none;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 11px 14px;
+  font-size: 13px;
+  outline: none;
+  max-height: 110px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.gaia-chat-input::placeholder {
+  color: #94a3b8;
+}
+
+.gaia-chat-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3), 0 10px 30px rgba(56, 189, 248, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gaia-chat-send-btn {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 84px;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.gaia-chat-send-btn:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.45);
+}
+
+.gaia-chat-send-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+}
+</style>
+
+<!-- Markdown + Sanitization + LaTeX -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.3/dist/purify.min.js"></script>
+<script>
+  window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<script>
+(function () {
+  // Global state (sayfa yenilenene kadar korunur)
+  const state = window.__GAIA_CHAT_STATE__ || {
+    messages: [],        // {id?, role: 'user'|'assistant', text, status?}
+    lastResponseId: null, // Son assistant cevabının id'si
+    isOpen: false
+  };
+  window.__GAIA_CHAT_STATE__ = state;
+
+  const messagesEl = document.getElementById('gaia-chat-messages');
+  const inputEl = document.getElementById('gaia-chat-input');
+  const sendBtn = document.getElementById('gaia-chat-send');
+  const lastResponseEl = document.getElementById('gaia-last-response');
+  const wrapperEl = document.getElementById('gaia-chat-wrapper');
+  const launcherEl = document.getElementById('gaia-launcher');
+  const closeEl = document.getElementById('gaia-close');
+  const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
+  const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
+  const pendingTool = { item: null, timer: null };
+  // STREAMING KAPALI TUT (tek seferde tam yanıt için)
+  // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
+
+  function renderMarkdown(md) {
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') return md || '';
+    const compact = (md || '').replace(/\n{3,}/g, '\n\n');
+    const html = marked.parse(compact);
+    return DOMPurify.sanitize(html);
+  }
+
+  function setPreviewText(text) {
+    if (launcherPreviewEl && text) {
+      launcherPreviewEl.textContent = text;
+    }
+  }
+
+  function playNotification() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const freqs = [660, 880];
+      freqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = f;
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.06, ctx.currentTime + 0.08 * i);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08 * (i + 1));
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + 0.08 * i);
+        osc.stop(ctx.currentTime + 0.08 * (i + 1));
+      });
+    } catch (e) {}
+  }
+
+  function openChat() {
+    if (wrapperEl) wrapperEl.classList.remove('is-hidden');
+    if (launcherEl) {
+      launcherEl.classList.add('is-hidden');
+      launcherEl.setAttribute('aria-expanded', 'true');
+      launcherEl.classList.remove('has-unread');
+    }
+    if (launcherUnreadEl) launcherUnreadEl.style.display = 'none';
+    state.isOpen = true;
+    if (inputEl) {
+      inputEl.focus({ preventScroll: true });
+    }
+  }
+
+  function closeChat() {
+    if (wrapperEl) wrapperEl.classList.add('is-hidden');
+    if (launcherEl) {
+      launcherEl.classList.remove('is-hidden');
+      launcherEl.setAttribute('aria-expanded', 'false');
+    }
+    if (launcherUnreadEl) launcherUnreadEl.style.display = '';
+    state.isOpen = false;
+  }
+
+  // Mesajları ekrana bas
+  function ensureInitialMessage() {
+    if (!state.messages || state.messages.length === 0) {
+      state.messages.push({
+        id: 'assistant_intro',
+        role: 'assistant',
+        text: 'I can scope your automation and draft it—tell me what you want to automate in one sentence.',
+        fullText: 'I can scope your automation and draft it—tell me what you want to automate in one sentence.',
+        status: 'completed'
+      });
+    }
+  }
+
+  function renderMessages() {
+    ensureInitialMessage();
+    if (!messagesEl) return;
+    messagesEl.innerHTML = '';
+
+    state.messages.forEach(function (msg) {
+      const div = document.createElement('div');
+      const baseClass = msg.role === 'user' ? 'user' : 'assistant';
+      const loadingClass = msg.status === 'loading' ? ' loading' : '';
+      div.className = 'gaia-chat-message ' + baseClass + loadingClass;
+      div.innerHTML = renderMarkdown(msg.text || '');
+      messagesEl.appendChild(div);
+    });
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    // LaTeX render
+    if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+      MathJax.typesetPromise();
+    }
+  }
+
+  // Assistant mesajı için sahte "typing" efekti
+  function startTypingAnimation(message) {
+    if (!message) return;
+    const full = message.fullText || '';
+
+    // Çok kısa metinler için animasyon yerine direkt yaz
+    if (full.length <= 40) {
+      message.text = full;
+      renderMessages();
+      return;
+    }
+
+    message.text = '';
+    message.typingIndex = 0;
+    if (message.typingTimer) {
+      clearInterval(message.typingTimer);
+    }
+
+    // Daha yavaş okuma hızı (yaklaşık 180-220 wpm eşleniği)
+    const step = Math.max(1, Math.floor(full.length / 140));
+    message.typingTimer = setInterval(function () {
+      message.typingIndex += step;
+      if (message.typingIndex >= full.length) {
+        message.text = full;
+        clearInterval(message.typingTimer);
+        message.typingTimer = null;
+        renderMessages();
+        return;
+      }
+      message.text = full.slice(0, message.typingIndex);
+      renderMessages();
+    }, 45);
+  }
+
+  // Son assistant cevabını Bubble'dan al ve mesaja ekle, varsa tool çağrısını Bubble'a ilet
+  function ingestLastResponse() {
+    if (!lastResponseEl) return;
+    const raw = (lastResponseEl.textContent || '').trim();
+    if (!raw) return;
+
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      console.error('gaia: failed to parse last response', e);
+      return;
+    }
+    if (!data || !data.id) return;
+
+    console.log('gaia: ingesting response', data.id);
+
+    // OpenAI Responses API 2024-11 output format:
+    // data.output: [{ type: 'message', content: [...] }, {type:'reasoning',...}]
+    // Eski format: data.content: [...]
+    const messageBlock =
+      (Array.isArray(data.output)
+        ? data.output.find(b => b && b.type === 'message')
+        : null) || null;
+    const contentArr = Array.isArray(data.content)
+      ? data.content
+      : Array.isArray(messageBlock?.content)
+        ? messageBlock.content
+        : [];
+    const firstBlock = contentArr[0] || {};
+
+    // content elemanı iki şekilde gelebilir:
+    // 1) { "type": "...", "text": "..." }  → klasik metin formatı
+    // 2) { "answer": "..." }               → JSON schema çıktısının kendisi
+    let text = '';
+    if (typeof firstBlock.text === 'string') {
+      text = firstBlock.text;
+    } else if (typeof firstBlock.answer === 'string') {
+      text = firstBlock.answer;
+    } else if (typeof firstBlock === 'string') {
+      text = firstBlock;
+    }
+
+    // Bekleme balonunu (loading) kaldır
+    const loadingIndex = state.messages.findIndex(m => m.status === 'loading' && m.role === 'assistant');
+    if (loadingIndex !== -1) {
+      state.messages.splice(loadingIndex, 1);
+    }
+
+    const existing = state.messages.find(m => m.id === data.id);
+    let targetMessage = existing;
+    const fullText = text || '';
+
+    if (targetMessage) {
+      targetMessage.fullText = fullText;
+      targetMessage.role = data.role || targetMessage.role || 'assistant';
+      targetMessage.status = data.status || targetMessage.status || '';
+    } else {
+      targetMessage = {
+        id: data.id,
+        role: data.role || 'assistant',
+        text: '',
+        fullText: fullText,
+        status: data.status || 'completed'
+      };
+      state.messages.push(targetMessage);
+    }
+    state.lastResponseId = data.id;
+
+    if (typeof startTypingAnimation === 'function') {
+      startTypingAnimation(targetMessage);
+    } else {
+      targetMessage.text = targetMessage.fullText || '';
+      renderMessages();
+    }
+
+    // Yeni mesaj geldiğinde açık kalmasını sağla (kapanmayı engelle)
+    if (state.isOpen && wrapperEl) wrapperEl.classList.remove('is-hidden');
+    if (state.isOpen && launcherEl) launcherEl.classList.add('is-hidden');
+
+    // Opsiyonel: tool_call veya function_call varsa Bubble'a ilet
+    const functionCallBlock =
+      Array.isArray(data.output)
+        ? data.output.find(b => b && b.type === 'function_call')
+        : null;
+    const toolCall = data.tool_call || (functionCallBlock ? {
+      id: functionCallBlock.id,
+      call_id: functionCallBlock.call_id,
+      name: functionCallBlock.name,
+      arguments: functionCallBlock.arguments
+    } : null);
+
+    const normalizeProcessType = (val) => {
+      const t = String(val || '').toLowerCase().trim();
+      if (t === 'visual_to_text' || t === 'visual to text') return 'Visual to text';
+      if (t === 'visual to text ') return 'Visual to text';
+      return 'Table';
+    };
+
+    const runToolCall = (callObj) => {
+      if (!callObj) return;
+      console.log('gaia: runToolCall called', callObj);
+      
+      // Workspace context from gaia-context
+      const ctxEl = document.getElementById('gaia-context');
+      let ctxString = '';
+      try {
+        const rawCtx = (ctxEl && ctxEl.textContent) ? ctxEl.textContent.trim() : '';
+        if (rawCtx) {
+          const ctx = JSON.parse(rawCtx);
+          ctxString = typeof ctx === 'string' ? ctx : JSON.stringify(ctx, null, 2);
+        }
+      } catch (e) {
+        ctxString = '';
+      }
+
+      try {
+        const rawTool = typeof callObj === 'string'
+          ? callObj
+          : JSON.stringify(callObj);
+
+        const toolObj = (() => {
+          if (typeof callObj === 'string') {
+            try { return JSON.parse(callObj); } catch (_) { return {}; }
+          }
+          return callObj || {};
+        })();
+
+        const argsRaw = typeof toolObj.arguments === 'string'
+          ? toolObj.arguments
+          : JSON.stringify(toolObj.arguments || {});
+
+        const argsObj = (() => {
+          if (typeof toolObj.arguments === 'string') {
+            try { return JSON.parse(toolObj.arguments); } catch (_) { return {}; }
+          }
+          return toolObj.arguments || {};
+        })();
+
+        const sanitizePrompt = (p) => {
+          if (!p) return '';
+          let out = String(p);
+          out = out.replace(/_\*_(.*?)_\*_/g, '$1'); // strip token markers
+          out = out.replace(/<[^>]+>/g, ''); // strip HTML
+          return out.trim();
+        };
+
+        // Normalize process_type (handles lowercase/underscore variants)
+        if (argsObj.process_type) {
+          argsObj.process_type = normalizeProcessType(argsObj.process_type);
+        }
+
+        const cfList = Array.isArray(argsObj.custom_fields) ? argsObj.custom_fields : [];
+        const cfStageTypes = cfList.map(cf => cf?.role || '');
+        const cfBulk = cfList.map(cf => ({
+          name: cf?.label || '',
+          type: cf?.type || '',
+          AllowMultiples: !!cf?.allow_multiple,
+          description: cf?.description || '',
+          source: Array.isArray(cf?.dropdown_values) ? cf.dropdown_values : [],
+          NotVisible: false,
+          editable: true
+          // sheet/referencesheet/OlusturanSirket eklemeyi Bubble tarafında yapın
+        }));
+        const cfBulkJson = cfBulk.map(item => JSON.stringify(item));
+        const cfBulkBase64 = cfBulkJson.map(json => {
+          try { return btoa(unescape(encodeURIComponent(json))); }
+          catch (e) { return json; }
+        });
+
+        // System prompt varyantları
+        const sysPlainRaw = argsObj.system_prompt_template || '';
+        const sysPlain = sanitizePrompt(sysPlainRaw);
+        const spans = cfList.map(cf => {
+          const roleClass = (cf?.role === 'control' || cf?.role === 'optional' || cf?.role === 'mandatory') ? cf.role : 'mandatory';
+          const label = cf?.label || '';
+          return `<span class="token ${roleClass}" data-id="_*_${label}_*_" contenteditable="false" draggable="false">${label}</span>`;
+        });
+        const sysHtml = `${sysPlain} ${spans.join(', ')}`;
+
+        // Eğer prompt varsa ve hiç control yoksa, ilk alanı control yap
+        if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
+          cfStageTypes[0] = 'control';
+        }
+
+        // Role bazlı isim listeleri (sadece promptta kullanılanlar: span ürettiğimiz alanlar)
+        const namesByRole = { control: [], optional: [], mandatory: [] };
+        cfList.forEach(cf => {
+          const label = cf?.label || '';
+          if (!label) return;
+          const role = (cf?.role || '').toLowerCase();
+          if (role === 'control') namesByRole.control.push(label);
+          else if (role === 'optional') namesByRole.optional.push(label);
+          else namesByRole.mandatory.push(label);
+        });
+        const roleLines = [
+          namesByRole.control.join(', '),
+          namesByRole.optional.join(', '),
+          namesByRole.mandatory.join(', ')
+        ];
+
+        // Multiple Outputs (Toolbox)
+        // OUTPUT1..4: düz alanlar (tool_call.arguments içinden)
+        //   output1: workspace_label
+        //   output2: process_name
+        //   output3: process_type
+        //   output4: custom_fields count (number)
+        // OUTPUTLIST1..4:
+        //   outputlist1: customfields_bulk (base64-encoded JSON strings list; Bubble “Value is a list” Text)
+        //   outputlist2: customfield_stage_types (array of strings)
+        //   outputlist3: [system_prompt_plain, system_prompt_innerhtml, actionName, tool_output_body_template, action_mode]
+        //   outputlist4: [control_names, optional_names, mandatory_names] (JSON-escaped strings)
+
+        // İlk elemanı ayrıca “value” olarak da gönder (listeden tek öğe almak isteyenler için)
+        const firstCf = cfBulkJson[0] || '';
+
+        const actionName =
+          argsObj.action_name ||
+          argsObj.button_label ||
+          argsObj.process_name ||
+          'Mesajı analiz et';
+
+        // Reasoning item varsa, function_call öncesine ekle (bazı modeller istiyor)
+        const reasoningItem =
+          (Array.isArray(data.output) && data.output.find(b => b && b.type === 'reasoning')) ||
+          null;
+        const reasoningMessage = reasoningItem
+          ? {
+              type: 'reasoning',
+              id: reasoningItem.id || '',
+              content: reasoningItem.content || [],
+              summary: reasoningItem.summary || []
+            }
+          : null;
+
+        // Tek desteklenen akış: function_call_output ile ikinci responses.create çağrısına gidecek body
+        const functionCallInput = [];
+        if (reasoningMessage) functionCallInput.push(reasoningMessage);
+        functionCallInput.push({
+          type: 'function_call',
+          id: callObj.id || '',
+          call_id: callObj.call_id || callObj.id || '',
+          name: callObj.name || '',
+          arguments: callObj.arguments || callObj.args || ''
+        });
+        functionCallInput.push({
+          type: 'function_call_output',
+          call_id: callObj.call_id || callObj.id || '',
+          output: JSON.stringify({
+            status: 'ok',
+            message: "Otomasyon başlatıldı. Çalışma alanına gidip 'Create' ile bir öğe ekleyin, ardından seçtiğimiz butona tıklayın; öğe ilgili sürece taşınacak ve AI otomasyonu çalışacak."
+          })
+        });
+
+        const workspaceMode = ctxString ? 'existing_workspace' : 'new_workspace';
+        const actionMode = argsObj.action_mode || (workspaceMode === 'existing_workspace' ? 'attach_to_existing' : 'create_new');
+        const functionCallOutputBody = JSON.stringify({
+          model: data.model || 'gpt-5-mini-2025-08-07',
+          input: functionCallInput
+        });
+
+        const cfBundle = { customfields: cfBulk, stage_types: cfStageTypes };
+        let cfBundleB64 = '';
+        try {
+          cfBundleB64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfBundle))));
+        } catch (e) {
+          cfBundleB64 = JSON.stringify(cfBundle);
+        }
+
+        console.log('gaia: calling bubble_fn_gaia_tool_call with payload', {
+          workspace_label: argsObj.workspace_label,
+          process_name: argsObj.process_name,
+          custom_fields_count: cfList.length
+        });
+        
+        window.bubble_fn_gaia_tool_call({
+          value: cfBulkBase64[0] || '',
+          output1: argsObj.workspace_label || '',
+          output2: argsObj.process_name || '',
+          output3: argsObj.process_type || '',
+          // Tek JSON (base64): customfield payloadları + stage type listesi (backend'e iletmek için)
+          // RAW_BASE64 olarak backend'e iletebilirsin.
+          output4: cfBundleB64,
+          outputlist1: cfBulkBase64,
+          outputlist2: cfStageTypes,
+          // 4. eleman: /v1/responses + input (function_call_output) için body (gönderilmeye hazır)
+          outputlist3: [sysPlain, sysHtml, actionName, functionCallOutputBody, actionMode],
+          outputlist4: roleLines.map(s => JSON.stringify(s || ''))
+        });
+        
+        console.log('gaia: bubble_fn_gaia_tool_call completed');
+
+        // UI state: show a system note about creation steps
+        state.messages.push({
+          id: 'system_working_' + Date.now(),
+          role: 'assistant',
+          text: 'Creating workspace, custom fields, and views…',
+          fullText: 'Creating workspace, custom fields, and views…',
+          status: 'info'
+        });
+        renderMessages();
+      } catch (e) {
+        console.error('gaia tool call failed', e);
+      }
+    };
+
+    if (toolCall) {
+      console.log('gaia: tool call found', toolCall);
+      if (typeof window.bubble_fn_gaia_tool_call === 'function') {
+        console.log('gaia: bubble_fn_gaia_tool_call is ready, executing immediately');
+        runToolCall(toolCall);
+      } else {
+        console.warn('gaia tool call pending: bubble_fn_gaia_tool_call not ready yet', toolCall);
+        pendingTool.item = toolCall;
+        if (!pendingTool.timer) {
+          pendingTool.timer = setInterval(() => {
+            if (pendingTool.item && typeof window.bubble_fn_gaia_tool_call === 'function') {
+              console.log('gaia: bubble_fn_gaia_tool_call now ready, executing from queue');
+              runToolCall(pendingTool.item);
+              pendingTool.item = null;
+              clearInterval(pendingTool.timer);
+              pendingTool.timer = null;
+            }
+          }, 400);
+        }
+        // Also try a one-shot retry soon
+        setTimeout(() => {
+          if (pendingTool.item && typeof window.bubble_fn_gaia_tool_call === 'function') {
+            console.log('gaia: bubble_fn_gaia_tool_call now ready, executing from one-shot retry');
+            runToolCall(pendingTool.item);
+            pendingTool.item = null;
+            if (pendingTool.timer) {
+              clearInterval(pendingTool.timer);
+              pendingTool.timer = null;
+            }
+          }
+        }, 200);
+      }
+    } else {
+      console.log('gaia: no tool call found in response');
+    }
+
+    // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
+    if (!state.isOpen && launcherEl) {
+      const snippet = (text || '').slice(0, 90) || 'I can scope your automation—want me to draft it?';
+      setPreviewText(snippet);
+      launcherEl.classList.add('has-unread');
+      playNotification();
+    }
+  }
+
+  function sendMessage() {
+    if (!inputEl) return;
+    const userText = inputEl.value.trim();
+    if (!userText) return;
+
+    // Workspace context from Bubble (optional)
+    const ctxEl = document.getElementById('gaia-context');
+    let ctxString = '';
+    let hasWorkspace = false;
+    try {
+      const rawCtx = (ctxEl && ctxEl.textContent) ? ctxEl.textContent.trim() : '';
+      if (rawCtx) {
+        // Try JSON parse first, if fails use as plain text
+        try {
+          const ctx = JSON.parse(rawCtx);
+          ctxString = typeof ctx === 'string' ? ctx : JSON.stringify(ctx, null, 2);
+        } catch (jsonErr) {
+          // If not valid JSON, use as-is (YAML or plain text)
+          ctxString = rawCtx;
+        }
+        // Check if workspace has meaningful data (label or id present)
+        hasWorkspace = ctxString.includes('label:') || ctxString.includes('id:') || 
+                      ctxString.includes('"label"') || ctxString.includes('"id"');
+      }
+    } catch (e) {
+      console.error('gaia: failed to read workspace context', e);
+      ctxString = '';
+      hasWorkspace = false;
+    }
+
+    console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
+
+    console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
+
+    // System prompt (mirrors asisstant.txt)
+    const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. Don't confirm one-by-one. Show concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS user EXPLICITLY says to create new workspace/table. Only create new (action_mode: create_new) if NO context OR user explicitly requests new workspace. Always mention existing workspace name. If user wants to add but no context, ask to open workspace first. Process type: "Visual to text" ONLY if image_pdf field has "innerstage" role; else "Table". Max one image_pdf with "innerstage". Input rule: every automation needs at least one control field; if none, mark first as control. If prompt exists, ensure control field. Planning: plain language; if workspace exists, say which fields you'll reuse. Don't wait for confirmation—proceed unless blocked. After plan, make single tool call with correct action_mode. Prefer multiline_text; avoid long_text. In system_prompt_template, use tokens like _*_Field Name_*_.`;
+    const systemContent = hasWorkspace
+      ? `${systemBase}\n\n=== CURRENT WORKSPACE CONTEXT (USER HAS THIS WORKSPACE OPEN) ===\n${ctxString}\n\n=== IMPORTANT: Since workspace context is provided above, you MUST use action_mode: attach_to_existing unless user explicitly asks to create a new workspace/table. ===`
+      : `${systemBase}\n\nNo workspace context provided; defaulting to creating a new workspace/stage. If you intend to add to an existing workspace, please open/select it first.`;
+
+    console.log('gaia: sending system prompt with workspace context:', hasWorkspace);
+
+    // Full body (output1) for Responses API
+    const body = {
+      model: "gpt-5-mini-2025-08-07",
+      reasoning: { effort: "medium" },
+      tool_choice: "auto",
+      instructions: systemBase,
+      tools: [
+        {
+          type: "function",
+          name: "create_gaia_automation_design",
+          description: "Finalize the Gaia automation design so the backend can create Bubble custom fields and the Gaia automation step.",
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              workspace_label: { type: "string" },
+              process_name: { type: "string" },
+              process_type: { type: "string", enum: ["Visual to text", "Table"] },
+              action_name: { type: "string" },
+              action_mode: { 
+                type: "string", 
+                enum: ["attach_to_existing", "create_new"],
+                description: "If adding a new process/stage to an existing workspace, use 'attach_to_existing'. If creating a brand new workspace, use 'create_new'."
+              },
+              custom_fields: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    label: { type: "string" },
+                    type: { type: "string", enum: ["text","number","dropdown","checkbox","date","image_pdf","long_text","phone","email","user","multiline_text"] },
+                    role: { type: "string", enum: ["mandatory","optional","control"] },
+                    allow_multiple: { type: "boolean" },
+                    dropdown_values: { type: "array", items: { type: "string" } },
+                    description: { type: "string" }
+                  },
+                  required: ["label","type","role"]
+                }
+              },
+              system_prompt_template: { type: "string" }
+            },
+            required: ["workspace_label","process_name","process_type","action_mode","custom_fields","system_prompt_template"]
+          }
+        }
+      ],
+      input: [
+        { role: "system", content: systemContent },
+        { role: "user", content: [ { type: "input_text", text: userText } ] }
+      ]
+    };
+    const bodyString = JSON.stringify(body);
+
+    // Önce UI'ya user mesajını ekle
+    state.messages.push({
+      id: 'user_' + Date.now(),
+      role: 'user',
+      text: ctxString ? `${ctxString}\n\n${userText}` : userText
+    });
+
+    // Assistant için bekleme balonu ekle
+    state.messages.push({
+      id: 'loading_' + Date.now(),
+      role: 'assistant',
+      text: 'Assistant is typing…',
+      status: 'loading'
+    });
+
+    renderMessages();
+    inputEl.value = '';
+
+    if (typeof window.bubble_fn_gaia_send_message === 'function') {
+      try {
+        // Multiple Outputs açıkken Toolbox varsayılan mapping:
+        // object formatında gönder: {value: ..., output1: ..., output2: ...}
+        window.bubble_fn_gaia_send_message({
+          value: bodyString,
+          output1: bodyString, // full body (model + system+user + tools)
+          output2: userText    // raw user text
+        });
+      } catch (e) {}
+    }
+  }
+
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
+  }
+  if (inputEl) {
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+
+  if (launcherEl) {
+    launcherEl.addEventListener('click', openChat);
+    launcherEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openChat();
+      }
+    });
+    // Başlangıçta teaser metni
+    setPreviewText('I can scope your automation—want me to draft it?');
+  }
+
+  if (closeEl) {
+    closeEl.addEventListener('click', closeChat);
+  }
+
+  ingestLastResponse();
+  renderMessages();
+
+  // Polling: gaia-last-response içeriği değişince otomatik ingest (Bubble için)
+  // Response ID'yi kontrol ederek aynı response'u birden fazla işlememek için
+  let lastProcessedResponseId = state.lastResponseId || '';
+  setInterval(function() {
+    const el = document.getElementById('gaia-last-response');
+    if (!el) return;
+    const currentContent = (el.textContent || '').trim();
+    if (!currentContent) return;
+    
+    try {
+      const data = JSON.parse(currentContent);
+      if (data && data.id && data.id !== lastProcessedResponseId) {
+        console.log('gaia: new response detected, ingesting', data.id);
+        lastProcessedResponseId = data.id;
+        ingestLastResponse();
+      }
+    } catch (e) {
+      // Ignore parse errors in polling
+    }
+  }, 500);
+
+  window.gaiaChatReset = function () {
+    state.messages = [];
+    state.lastResponseId = null;
+    renderMessages();
+  };
+  window.gaiaIngestResponse = function () {
+    ingestLastResponse();
+  };
+})();
+</script>
+
+
