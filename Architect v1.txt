@@ -340,6 +340,7 @@
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
   const pendingTool = { item: null, timer: null };
+  const processedToolCallIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
 
@@ -566,8 +567,38 @@
       return 'Table';
     };
 
+    const getToolCallKey = (callObj) => {
+      if (!callObj) return '';
+      const callId = callObj.call_id || callObj.id || '';
+      const name = callObj.name || '';
+      let args = '';
+      if (typeof callObj.arguments === 'string') {
+        args = callObj.arguments;
+      } else if (callObj.arguments || callObj.args) {
+        try {
+          args = JSON.stringify(callObj.arguments || callObj.args || {});
+        } catch (e) {
+          args = '';
+        }
+      }
+      return `${callId}::${name}::${args}`;
+    };
+
     const runToolCall = (callObj) => {
       if (!callObj) return;
+      const callKey = getToolCallKey(callObj);
+      if (callKey && processedToolCallIds.has(callKey)) {
+        console.log('gaia: tool call already processed, skipping', callKey);
+        if (pendingTool.item && getToolCallKey(pendingTool.item) === callKey) {
+          pendingTool.item = null;
+          if (pendingTool.timer) {
+            clearInterval(pendingTool.timer);
+            pendingTool.timer = null;
+          }
+        }
+        return;
+      }
+      if (callKey) processedToolCallIds.add(callKey);
       console.log('gaia: runToolCall called', callObj);
       
       // Workspace context from gaia-context
@@ -1006,5 +1037,4 @@
   };
 })();
 </script>
-
 
