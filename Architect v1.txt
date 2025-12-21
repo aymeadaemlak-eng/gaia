@@ -352,6 +352,11 @@
     return DOMPurify.sanitize(html);
   }
 
+  function setInputDisabled(disabled) {
+    if (inputEl) inputEl.disabled = disabled;
+    if (sendBtn) sendBtn.disabled = disabled;
+  }
+
   function setPreviewText(text) {
     if (launcherPreviewEl && text) {
       launcherPreviewEl.textContent = text;
@@ -454,7 +459,7 @@
     }
 
     // Daha yavaş okuma hızı (yaklaşık 180-220 wpm eşleniği)
-    const step = Math.max(1, Math.floor(full.length / 140));
+    const step = Math.max(2, Math.floor(full.length / 120));
     message.typingTimer = setInterval(function () {
       message.typingIndex += step;
       if (message.typingIndex >= full.length) {
@@ -466,7 +471,7 @@
       }
       message.text = full.slice(0, message.typingIndex);
       renderMessages();
-    }, 45);
+    }, 35);
   }
 
   // Son assistant cevabını Bubble'dan al ve mesaja ekle, varsa tool çağrısını Bubble'a ilet
@@ -853,6 +858,9 @@
       console.log('gaia: no tool call found in response');
     }
 
+    state.isAwaitingResponse = false;
+    setInputDisabled(false);
+
     // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
     if (!state.isOpen && launcherEl) {
       const snippet = (text || '').slice(0, 90) || 'I can scope your automation—want me to draft it?';
@@ -866,6 +874,7 @@
     if (!inputEl) return;
     const userText = inputEl.value.trim();
     if (!userText) return;
+    if (state.isAwaitingResponse) return;
 
     // Workspace context from Bubble (optional)
     const ctxEl = document.getElementById('gaia-context');
@@ -961,7 +970,7 @@
     state.messages.push({
       id: 'user_' + Date.now(),
       role: 'user',
-      text: ctxString ? `${ctxString}\n\n${userText}` : userText
+      text: userText
     });
 
     // Assistant için bekleme balonu ekle
@@ -974,6 +983,8 @@
 
     renderMessages();
     inputEl.value = '';
+    state.isAwaitingResponse = true;
+    setInputDisabled(true);
 
     if (typeof window.bubble_fn_gaia_send_message === 'function') {
       try {
