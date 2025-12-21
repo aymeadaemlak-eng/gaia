@@ -6,6 +6,8 @@
 <script type="application/json" id="gaia-context">
 {{gaia_workspace_context}}
 </script>
+
+</script>
 <!-- BUBBLE DATA CONFIGURATION END -->
 
 <div class="gaia-shell">
@@ -340,7 +342,8 @@
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
   const pendingTool = { item: null, timer: null, key: null };
-  const processedToolCallIds = new Set();
+  const processedToolCallKeys = new Set();
+  const processedResponseIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
 
@@ -349,11 +352,6 @@
     const compact = (md || '').replace(/\n{3,}/g, '\n\n');
     const html = marked.parse(compact);
     return DOMPurify.sanitize(html);
-  }
-
-  function setInputDisabled(disabled) {
-    if (inputEl) inputEl.disabled = disabled;
-    if (sendBtn) sendBtn.disabled = disabled;
   }
 
   function setPreviewText(text) {
@@ -458,7 +456,7 @@
     }
 
     // Daha yavaş okuma hızı (yaklaşık 180-220 wpm eşleniği)
-    const step = Math.max(2, Math.floor(full.length / 120));
+    const step = Math.max(1, Math.floor(full.length / 140));
     message.typingTimer = setInterval(function () {
       message.typingIndex += step;
       if (message.typingIndex >= full.length) {
@@ -470,7 +468,7 @@
       }
       message.text = full.slice(0, message.typingIndex);
       renderMessages();
-    }, 35);
+    }, 45);
   }
 
   // Son assistant cevabını Bubble'dan al ve mesaja ekle, varsa tool çağrısını Bubble'a ilet
@@ -577,10 +575,8 @@
       return 'Table';
     };
 
-    const getToolCallKey = (callObj, responseId) => {
+    const getToolCallKey = (callObj) => {
       if (!callObj) return '';
-      const responsePart = responseId ? String(responseId) : '';
-      const callId = callObj.call_id || callObj.id || '';
       const name = callObj.name || '';
       let args = '';
       if (typeof callObj.arguments === 'string') {
@@ -592,12 +588,12 @@
           args = '';
         }
       }
-      return `${responsePart}::${callId}::${name}::${args}`;
+      return `${name}::${args}`;
     };
 
     const runToolCall = (callObj, callKey) => {
       if (!callObj) return;
-      if (callKey && processedToolCallIds.has(callKey)) {
+      if (callKey && processedToolCallKeys.has(callKey)) {
         console.log('gaia: tool call already processed, skipping', callKey);
         if (pendingTool.item && pendingTool.key === callKey) {
           pendingTool.item = null;
@@ -609,7 +605,7 @@
         }
         return;
       }
-      if (callKey) processedToolCallIds.add(callKey);
+      if (callKey) processedToolCallKeys.add(callKey);
       console.log('gaia: runToolCall called', callObj);
       
       // Workspace context from gaia-context
@@ -816,8 +812,8 @@
     };
 
     if (toolCall) {
-      const toolCallKey = getToolCallKey(toolCall, data.id);
-      if (toolCallKey && processedToolCallIds.has(toolCallKey)) {
+      const toolCallKey = getToolCallKey(toolCall);
+      if (toolCallKey && processedToolCallKeys.has(toolCallKey)) {
         console.log('gaia: tool call already processed for response, skipping', toolCallKey);
         return;
       }
@@ -859,9 +855,6 @@
       console.log('gaia: no tool call found in response');
     }
 
-    state.isAwaitingResponse = false;
-    setInputDisabled(false);
-
     // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
     if (!state.isOpen && launcherEl) {
       const snippet = (text || '').slice(0, 90) || 'I can scope your automation—want me to draft it?';
@@ -875,7 +868,6 @@
     if (!inputEl) return;
     const userText = inputEl.value.trim();
     if (!userText) return;
-    if (state.isAwaitingResponse) return;
 
     // Workspace context from Bubble (optional)
     const ctxEl = document.getElementById('gaia-context');
@@ -971,7 +963,7 @@
     state.messages.push({
       id: 'user_' + Date.now(),
       role: 'user',
-      text: userText
+      text: ctxString ? `${ctxString}\n\n${userText}` : userText
     });
 
     // Assistant için bekleme balonu ekle
@@ -984,8 +976,6 @@
 
     renderMessages();
     inputEl.value = '';
-    state.isAwaitingResponse = true;
-    setInputDisabled(true);
 
     if (typeof window.bubble_fn_gaia_send_message === 'function') {
       try {
