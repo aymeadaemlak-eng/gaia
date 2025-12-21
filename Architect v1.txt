@@ -340,8 +340,7 @@
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
   const pendingTool = { item: null, timer: null, key: null };
-  const processedToolCallKeys = new Set();
-  const processedResponseIds = new Set();
+  const processedToolCallIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
 
@@ -578,8 +577,10 @@
       return 'Table';
     };
 
-    const getToolCallKey = (callObj) => {
+    const getToolCallKey = (callObj, responseId) => {
       if (!callObj) return '';
+      const responsePart = responseId ? String(responseId) : '';
+      const callId = callObj.call_id || callObj.id || '';
       const name = callObj.name || '';
       let args = '';
       if (typeof callObj.arguments === 'string') {
@@ -591,12 +592,12 @@
           args = '';
         }
       }
-      return `${name}::${args}`;
+      return `${responsePart}::${callId}::${name}::${args}`;
     };
 
     const runToolCall = (callObj, callKey) => {
       if (!callObj) return;
-      if (callKey && processedToolCallKeys.has(callKey)) {
+      if (callKey && processedToolCallIds.has(callKey)) {
         console.log('gaia: tool call already processed, skipping', callKey);
         if (pendingTool.item && pendingTool.key === callKey) {
           pendingTool.item = null;
@@ -608,7 +609,7 @@
         }
         return;
       }
-      if (callKey) processedToolCallKeys.add(callKey);
+      if (callKey) processedToolCallIds.add(callKey);
       console.log('gaia: runToolCall called', callObj);
       
       // Workspace context from gaia-context
@@ -815,8 +816,8 @@
     };
 
     if (toolCall) {
-      const toolCallKey = getToolCallKey(toolCall);
-      if (toolCallKey && processedToolCallKeys.has(toolCallKey)) {
+      const toolCallKey = getToolCallKey(toolCall, data.id);
+      if (toolCallKey && processedToolCallIds.has(toolCallKey)) {
         console.log('gaia: tool call already processed for response, skipping', toolCallKey);
         return;
       }
