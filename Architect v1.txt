@@ -326,7 +326,8 @@
   const state = window.__GAIA_CHAT_STATE__ || {
     messages: [],        // {id?, role: 'user'|'assistant', text, status?}
     lastResponseId: null, // Son assistant cevabının id'si
-    isOpen: false
+    isOpen: false,
+    draftInput: ''
   };
   window.__GAIA_CHAT_STATE__ = state;
 
@@ -339,7 +340,9 @@
   const closeEl = document.getElementById('gaia-close');
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
-  const pendingTool = { item: null, timer: null };
+  const pendingTool = { item: null, timer: null, key: null };
+  const processedToolCallKeys = new Set();
+  const processedResponseIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
 
@@ -348,6 +351,11 @@
     const compact = (md || '').replace(/\n{3,}/g, '\n\n');
     const html = marked.parse(compact);
     return DOMPurify.sanitize(html);
+  }
+
+  function setInputDisabled(disabled) {
+    if (inputEl) inputEl.disabled = disabled;
+    if (sendBtn) sendBtn.disabled = disabled;
   }
 
   function setPreviewText(text) {
@@ -396,6 +404,19 @@
     }
     if (launcherUnreadEl) launcherUnreadEl.style.display = '';
     state.isOpen = false;
+  }
+
+  function restoreUiState() {
+    if (inputEl && typeof state.draftInput === 'string') {
+      inputEl.value = state.draftInput;
+    }
+    if (state.isOpen) {
+      openChat();
+    } else if (launcherEl && wrapperEl) {
+      wrapperEl.classList.add('is-hidden');
+      launcherEl.classList.remove('is-hidden');
+    }
+    setInputDisabled(!!state.isAwaitingResponse);
   }
 
   // Mesajları ekrana bas
@@ -452,7 +473,7 @@
     }
 
     // Daha yavaş okuma hızı (yaklaşık 180-220 wpm eşleniği)
-    const step = Math.max(1, Math.floor(full.length / 140));
+    const step = Math.max(2, Math.floor(full.length / 120));
     message.typingTimer = setInterval(function () {
       message.typingIndex += step;
       if (message.typingIndex >= full.length) {
@@ -464,7 +485,7 @@
       }
       message.text = full.slice(0, message.typingIndex);
       renderMessages();
-    }, 45);
+    }, 35);
   }
 
   // Son assistant cevabını Bubble'dan al ve mesaja ekle, varsa tool çağrısını Bubble'a ilet
@@ -482,6 +503,11 @@
     }
     if (!data || !data.id) return;
 
+    if (processedResponseIds.has(data.id)) {
+      console.log('gaia: response already processed, skipping', data.id);
+      return;
+    }
+    processedResponseIds.add(data.id);
     console.log('gaia: ingesting response', data.id);
 
     // OpenAI Responses API 2024-11 output format:
@@ -566,8 +592,37 @@
       return 'Table';
     };
 
-    const runToolCall = (callObj) => {
+    const getToolCallKey = (callObj) => {
+      if (!callObj) return '';
+      const name = callObj.name || '';
+      let args = '';
+      if (typeof callObj.arguments === 'string') {
+        args = callObj.arguments;
+      } else if (callObj.arguments || callObj.args) {
+        try {
+          args = JSON.stringify(callObj.arguments || callObj.args || {});
+        } catch (e) {
+          args = '';
+        }
+      }
+      return `${name}::${args}`;
+    };
+
+    const runToolCall = (callObj, callKey) => {
       if (!callObj) return;
+      if (callKey && processedToolCallKeys.has(callKey)) {
+        console.log('gaia: tool call already processed, skipping', callKey);
+        if (pendingTool.item && pendingTool.key === callKey) {
+          pendingTool.item = null;
+          pendingTool.key = null;
+          if (pendingTool.timer) {
+            clearInterval(pendingTool.timer);
+            pendingTool.timer = null;
+          }
+        }
+        return;
+      }
+      if (callKey) processedToolCallKeys.add(callKey);
       console.log('gaia: runToolCall called', callObj);
       
       // Workspace context from gaia-context
@@ -774,19 +829,26 @@
     };
 
     if (toolCall) {
+      const toolCallKey = getToolCallKey(toolCall);
+      if (toolCallKey && processedToolCallKeys.has(toolCallKey)) {
+        console.log('gaia: tool call already processed for response, skipping', toolCallKey);
+        return;
+      }
       console.log('gaia: tool call found', toolCall);
       if (typeof window.bubble_fn_gaia_tool_call === 'function') {
         console.log('gaia: bubble_fn_gaia_tool_call is ready, executing immediately');
-        runToolCall(toolCall);
+        runToolCall(toolCall, toolCallKey);
       } else {
         console.warn('gaia tool call pending: bubble_fn_gaia_tool_call not ready yet', toolCall);
         pendingTool.item = toolCall;
+        pendingTool.key = toolCallKey;
         if (!pendingTool.timer) {
           pendingTool.timer = setInterval(() => {
             if (pendingTool.item && typeof window.bubble_fn_gaia_tool_call === 'function') {
               console.log('gaia: bubble_fn_gaia_tool_call now ready, executing from queue');
-              runToolCall(pendingTool.item);
+              runToolCall(pendingTool.item, pendingTool.key);
               pendingTool.item = null;
+              pendingTool.key = null;
               clearInterval(pendingTool.timer);
               pendingTool.timer = null;
             }
@@ -796,8 +858,9 @@
         setTimeout(() => {
           if (pendingTool.item && typeof window.bubble_fn_gaia_tool_call === 'function') {
             console.log('gaia: bubble_fn_gaia_tool_call now ready, executing from one-shot retry');
-            runToolCall(pendingTool.item);
+            runToolCall(pendingTool.item, pendingTool.key);
             pendingTool.item = null;
+            pendingTool.key = null;
             if (pendingTool.timer) {
               clearInterval(pendingTool.timer);
               pendingTool.timer = null;
@@ -808,6 +871,9 @@
     } else {
       console.log('gaia: no tool call found in response');
     }
+
+    state.isAwaitingResponse = false;
+    setInputDisabled(false);
 
     // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
     if (!state.isOpen && launcherEl) {
@@ -822,6 +888,7 @@
     if (!inputEl) return;
     const userText = inputEl.value.trim();
     if (!userText) return;
+    if (state.isAwaitingResponse) return;
 
     // Workspace context from Bubble (optional)
     const ctxEl = document.getElementById('gaia-context');
@@ -917,7 +984,7 @@
     state.messages.push({
       id: 'user_' + Date.now(),
       role: 'user',
-      text: ctxString ? `${ctxString}\n\n${userText}` : userText
+      text: userText
     });
 
     // Assistant için bekleme balonu ekle
@@ -930,6 +997,8 @@
 
     renderMessages();
     inputEl.value = '';
+    state.isAwaitingResponse = true;
+    setInputDisabled(true);
 
     if (typeof window.bubble_fn_gaia_send_message === 'function') {
       try {
@@ -947,6 +1016,12 @@
   if (sendBtn) {
     sendBtn.addEventListener('click', sendMessage);
   }
+  if (inputEl) {
+    inputEl.addEventListener('input', function () {
+      state.draftInput = inputEl.value || '';
+    });
+  }
+  restoreUiState();
   if (inputEl) {
     inputEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -1006,5 +1081,3 @@
   };
 })();
 </script>
-
-
