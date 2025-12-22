@@ -7,7 +7,6 @@
 {{gaia_workspace_context}}
 </script>
 
-</script>
 <!-- BUBBLE DATA CONFIGURATION END -->
 
 <div class="gaia-shell">
@@ -27,14 +26,25 @@
           <div class="gaia-chat-title">Gaia Assistant</div>
           <div class="gaia-chat-subtitle">Automation design copilot</div>
         </div>
-        <button id="gaia-close" class="gaia-close-btn" type="button" aria-label="Minimize assistant">−</button>
+        <div class="gaia-chat-actions">
+          <button id="gaia-reset" class="gaia-icon-btn" type="button" aria-label="Reset chat" title="Reset chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5a7 7 0 1 1-6.12 3.5H4.2a.8.8 0 0 1-.57-1.36l2.6-2.6a.8.8 0 0 1 1.14 0l2.6 2.6a.8.8 0 0 1-.57 1.36H7.4A5.6 5.6 0 1 0 12 6.4V5Z"/>
+            </svg>
+          </button>
+          <button id="gaia-close" class="gaia-icon-btn" type="button" aria-label="Minimize assistant" title="Minimize assistant">−</button>
+        </div>
       </div>
 
       <div id="gaia-chat-messages" class="gaia-chat-messages"></div>
 
       <div class="gaia-chat-input-row">
         <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
-        <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button">Send</button>
+        <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12.5h12.09l-4.3 4.3a1 1 0 1 0 1.42 1.4l6-6a1 1 0 0 0 0-1.4l-6-6a1 1 0 1 0-1.42 1.4l4.3 4.3H5a1 1 0 0 0 0 2Z"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -117,6 +127,23 @@
   line-height: 1.4;
 }
 
+.gaia-launcher.is-typing .gaia-launcher-preview::after {
+  content: " •••";
+  letter-spacing: 2px;
+  opacity: 0.7;
+  animation: gaia-launcher-typing 1.2s infinite;
+}
+
+@keyframes gaia-launcher-typing {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
 .gaia-launcher-unread {
   font-size: 11px;
   font-weight: 800;
@@ -171,25 +198,40 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.gaia-close-btn {
+.gaia-chat-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gaia-icon-btn {
   border: none;
   background: rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
   border-radius: 10px;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.gaia-close-btn:hover {
+.gaia-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.gaia-icon-btn:hover {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.gaia-close-btn:active {
+.gaia-icon-btn:active {
   transform: translateY(1px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
 }
@@ -254,25 +296,17 @@
 }
 
 .gaia-chat-message.loading::after {
-  content: "";
+  content: "...";
   display: inline-block;
-  width: 8px;
-  height: 14px;
+  width: 0;
+  overflow: hidden;
   margin-left: 6px;
-  border-radius: 2px;
-  background: currentColor;
-  animation: gaia-loading-caret 1s steps(2, end) infinite;
+  animation: gaia-loading-dots 1.1s steps(4, end) infinite;
 }
 
-@keyframes gaia-loading-caret {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  50.01%,
-  100% {
-    opacity: 0;
-  }
+@keyframes gaia-loading-dots {
+  0% { width: 0; }
+  100% { width: 1.6em; }
 }
 
 .gaia-chat-input-row {
@@ -313,20 +347,25 @@
 
 .gaia-chat-send-btn {
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #38bdf8, #2563eb);
   color: #f8fafc;
   font-size: 12px;
   font-weight: 700;
-  padding: 12px 18px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 84px;
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.35);
   transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.gaia-chat-send-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 .gaia-chat-send-btn:hover {
@@ -337,6 +376,13 @@
 .gaia-chat-send-btn:active {
   transform: translateY(1px);
   box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+}
+
+.gaia-chat-send-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+  opacity: 0.45;
+  box-shadow: none;
 }
 </style>
 
@@ -355,7 +401,8 @@
     messages: [],        // {id?, role: 'user'|'assistant', text, status?}
     lastResponseId: null, // Son assistant cevabının id'si
     isOpen: false,
-    draft: ''
+    draft: '',
+    awaitingResponse: false
   };
   window.__GAIA_CHAT_STATE__ = state;
   const STORAGE_KEY = 'gaia_chat_state_v1';
@@ -367,6 +414,7 @@
   const wrapperEl = document.getElementById('gaia-chat-wrapper');
   const launcherEl = document.getElementById('gaia-launcher');
   const closeEl = document.getElementById('gaia-close');
+  const resetEl = document.getElementById('gaia-reset');
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
   const pendingTool = { item: null, timer: null, key: null };
@@ -383,11 +431,17 @@
       if (saved && Array.isArray(saved.messages) && saved.messages.length && (!state.messages || state.messages.length === 0)) {
         state.messages = saved.messages;
       }
+      if (typeof saved.lastResponseId === 'string') {
+        state.lastResponseId = saved.lastResponseId;
+      }
       if (typeof saved.isOpen === 'boolean') {
         state.isOpen = saved.isOpen;
       }
       if (typeof saved.draft === 'string') {
         state.draft = saved.draft;
+      }
+      if (typeof saved.awaitingResponse === 'boolean') {
+        state.awaitingResponse = saved.awaitingResponse;
       }
     } catch (e) {}
   }
@@ -406,10 +460,38 @@
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         messages: safeMessages,
+        lastResponseId: state.lastResponseId || '',
         isOpen: state.isOpen,
-        draft: state.draft || ''
+        draft: state.draft || '',
+        awaitingResponse: !!state.awaitingResponse
       }));
     } catch (e) {}
+  }
+
+  function readLastResponseId() {
+    if (!lastResponseEl) return '';
+    const raw = (lastResponseEl.textContent || '').trim();
+    if (!raw) return '';
+    try {
+      const data = JSON.parse(raw);
+      return data && data.id ? data.id : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function syncHistoryWithLastResponse() {
+    const currentId = readLastResponseId();
+    if (!currentId) {
+      state.messages = [];
+      state.lastResponseId = null;
+      state.awaitingResponse = false;
+      if (window.sessionStorage) {
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      }
+      return;
+    }
+    state.lastResponseId = currentId;
   }
 
   function renderMarkdown(md) {
@@ -423,6 +505,11 @@
     if (launcherPreviewEl && text) {
       launcherPreviewEl.textContent = text;
     }
+  }
+
+  function setLauncherTyping(isTyping) {
+    if (!launcherEl) return;
+    launcherEl.classList.toggle('is-typing', !!isTyping);
   }
 
   function playNotification() {
@@ -475,8 +562,8 @@
       state.messages.push({
         id: 'assistant_intro',
         role: 'assistant',
-        text: 'I can scope your automation and draft it—tell me what you want to automate in one sentence.',
-        fullText: 'I can scope your automation and draft it—tell me what you want to automate in one sentence.',
+        text: 'Merhaba! Otomasyonunu netleştirebilirim. Tek cümleyle ne yapmak istediğini yaz.',
+        fullText: 'Merhaba! Otomasyonunu netleştirebilirim. Tek cümleyle ne yapmak istediğini yaz.',
         status: 'completed'
       });
     }
@@ -503,6 +590,13 @@
       MathJax.typesetPromise();
     }
     persistState();
+  }
+
+  function updateSendState() {
+    if (!sendBtn || !inputEl) return;
+    const hasText = !!inputEl.value.trim();
+    const isDisabled = !hasText || !!state.awaitingResponse;
+    sendBtn.disabled = isDisabled;
   }
 
   // Assistant mesajı için sahte "typing" efekti
@@ -592,6 +686,7 @@
     if (loadingIndex !== -1) {
       state.messages.splice(loadingIndex, 1);
     }
+    state.awaitingResponse = false;
 
     const existing = state.messages.find(m => m.id === data.id);
     let targetMessage = existing;
@@ -935,17 +1030,18 @@
 
     // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
     if (!state.isOpen && launcherEl) {
-      const snippet = (text || '').slice(0, 90) || 'I can scope your automation—want me to draft it?';
+      const snippet = (text || '').slice(0, 90) || 'Merhaba! İstediğin otomasyonu tek cümleyle yaz.';
       setPreviewText(snippet);
       launcherEl.classList.add('has-unread');
       playNotification();
     }
+    updateSendState();
   }
 
   function sendMessage() {
     if (!inputEl) return;
     const userText = inputEl.value.trim();
-    if (!userText) return;
+    if (!userText || state.awaitingResponse) return;
 
     // Workspace context from Bubble (optional)
     const ctxEl = document.getElementById('gaia-context');
@@ -1046,14 +1142,16 @@
     state.messages.push({
       id: 'loading_' + Date.now(),
       role: 'assistant',
-      text: 'Assistant is thinking',
+      text: 'Otomasyon hazırlanıyor',
       status: 'loading'
     });
+    state.awaitingResponse = true;
 
     renderMessages();
     inputEl.value = '';
     state.draft = '';
     persistState();
+    updateSendState();
 
     if (typeof window.bubble_fn_gaia_send_message === 'function') {
       try {
@@ -1081,6 +1179,7 @@
     inputEl.addEventListener('input', function () {
       state.draft = inputEl.value;
       persistState();
+      updateSendState();
     });
   }
 
@@ -1093,16 +1192,39 @@
       }
     });
     // Başlangıçta teaser metni
-    setPreviewText('I can scope your automation—want me to draft it?');
+    setPreviewText('Hazır olduğunda otomasyonunu birlikte çıkaralım.');
+    setLauncherTyping(true);
+    setTimeout(() => {
+      setLauncherTyping(false);
+      setPreviewText('Merhaba! İstediğin otomasyonu tek cümleyle yaz.');
+    }, 2400);
   }
 
   if (closeEl) {
     closeEl.addEventListener('click', closeChat);
   }
+  if (resetEl) {
+    resetEl.addEventListener('click', function () {
+      state.messages = [];
+      state.lastResponseId = null;
+      state.awaitingResponse = false;
+      if (inputEl) {
+        inputEl.value = '';
+        state.draft = '';
+      }
+      if (window.sessionStorage) {
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      }
+      renderMessages();
+      updateSendState();
+    });
+  }
 
   loadPersistedState();
+  syncHistoryWithLastResponse();
   ingestLastResponse();
   renderMessages();
+  updateSendState();
 
   if (inputEl && state.draft) {
     inputEl.value = state.draft;
@@ -1138,7 +1260,16 @@
   window.gaiaChatReset = function () {
     state.messages = [];
     state.lastResponseId = null;
+    state.awaitingResponse = false;
+    if (inputEl) {
+      inputEl.value = '';
+      state.draft = '';
+    }
+    if (window.sessionStorage) {
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    }
     renderMessages();
+    updateSendState();
   };
   window.gaiaIngestResponse = function () {
     ingestLastResponse();
