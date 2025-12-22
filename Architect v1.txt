@@ -849,7 +849,7 @@
         const workspaceMode = ctxString ? 'existing_workspace' : 'new_workspace';
         const actionMode = argsObj.action_mode || (workspaceMode === 'existing_workspace' ? 'attach_to_existing' : 'create_new');
         const functionCallOutputBody = JSON.stringify({
-          model: data.model || 'gpt-5-mini-2025-08-07',
+          model: data.model || 'gpt-5.2-2025-12-11',
           input: functionCallInput
         });
 
@@ -984,7 +984,7 @@
 
     // Full body (output1) for Responses API
     const body = {
-      model: "gpt-5-mini-2025-08-07",
+      model: "gpt-5.2-2025-12-11",
       reasoning: { effort: "medium" },
       tool_choice: "auto",
       instructions: systemBase,
