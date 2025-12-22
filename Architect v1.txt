@@ -247,6 +247,26 @@
 .gaia-chat-message.loading {
   opacity: 0.78;
   font-style: italic;
+  position: relative;
+}
+
+.gaia-chat-message.loading::after {
+  content: "...";
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: gaia-loading-dots 1.1s steps(3, end) infinite;
+  margin-left: 4px;
+}
+
+@keyframes gaia-loading-dots {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 3ch;
+  }
 }
 
 .gaia-chat-input-row {
@@ -331,6 +351,7 @@
     isOpen: false
   };
   window.__GAIA_CHAT_STATE__ = state;
+  const STORAGE_KEY = 'gaia_chat_state_v1';
 
   const messagesEl = document.getElementById('gaia-chat-messages');
   const inputEl = document.getElementById('gaia-chat-input');
@@ -346,6 +367,39 @@
   const processedResponseIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
+
+  function loadPersistedState() {
+    try {
+      const raw = window.sessionStorage ? sessionStorage.getItem(STORAGE_KEY) : null;
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && Array.isArray(saved.messages) && saved.messages.length && (!state.messages || state.messages.length === 0)) {
+        state.messages = saved.messages;
+      }
+      if (typeof saved.isOpen === 'boolean') {
+        state.isOpen = saved.isOpen;
+      }
+    } catch (e) {}
+  }
+
+  function persistState() {
+    if (!window.sessionStorage) return;
+    const safeMessages = Array.isArray(state.messages)
+      ? state.messages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          text: msg.text,
+          fullText: msg.fullText,
+          status: msg.status
+        }))
+      : [];
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: safeMessages,
+        isOpen: state.isOpen
+      }));
+    } catch (e) {}
+  }
 
   function renderMarkdown(md) {
     if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') return md || '';
@@ -390,6 +444,7 @@
     if (inputEl) {
       inputEl.focus({ preventScroll: true });
     }
+    persistState();
   }
 
   function closeChat() {
@@ -400,6 +455,7 @@
     }
     if (launcherUnreadEl) launcherUnreadEl.style.display = '';
     state.isOpen = false;
+    persistState();
   }
 
   // Mesajları ekrana bas
@@ -435,6 +491,7 @@
     if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
       MathJax.typesetPromise();
     }
+    persistState();
   }
 
   // Assistant mesajı için sahte "typing" efekti
@@ -528,28 +585,31 @@
     const existing = state.messages.find(m => m.id === data.id);
     let targetMessage = existing;
     const fullText = text || '';
-
-    if (targetMessage) {
-      targetMessage.fullText = fullText;
-      targetMessage.role = data.role || targetMessage.role || 'assistant';
-      targetMessage.status = data.status || targetMessage.status || '';
-    } else {
-      targetMessage = {
-        id: data.id,
-        role: data.role || 'assistant',
-        text: '',
-        fullText: fullText,
-        status: data.status || 'completed'
-      };
-      state.messages.push(targetMessage);
-    }
-    state.lastResponseId = data.id;
-
-    if (typeof startTypingAnimation === 'function') {
-      startTypingAnimation(targetMessage);
-    } else {
-      targetMessage.text = targetMessage.fullText || '';
+    if (!fullText) {
       renderMessages();
+    } else {
+      if (targetMessage) {
+        targetMessage.fullText = fullText;
+        targetMessage.role = data.role || targetMessage.role || 'assistant';
+        targetMessage.status = data.status || targetMessage.status || '';
+      } else {
+        targetMessage = {
+          id: data.id,
+          role: data.role || 'assistant',
+          text: '',
+          fullText: fullText,
+          status: data.status || 'completed'
+        };
+        state.messages.push(targetMessage);
+      }
+      state.lastResponseId = data.id;
+
+      if (typeof startTypingAnimation === 'function') {
+        startTypingAnimation(targetMessage);
+      } else {
+        targetMessage.text = targetMessage.fullText || '';
+        renderMessages();
+      }
     }
 
     // Yeni mesaj geldiğinde açık kalmasını sağla (kapanmayı engelle)
@@ -797,15 +857,6 @@
         
         console.log('gaia: bubble_fn_gaia_tool_call completed');
 
-        // UI state: show a system note about creation steps
-        state.messages.push({
-          id: 'system_working_' + Date.now(),
-          role: 'assistant',
-          text: 'Creating workspace, custom fields, and views…',
-          fullText: 'Creating workspace, custom fields, and views…',
-          status: 'info'
-        });
-        renderMessages();
       } catch (e) {
         console.error('gaia tool call failed', e);
       }
@@ -896,8 +947,6 @@
 
     console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
 
-    console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
-
     // System prompt (mirrors asisstant.txt)
     const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. Don't confirm one-by-one. Show concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS user EXPLICITLY says to create new workspace/table. Only create new (action_mode: create_new) if NO context OR user explicitly requests new workspace. Always mention existing workspace name. If user wants to add but no context, ask to open workspace first. Process type: "Visual to text" ONLY if image_pdf field has "innerstage" role; else "Table". Max one image_pdf with "innerstage". Input rule: every automation needs at least one control field; if none, mark first as control. If prompt exists, ensure control field. Planning: plain language; if workspace exists, say which fields you'll reuse. Don't wait for confirmation—proceed unless blocked. After plan, make single tool call with correct action_mode. Prefer multiline_text; avoid long_text. In system_prompt_template, use tokens like _*_Field Name_*_.`;
     const systemContent = hasWorkspace
@@ -963,14 +1012,14 @@
     state.messages.push({
       id: 'user_' + Date.now(),
       role: 'user',
-      text: ctxString ? `${ctxString}\n\n${userText}` : userText
+      text: userText
     });
 
     // Assistant için bekleme balonu ekle
     state.messages.push({
       id: 'loading_' + Date.now(),
       role: 'assistant',
-      text: 'Assistant is typing…',
+      text: 'Assistant is thinking',
       status: 'loading'
     });
 
@@ -1018,8 +1067,15 @@
     closeEl.addEventListener('click', closeChat);
   }
 
+  loadPersistedState();
   ingestLastResponse();
   renderMessages();
+
+  if (state.isOpen) {
+    openChat();
+  } else {
+    closeChat();
+  }
 
   // Polling: gaia-last-response içeriği değişince otomatik ingest (Bubble için)
   // Response ID'yi kontrol ederek aynı response'u birden fazla işlememek için
