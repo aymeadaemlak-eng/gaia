@@ -248,24 +248,30 @@
   opacity: 0.78;
   font-style: italic;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
 }
 
 .gaia-chat-message.loading::after {
-  content: "...";
+  content: "";
   display: inline-block;
-  width: 0;
-  overflow: hidden;
-  vertical-align: bottom;
-  animation: gaia-loading-dots 1.1s steps(3, end) infinite;
-  margin-left: 4px;
+  width: 8px;
+  height: 14px;
+  margin-left: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: gaia-loading-caret 1s steps(2, end) infinite;
 }
 
-@keyframes gaia-loading-dots {
-  0% {
-    width: 0;
+@keyframes gaia-loading-caret {
+  0%,
+  50% {
+    opacity: 1;
   }
+  50.01%,
   100% {
-    width: 3ch;
+    opacity: 0;
   }
 }
 
@@ -348,7 +354,8 @@
   const state = window.__GAIA_CHAT_STATE__ || {
     messages: [],        // {id?, role: 'user'|'assistant', text, status?}
     lastResponseId: null, // Son assistant cevabının id'si
-    isOpen: false
+    isOpen: false,
+    draft: ''
   };
   window.__GAIA_CHAT_STATE__ = state;
   const STORAGE_KEY = 'gaia_chat_state_v1';
@@ -379,6 +386,9 @@
       if (typeof saved.isOpen === 'boolean') {
         state.isOpen = saved.isOpen;
       }
+      if (typeof saved.draft === 'string') {
+        state.draft = saved.draft;
+      }
     } catch (e) {}
   }
 
@@ -396,7 +406,8 @@
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         messages: safeMessages,
-        isOpen: state.isOpen
+        isOpen: state.isOpen,
+        draft: state.draft || ''
       }));
     } catch (e) {}
   }
@@ -704,12 +715,33 @@
           return toolObj.arguments || {};
         })();
 
+        const stripHtml = (input) => String(input || '').replace(/<[^>]+>/g, '');
+        const escapeHtml = (input) => String(input || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
         const sanitizePrompt = (p) => {
           if (!p) return '';
-          let out = String(p);
+          let out = stripHtml(p);
           out = out.replace(/_\*_(.*?)_\*_/g, '$1'); // strip token markers
-          out = out.replace(/<[^>]+>/g, ''); // strip HTML
           return out.trim();
+        };
+        const buildSystemPromptHtml = (raw, fields) => {
+          const safeRaw = stripHtml(raw || '');
+          if (!safeRaw) return '';
+          const roleByLabel = new Map();
+          (fields || []).forEach(cf => {
+            if (cf?.label) roleByLabel.set(cf.label, cf?.role || 'mandatory');
+          });
+          return safeRaw.replace(/_\*_(.*?)_\*_/g, (_, label) => {
+            const cleanLabel = String(label || '').trim();
+            const role = (roleByLabel.get(cleanLabel) || 'mandatory').toLowerCase();
+            const roleClass = ['control', 'optional', 'mandatory'].includes(role) ? role : 'mandatory';
+            const safeLabel = escapeHtml(cleanLabel);
+            return `<span class="token ${roleClass}" data-id="_*_${safeLabel}_*_" contenteditable="false" draggable="false">${safeLabel}</span>`;
+          }).trim();
         };
 
         // Normalize process_type (handles lowercase/underscore variants)
@@ -738,12 +770,7 @@
         // System prompt varyantları
         const sysPlainRaw = argsObj.system_prompt_template || '';
         const sysPlain = sanitizePrompt(sysPlainRaw);
-        const spans = cfList.map(cf => {
-          const roleClass = (cf?.role === 'control' || cf?.role === 'optional' || cf?.role === 'mandatory') ? cf.role : 'mandatory';
-          const label = cf?.label || '';
-          return `<span class="token ${roleClass}" data-id="_*_${label}_*_" contenteditable="false" draggable="false">${label}</span>`;
-        });
-        const sysHtml = `${sysPlain} ${spans.join(', ')}`;
+        const sysHtml = buildSystemPromptHtml(sysPlainRaw, cfList) || sysPlain;
 
         // Eğer prompt varsa ve hiç control yoksa, ilk alanı control yap
         if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
@@ -1025,6 +1052,8 @@
 
     renderMessages();
     inputEl.value = '';
+    state.draft = '';
+    persistState();
 
     if (typeof window.bubble_fn_gaia_send_message === 'function') {
       try {
@@ -1049,6 +1078,10 @@
         sendMessage();
       }
     });
+    inputEl.addEventListener('input', function () {
+      state.draft = inputEl.value;
+      persistState();
+    });
   }
 
   if (launcherEl) {
@@ -1070,6 +1103,10 @@
   loadPersistedState();
   ingestLastResponse();
   renderMessages();
+
+  if (inputEl && state.draft) {
+    inputEl.value = state.draft;
+  }
 
   if (state.isOpen) {
     openChat();
