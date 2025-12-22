@@ -222,8 +222,8 @@
 }
 
 .gaia-icon-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   fill: currentColor;
 }
 
@@ -288,25 +288,26 @@
 
 .gaia-chat-message.loading {
   opacity: 0.78;
-  font-style: italic;
   position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 22px;
+  animation: gaia-loading-pulse 1.3s ease-in-out infinite;
 }
 
-.gaia-chat-message.loading::after {
-  content: "...";
-  display: inline-block;
-  width: 0;
-  overflow: hidden;
-  margin-left: 6px;
-  animation: gaia-loading-dots 1.1s steps(4, end) infinite;
-}
-
-@keyframes gaia-loading-dots {
-  0% { width: 0; }
-  100% { width: 1.6em; }
+@keyframes gaia-loading-pulse {
+  0% {
+    opacity: 0.55;
+    box-shadow: 0 8px 18px rgba(56, 189, 248, 0.18);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 12px 28px rgba(56, 189, 248, 0.35);
+  }
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 8px 18px rgba(56, 189, 248, 0.18);
+  }
 }
 
 .gaia-chat-input-row {
@@ -314,11 +315,11 @@
   align-items: flex-end;
   gap: 10px;
   margin-top: 4px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .gaia-chat-input {
@@ -562,8 +563,8 @@
       state.messages.push({
         id: 'assistant_intro',
         role: 'assistant',
-        text: 'Merhaba! Otomasyonunu netleştirebilirim. Tek cümleyle ne yapmak istediğini yaz.',
-        fullText: 'Merhaba! Otomasyonunu netleştirebilirim. Tek cümleyle ne yapmak istediğini yaz.',
+        text: 'Hi! I can clarify your automation. Tell me what you want in one sentence.',
+        fullText: 'Hi! I can clarify your automation. Tell me what you want in one sentence.',
         status: 'completed'
       });
     }
@@ -907,7 +908,7 @@
           argsObj.action_name ||
           argsObj.button_label ||
           argsObj.process_name ||
-          'Mesajı analiz et';
+          'Analyze message';
 
         // Reasoning item varsa, function_call öncesine ekle (bazı modeller istiyor)
         const reasoningItem =
@@ -937,7 +938,7 @@
           call_id: callObj.call_id || callObj.id || '',
           output: JSON.stringify({
             status: 'ok',
-            message: "Otomasyon başlatıldı. Çalışma alanına gidip 'Create' ile bir öğe ekleyin, ardından seçtiğimiz butona tıklayın; öğe ilgili sürece taşınacak ve AI otomasyonu çalışacak."
+            message: "Automation started. Go to the workspace, add an item with 'Create', then click the button we chose; the item will move to the relevant process and the AI automation will run."
           })
         });
 
@@ -1030,7 +1031,7 @@
 
     // Kullanıcı kapatmışsa küçük launcher'a son mesaj önizlemesini ve unread rozetini düşür
     if (!state.isOpen && launcherEl) {
-      const snippet = (text || '').slice(0, 90) || 'Merhaba! İstediğin otomasyonu tek cümleyle yaz.';
+      const snippet = (text || '').slice(0, 90) || 'Hi! Tell me the automation you want in one sentence.';
       setPreviewText(snippet);
       launcherEl.classList.add('has-unread');
       playNotification();
@@ -1129,6 +1130,9 @@
         { role: "user", content: [ { type: "input_text", text: userText } ] }
       ]
     };
+    if (state.lastResponseId) {
+      body.previous_response_id = state.lastResponseId;
+    }
     const bodyString = JSON.stringify(body);
 
     // Önce UI'ya user mesajını ekle
@@ -1142,7 +1146,7 @@
     state.messages.push({
       id: 'loading_' + Date.now(),
       role: 'assistant',
-      text: 'Otomasyon hazırlanıyor',
+      text: 'Assistant is thinking',
       status: 'loading'
     });
     state.awaitingResponse = true;
@@ -1192,11 +1196,11 @@
       }
     });
     // Başlangıçta teaser metni
-    setPreviewText('Hazır olduğunda otomasyonunu birlikte çıkaralım.');
+    setPreviewText('When you are ready, we can outline your automation together.');
     setLauncherTyping(true);
     setTimeout(() => {
       setLauncherTyping(false);
-      setPreviewText('Merhaba! İstediğin otomasyonu tek cümleyle yaz.');
+      setPreviewText('Hi! Tell me the automation you want in one sentence.');
     }, 2400);
   }
 
