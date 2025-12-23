@@ -95,6 +95,11 @@ cfListRaw.forEach((cfObj, idx) => {
   const name = cfObj.name || cfObj.label || cfObj.id || cfObj._id || '';
   const type = cfObj.type || '';
   const mappedType = typeMap[type] ?? type; // display -> option set display
+  const rawProcessType =
+    cfObj.process_type ||
+    cfObj.processType ||
+    (processTypeMap[type] ? type : '');
+  const mappedProcessType = processTypeMap[rawProcessType] ?? rawProcessType;
   const allow = cfObj.AllowMultiples === true || cfObj.allow_multiple === true;
   const source = toArray(cfObj.source || cfObj.dropdown_values);
   const order = startIndex + idx + 1;
@@ -121,7 +126,8 @@ cfListRaw.forEach((cfObj, idx) => {
     header: name,
     Order: order,
     sheet,
-    viewsstagetype: stageType
+    viewsstagetype: stageType,
+    processType: mappedProcessType
   };
 
   cfBulk.push(cfPayload);
@@ -208,9 +214,20 @@ async function run() {
 
   // View'ları control/mandatory/optional önceliğiyle sırala, Order'ı yeniden yaz
   const viewPriority = ['control', 'mandatory', 'optional', 'innerstage', ''];
+  const isVisualToTextInnerStage = (viewItem) => {
+    const stageType = String(viewItem.viewsstagetype || '').toLowerCase();
+    if (stageType !== 'innerstage') return false;
+    const processType = String(viewItem.processType || '').toLowerCase();
+    return processType === 'visual to text' || processType === 'visual_to_text';
+  };
   const sortedViews = viewBulk
     .map((v, idx) => ({ ...v, _origIdx: idx }))
     .sort((a, b) => {
+      const aInnerVisual = isVisualToTextInnerStage(a);
+      const bInnerVisual = isVisualToTextInnerStage(b);
+      if (aInnerVisual !== bInnerVisual) {
+        return aInnerVisual ? -1 : 1;
+      }
       const pa = viewPriority.indexOf(String(a.viewsstagetype || '').toLowerCase());
       const pb = viewPriority.indexOf(String(b.viewsstagetype || '').toLowerCase());
       return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
