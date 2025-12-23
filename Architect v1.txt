@@ -939,7 +939,7 @@
           description: cf?.description || ''
         })).filter(cf => cf.id || cf.label);
         const combinedCfList = [...cfList, ...normalizedExisting];
-        const cfStageTypes = combinedCfList.map(cf => cf?.role || '');
+        const cfStageTypes = combinedCfList.map(cf => String(cf?.role || '').toLowerCase());
         const cfBulk = combinedCfList.map(cf => ({
           id: cf?.id || '',
           name: cf?.label || cf?.id || '',
@@ -964,9 +964,12 @@
         const promptLabels = detectPromptLabels(sysPlain, combinedCfList);
         const sysHtml = buildSystemPromptHtml(sysPlain, combinedCfList, promptLabels) || sysPlain;
 
-        // Eğer prompt varsa ve hiç control yoksa, ilk alanı control yap
+        // Eğer prompt varsa ve hiç control yoksa, ilk non-innerstage alanı control yap
         if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
-          cfStageTypes[0] = 'control';
+          const firstNonInnerstageIndex = cfStageTypes.findIndex(r => String(r).toLowerCase() !== 'innerstage');
+          if (firstNonInnerstageIndex !== -1) {
+            cfStageTypes[firstNonInnerstageIndex] = 'control';
+          }
         }
 
         // Role bazlı isim listeleri (sadece promptta kullanılanlar)
