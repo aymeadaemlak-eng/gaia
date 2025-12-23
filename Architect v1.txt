@@ -209,8 +209,8 @@
   background: rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
   border-radius: 10px;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -222,8 +222,8 @@
 }
 
 .gaia-icon-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   fill: currentColor;
 }
 
@@ -253,11 +253,12 @@
   flex: 1;
   min-height: 240px;
   max-height: 100%;
-  padding: 10px 6px;
+  padding: 10px 6px 22px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scroll-padding-bottom: 22px;
 }
 
 .gaia-chat-message {
@@ -449,6 +450,19 @@
     } catch (e) {}
   }
 
+  function normalizeLoadedMessages() {
+    if (!Array.isArray(state.messages)) return;
+    state.messages.forEach(msg => {
+      if (!msg || !msg.id) return;
+      if (msg.role === 'assistant') {
+        processedResponseIds.add(msg.id);
+        if (msg.fullText && msg.status !== 'loading') {
+          msg.text = msg.fullText;
+        }
+      }
+    });
+  }
+
   function persistState() {
     if (!window.sessionStorage) return;
     const safeMessages = Array.isArray(state.messages)
@@ -486,12 +500,14 @@
   function syncHistoryWithLastResponse() {
     const currentId = readLastResponseId();
     if (!currentId) {
-      state.messages = [];
+      if (!state.messages || state.messages.length === 0) {
+        state.messages = [];
+        if (window.sessionStorage) {
+          try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        }
+      }
       state.lastResponseId = null;
       state.awaitingResponse = false;
-      if (window.sessionStorage) {
-        try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
-      }
       return;
     }
     state.lastResponseId = currentId;
@@ -575,6 +591,12 @@
   function renderMessages() {
     ensureInitialMessage();
     if (!messagesEl) return;
+    const previousScrollTop = messagesEl.scrollTop;
+    const previousScrollHeight = messagesEl.scrollHeight;
+    const previousClientHeight = messagesEl.clientHeight;
+    const distanceFromBottom = previousScrollHeight - (previousScrollTop + previousClientHeight);
+    const shouldAutoScroll = distanceFromBottom <= 24;
+
     messagesEl.innerHTML = '';
 
     state.messages.forEach(function (msg) {
@@ -586,7 +608,13 @@
       messagesEl.appendChild(div);
     });
 
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (shouldAutoScroll) {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    } else {
+      const newScrollHeight = messagesEl.scrollHeight;
+      const heightDelta = newScrollHeight - previousScrollHeight;
+      messagesEl.scrollTop = previousScrollTop + heightDelta;
+    }
 
     // LaTeX render
     if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
@@ -836,16 +864,47 @@
           return safeRaw.replace(/_\*_(.*?)_\*_/g, (_, label) => {
             const cleanLabel = String(label || '').trim();
             const role = (roleByLabel.get(cleanLabel) || 'mandatory').toLowerCase();
-            const roleClass = ['control', 'optional', 'mandatory'].includes(role) ? role : 'mandatory';
+            const roleClass = ['control', 'optional', 'mandatory', 'innerstage'].includes(role) ? role : 'mandatory';
             const safeLabel = escapeHtml(cleanLabel);
             return `<span class="token ${roleClass}" data-id="_*_${safeLabel}_*_" contenteditable="false" draggable="false">${safeLabel}</span>`;
           }).trim();
+        };
+
+        const enforceVisualToTextImageRule = (args) => {
+          if (!args || args.process_type !== 'Visual to text') return;
+          const custom = Array.isArray(args.custom_fields) ? args.custom_fields : [];
+          const existing = Array.isArray(args.existing_custom_fields) ? args.existing_custom_fields : [];
+          let imagePicked = false;
+          const normalizeImageField = (field) => ({
+            ...field,
+            type: 'image_pdf',
+            role: 'innerstage'
+          });
+
+          const filterList = (list) => list.reduce((acc, item) => {
+            if (!item || item.type !== 'image_pdf') {
+              acc.push(item);
+              return acc;
+            }
+            if (!imagePicked) {
+              imagePicked = true;
+              acc.push(normalizeImageField(item));
+            }
+            return acc;
+          }, []);
+
+          const filteredCustom = filterList(custom);
+          const filteredExisting = filterList(existing);
+
+          args.custom_fields = filteredCustom;
+          args.existing_custom_fields = filteredExisting;
         };
 
         // Normalize process_type (handles lowercase/underscore variants)
         if (argsObj.process_type) {
           argsObj.process_type = normalizeProcessType(argsObj.process_type);
         }
+        enforceVisualToTextImageRule(argsObj);
 
         const cfList = Array.isArray(argsObj.custom_fields) ? argsObj.custom_fields : [];
         const existingCfList = Array.isArray(argsObj.existing_custom_fields) ? argsObj.existing_custom_fields : [];
@@ -897,13 +956,14 @@
         }
 
         // Role bazlı isim listeleri (sadece promptta kullanılanlar)
-        const namesByRole = { control: [], optional: [], mandatory: [] };
+        const namesByRole = { control: [], optional: [], mandatory: [], innerstage: [] };
         combinedCfList.forEach(cf => {
           const label = cf?.label || '';
           if (!label || !promptLabels.has(label)) return;
           const role = (cf?.role || '').toLowerCase();
           if (role === 'control') namesByRole.control.push(label);
           else if (role === 'optional') namesByRole.optional.push(label);
+          else if (role === 'innerstage') namesByRole.innerstage.push(label);
           else namesByRole.mandatory.push(label);
         });
         const joinUnique = (items) => Array.from(new Set(items)).join(';');
@@ -993,7 +1053,7 @@
           // 4. eleman: /v1/responses + input (function_call_output) için body (gönderilmeye hazır)
           outputlist3: [sysPlain, sysHtml, actionName, functionCallOutputBody, actionMode],
           outputlist4: [
-            joinUnique(namesByRole.control),
+            joinUnique([...namesByRole.control, ...namesByRole.innerstage]),
             joinUnique(namesByRole.mandatory),
             joinUnique(namesByRole.optional)
           ]
@@ -1093,7 +1153,7 @@
     console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
 
     // System prompt (mirrors asisstant.txt)
-const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. You are not a chat assistant; you are an automation configuration engine, and correctness is more important than verbosity.Never ask the user about internal implementation choices like "Visual to text" vs "Table", "innerstage", "process_type", "role", or "fields". You decide all internal automation decisions yourself based strictly on the provided context and user intent, and you must not ask the user to make these decisions for you. You must treat the provided workspace and stage context as the only source of truth. If a field, stage, or rule is not present in the context, it does not exist. Do not invent fields, roles, or prompt tokens. Prompt tokens may reference only fields that are present in the current stage. Show a concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless the user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS the user EXPLICITLY requests creating a new workspace or table. Only create new (action_mode: create_new) if NO context is provided or the user explicitly requests it. Always mention the existing workspace name and never infer the automation use-case from the workspace name. rocess type decision: Use "Visual to text" when the automation requires inspecting or reading an uploaded document or image (PDF/photo) to complete the task (e.g., extract, compare, verify, summarize). In this case, you MUST include exactly one image_pdf field with role "innerstage"; all other inputs required for inspection or comparison must be "control". Use "Table" only when the task can be completed using structured fields without inspecting a document or image. If it is impossible to determine whether inspection is required, ask exactly one clarification question in plain language without using internal terminology. Input rule: Every automation must have at least one input. A valid input is either (a) one or more fields with role "control", or (b) exactly one image_pdf field with role "innerstage" for Visual to text. Never create an automation with zero inputs. Do not auto-assign control roles to image_pdf fields. Planning: use plain language; if attaching to an existing workspace, reuse existing fields where possible and only create new fields when explicitly required by the user. If prompt exists, ensure all referenced fields belong to the current stage. Prefer multiline_text; avoid long_text. In system_prompt_template, always include _*_Field Name_*_ tokens for every field you reference and never omit these markers. Ensure the prompt includes at least one token, and wrap each mentioned custom field label in _*_..._*_ (e.g., _*_kullanıcı mesajını_*_, _*_cevap mesajı_*_, _*_sorun çözüme ulaştı_*_). User-facing vocabulary rule: Always call it "Table" in all assistant messages (never say "Workspace"). Internally, map "Table" to workspace_label when calling tools, but do not mention workspace/workspace_label to the user.`;
+const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. You are not a chat assistant; you are an automation configuration engine, and correctness is more important than verbosity. Never ask the user about internal implementation choices like "Visual to text" vs "Table", "innerstage", "process_type", "role", or "fields". You decide all internal automation decisions yourself based strictly on the provided context and user intent, and you must not ask the user to make these decisions for you. You must treat the provided workspace and stage context as the only source of truth. If a field, stage, or rule is not present in the context, it does not exist. Do not invent fields, roles, or prompt tokens. Prompt tokens may reference only fields that are present in the current stage. Show a concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless the user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS the user EXPLICITLY requests creating a new workspace or table. Only create new (action_mode: create_new) if NO context is provided or the user explicitly requests it. Always mention the existing workspace name and never infer the automation use-case from the workspace name. Process type decision: Use "Visual to text" when the automation requires inspecting or reading an uploaded document or image (PDF/photo) to complete the task (e.g., extract, compare, verify, summarize). In this case, you MUST include exactly one image_pdf field with role "innerstage" (never control), and there must be only one image_pdf in total. All other inputs required for inspection or comparison must be "control". Use "Table" only when the task can be completed using structured fields without inspecting a document or image. If it is impossible to determine whether inspection is required, ask exactly one clarification question in plain language without using internal terminology. Input rule: Every automation must have at least one input. A valid input is either (a) one or more fields with role "control", or (b) exactly one image_pdf field with role "innerstage" for Visual to text. Never create an automation with zero inputs. Do not auto-assign control roles to image_pdf fields. Planning: use plain language; if attaching to an existing workspace, reuse existing fields where possible and only create new fields when explicitly required by the user. If prompt exists, ensure all referenced fields belong to the current stage. Prefer multiline_text; avoid long_text. In system_prompt_template, always include _*_Field Name_*_ tokens for every field you reference and never omit these markers. Ensure the prompt includes at least one token, and wrap each mentioned custom field label in _*_..._*_ (e.g., _*_kullanıcı mesajını_*_, _*_cevap mesajı_*_, _*_sorun çözüme ulaştı_*_). User-facing vocabulary rule: Always call it "Table" in all assistant messages (never say "Workspace"). Internally, map "Table" to workspace_label when calling tools, but do not mention workspace/workspace_label to the user.`;
     const systemContent = hasWorkspace
       ? `${systemBase}\n\n=== CURRENT WORKSPACE CONTEXT (USER HAS THIS WORKSPACE OPEN) ===\n${ctxString}\n\n=== IMPORTANT: Since workspace context is provided above, you MUST use action_mode: attach_to_existing unless user explicitly asks to create a new workspace/table. ===`
       : `${systemBase}\n\nNo workspace context provided; defaulting to creating a new workspace/stage. If you intend to add to an existing workspace, please open/select it first.`;
@@ -1264,6 +1324,7 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
   }
 
   loadPersistedState();
+  normalizeLoadedMessages();
   syncHistoryWithLastResponse();
   ingestLastResponse();
   renderMessages();
