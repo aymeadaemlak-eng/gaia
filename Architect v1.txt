@@ -906,15 +906,7 @@
           else if (role === 'optional') namesByRole.optional.push(label);
           else namesByRole.mandatory.push(label);
         });
-        const controlNameSet = new Set(namesByRole.control);
-        cfList.forEach(cf => {
-          const label = cf?.label || cf?.id || '';
-          if (label) controlNameSet.add(label);
-        });
-        normalizedExisting.forEach(cf => {
-          const label = cf?.label || cf?.id || '';
-          if (label) controlNameSet.add(label);
-        });
+        const joinUnique = (items) => Array.from(new Set(items)).join(';');
 
         // Multiple Outputs (Toolbox)
         // OUTPUT1..4: düz alanlar (tool_call.arguments içinden)
@@ -1001,9 +993,9 @@
           // 4. eleman: /v1/responses + input (function_call_output) için body (gönderilmeye hazır)
           outputlist3: [sysPlain, sysHtml, actionName, functionCallOutputBody, actionMode],
           outputlist4: [
-            Array.from(controlNameSet).join(';'),
-            namesByRole.mandatory.join(';'),
-            namesByRole.optional.join(';')
+            joinUnique(namesByRole.control),
+            joinUnique(namesByRole.mandatory),
+            joinUnique(namesByRole.optional)
           ]
         });
         
