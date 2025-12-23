@@ -1,0 +1,269 @@
+/**
+ * Server script for creating Bubble custom fields and their views in bulk.
+ * Use the CONFIG block below to supply sheet/company IDs, stage types, and
+ * pre-encoded Base64 custom field payloads when you prefer not to provide
+ * RAW_BASE64 input or want to override it.
+ */
+
+const CONFIG = {
+  sheet: '',      // default sheet id
+  olusturanSirket: '', // default company id
+  customfieldstagetype: ,
+  apiToken: '',                                  
+  rawbase64: '',
+debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
+  // Display -> option set value mapping (Bubble display değerleri)
+  typeMap: {
+    text: 'Text',
+    long_text: 'Text (long)',
+    multiline_text: 'Multiline text',
+    dropdown: 'Dropdown',
+    number: 'Number',
+    checkbox: 'Checkbox',
+    date: 'Date',
+    reference: 'Reference',
+    image_pdf: 'Image&Pdf',
+    phone: 'Phone',
+    embed: 'Embed',
+    user: 'User',
+    email: 'E-mail',
+    sys_cf: 'Sys.cf',
+    action_cf: 'Action.cf'
+  },
+  processTypeMap: {
+    visual_to_text: 'Visual to text',
+    table: 'Table'
+  }
+};
+
+const API_BASE = 'https://gaiasphere.io/version-test/api/1.1';
+const API_TOKEN = (CONFIG.apiToken || properties?.api_token || context?.keys?.BUBBLE_API_TOKEN || '').trim();
+
+if (!API_TOKEN) {
+  throw new Error('API token missing (set properties.api_token or context.keys.BUBBLE_API_TOKEN).');
+}
+
+// parse incoming RAW_BASE64 or fallback to CONFIG
+let payload = {};
+try {
+  const raw = Buffer.from(String(CONFIG.rawbase64 || RAW_BASE64 || ''), 'base64').toString('utf8');
+  if (raw) payload = JSON.parse(raw);
+} catch (e) {
+  payload = {};
+}
+
+const DEBUG = payload?.debug === true || CONFIG.debug === true;
+const baseTypeMap = CONFIG.typeMap || {};
+const overrideTypeMap = payload?.typeMap || {};
+const typeMap = { ...baseTypeMap, ...overrideTypeMap };
+const baseProcessTypeMap = CONFIG.processTypeMap || {};
+const overrideProcessTypeMap = payload?.processTypeMap || {};
+const processTypeMap = { ...baseProcessTypeMap, ...overrideProcessTypeMap };
+const sheet = payload.sheet || CONFIG.sheet || '';
+const olusturanSirket = payload.olusturansirket || CONFIG.olusturanSirket || '';
+// Yeni format (Architect output4): { customfields: [...], stage_types: [...] }
+const cfBundle = payload?.output4 ? payload.output4 : payload?.customfields ? payload : null;
+let cfListRaw = [];
+let stageTypesRaw = [];
+if (cfBundle && cfBundle.customfields) {
+  cfListRaw = Array.isArray(cfBundle.customfields) ? cfBundle.customfields : [];
+  stageTypesRaw = Array.isArray(cfBundle.stage_types) ? cfBundle.stage_types : [];
+} else {
+  // eski fallback
+  const baseTypes = Array.isArray(payload.customfieldstagetype)
+    ? payload.customfieldstagetype
+    : CONFIG.customfieldstagetype || [];
+  stageTypesRaw = baseTypes;
+  const cfInputs = Array.isArray(payload.inputtext)
+    ? payload.inputtext
+    : CONFIG.inputtext || [];
+  cfInputs.forEach((b64) => {
+    try {
+      const cfObj = JSON.parse(Buffer.from(String(b64 || ''), 'base64').toString('utf8'));
+      cfListRaw.push(cfObj);
+    } catch (_err) {}
+  });
+}
+const startIndex = Number(payload.index) || 0;
+
+const cfBulk = [];
+const viewBulk = [];
+
+const toArray = (v) => Array.isArray(v) ? v : [];
+
+cfListRaw.forEach((cfObj, idx) => {
+  const name = cfObj.name || cfObj.label || '';
+  const type = cfObj.type || '';
+  const mappedType = typeMap[type] ?? type; // display -> option set display
+  const allow = cfObj.AllowMultiples === true || cfObj.allow_multiple === true;
+  const source = toArray(cfObj.source || cfObj.dropdown_values);
+  const order = startIndex + idx + 1;
+  const existingId = cfObj.id || cfObj._id || '';
+
+  const cfPayload = {
+    name,
+    type: mappedType, // process type (visual_to_text/table)
+    AllowMultiples: allow,
+    description: cfObj.description || '',
+    source,
+    NotVisible: !!cfObj.NotVisible,
+    editable: cfObj.editable !== false,
+    sheet,
+    OlusturanSirket: olusturanSirket,
+    order,
+    existingId
+  };
+
+  const stageTypeRaw = stageTypesRaw[idx] ?? '';
+  const stageType = stageTypeRaw; // view role: control/mandatory/optional/innerstage (no map)
+
+  const viewPayload = {
+    header: name,
+    Order: order,
+    sheet,
+    viewsstagetype: stageType
+  };
+
+  cfBulk.push(cfPayload);
+  viewBulk.push(viewPayload);
+});
+
+async function callApi(path, bodyObj) {
+  // Bubble API workflow çağrısı: api_token query paramıyla
+  const url = `${API_BASE}${path}?api_token=${encodeURIComponent(API_TOKEN)}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_TOKEN}`
+    },
+    body: JSON.stringify(bodyObj)
+  });
+
+  const text = await resp.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (err) {
+    json = { parse_error: text };
+  }
+
+  if (!resp.ok) {
+    throw new Error(`API ${path} failed (${resp.status}): ${text}`);
+  }
+
+  return json;
+}
+
+async function run() {
+  // Workflow endpointleri: /wf/createcustomfield ve /wf/createcustomfieldview
+  const createdCFs = [];
+  const cfLogs = [];
+  for (let idx = 0; idx < cfBulk.length; idx += 1) {
+    const item = cfBulk[idx];
+    // Mevcut CF varsa create atla, id'yi kullan
+    if (item.existingId) {
+      createdCFs.push({ id: item.existingId, existing: true, __order: startIndex + idx + 1 });
+      cfLogs.push({ ok: true, existing: true, id: item.existingId, skippedCreate: true });
+      continue;
+    }
+    // Workflow parametreleri (display value ile)
+    const tempId = item.id || item._id || `tmp-${Date.now()}-${idx}`;
+    const wfPayload = {
+      allowmultiple: item.AllowMultiples === true,
+      id: tempId,
+      name: item.name,
+      sheet: item.sheet,
+      olusturansirket: item.OlusturanSirket,
+      source: item.source,
+      type: item.type // display value olarak iletiliyor
+    };
+    try {
+      const res = await callApi('/wf/createcustomfield', wfPayload);
+      const createdId =
+        res?.response?.Created?._id ||
+        res?.response?.Created?.id ||
+        res?.Created?._id ||
+        res?.Created?.id ||
+        res?._id ||
+        res?.id ||
+        tempId;
+      const created = {
+        id: createdId,
+        ...res,
+        __order: startIndex + idx + 1
+      };
+      createdCFs.push(created);
+      cfLogs.push({ ok: true, res });
+    } catch (err) {
+      cfLogs.push({ ok: false, error: err.message, item });
+    }
+  }
+
+  createdCFs.forEach((cfItem, idx) => {
+    if (viewBulk[idx]) {
+      viewBulk[idx].customfield = cfItem.id || cfItem._id || '';
+    }
+  });
+
+  // View'ları control/mandatory/optional önceliğiyle sırala, Order'ı yeniden yaz
+  const viewPriority = ['control', 'mandatory', 'optional', ''];
+  const sortedViews = viewBulk
+    .map((v, idx) => ({ ...v, _origIdx: idx }))
+    .sort((a, b) => {
+      const pa = viewPriority.indexOf(String(a.viewsstagetype || '').toLowerCase());
+      const pb = viewPriority.indexOf(String(b.viewsstagetype || '').toLowerCase());
+      return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
+    })
+    .map((v, newIdx) => ({ ...v, Order: newIdx + 1 }));
+
+  const createdViews = [];
+  const viewLogs = [];
+  for (let idx = 0; idx < sortedViews.length; idx += 1) {
+    const item = sortedViews[idx];
+    try {
+      if (!item.customfield) {
+        viewLogs.push({ ok: false, error: 'missing customfield id', item });
+        continue;
+      }
+      const wfViewPayload = {
+        header: item.header,
+        order: item.Order,
+        customfield: item.customfield,
+        stagetypes: item.viewsstagetype,
+        sheet: item.sheet,
+        type: item.type // display value
+      };
+      const res = await callApi('/wf/createcustomfieldview', wfViewPayload);
+      const createdId =
+        res?.response?.Created?._id ||
+        res?.response?.Created?.id ||
+        res?.Created?._id ||
+        res?.Created?.id ||
+        res?._id ||
+        res?.id ||
+        '';
+      const created = {
+        id: createdId,
+        ...res,
+        __order: item?.Order
+      };
+      createdViews.push(created);
+      viewLogs.push({ ok: true, res });
+    } catch (err) {
+      viewLogs.push({ ok: false, error: err.message, item });
+    }
+  }
+
+  return {
+    output1: DEBUG ? JSON.stringify({ createdCFs, cfLogs }) : createdCFs.length.toString(),
+    output2: DEBUG ? JSON.stringify({ createdViews, viewLogs, viewOrder: sortedViews.map(v => v.header) }) : createdViews.length.toString(),
+    output3: DEBUG ? JSON.stringify(cfBulk) : '',
+    output4: DEBUG ? JSON.stringify(viewBulk) : '',
+    outputlist1: createdCFs.map((c) => c.id || c._id || ''),
+    outputlist2: createdViews.map((v) => v.id || v._id || ''),
+    outputlist3: stageTypesRaw
+  };
+}
+
+return run();
