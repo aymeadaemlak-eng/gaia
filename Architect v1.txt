@@ -842,6 +842,7 @@
         })();
 
         const stripHtml = (input) => String(input || '').replace(/<[^>]+>/g, '');
+        const escapeRegex = (input) => String(input || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const escapeHtml = (input) => String(input || '')
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
@@ -854,20 +855,40 @@
           out = out.replace(/_\*_(.*?)_\*_/g, '$1'); // strip token markers
           return out.trim();
         };
-        const buildSystemPromptHtml = (raw, fields) => {
-          const safeRaw = stripHtml(raw || '');
+        const buildSystemPromptHtml = (plainPrompt, fields, usedLabels) => {
+          const safeRaw = stripHtml(plainPrompt || '');
           if (!safeRaw) return '';
           const roleByLabel = new Map();
           (fields || []).forEach(cf => {
             if (cf?.label) roleByLabel.set(cf.label, cf?.role || 'mandatory');
           });
-          return safeRaw.replace(/_\*_(.*?)_\*_/g, (_, label) => {
-            const cleanLabel = String(label || '').trim();
-            const role = (roleByLabel.get(cleanLabel) || 'mandatory').toLowerCase();
+          const labels = Array.from(usedLabels || [])
+            .map(label => String(label || '').trim())
+            .filter(Boolean)
+            .sort((a, b) => b.length - a.length);
+          let result = safeRaw;
+          labels.forEach(label => {
+            const role = (roleByLabel.get(label) || 'mandatory').toLowerCase();
             const roleClass = ['control', 'optional', 'mandatory', 'innerstage'].includes(role) ? role : 'mandatory';
-            const safeLabel = escapeHtml(cleanLabel);
-            return `<span class="token ${roleClass}" data-id="_*_${safeLabel}_*_" contenteditable="false" draggable="false">${safeLabel}</span>`;
-          }).trim();
+            const safeLabel = escapeHtml(label);
+            const token = `<span class="token ${roleClass}" data-id="_*_${safeLabel}_*_" contenteditable="false" draggable="false">${safeLabel}</span>`;
+            const pattern = new RegExp(escapeRegex(label), 'g');
+            result = result.replace(pattern, token);
+          });
+          return result.trim();
+        };
+        const detectPromptLabels = (plainPrompt, fields) => {
+          const labels = new Set();
+          const promptLower = String(plainPrompt || '').toLowerCase();
+          if (!promptLower) return labels;
+          (fields || []).forEach(cf => {
+            const label = String(cf?.label || '').trim();
+            if (!label) return;
+            if (promptLower.includes(label.toLowerCase())) {
+              labels.add(label);
+            }
+          });
+          return labels;
         };
 
         const enforceVisualToTextImageRule = (args) => {
@@ -940,19 +961,12 @@
         // System prompt varyantları
         const sysPlainRaw = argsObj.system_prompt_template || '';
         const sysPlain = sanitizePrompt(sysPlainRaw);
-        const sysHtml = buildSystemPromptHtml(sysPlainRaw, combinedCfList) || sysPlain;
+        const promptLabels = detectPromptLabels(sysPlain, combinedCfList);
+        const sysHtml = buildSystemPromptHtml(sysPlain, combinedCfList, promptLabels) || sysPlain;
 
         // Eğer prompt varsa ve hiç control yoksa, ilk alanı control yap
         if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
           cfStageTypes[0] = 'control';
-        }
-
-        const promptLabels = new Set();
-        const tokenRegex = /_\*_(.*?)_\*_/g;
-        let tokenMatch;
-        while ((tokenMatch = tokenRegex.exec(sysPlainRaw || '')) !== null) {
-          const label = String(tokenMatch[1] || '').trim();
-          if (label) promptLabels.add(label);
         }
 
         // Role bazlı isim listeleri (sadece promptta kullanılanlar)
