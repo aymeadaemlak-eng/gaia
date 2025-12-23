@@ -222,8 +222,8 @@
 }
 
 .gaia-icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
@@ -312,7 +312,7 @@
 
 .gaia-chat-input-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
   margin-top: 4px;
   padding: 0;
@@ -329,6 +329,8 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 11px 14px;
   font-size: 13px;
+  line-height: 1.4;
+  min-height: 44px;
   outline: none;
   max-height: 110px;
   background: rgba(255, 255, 255, 0.08);
@@ -846,10 +848,23 @@
         }
 
         const cfList = Array.isArray(argsObj.custom_fields) ? argsObj.custom_fields : [];
-        const cfStageTypes = cfList.map(cf => cf?.role || '');
-        const cfBulk = cfList.map(cf => ({
-          name: cf?.label || '',
+        const existingCfList = Array.isArray(argsObj.existing_custom_fields) ? argsObj.existing_custom_fields : [];
+        const normalizedExisting = existingCfList.map(cf => ({
+          id: cf?.id || cf?._id || '',
+          label: cf?.label || '',
           type: cf?.type || '',
+          role: cf?.role || 'mandatory',
+          allow_multiple: !!cf?.allow_multiple,
+          dropdown_values: Array.isArray(cf?.dropdown_values) ? cf.dropdown_values : [],
+          description: cf?.description || ''
+        })).filter(cf => cf.id || cf.label);
+        const combinedCfList = [...cfList, ...normalizedExisting];
+        const cfStageTypes = combinedCfList.map(cf => cf?.role || '');
+        const cfBulk = combinedCfList.map(cf => ({
+          id: cf?.id || '',
+          name: cf?.label || cf?.id || '',
+          type: cf?.type || '',
+          role: cf?.role || 'mandatory',
           AllowMultiples: !!cf?.allow_multiple,
           description: cf?.description || '',
           source: Array.isArray(cf?.dropdown_values) ? cf.dropdown_values : [],
@@ -866,40 +881,42 @@
         // System prompt varyantları
         const sysPlainRaw = argsObj.system_prompt_template || '';
         const sysPlain = sanitizePrompt(sysPlainRaw);
-        const sysHtml = buildSystemPromptHtml(sysPlainRaw, cfList) || sysPlain;
+        const sysHtml = buildSystemPromptHtml(sysPlainRaw, combinedCfList) || sysPlain;
 
         // Eğer prompt varsa ve hiç control yoksa, ilk alanı control yap
         if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
           cfStageTypes[0] = 'control';
         }
 
-        // Role bazlı isim listeleri (sadece promptta kullanılanlar: span ürettiğimiz alanlar)
+        const promptLabels = new Set();
+        const tokenRegex = /_\*_(.*?)_\*_/g;
+        let tokenMatch;
+        while ((tokenMatch = tokenRegex.exec(sysPlainRaw || '')) !== null) {
+          const label = String(tokenMatch[1] || '').trim();
+          if (label) promptLabels.add(label);
+        }
+
+        // Role bazlı isim listeleri (sadece promptta kullanılanlar)
         const namesByRole = { control: [], optional: [], mandatory: [] };
-        cfList.forEach(cf => {
+        combinedCfList.forEach(cf => {
           const label = cf?.label || '';
-          if (!label) return;
+          if (!label || !promptLabels.has(label)) return;
           const role = (cf?.role || '').toLowerCase();
           if (role === 'control') namesByRole.control.push(label);
           else if (role === 'optional') namesByRole.optional.push(label);
           else namesByRole.mandatory.push(label);
         });
-        const roleLines = [
-          namesByRole.control.join(', '),
-          namesByRole.optional.join(', '),
-          namesByRole.mandatory.join(', ')
-        ];
 
         // Multiple Outputs (Toolbox)
         // OUTPUT1..4: düz alanlar (tool_call.arguments içinden)
         //   output1: workspace_label
         //   output2: process_name
         //   output3: process_type
-        //   output4: custom_fields count (number)
+        //   output4: cfBundle base64 (customfields + stage_types)
         // OUTPUTLIST1..4:
         //   outputlist1: customfields_bulk (base64-encoded JSON strings list; Bubble “Value is a list” Text)
-        //   outputlist2: customfield_stage_types (array of strings)
         //   outputlist3: [system_prompt_plain, system_prompt_innerhtml, actionName, tool_output_body_template, action_mode]
-        //   outputlist4: [control_names, optional_names, mandatory_names] (JSON-escaped strings)
+        //   outputlist4: [control_names, mandatory_names, optional_names] (semicolon-delimited strings, prompt-only)
 
         // İlk elemanı ayrıca “value” olarak da gönder (listeden tek öğe almak isteyenler için)
         const firstCf = cfBulkJson[0] || '';
@@ -972,10 +989,13 @@
           // RAW_BASE64 olarak backend'e iletebilirsin.
           output4: cfBundleB64,
           outputlist1: cfBulkBase64,
-          outputlist2: cfStageTypes,
           // 4. eleman: /v1/responses + input (function_call_output) için body (gönderilmeye hazır)
           outputlist3: [sysPlain, sysHtml, actionName, functionCallOutputBody, actionMode],
-          outputlist4: roleLines.map(s => JSON.stringify(s || ''))
+          outputlist4: [
+            namesByRole.control.join(';'),
+            namesByRole.mandatory.join(';'),
+            namesByRole.optional.join(';')
+          ]
         });
         
         console.log('gaia: bubble_fn_gaia_tool_call completed');
@@ -1072,7 +1092,7 @@
     console.log('gaia: hasWorkspace?', hasWorkspace, 'context length:', ctxString.length);
 
     // System prompt (mirrors asisstant.txt)
-    const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. Never ask the user about internal implementation choices like "Visual to text" vs "Table", "innerstage", "process_type", "role", or "fields". Decide those internally based on the user's intent and describe it in plain language (e.g., "I'll read the uploaded document and extract X, Y, Z"). Don't confirm one-by-one. Show concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS user EXPLICITLY says to create new workspace/table. Only create new (action_mode: create_new) if NO context OR user explicitly requests new workspace. Always mention existing workspace name. Do not infer the automation use-case from the workspace name. The workspace name is only a container label. Always keep the process intent from the user's original request. If user wants to add but no context, ask to open workspace first. Process type decision: Use "Visual to text" when the user’s automation requires reading/inspecting an uploaded document or image (PDF/photo) to complete the task (e.g., extract values, summarize a decision, check if amounts match). Strong heuristic (internal): If the request implies reading/inspecting an uploaded document or image to extract/summarize/verify/check info (keywords like: document, license, registration, invoice, receipt, statement, decision, contract, form, PDF, image, photo, scan), choose process_type="Visual to text" without asking. Use "Table" when the task uses only structured fields without needing to read a document/image. If unclear from the user message, ask ONE short clarification question before any tool call. If process_type is "Visual to text", you MUST include exactly one image_pdf field with role "innerstage" (max one). If the user mentions a document, name the image_pdf field accordingly (e.g., "License / Registration", "Invoice", "Contract", "Decision PDF"). Max one image_pdf with "innerstage". Input rule: Every automation must have at least one input. A valid input is either (a) at least one field with role "control" OR (b) a single image_pdf field with role "innerstage" (for Visual to text). Never create an automation with zero inputs. Do not auto-assign control roles. If prompt exists, ensure control field. Planning: plain language; if workspace exists, say which fields you'll reuse. Confirmation rule (ONE time only): If key info is ambiguous (especially whether a document must be read/inspected, or which document is the primary one), ask ONE short clarification question and DO NOT call the tool yet. If the user replies without changing the request (or says "evet/yes/devam"), proceed with a single tool call immediately. Do not ask a second confirmation. After plan, make single tool call with correct action_mode. Prefer multiline_text; avoid long_text. In system_prompt_template, use tokens like _*_Field Name_*_.`;
+    const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI BPA platform. Core: Workspace (table), Process (stage), Custom Field (data type). Match user's language. Brand-facing: warm, confident, result-oriented. Greet briefly once; no repeat. Ultra short replies (max 2 sentences), no lists unless needed, no jargon. Never ask the user about internal implementation choices like "Visual to text" vs "Table", "innerstage", "process_type", "role", or "fields". Decide those internally based on the user's intent and describe it in plain language (e.g., "I'll read the uploaded document and extract X, Y, Z"). Don't confirm one-by-one. Show concise plan (e.g., "I'll add these to your '[workspace name]' workspace: X, Y, Z") and act immediately unless user says stop/iptal/cancel. CRITICAL: If workspace context (label/id, fields, stages) IS PROVIDED, DEFAULT to adding to that workspace (action_mode: attach_to_existing) UNLESS user EXPLICITLY says to create new workspace/table. Only create new (action_mode: create_new) if NO context OR user explicitly requests new workspace. Always mention existing workspace name. Do not infer the automation use-case from the workspace name. The workspace name is only a container label. Always keep the process intent from the user's original request. If user wants to add but no context, ask to open workspace first. Process type decision: Use "Visual to text" when the user’s automation requires reading/inspecting an uploaded document or image (PDF/photo) to complete the task (e.g., extract values, summarize a decision, check if amounts match). Strong heuristic (internal): If the request implies reading/inspecting an uploaded document or image to extract/summarize/verify/check info (keywords like: document, license, registration, invoice, receipt, statement, decision, contract, form, PDF, image, photo, scan), choose process_type="Visual to text" without asking. Use "Table" when the task uses only structured fields without needing to read a document/image. If unclear from the user message, ask ONE short clarification question before any tool call. If process_type is "Visual to text", you MUST include exactly one image_pdf field with role "innerstage" (max one). If the user mentions a document, name the image_pdf field accordingly (e.g., "License / Registration", "Invoice", "Contract", "Decision PDF"). Max one image_pdf with "innerstage". Input rule: Every automation must have at least one input. A valid input is either (a) at least one field with role "control" OR (b) a single image_pdf field with role "innerstage" (for Visual to text). Never create an automation with zero inputs. Do not auto-assign control roles. If prompt exists, ensure control field. Planning: plain language; if workspace exists, say which fields you'll reuse. For attach_to_existing, list any fields that already exist in the workspace under existing_custom_fields with their unique id and role for the new process; only list brand-new fields under custom_fields. Confirmation rule (ONE time only): If key info is ambiguous (especially whether a document must be read/inspected, or which document is the primary one), ask ONE short clarification question and DO NOT call the tool yet. If the user replies without changing the request (or says "evet/yes/devam"), proceed with a single tool call immediately. Do not ask a second confirmation. After plan, make single tool call with correct action_mode. Prefer multiline_text; avoid long_text. In system_prompt_template, use tokens like _*_Field Name_*_.`;
     const systemContent = hasWorkspace
       ? `${systemBase}\n\n=== CURRENT WORKSPACE CONTEXT (USER HAS THIS WORKSPACE OPEN) ===\n${ctxString}\n\n=== IMPORTANT: Since workspace context is provided above, you MUST use action_mode: attach_to_existing unless user explicitly asks to create a new workspace/table. ===`
       : `${systemBase}\n\nNo workspace context provided; defaulting to creating a new workspace/stage. If you intend to add to an existing workspace, please open/select it first.`;
@@ -1117,6 +1137,24 @@
                     description: { type: "string" }
                   },
                   required: ["label","type","role"]
+                }
+              },
+              existing_custom_fields: {
+                type: "array",
+                description: "Fields that already exist in the current workspace and should be attached to the new process.",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    id: { type: "string" },
+                    label: { type: "string" },
+                    type: { type: "string", enum: ["text","number","dropdown","checkbox","date","image_pdf","long_text","phone","email","user","multiline_text"] },
+                    role: { type: "string", enum: ["mandatory","optional","control","innerstage"] },
+                    allow_multiple: { type: "boolean" },
+                    dropdown_values: { type: "array", items: { type: "string" } },
+                    description: { type: "string" }
+                  },
+                  required: ["id","role"]
                 }
               },
               system_prompt_template: { type: "string" }

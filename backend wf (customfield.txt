@@ -92,7 +92,7 @@ const viewBulk = [];
 const toArray = (v) => Array.isArray(v) ? v : [];
 
 cfListRaw.forEach((cfObj, idx) => {
-  const name = cfObj.name || cfObj.label || '';
+  const name = cfObj.name || cfObj.label || cfObj.id || cfObj._id || '';
   const type = cfObj.type || '';
   const mappedType = typeMap[type] ?? type; // display -> option set display
   const allow = cfObj.AllowMultiples === true || cfObj.allow_multiple === true;
