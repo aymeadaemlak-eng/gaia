@@ -423,6 +423,8 @@
   const pendingTool = { item: null, timer: null, key: null };
   const processedToolCallKeys = new Set();
   const processedResponseIds = new Set();
+  let autoScrollEnabled = true;
+  const AUTO_SCROLL_TOLERANCE = 24;
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
 
@@ -586,7 +588,9 @@
       messagesEl.appendChild(div);
     });
 
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (autoScrollEnabled) {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
 
     // LaTeX render
     if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
@@ -802,16 +806,26 @@
           return callObj || {};
         })();
 
+        const parseToolArguments = (raw) => {
+          if (!raw) return {};
+          if (typeof raw === 'object') return raw;
+          if (typeof raw !== 'string') return {};
+          try {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed === 'string') {
+              try { return JSON.parse(parsed); } catch (_) { return {}; }
+            }
+            return parsed || {};
+          } catch (e) {
+            return {};
+          }
+        };
+
         const argsRaw = typeof toolObj.arguments === 'string'
           ? toolObj.arguments
           : JSON.stringify(toolObj.arguments || {});
 
-        const argsObj = (() => {
-          if (typeof toolObj.arguments === 'string') {
-            try { return JSON.parse(toolObj.arguments); } catch (_) { return {}; }
-          }
-          return toolObj.arguments || {};
-        })();
+        const argsObj = parseToolArguments(toolObj.arguments || toolObj.args);
 
         const stripHtml = (input) => String(input || '').replace(/<[^>]+>/g, '');
         const escapeHtml = (input) => String(input || '')
@@ -907,6 +921,18 @@
           else namesByRole.mandatory.push(label);
         });
         const joinUnique = (items) => Array.from(new Set(items)).join(';');
+        const hasPromptLabels = promptLabels.size > 0;
+        const roleBucketsEmpty = !namesByRole.control.length && !namesByRole.mandatory.length && !namesByRole.optional.length;
+        if (!hasPromptLabels || roleBucketsEmpty) {
+          combinedCfList.forEach(cf => {
+            const label = cf?.label || '';
+            if (!label) return;
+            const role = (cf?.role || '').toLowerCase();
+            if (role === 'control') namesByRole.control.push(label);
+            else if (role === 'optional') namesByRole.optional.push(label);
+            else namesByRole.mandatory.push(label);
+          });
+        }
 
         // Multiple Outputs (Toolbox)
         // OUTPUT1..4: düz alanlar (tool_call.arguments içinden)
@@ -1189,6 +1215,7 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
       status: 'loading'
     });
     state.awaitingResponse = true;
+    autoScrollEnabled = true;
 
     renderMessages();
     inputEl.value = '';
@@ -1224,6 +1251,15 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
       persistState();
       updateSendState();
     });
+  }
+
+  const updateAutoScrollState = () => {
+    if (!messagesEl) return;
+    const distanceFromBottom = messagesEl.scrollHeight - (messagesEl.scrollTop + messagesEl.clientHeight);
+    autoScrollEnabled = distanceFromBottom <= AUTO_SCROLL_TOLERANCE;
+  };
+  if (messagesEl) {
+    messagesEl.addEventListener('scroll', updateAutoScrollState);
   }
 
   if (launcherEl) {
