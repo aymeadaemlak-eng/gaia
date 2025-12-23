@@ -207,7 +207,7 @@ async function run() {
   });
 
   // View'ları control/mandatory/optional önceliğiyle sırala, Order'ı yeniden yaz
-  const viewPriority = ['control', 'mandatory', 'optional', ''];
+  const viewPriority = ['control', 'mandatory', 'optional', 'innerstage', ''];
   const sortedViews = viewBulk
     .map((v, idx) => ({ ...v, _origIdx: idx }))
     .sort((a, b) => {
