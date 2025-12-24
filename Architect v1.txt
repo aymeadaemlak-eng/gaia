@@ -10,13 +10,17 @@
 <!-- BUBBLE DATA CONFIGURATION END -->
 
 <div class="gaia-shell">
-  <div id="gaia-launcher" class="gaia-launcher" role="button" tabindex="0" aria-expanded="false">
-    <div class="gaia-launcher-avatar">G</div>
-    <div class="gaia-launcher-copy">
-      <div class="gaia-launcher-title">Gaia Assistant</div>
+  <div id="gaia-launcher" class="gaia-launcher" aria-expanded="false">
+    <div id="gaia-launcher-bubble" class="gaia-launcher-bubble" role="button" tabindex="0" aria-label="Open assistant">
+      <button id="gaia-launcher-minimize" class="gaia-launcher-minimize" type="button" aria-label="Minimize greeting">−</button>
       <div id="gaia-launcher-preview" class="gaia-launcher-preview">I can scope your automation—want me to draft it?</div>
     </div>
-    <div id="gaia-launcher-unread" class="gaia-launcher-unread">New</div>
+    <button id="gaia-launcher-button" class="gaia-launcher-button" type="button" aria-label="Open chat">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6.75C4 5.23 5.23 4 6.75 4h10.5C18.77 4 20 5.23 20 6.75v6.5c0 1.52-1.23 2.75-2.75 2.75H9.5l-3.7 3.7a.75.75 0 0 1-1.28-.53V16.5c-1.3-.35-2.25-1.53-2.25-2.97v-6.78Z"/>
+      </svg>
+      <span id="gaia-launcher-unread" class="gaia-launcher-unread">New</span>
+    </button>
   </div>
 
   <div id="gaia-chat-wrapper" class="gaia-chat-wrapper is-hidden">
@@ -39,12 +43,14 @@
       <div id="gaia-chat-messages" class="gaia-chat-messages"></div>
 
       <div class="gaia-chat-input-row">
-        <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
-        <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12.5h12.09l-4.3 4.3a1 1 0 1 0 1.42 1.4l6-6a1 1 0 0 0 0-1.4l-6-6a1 1 0 1 0-1.42 1.4l4.3 4.3H5a1 1 0 0 0 0 2Z"/>
-          </svg>
-        </button>
+        <div class="gaia-chat-input-wrap">
+          <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
+          <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12.5h12.09l-4.3 4.3a1 1 0 1 0 1.42 1.4l6-6a1 1 0 0 0 0-1.4l-6-6a1 1 0 1 0-1.42 1.4l4.3 4.3H5a1 1 0 0 0 0 2Z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -63,18 +69,11 @@
 
 .gaia-launcher {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
-  background: #ffffff;
   color: #0f172a;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
-  cursor: pointer;
   user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
   pointer-events: auto;
 }
 
@@ -82,49 +81,13 @@
   display: none;
 }
 
-.gaia-launcher:hover {
-  filter: brightness(1.03);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
-}
-
-.gaia-launcher:active {
-  transform: translateY(1px);
-}
-
-.gaia-launcher-text {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.gaia-launcher-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #60a5fa, #6366f1);
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
-}
-
-.gaia-launcher-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-}
-
-.gaia-launcher-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
+.gaia-launcher.only-icon .gaia-launcher-bubble {
+  display: none;
 }
 
 .gaia-launcher-preview {
   font-size: 12px;
-  color: #475569;
+  color: #0f172a;
   line-height: 1.4;
 }
 
@@ -148,16 +111,85 @@
 .gaia-launcher-unread {
   font-size: 11px;
   font-weight: 800;
-  padding: 6px 10px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
   background: #16a34a;
   color: #ffffff;
   box-shadow: 0 8px 18px rgba(22, 163, 74, 0.25);
   display: none;
+  position: absolute;
+  top: -6px;
+  right: -6px;
 }
 
 .gaia-launcher.has-unread .gaia-launcher-unread {
   display: inline-block;
+}
+
+.gaia-launcher-button {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.gaia-launcher-button svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.gaia-launcher-button:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 16px 32px rgba(79, 70, 229, 0.35);
+}
+
+.gaia-launcher-button:active {
+  transform: translateY(1px);
+}
+
+.gaia-launcher-bubble {
+  position: relative;
+  max-width: 320px;
+  padding: 14px 16px 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+}
+
+.gaia-launcher-minimize {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+}
+
+.gaia-launcher-minimize:hover {
+  background: #f1f5f9;
 }
 
 .gaia-chat-wrapper {
@@ -315,7 +347,6 @@
 .gaia-chat-input-row {
   display: flex;
   align-items: center;
-  gap: 10px;
   margin-top: 4px;
   padding: 0;
   border: none;
@@ -324,12 +355,17 @@
   box-shadow: none;
 }
 
+.gaia-chat-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
 .gaia-chat-input {
   flex: 1;
   resize: none;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 11px 14px;
+  padding: 11px 44px 11px 14px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
@@ -351,43 +387,45 @@
 }
 
 .gaia-chat-send-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: #ffffff;
+  border-radius: 10px;
+  background: transparent;
+  color: #2563eb;
   font-size: 12px;
   font-weight: 700;
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.28);
-  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: none;
+  transition: transform 0.12s ease, filter 0.2s ease;
 }
 
 .gaia-chat-send-btn svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
+  color: #2563eb;
 }
 
 .gaia-chat-send-btn:hover {
-  filter: brightness(1.02);
-  box-shadow: 0 14px 32px rgba(79, 70, 229, 0.35);
+  filter: brightness(0.9);
 }
 
 .gaia-chat-send-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.28);
+  transform: translateY(calc(-50% + 1px));
 }
 
 .gaia-chat-send-btn:disabled {
   cursor: not-allowed;
   filter: grayscale(0.2);
   opacity: 0.45;
-  box-shadow: none;
 }
 </style>
 
@@ -407,7 +445,9 @@
     lastResponseId: null, // Son assistant cevabının id'si
     isOpen: false,
     draft: '',
-    awaitingResponse: false
+    awaitingResponse: false,
+    launcherCollapsed: false,
+    greetingNotified: false
   };
   window.__GAIA_CHAT_STATE__ = state;
   const STORAGE_KEY = 'gaia_chat_state_v1';
@@ -422,6 +462,9 @@
   const resetEl = document.getElementById('gaia-reset');
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
+  const launcherButtonEl = document.getElementById('gaia-launcher-button');
+  const launcherBubbleEl = document.getElementById('gaia-launcher-bubble');
+  const launcherMinimizeEl = document.getElementById('gaia-launcher-minimize');
   const pendingTool = { item: null, timer: null, key: null };
   const processedToolCallKeys = new Set();
   const processedResponseIds = new Set();
@@ -447,6 +490,12 @@
       }
       if (typeof saved.awaitingResponse === 'boolean') {
         state.awaitingResponse = saved.awaitingResponse;
+      }
+      if (typeof saved.launcherCollapsed === 'boolean') {
+        state.launcherCollapsed = saved.launcherCollapsed;
+      }
+      if (typeof saved.greetingNotified === 'boolean') {
+        state.greetingNotified = saved.greetingNotified;
       }
     } catch (e) {}
   }
@@ -481,7 +530,9 @@
         lastResponseId: state.lastResponseId || '',
         isOpen: state.isOpen,
         draft: state.draft || '',
-        awaitingResponse: !!state.awaitingResponse
+        awaitingResponse: !!state.awaitingResponse,
+        launcherCollapsed: !!state.launcherCollapsed,
+        greetingNotified: !!state.greetingNotified
       }));
     } catch (e) {}
   }
@@ -532,6 +583,14 @@
     launcherEl.classList.toggle('is-typing', !!isTyping);
   }
 
+  function setLauncherCollapsed(collapsed) {
+    state.launcherCollapsed = !!collapsed;
+    if (launcherEl) {
+      launcherEl.classList.toggle('only-icon', state.launcherCollapsed);
+    }
+    persistState();
+  }
+
   function playNotification() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -573,19 +632,26 @@
     }
     if (launcherUnreadEl) launcherUnreadEl.style.display = '';
     state.isOpen = false;
+    setLauncherCollapsed(true);
     persistState();
   }
 
   // Mesajları ekrana bas
   function ensureInitialMessage() {
     if (!state.messages || state.messages.length === 0) {
+      const greetingText = 'Hi! I can clarify your automation. Tell me what you want in one sentence.';
       state.messages.push({
         id: 'assistant_intro',
         role: 'assistant',
-        text: 'Hi! I can clarify your automation. Tell me what you want in one sentence.',
-        fullText: 'Hi! I can clarify your automation. Tell me what you want in one sentence.',
+        text: greetingText,
+        fullText: greetingText,
         status: 'completed'
       });
+      setPreviewText(greetingText);
+      if (!state.greetingNotified) {
+        playNotification();
+        state.greetingNotified = true;
+      }
     }
   }
 
@@ -1312,21 +1378,23 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
     });
   }
 
-  if (launcherEl) {
-    launcherEl.addEventListener('click', openChat);
-    launcherEl.addEventListener('keydown', function (e) {
+  if (launcherButtonEl) {
+    launcherButtonEl.addEventListener('click', openChat);
+  }
+  if (launcherBubbleEl) {
+    launcherBubbleEl.addEventListener('click', openChat);
+    launcherBubbleEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         openChat();
       }
     });
-    // Başlangıçta teaser metni
-    setPreviewText('When you are ready, we can outline your automation together.');
-    setLauncherTyping(true);
-    setTimeout(() => {
-      setLauncherTyping(false);
-      setPreviewText('Hi! Tell me the automation you want in one sentence.');
-    }, 2400);
+  }
+  if (launcherMinimizeEl) {
+    launcherMinimizeEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setLauncherCollapsed(true);
+    });
   }
 
   if (closeEl) {
@@ -1363,7 +1431,12 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
   if (state.isOpen) {
     openChat();
   } else {
-    closeChat();
+    if (wrapperEl) wrapperEl.classList.add('is-hidden');
+    if (launcherEl) {
+      launcherEl.classList.remove('is-hidden');
+      launcherEl.setAttribute('aria-expanded', 'false');
+    }
+    setLauncherCollapsed(state.launcherCollapsed);
   }
 
   // Polling: gaia-last-response içeriği değişince otomatik ingest (Bubble için)
