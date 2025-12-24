@@ -52,7 +52,7 @@
           <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
           <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 12.5h12.09l-4.3 4.3a1 1 0 1 0 1.42 1.4l6-6a1 1 0 0 0 0-1.4l-6-6a1 1 0 1 0-1.42 1.4l4.3 4.3H5a1 1 0 0 0 0 2Z"/>
+              <path d="M6.75 4h10.5C18.77 4 20 5.23 20 6.75v6.5C20 14.77 18.77 16 17.25 16H9.5l-3.7 3.7a.75.75 0 0 1-1.28-.53V16.5C3.2 16.15 2.25 14.97 2.25 13.53v-6.78C2.25 5.23 3.48 4 5 4h1.75Z"/>
             </svg>
           </button>
         </div>
@@ -63,13 +63,13 @@
 
 <style>
 .gaia-shell {
-  position: fixed;
-  left: 22px;
-  bottom: 22px;
-  width: 520px;
-  max-width: calc(100% - 44px);
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: 100%;
   z-index: 9999;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .gaia-launcher {
