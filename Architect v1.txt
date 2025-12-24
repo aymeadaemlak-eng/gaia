@@ -12,7 +12,7 @@
 <div class="gaia-shell">
   <div id="gaia-launcher" class="gaia-launcher" aria-expanded="false">
     <div id="gaia-launcher-bubble" class="gaia-launcher-bubble" role="button" tabindex="0" aria-label="Open assistant">
-      <button id="gaia-launcher-minimize" class="gaia-launcher-minimize" type="button" aria-label="Minimize greeting">−</button>
+      <button id="gaia-launcher-minimize" class="gaia-launcher-minimize" type="button" aria-label="Minimize greeting">×</button>
       <div id="gaia-launcher-preview" class="gaia-launcher-preview">I can scope your automation—want me to draft it?</div>
     </div>
     <button id="gaia-launcher-button" class="gaia-launcher-button" type="button" aria-label="Open chat">
@@ -44,6 +44,11 @@
 
       <div class="gaia-chat-input-row">
         <div class="gaia-chat-input-wrap">
+          <span class="gaia-chat-input-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.75 4h10.5C18.77 4 20 5.23 20 6.75v6.5C20 14.77 18.77 16 17.25 16H9.5l-3.7 3.7a.75.75 0 0 1-1.28-.53V16.5C3.2 16.15 2.25 14.97 2.25 13.53v-6.78C2.25 5.23 3.48 4 5 4h1.75Z"/>
+            </svg>
+          </span>
           <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
           <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -171,8 +176,8 @@
 
 .gaia-launcher-minimize {
   position: absolute;
-  top: -10px;
-  left: -10px;
+  top: -12px;
+  left: -12px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -207,7 +212,7 @@
   max-width: 560px;
   height: 580px;
   margin: 0;
-  padding: 16px;
+  padding: 16px 16px 12px;
   background: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08), transparent 40%),
               radial-gradient(circle at 85% 10%, rgba(99, 102, 241, 0.06), transparent 35%),
               #f8fafc;
@@ -252,6 +257,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+#gaia-reset {
+  background: #ffffff;
+  border: 1px solid #cbd5f5;
+  color: #1e3a8a;
+}
+
+#gaia-reset:hover {
+  background: #e2e8f0;
+}
+
+#gaia-reset svg {
+  width: 20px;
+  height: 20px;
 }
 
 .gaia-icon-btn svg {
@@ -347,11 +367,12 @@
 .gaia-chat-input-row {
   display: flex;
   align-items: center;
-  margin-top: 4px;
-  padding: 0;
+  margin: 0 -16px -12px;
+  padding: 10px 16px 16px;
   border: none;
+  border-top: 1px solid #e2e8f0;
   border-radius: 0;
-  background: transparent;
+  background: #f8fafc;
   box-shadow: none;
 }
 
@@ -360,12 +381,31 @@
   width: 100%;
 }
 
+.gaia-chat-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.gaia-chat-input-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .gaia-chat-input {
   flex: 1;
+  width: 100%;
   resize: none;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 11px 44px 11px 14px;
+  padding: 11px 44px 11px 40px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
@@ -447,7 +487,8 @@
     draft: '',
     awaitingResponse: false,
     launcherCollapsed: false,
-    greetingNotified: false
+    greetingNotified: false,
+    forceGreetingOnLoad: true
   };
   window.__GAIA_CHAT_STATE__ = state;
   const STORAGE_KEY = 'gaia_chat_state_v1';
@@ -638,7 +679,7 @@
 
   // Mesajları ekrana bas
   function ensureInitialMessage() {
-    if (!state.messages || state.messages.length === 0) {
+    if (!state.messages || state.messages.length === 0 || state.forceGreetingOnLoad) {
       const greetingText = 'Hi! I can clarify your automation. Tell me what you want in one sentence.';
       state.messages.push({
         id: 'assistant_intro',
@@ -652,6 +693,7 @@
         playNotification();
         state.greetingNotified = true;
       }
+      state.forceGreetingOnLoad = false;
     }
   }
 
@@ -1419,6 +1461,8 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
 
   loadPersistedState();
   normalizeLoadedMessages();
+  state.greetingNotified = false;
+  state.forceGreetingOnLoad = true;
   syncHistoryWithLastResponse();
   ingestLastResponse();
   renderMessages();
