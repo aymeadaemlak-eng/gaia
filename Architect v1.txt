@@ -428,34 +428,32 @@
 
 .gaia-chat-send-btn {
   position: absolute;
-  right: 8px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  border-radius: 10px;
+  border-radius: 50%;
   background: transparent;
-  color: #2563eb;
-  font-size: 12px;
-  font-weight: 700;
-  width: 30px;
-  height: 30px;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: none;
-  transition: transform 0.12s ease, filter 0.2s ease;
+  transition: transform 0.12s ease, color 0.2s ease, background 0.2s ease;
 }
 
 .gaia-chat-send-btn svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
-  color: #2563eb;
 }
 
 .gaia-chat-send-btn:hover {
-  filter: brightness(0.9);
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .gaia-chat-send-btn:active {
@@ -682,13 +680,14 @@
     if (!state.messages || state.messages.length === 0 || state.forceGreetingOnLoad) {
       const greetingText = 'Hi! I can clarify your automation. Tell me what you want in one sentence.';
       state.messages.push({
-        id: 'assistant_intro',
+        id: `assistant_intro_${Date.now()}`,
         role: 'assistant',
         text: greetingText,
         fullText: greetingText,
         status: 'completed'
       });
       setPreviewText(greetingText);
+      setLauncherCollapsed(false);
       if (!state.greetingNotified) {
         playNotification();
         state.greetingNotified = true;
