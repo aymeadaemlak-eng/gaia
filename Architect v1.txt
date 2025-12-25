@@ -31,7 +31,6 @@
           <div class="gaia-chat-subtitle">Automation design copilot</div>
         </div>
       <div class="gaia-chat-actions">
-          <button id="gaia-reset" class="gaia-icon-btn" type="button" aria-label="Reset chat" title="Reset chat">⟲</button>
           <button id="gaia-close" class="gaia-icon-btn" type="button" aria-label="Minimize assistant" title="Minimize assistant">×</button>
         </div>
       </div>
@@ -46,13 +45,6 @@
             </svg>
           </span>
           <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
-          <button id="gaia-chat-send" class="gaia-chat-input-action" type="button" aria-label="Send message" title="Send message">
-            <span class="gaia-chat-input-icon gaia-chat-input-icon--right" aria-hidden="true">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3.4 20.2a.8.8 0 0 1-1.1-.9L4.1 12 2.3 4.7a.8.8 0 0 1 1.1-.9l17.5 7.3a.8.8 0 0 1 0 1.5L3.4 20.2Zm2.2-9 1.2 4.8 10.3-4.3-10.3-4.3-1.2 4.8Z"/>
-              </svg>
-            </span>
-          </button>
         </div>
       </div>
     </div>
@@ -397,7 +389,7 @@
   resize: none;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 11px 44px 11px 40px;
+  padding: 11px 16px 11px 40px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
@@ -416,44 +408,6 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 10px 30px rgba(37, 99, 235, 0.12);
   background: #ffffff;
-}
-
-.gaia-chat-input-action {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  color: #2563eb;
-  width: 44px;
-  height: 44px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: none;
-  transition: transform 0.12s ease, color 0.2s ease, background 0.2s ease;
-}
-
-.gaia-chat-input-action svg {
-  display: block;
-}
-
-.gaia-chat-input-action:hover {
-  color: #1d4ed8;
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.gaia-chat-input-action:active {
-  transform: translateY(calc(-50% + 1px));
-}
-
-.gaia-chat-input-action:disabled {
-  cursor: not-allowed;
-  filter: grayscale(0.3);
-  opacity: 0.6;
 }
 </style>
 
@@ -479,8 +433,6 @@
     forceGreetingOnLoad: false
   };
   window.__GAIA_CHAT_STATE__ = state;
-  const STORAGE_KEY = 'gaia_chat_state_v1';
-  const LAST_RESPONSE_KEY = 'gaia_last_response_id_v1';
 
   const messagesEl = document.getElementById('gaia-chat-messages');
   const inputEl = document.getElementById('gaia-chat-input');
@@ -489,7 +441,6 @@
   const wrapperEl = document.getElementById('gaia-chat-wrapper');
   const launcherEl = document.getElementById('gaia-launcher');
   const closeEl = document.getElementById('gaia-close');
-  const resetEl = document.getElementById('gaia-reset');
   const launcherPreviewEl = document.getElementById('gaia-launcher-preview');
   const launcherUnreadEl = document.getElementById('gaia-launcher-unread');
   const launcherButtonEl = document.getElementById('gaia-launcher-button');
@@ -500,42 +451,6 @@
   const processedResponseIds = new Set();
   // STREAMING KAPALI TUT (tek seferde tam yanıt için)
   // Eğer Responses API çağrısında stream kullanıyorsan argümanlar chunk chunk gelir.
-
-  function loadPersistedState() {
-    try {
-      const raw = window.sessionStorage ? sessionStorage.getItem(STORAGE_KEY) : null;
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      if (saved && Array.isArray(saved.messages) && saved.messages.length && (!state.messages || state.messages.length === 0)) {
-        state.messages = saved.messages;
-      }
-      if (typeof saved.lastResponseId === 'string') {
-        state.lastResponseId = saved.lastResponseId;
-      }
-      if (typeof saved.isOpen === 'boolean') {
-        state.isOpen = saved.isOpen;
-      }
-      if (typeof saved.draft === 'string') {
-        state.draft = saved.draft;
-      }
-      if (typeof saved.awaitingResponse === 'boolean') {
-        state.awaitingResponse = saved.awaitingResponse;
-      }
-      if (typeof saved.launcherCollapsed === 'boolean') {
-        state.launcherCollapsed = saved.launcherCollapsed;
-      }
-      if (typeof saved.greetingNotified === 'boolean') {
-        state.greetingNotified = saved.greetingNotified;
-      }
-    } catch (e) {}
-
-    try {
-      const storedLastResponse = window.localStorage ? localStorage.getItem(LAST_RESPONSE_KEY) : null;
-      if (storedLastResponse) {
-        state.lastResponseId = storedLastResponse;
-      }
-    } catch (e) {}
-  }
 
   function normalizeLoadedMessages() {
     if (!Array.isArray(state.messages)) return;
@@ -550,39 +465,7 @@
     });
   }
 
-  function persistState() {
-    if (!window.sessionStorage) return;
-    const safeMessages = Array.isArray(state.messages)
-      ? state.messages.map(msg => ({
-          id: msg.id,
-          role: msg.role,
-          text: msg.text,
-          fullText: msg.fullText,
-          status: msg.status
-        }))
-      : [];
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        messages: safeMessages,
-        lastResponseId: state.lastResponseId || '',
-        isOpen: state.isOpen,
-        draft: state.draft || '',
-        awaitingResponse: !!state.awaitingResponse,
-        launcherCollapsed: !!state.launcherCollapsed,
-        greetingNotified: !!state.greetingNotified
-      }));
-    } catch (e) {}
-
-    try {
-      if (window.localStorage) {
-        if (state.lastResponseId) {
-          localStorage.setItem(LAST_RESPONSE_KEY, state.lastResponseId);
-        } else {
-          localStorage.removeItem(LAST_RESPONSE_KEY);
-        }
-      }
-    } catch (e) {}
-  }
+  function persistState() {}
 
   function readLastResponseId() {
     if (!lastResponseEl) return '';
@@ -601,15 +484,9 @@
     if (!currentId) {
       if (!state.messages || state.messages.length === 0) {
         state.messages = [];
-        if (window.sessionStorage) {
-          try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
-        }
       }
       state.lastResponseId = null;
       state.awaitingResponse = false;
-      if (window.localStorage) {
-        try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
-      }
       return;
     }
     state.lastResponseId = currentId;
@@ -742,10 +619,12 @@
   }
 
   function updateSendState() {
-    if (!sendBtn || !inputEl) return;
+    if (!inputEl) return;
     const hasText = !!inputEl.value.trim();
     const isDisabled = !hasText || !!state.awaitingResponse;
-    sendBtn.disabled = isDisabled;
+    if (sendBtn) {
+      sendBtn.disabled = isDisabled;
+    }
   }
 
   // Assistant mesajı için sahte "typing" efekti
@@ -1412,9 +1291,6 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
     }
   }
 
-  if (sendBtn) {
-    sendBtn.addEventListener('click', sendMessage);
-  }
   if (inputEl) {
     inputEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -1451,27 +1327,7 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
   if (closeEl) {
     closeEl.addEventListener('click', closeChat);
   }
-    if (resetEl) {
-      resetEl.addEventListener('click', function () {
-        state.messages = [];
-        state.lastResponseId = null;
-        state.awaitingResponse = false;
-        if (inputEl) {
-          inputEl.value = '';
-          state.draft = '';
-        }
-        if (window.sessionStorage) {
-          try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
-        }
-        if (window.localStorage) {
-          try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
-        }
-        renderMessages();
-        updateSendState();
-      });
-    }
 
-  loadPersistedState();
   normalizeLoadedMessages();
   state.greetingNotified = false;
   syncHistoryWithLastResponse();
@@ -1522,12 +1378,6 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
     if (inputEl) {
       inputEl.value = '';
       state.draft = '';
-    }
-    if (window.sessionStorage) {
-      try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
-    }
-    if (window.localStorage) {
-      try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
     }
     renderMessages();
     updateSendState();
