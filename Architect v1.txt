@@ -406,20 +406,21 @@
   width: 100%;
   resize: none;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   padding: 11px 14px 11px 40px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
   outline: none;
   max-height: 110px;
-  background: #ffffff;
+  background: #f8fafc;
   color: #0f172a;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.15);
 }
 
 .gaia-chat-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .gaia-chat-input:focus {
