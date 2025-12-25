@@ -13,7 +13,7 @@
   <div id="gaia-launcher" class="gaia-launcher" aria-expanded="false">
     <div id="gaia-launcher-bubble" class="gaia-launcher-bubble" role="button" tabindex="0" aria-label="Open assistant">
       <button id="gaia-launcher-minimize" class="gaia-launcher-minimize" type="button" aria-label="Minimize greeting">×</button>
-      <div id="gaia-launcher-preview" class="gaia-launcher-preview">Merhaba! Otomasyonunu netleştirelim—hedefini tek cümlede yaz.</div>
+      <div id="gaia-launcher-preview" class="gaia-launcher-preview">Hello! Let’s clarify your automation—describe your goal in one sentence.</div>
     </div>
     <button id="gaia-launcher-button" class="gaia-launcher-button" type="button" aria-label="Open chat">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -439,6 +439,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 0;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
   transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
@@ -448,6 +449,8 @@
   width: 16px;
   height: 16px;
   fill: currentColor;
+  display: block;
+  transform: translate(0.5px, -0.5px);
 }
 
 .gaia-chat-send:hover:not(:disabled) {
@@ -621,7 +624,7 @@
   // Mesajları ekrana bas
   function ensureInitialMessage() {
     if (!state.messages || state.messages.length === 0) {
-      const greetingText = 'Merhaba! Otomasyonunu netleştirelim—hedefini tek cümlede yaz.';
+      const greetingText = 'Hello! Let’s clarify your automation—describe your goal in one sentence.';
       state.messages.push({
         id: `assistant_intro_${Date.now()}`,
         role: 'assistant',
