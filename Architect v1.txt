@@ -63,13 +63,17 @@
 
 <style>
 .gaia-shell {
-  position: relative;
-  left: auto;
-  bottom: auto;
-  width: 100%;
-  max-width: 100%;
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: auto;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
   z-index: 9999;
-  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
 }
 
 .gaia-launcher {
@@ -210,7 +214,7 @@
   box-sizing: border-box;
   width: 100%;
   max-width: 560px;
-  height: 580px;
+  height: min(580px, calc(100vh - 120px));
   margin: 0;
   padding: 16px 16px 12px;
   background: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08), transparent 40%),
