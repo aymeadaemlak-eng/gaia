@@ -127,7 +127,8 @@ cfListRaw.forEach((cfObj, idx) => {
     Order: order,
     sheet,
     viewsstagetype: stageType,
-    processType: mappedProcessType
+    processType: mappedProcessType,
+    type: mappedType
   };
 
   cfBulk.push(cfPayload);
@@ -249,7 +250,8 @@ async function run() {
         customfield: item.customfield,
         stagetypes: item.viewsstagetype,
         sheet: item.sheet,
-        type: item.type // display value
+        type: item.type, // display value
+        processType: item.processType
       };
       const res = await callApi('/wf/createcustomfieldview', wfViewPayload);
       const createdId =
