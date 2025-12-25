@@ -13,7 +13,7 @@
   <div id="gaia-launcher" class="gaia-launcher" aria-expanded="false">
     <div id="gaia-launcher-bubble" class="gaia-launcher-bubble" role="button" tabindex="0" aria-label="Open assistant">
       <button id="gaia-launcher-minimize" class="gaia-launcher-minimize" type="button" aria-label="Minimize greeting">×</button>
-      <div id="gaia-launcher-preview" class="gaia-launcher-preview">I can scope your automation—want me to draft it?</div>
+      <div id="gaia-launcher-preview" class="gaia-launcher-preview">Merhaba! Otomasyonunu netleştirelim—hedefini tek cümlede yaz.</div>
     </div>
     <button id="gaia-launcher-button" class="gaia-launcher-button" type="button" aria-label="Open chat">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -30,7 +30,7 @@
           <div class="gaia-chat-title">Gaia Assistant</div>
           <div class="gaia-chat-subtitle">Automation design copilot</div>
         </div>
-      <div class="gaia-chat-actions">
+        <div class="gaia-chat-actions">
           <button id="gaia-close" class="gaia-icon-btn" type="button" aria-label="Minimize assistant" title="Minimize assistant">×</button>
         </div>
       </div>
@@ -45,6 +45,11 @@
             </svg>
           </span>
           <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
+          <button id="gaia-chat-send" class="gaia-chat-send" type="button" aria-label="Send message" title="Send">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20.33 4.74a.75.75 0 0 1 .1.78l-6.5 14a.75.75 0 0 1-1.37-.02l-2.12-4.78-4.78-2.12a.75.75 0 0 1-.02-1.37l14-6.5a.75.75 0 0 1 .69.01Zm-11.6 7.54 2.96 1.31a.75.75 0 0 1 .38.38l1.31 2.96 3.92-8.45-8.57 3.8Z"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -85,8 +90,9 @@
 }
 
 .gaia-launcher-preview {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #0f172a;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -226,6 +232,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -234,6 +241,8 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  margin-top: -6px;
+  padding-left: 12px;
 }
 
 .gaia-icon-btn {
@@ -241,9 +250,9 @@
   background: #f1f5f9;
   color: #0f172a;
   border-radius: 10px;
-  width: 36px;
-  height: 36px;
-  font-size: 18px;
+  width: 42px;
+  height: 42px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
@@ -319,6 +328,12 @@
   border-bottom-left-radius: 6px;
 }
 
+.gaia-chat-message.greeting {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.16));
+  border-color: rgba(79, 70, 229, 0.35);
+  font-weight: 600;
+}
+
 .gaia-chat-message.loading {
   opacity: 0.78;
   position: relative;
@@ -389,7 +404,7 @@
   resize: none;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 11px 16px 11px 40px;
+  padding: 11px 52px 11px 40px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
@@ -408,6 +423,46 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 10px 30px rgba(37, 99, 235, 0.12);
   background: #ffffff;
+}
+
+.gaia-chat-send {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.gaia-chat-send svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.gaia-chat-send:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28);
+}
+
+.gaia-chat-send:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.98);
+}
+
+.gaia-chat-send:disabled {
+  background: #cbd5f5;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 </style>
 
@@ -566,7 +621,7 @@
   // Mesajları ekrana bas
   function ensureInitialMessage() {
     if (!state.messages || state.messages.length === 0) {
-      const greetingText = 'Hi! I can clarify your automation. Tell me what you want in one sentence.';
+      const greetingText = 'Merhaba! Otomasyonunu netleştirelim—hedefini tek cümlede yaz.';
       state.messages.push({
         id: `assistant_intro_${Date.now()}`,
         role: 'assistant',
@@ -597,8 +652,9 @@
     state.messages.forEach(function (msg) {
       const div = document.createElement('div');
       const baseClass = msg.role === 'user' ? 'user' : 'assistant';
+      const greetingClass = msg.id && msg.id.startsWith('assistant_intro_') ? ' greeting' : '';
       const loadingClass = msg.status === 'loading' ? ' loading' : '';
-      div.className = 'gaia-chat-message ' + baseClass + loadingClass;
+      div.className = 'gaia-chat-message ' + baseClass + greetingClass + loadingClass;
       div.innerHTML = renderMarkdown(msg.text || '');
       messagesEl.appendChild(div);
     });
@@ -1326,6 +1382,10 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
 
   if (closeEl) {
     closeEl.addEventListener('click', closeChat);
+  }
+
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
   }
 
   normalizeLoadedMessages();
