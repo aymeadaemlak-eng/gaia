@@ -213,7 +213,7 @@
 .gaia-chat-container {
   box-sizing: border-box;
   width: 100%;
-  max-width: 560px;
+  max-width: 680px;
   height: min(580px, calc(100vh - 120px));
   margin: 0;
   padding: 16px 16px 12px;
