@@ -373,6 +373,9 @@
 .gaia-chat-input-wrap {
   position: relative;
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .gaia-chat-input-icon {
@@ -404,7 +407,7 @@
   resize: none;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 11px 52px 11px 40px;
+  padding: 11px 14px 11px 40px;
   font-size: 13px;
   line-height: 1.4;
   min-height: 44px;
@@ -426,10 +429,8 @@
 }
 
 .gaia-chat-send {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
   width: 32px;
   height: 32px;
   border-radius: 10px;
@@ -441,6 +442,7 @@
   justify-content: center;
   line-height: 0;
   cursor: pointer;
+  flex-shrink: 0;
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
   transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
@@ -459,7 +461,7 @@
 }
 
 .gaia-chat-send:active:not(:disabled) {
-  transform: translateY(-50%) scale(0.98);
+  transform: scale(0.98);
 }
 
 .gaia-chat-send:disabled {
