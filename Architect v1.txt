@@ -31,12 +31,8 @@
           <div class="gaia-chat-subtitle">Automation design copilot</div>
         </div>
         <div class="gaia-chat-actions">
-          <button id="gaia-reset" class="gaia-icon-btn" type="button" aria-label="Reset chat" title="Reset chat">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5a7 7 0 1 1-6.12 3.5H4.2a.8.8 0 0 1-.57-1.36l2.6-2.6a.8.8 0 0 1 1.14 0l2.6 2.6a.8.8 0 0 1-.57 1.36H7.4A5.6 5.6 0 1 0 12 6.4V5Z"/>
-            </svg>
-          </button>
-          <button id="gaia-close" class="gaia-icon-btn" type="button" aria-label="Minimize assistant" title="Minimize assistant">−</button>
+          <button id="gaia-close" class="gaia-icon-btn" type="button" aria-label="Minimize assistant" title="Minimize assistant">×</button>
+          <button id="gaia-reset" class="gaia-icon-btn" type="button" aria-label="Reset chat" title="Reset chat">⟲</button>
         </div>
       </div>
 
@@ -50,10 +46,12 @@
             </svg>
           </span>
           <textarea id="gaia-chat-input" class="gaia-chat-input" rows="1" placeholder="Type your message..."></textarea>
-          <button id="gaia-chat-send" class="gaia-chat-send-btn" type="button" aria-label="Send message" title="Send message">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6.75 4h10.5C18.77 4 20 5.23 20 6.75v6.5C20 14.77 18.77 16 17.25 16H9.5l-3.7 3.7a.75.75 0 0 1-1.28-.53V16.5C3.2 16.15 2.25 14.97 2.25 13.53v-6.78C2.25 5.23 3.48 4 5 4h1.75Z"/>
-            </svg>
+          <button id="gaia-chat-send" class="gaia-chat-input-action" type="button" aria-label="Send message" title="Send message">
+            <span class="gaia-chat-input-icon gaia-chat-input-icon--right" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3.4 20.2a.8.8 0 0 1-1.1-.9L4.1 12 2.3 4.7a.8.8 0 0 1 1.1-.9l17.5 7.3a.8.8 0 0 1 0 1.5L3.4 20.2Zm2.2-9 1.2 4.8 10.3-4.3-10.3-4.3-1.2 4.8Z"/>
+              </svg>
+            </span>
           </button>
         </div>
       </div>
@@ -168,7 +166,7 @@
 
 .gaia-launcher-bubble {
   position: relative;
-  max-width: 320px;
+  max-width: 360px;
   padding: 14px 16px 12px 16px;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.6);
@@ -261,21 +259,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-#gaia-reset {
-  background: #ffffff;
-  border: 1px solid #cbd5f5;
-  color: #1e3a8a;
-}
-
-#gaia-reset:hover {
-  background: #e2e8f0;
-}
-
-#gaia-reset svg {
-  width: 20px;
-  height: 20px;
 }
 
 .gaia-icon-btn svg {
@@ -403,6 +386,11 @@
   fill: currentColor;
 }
 
+.gaia-chat-input-icon--right {
+  left: auto;
+  right: 12px;
+}
+
 .gaia-chat-input {
   flex: 1;
   width: 100%;
@@ -430,17 +418,16 @@
   background: #ffffff;
 }
 
-.gaia-chat-send-btn {
+.gaia-chat-input-action {
   position: absolute;
-  right: 12px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  border-radius: 50%;
-  background: rgba(37, 99, 235, 0.1);
+  background: transparent;
   color: #2563eb;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -449,22 +436,16 @@
   transition: transform 0.12s ease, color 0.2s ease, background 0.2s ease;
 }
 
-.gaia-chat-send-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-.gaia-chat-send-btn:hover {
+.gaia-chat-input-action:hover {
   color: #1d4ed8;
-  background: rgba(37, 99, 235, 0.18);
+  background: rgba(37, 99, 235, 0.08);
 }
 
-.gaia-chat-send-btn:active {
+.gaia-chat-input-action:active {
   transform: translateY(calc(-50% + 1px));
 }
 
-.gaia-chat-send-btn:disabled {
+.gaia-chat-input-action:disabled {
   cursor: not-allowed;
   filter: grayscale(0.3);
   opacity: 0.6;
@@ -494,6 +475,7 @@
   };
   window.__GAIA_CHAT_STATE__ = state;
   const STORAGE_KEY = 'gaia_chat_state_v1';
+  const LAST_RESPONSE_KEY = 'gaia_last_response_id_v1';
 
   const messagesEl = document.getElementById('gaia-chat-messages');
   const inputEl = document.getElementById('gaia-chat-input');
@@ -541,6 +523,13 @@
         state.greetingNotified = saved.greetingNotified;
       }
     } catch (e) {}
+
+    try {
+      const storedLastResponse = window.localStorage ? localStorage.getItem(LAST_RESPONSE_KEY) : null;
+      if (storedLastResponse) {
+        state.lastResponseId = storedLastResponse;
+      }
+    } catch (e) {}
   }
 
   function normalizeLoadedMessages() {
@@ -578,6 +567,16 @@
         greetingNotified: !!state.greetingNotified
       }));
     } catch (e) {}
+
+    try {
+      if (window.localStorage) {
+        if (state.lastResponseId) {
+          localStorage.setItem(LAST_RESPONSE_KEY, state.lastResponseId);
+        } else {
+          localStorage.removeItem(LAST_RESPONSE_KEY);
+        }
+      }
+    } catch (e) {}
   }
 
   function readLastResponseId() {
@@ -603,6 +602,9 @@
       }
       state.lastResponseId = null;
       state.awaitingResponse = false;
+      if (window.localStorage) {
+        try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
+      }
       return;
     }
     state.lastResponseId = currentId;
@@ -1444,22 +1446,25 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
   if (closeEl) {
     closeEl.addEventListener('click', closeChat);
   }
-  if (resetEl) {
-    resetEl.addEventListener('click', function () {
-      state.messages = [];
-      state.lastResponseId = null;
-      state.awaitingResponse = false;
-      if (inputEl) {
-        inputEl.value = '';
-        state.draft = '';
-      }
-      if (window.sessionStorage) {
-        try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
-      }
-      renderMessages();
-      updateSendState();
-    });
-  }
+    if (resetEl) {
+      resetEl.addEventListener('click', function () {
+        state.messages = [];
+        state.lastResponseId = null;
+        state.awaitingResponse = false;
+        if (inputEl) {
+          inputEl.value = '';
+          state.draft = '';
+        }
+        if (window.sessionStorage) {
+          try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        }
+        if (window.localStorage) {
+          try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
+        }
+        renderMessages();
+        updateSendState();
+      });
+    }
 
   loadPersistedState();
   normalizeLoadedMessages();
@@ -1515,6 +1520,9 @@ const systemBase = `You are "Gaia Automation Architect" for GAIA—a no-code AI 
     }
     if (window.sessionStorage) {
       try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    }
+    if (window.localStorage) {
+      try { localStorage.removeItem(LAST_RESPONSE_KEY); } catch (e) {}
     }
     renderMessages();
     updateSendState();
