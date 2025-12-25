@@ -1133,22 +1133,32 @@
           custom_fields_count: cfList.length
         });
         
+        const safeText = (value) => (value === null || value === undefined ? '' : String(value));
+        const outputList3 = [
+          safeText(sysPlain),
+          safeText(sysHtml || sysPlain),
+          safeText(actionName),
+          safeText(functionCallOutputBody),
+          safeText(actionMode)
+        ];
+        const outputList4 = [
+          safeText(joinUnique([...namesByRole.control, ...namesByRole.innerstage])),
+          safeText(joinUnique(namesByRole.mandatory)),
+          safeText(joinUnique(namesByRole.optional))
+        ];
+
         window.bubble_fn_gaia_tool_call({
           value: cfBulkBase64[0] || '',
-          output1: argsObj.workspace_label || '',
-          output2: argsObj.process_name || '',
-          output3: argsObj.process_type || '',
+          output1: safeText(argsObj.workspace_label),
+          output2: safeText(argsObj.process_name),
+          output3: safeText(argsObj.process_type),
           // Tek JSON (base64): customfield payloadları + stage type listesi (backend'e iletmek için)
           // RAW_BASE64 olarak backend'e iletebilirsin.
-          output4: cfBundleB64,
+          output4: safeText(cfBundleB64),
           outputlist1: cfBulkBase64,
           // 4. eleman: /v1/responses + input (function_call_output) için body (gönderilmeye hazır)
-          outputlist3: [sysPlain, sysHtml, actionName, functionCallOutputBody, actionMode],
-          outputlist4: [
-            joinUnique([...namesByRole.control, ...namesByRole.innerstage]),
-            joinUnique(namesByRole.mandatory),
-            joinUnique(namesByRole.optional)
-          ]
+          outputlist3: outputList3,
+          outputlist4: outputList4
         });
         
         console.log('gaia: bubble_fn_gaia_tool_call completed');
