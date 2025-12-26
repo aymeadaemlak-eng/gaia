@@ -8,12 +8,14 @@
 const CONFIG = {
   sheet: '',      // default sheet id
   olusturanSirket: '', // default company id
-  customfieldstagetype: ,
+  customfieldstagetype: [],
+  inputtext: [],
   apiToken: '',                                  
   rawbase64: '',
-  innerprompt: '',
+  innerprompt: '', // Use backticks (`) for multiline strings
   appUrl: '',
-debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
+  apiEnv: 'version-test',
+  debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
   // Display -> option set value mapping (Bubble display değerleri)
   typeMap: {
     text: 'Text',
@@ -38,7 +40,16 @@ debug: true,                                         // varsayılan true: ham re
   }
 };
 
-const API_BASE = (CONFIG.appUrl || 'https://gaiasphere.io').replace(/\/$/, '') + '/version-test/api/1.1';
+const DEFAULT_APP_URL = 'https://gaiasphere.io';
+
+function buildApiBase(appUrl, env) {
+  const base = (appUrl || DEFAULT_APP_URL).replace(/\/$/, '');
+  if (!env || env === 'live' || env === 'production') {
+    return `${base}/api/1.1`;
+  }
+  return `${base}/${env.replace(/^\//, '').replace(/\/$/, '')}/api/1.1`;
+}
+
 const API_TOKEN = (CONFIG.apiToken || properties?.api_token || context?.keys?.BUBBLE_API_TOKEN || '').trim();
 
 if (!API_TOKEN) {
@@ -53,6 +64,15 @@ try {
 } catch (e) {
   payload = {};
 }
+
+const API_ENV =
+  payload?.api_env ||
+  payload?.apiEnv ||
+  CONFIG.apiEnv ||
+  properties?.api_env ||
+  properties?.apiEnv ||
+  (typeof API_ENV !== 'undefined' ? API_ENV : 'version-test');
+const API_BASE = buildApiBase(CONFIG.appUrl, API_ENV);
 
 const DEBUG = payload?.debug === true || CONFIG.debug === true;
 const baseTypeMap = CONFIG.typeMap || {};
