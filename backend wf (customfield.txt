@@ -63,6 +63,15 @@ const sheet = payload.sheet || CONFIG.sheet || '';
 const olusturanSirket = payload.olusturansirket || CONFIG.olusturanSirket || '';
 // Yeni format (Architect output4): { customfields: [...], stage_types: [...] }
 const cfBundle = payload?.output4 ? payload.output4 : payload?.customfields ? payload : null;
+const innerPromptRaw =
+  payload?.innerprompt ||
+  payload?.inner_prompt ||
+  payload?.system_prompt_innerhtml ||
+  payload?.system_prompt_html ||
+  properties?.innerprompt ||
+  properties?.inner_prompt ||
+  (typeof INNERPROMPT !== 'undefined' ? INNERPROMPT : '') ||
+  '';
 let cfListRaw = [];
 let stageTypesRaw = [];
 if (cfBundle && cfBundle.customfields) {
@@ -274,8 +283,31 @@ async function run() {
     }
   }
 
+  const headerToViewId = new Map();
+  sortedViews.forEach((viewItem, idx) => {
+    const header = String(viewItem?.header || '').trim();
+    const viewId = createdViews[idx]?.id || createdViews[idx]?._id || '';
+    if (header && viewId) headerToViewId.set(header, viewId);
+  });
+
+  const replacePromptTokens = (prompt, mapping) => {
+    if (!prompt) return '';
+    let result = String(prompt);
+    const entries = Array.from(mapping.entries()).sort((a, b) => b[0].length - a[0].length);
+    entries.forEach(([label, viewId]) => {
+      const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const tokenPattern = new RegExp(`_\\*_\\s*${escapedLabel}\\s*_\\*_`, 'g');
+      const dataIdPattern = new RegExp(`data-id=["']_\\*_\\s*${escapedLabel}\\s*_\\*_["']`, 'g');
+      result = result.replace(tokenPattern, viewId);
+      result = result.replace(dataIdPattern, `data-id="${viewId}"`);
+    });
+    return result;
+  };
+
+  const innerPromptWithIds = replacePromptTokens(innerPromptRaw, headerToViewId);
+
   return {
-    output1: DEBUG ? JSON.stringify({ createdCFs, cfLogs }) : createdCFs.length.toString(),
+    output1: DEBUG ? innerPromptWithIds : innerPromptWithIds,
     output2: DEBUG ? JSON.stringify({ createdViews, viewLogs, viewOrder: sortedViews.map(v => v.header) }) : createdViews.length.toString(),
     output3: DEBUG ? JSON.stringify(cfBulk) : '',
     output4: DEBUG ? JSON.stringify(viewBulk) : '',

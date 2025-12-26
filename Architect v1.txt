@@ -954,12 +954,14 @@
         };
         const detectPromptLabels = (plainPrompt, fields) => {
           const labels = new Set();
-          const promptLower = String(plainPrompt || '').toLowerCase();
+          const promptRaw = String(plainPrompt || '');
+          const promptLower = promptRaw.toLowerCase();
           if (!promptLower) return labels;
           (fields || []).forEach(cf => {
             const label = String(cf?.label || '').trim();
             if (!label) return;
-            if (promptLower.includes(label.toLowerCase())) {
+            const tokenLower = `_*_${label}_*_`.toLowerCase();
+            if (promptLower.includes(tokenLower) || promptLower.includes(label.toLowerCase())) {
               labels.add(label);
             }
           });
@@ -1036,7 +1038,7 @@
         // System prompt varyantları
         const sysPlainRaw = argsObj.system_prompt_template || '';
         const sysPlain = sanitizePrompt(sysPlainRaw);
-        const promptLabels = detectPromptLabels(sysPlain, combinedCfList);
+        const promptLabels = detectPromptLabels(sysPlainRaw || sysPlain, combinedCfList);
         const sysHtml = buildSystemPromptHtml(sysPlain, combinedCfList, promptLabels) || sysPlain;
 
         // Eğer prompt varsa ve hiç control yoksa, ilk non-innerstage alanı control yap
