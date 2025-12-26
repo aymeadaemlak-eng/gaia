@@ -11,6 +11,8 @@ const CONFIG = {
   customfieldstagetype: ,
   apiToken: '',                                  
   rawbase64: '',
+  innerprompt: '',
+  appUrl: '',
 debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
   // Display -> option set value mapping (Bubble display değerleri)
   typeMap: {
@@ -36,7 +38,7 @@ debug: true,                                         // varsayılan true: ham re
   }
 };
 
-const API_BASE = 'https://gaiasphere.io/version-test/api/1.1';
+const API_BASE = (CONFIG.appUrl || 'https://gaiasphere.io').replace(/\/$/, '') + '/version-test/api/1.1';
 const API_TOKEN = (CONFIG.apiToken || properties?.api_token || context?.keys?.BUBBLE_API_TOKEN || '').trim();
 
 if (!API_TOKEN) {
@@ -68,6 +70,7 @@ const innerPromptRaw =
   payload?.inner_prompt ||
   payload?.system_prompt_innerhtml ||
   payload?.system_prompt_html ||
+  CONFIG.innerprompt ||
   properties?.innerprompt ||
   properties?.inner_prompt ||
   (typeof INNERPROMPT !== 'undefined' ? INNERPROMPT : '') ||
