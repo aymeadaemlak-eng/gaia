@@ -1078,7 +1078,7 @@
         //   output4: cfBundle base64 (customfields + stage_types)
         // OUTPUTLIST1..4:
         //   outputlist1: customfields_bulk (base64-encoded JSON strings list; Bubble “Value is a list” Text)
-        //   outputlist3: [system_prompt_plain, system_prompt_innerhtml, actionName, tool_output_body_template, action_mode]
+        //   outputlist3: [system_prompt_plain, system_prompt_innerhtml, actionName, tool_output_body_template, action_mode, system_prompt_innerhtml_base64]
         //   outputlist4: [control_names, mandatory_names, optional_names] (semicolon-delimited strings, prompt-only)
 
         // İlk elemanı ayrıca “value” olarak da gönder (listeden tek öğe almak isteyenler için)
@@ -1153,7 +1153,8 @@
           safeText(sysHtml || sysPlain),
           safeText(actionName),
           safeText(functionCallOutputBody),
-          safeText(actionMode)
+          safeText(actionMode),
+          safeText(sysHtmlBase64)
         ];
         const outputList4 = [
           safeText(joinUnique([...namesByRole.control, ...namesByRole.innerstage])),
