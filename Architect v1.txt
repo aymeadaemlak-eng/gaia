@@ -922,6 +922,13 @@
           out = out.replace(/_\*_(.*?)_\*_/g, '$1'); // strip token markers
           return out.trim();
         };
+        const toBase64 = (value) => {
+          try {
+            return btoa(unescape(encodeURIComponent(String(value || ''))));
+          } catch (e) {
+            return '';
+          }
+        };
         const buildSystemPromptHtml = (plainPrompt, fields, usedLabels) => {
           const safeRaw = stripHtml(plainPrompt || '');
           if (!safeRaw) return '';
@@ -1040,6 +1047,7 @@
         const sysPlain = sanitizePrompt(sysPlainRaw);
         const promptLabels = detectPromptLabels(sysPlainRaw || sysPlain, combinedCfList);
         const sysHtml = buildSystemPromptHtml(sysPlain, combinedCfList, promptLabels) || sysPlain;
+        const sysHtmlBase64 = toBase64(sysHtml || sysPlain);
 
         // Eğer prompt varsa ve hiç control yoksa, ilk non-innerstage alanı control yap
         if (sysPlain && !cfStageTypes.some(r => String(r).toLowerCase() === 'control') && cfStageTypes.length > 0) {
@@ -1121,7 +1129,11 @@
           input: functionCallInput
         });
 
-        const cfBundle = { customfields: cfBulk, stage_types: cfStageTypes };
+        const cfBundle = {
+          customfields: cfBulk,
+          stage_types: cfStageTypes,
+          innerprompt_base64: sysHtmlBase64
+        };
         let cfBundleB64 = '';
         try {
           cfBundleB64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfBundle))));

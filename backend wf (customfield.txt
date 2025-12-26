@@ -56,6 +56,15 @@ function buildApiBase(appUrl, env) {
 const getNested = (obj, path) =>
   path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
 
+const decodeBase64 = (value) => {
+  if (!value) return '';
+  try {
+    return Buffer.from(String(value), 'base64').toString('utf8');
+  } catch (_err) {
+    return '';
+  }
+};
+
 const API_TOKEN = (
   CONFIG.apiToken ||
   getNested(properties, ['api_token']) ||
@@ -100,7 +109,17 @@ const cfBundle = getNested(payload, ['output4'])
   : getNested(payload, ['customfields'])
     ? payload
     : null;
+const innerPromptBase64 =
+  getNested(payload, ['innerprompt_base64']) ||
+  getNested(payload, ['innerprompt_b64']) ||
+  getNested(payload, ['system_prompt_innerhtml_base64']) ||
+  getNested(payload, ['system_prompt_html_base64']) ||
+  getNested(payload, ['output4', 'innerprompt_base64']) ||
+  getNested(payload, ['output4', 'innerprompt_b64']) ||
+  '';
+const decodedInnerPrompt = decodeBase64(innerPromptBase64);
 const innerPromptRaw =
+  decodedInnerPrompt ||
   getNested(payload, ['innerprompt']) ||
   getNested(payload, ['inner_prompt']) ||
   getNested(payload, ['system_prompt_innerhtml']) ||
