@@ -12,10 +12,14 @@ const CONFIG = {
   inputtext: [],
   apiToken: '',                                  
   rawbase64: '',
-  // Use an array join for multiline strings to avoid template literal interpolation.
-  innerprompt: [
-    ''
-  ].join('\n'),
+  // Use an array of lines for multiline strings to avoid template literal interpolation.
+  // Example:
+  // innerprompt: [
+  //   'Line 1',
+  //   'Line 2',
+  //   'Line 3'
+  // ],
+  innerprompt: [],
   appUrl: '',
   apiEnv: 'version-test',
   debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
@@ -100,7 +104,13 @@ const cfBundle = getNested(payload, ['output4'])
   : getNested(payload, ['customfields'])
     ? payload
     : null;
-const innerPromptRaw =
+const normalizeInnerPrompt = (value) => {
+  if (Array.isArray(value)) return value.join('\n');
+  if (value === null || value === undefined) return '';
+  return String(value);
+};
+
+const innerPromptRaw = normalizeInnerPrompt(
   getNested(payload, ['innerprompt']) ||
   getNested(payload, ['inner_prompt']) ||
   getNested(payload, ['system_prompt_innerhtml']) ||
@@ -108,8 +118,8 @@ const innerPromptRaw =
   CONFIG.innerprompt ||
   getNested(properties, ['innerprompt']) ||
   getNested(properties, ['inner_prompt']) ||
-  (typeof INNERPROMPT !== 'undefined' ? INNERPROMPT : '') ||
-  '';
+  (typeof INNERPROMPT !== 'undefined' ? INNERPROMPT : '')
+);
 let cfListRaw = [];
 let stageTypesRaw = [];
 if (cfBundle && cfBundle.customfields) {
