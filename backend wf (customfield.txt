@@ -12,7 +12,10 @@ const CONFIG = {
   inputtext: [],
   apiToken: '',                                  
   rawbase64: '',
-  innerprompt: '', // Use backticks (`) for multiline strings
+  // Use an array join for multiline strings to avoid template literal interpolation.
+  innerprompt: [
+    ''
+  ].join('\n'),
   appUrl: '',
   apiEnv: 'version-test',
   debug: true,                                         // varsayılan true: ham response ve gönderilen body döner
