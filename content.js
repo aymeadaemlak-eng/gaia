@@ -151,6 +151,12 @@ function collectCompanyNames(davali, dosyalar) {
   const keys = [
     "Davalı",
     "Davali",
+    "Davalı Adı",
+    "Davali Adi",
+    "Davalı Ünvan",
+    "Davalı Unvan",
+    "Davalı Ünvanı",
+    "Davalı Unvani",
     "Davalı Şirketi",
     "Davali Sirketi",
     "Davalı Şirket",
@@ -1116,7 +1122,10 @@ async function fillCurrentFormWithGaia() {
   } else if (url.includes("/vekilBilgileri.sbm")) {
     console.log("➡️ Form 2'ye yönlendiriliyor: Vekil Bilgileri");
     await fillVekilBilgileriForm(vekil, dosyalar);
-  } else if (url.includes("/basvuruKonusuSirket.sbm")) {
+  } else if (
+    url.includes("/basvuruKonusuSirket.sbm") ||
+    url.includes("/basvuruKonusu.sbm")
+  ) {
     console.log("➡️ Form 3'e yönlendiriliyor: Başvuru Konusu Şirket");
     await fillBasvuruKonusuSirketForm(dosyalar, davali);
   } else {
@@ -1137,7 +1146,8 @@ const AUTO_ASSIST_MAX_RETRIES = 8;
 const AUTO_FILL_URLS = [
   "/basvuruYapan.sbm",
   "/vekilBilgileri.sbm",
-  "/basvuruKonusuSirket.sbm"
+  "/basvuruKonusuSirket.sbm",
+  "/basvuruKonusu.sbm"
 ];
 
 const AUTO_ASSIST_URLS = [
