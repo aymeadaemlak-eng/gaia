@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "SBM Tahkim GAIA Otomatik Doldurucu",
+  "version": "1.0.0",
+  "description": "GAIA JSON'dan SBM Tahkim başvuru formlarını sırasıyla ve gecikmeli doldurur.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://online.sbm.org.tr/sbm-tahkim/public/onlineBasvuru/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GAIA → SBM doldur"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://online.sbm.org.tr/sbm-tahkim/public/onlineBasvuru/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
