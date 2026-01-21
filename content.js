@@ -147,6 +147,140 @@ function selectByText(selectEl, text) {
   }
 }
 
+function collectCompanyNames(davali, dosyalar) {
+  const keys = [
+    "Davalı",
+    "Davali",
+    "Davalı Şirketi",
+    "Davali Sirketi",
+    "Davalı Şirket",
+    "Davali Sirket",
+    "Davalı Sigorta Şirketi",
+    "Davali Sigorta Sirketi",
+    "Davalı Sigorta Şirketleri",
+    "Davali Sigorta Sirketleri",
+    "Sigorta Şirketi",
+    "Sigorta Sirketi",
+    "Sigorta Şirketleri",
+    "Sigorta Sirketleri"
+  ];
+
+  const values = [];
+  for (const key of keys) {
+    const primaryValue =
+      (davali && Object.prototype.hasOwnProperty.call(davali, key)
+        ? davali[key]
+        : undefined) ??
+      (dosyalar && Object.prototype.hasOwnProperty.call(dosyalar, key)
+        ? dosyalar[key]
+        : undefined);
+
+    if (primaryValue === undefined || primaryValue === null) {
+      continue;
+    }
+
+    if (Array.isArray(primaryValue)) {
+      values.push(...primaryValue);
+    } else {
+      values.push(primaryValue);
+    }
+  }
+
+  return parseCompanyNames(values);
+}
+
+function parseCompanyNames(rawValues) {
+  if (!rawValues || rawValues.length === 0) return [];
+  const values = Array.isArray(rawValues) ? rawValues : [rawValues];
+  const names = [];
+
+  values.forEach((value) => {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item) names.push(String(item));
+      });
+      return;
+    }
+    const str = String(value);
+    str
+      .split(/[\n,;]+/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => names.push(part));
+  });
+
+  const unique = new Map();
+  names.forEach((name) => {
+    const normalized = normalizeTrString(name);
+    if (!normalized) return;
+    if (!unique.has(normalized)) {
+      unique.set(normalized, name.trim());
+    }
+  });
+  return Array.from(unique.values());
+}
+
+async function selectCompaniesFromPickList(companyNames) {
+  if (!companyNames || companyNames.length === 0) {
+    console.log("ℹ️ Davalı şirket bilgisi bulunamadı, seçim yapılmadı.");
+    return;
+  }
+
+  const sourceSelect = document.getElementById("basvuruKonusuForm.sirkets");
+  const targetSelect = document.getElementById(
+    "basvuruKonusuForm.selectedSirkets"
+  );
+  const moveRightButton = document.querySelector(".sbm-move-right-single");
+
+  if (!sourceSelect || !targetSelect || !moveRightButton) {
+    console.log("⚠️ Şirket seçim listesi veya taşıma butonu bulunamadı.");
+    return;
+  }
+
+  await waitForSelectOptions(sourceSelect, 2, 5000);
+
+  const selectedSet = new Set(
+    Array.from(targetSelect.options).map((opt) =>
+      normalizeTrString(opt.textContent || opt.value)
+    )
+  );
+
+  for (const name of companyNames) {
+    const target = normalizeTrString(name);
+    if (!target) continue;
+    if (selectedSet.has(target)) {
+      console.log(`✅ Şirket zaten seçili: ${name}`);
+      continue;
+    }
+
+    const option = Array.from(sourceSelect.options).find((opt) => {
+      const optLabel = opt.textContent || opt.innerText || opt.value;
+      const optNorm = normalizeTrString(optLabel);
+      return (
+        optNorm === target ||
+        optNorm.includes(target) ||
+        target.includes(optNorm)
+      );
+    });
+
+    if (!option) {
+      console.log(`⚠️ Şirket listede bulunamadı: ${name}`);
+      continue;
+    }
+
+    console.log(`🏢 Şirket seçiliyor: ${option.textContent || option.value}`);
+    option.selected = true;
+    sourceSelect.value = option.value;
+    dispatchEvents(sourceSelect);
+    moveRightButton.click();
+    await sleep(BASE_DELAY);
+    selectedSet.add(
+      normalizeTrString(option.textContent || option.value)
+    );
+  }
+}
+
 
 async function clickIfVisible(selector, waitAfterMs = 0) {
   const el = document.querySelector(selector);
@@ -416,7 +550,7 @@ function getGaiaData() {
 //
 // FORM 1 – Başvuruyu Yapan
 //
-async function fillBasvuruyuYapanForm(dosyalar) {
+async function fillBasvuruyuYapanForm(dosyalar, vekil = {}) {
   console.log("🚀 === FORM 1 BAŞLADI: Başvuruyu Yapan ===");
   showToast("Form 1/3 dolduruluyor: Başvuruyu Yapan", "info", 0);
 
@@ -513,7 +647,25 @@ async function fillBasvuruyuYapanForm(dosyalar) {
 	const tel = document.getElementById(
 	  "basvuruyuYapanForm.basvuruYapanGercek.cepTelefonu"
 	);
-	const telValue = normalizeTrMobile(dosyalar["Davacı Tel"]);
+	let davaciTelRaw = firstNonEmpty(dosyalar, [
+	  "Davacı Tel",
+	  "Davaci Tel",
+	  "Davacı Telefon",
+	  "Davaci Telefon"
+	]);
+	if (isPlaceholderValue(davaciTelRaw)) {
+	  davaciTelRaw = valueFrom(vekil, dosyalar, [
+	    "Vekil Tel",
+	    "Vekil Telefon",
+	    "Vekil Büro Tel",
+	    "Vekil Cep",
+	    "Vekil Cep Telefonu"
+	  ]);
+	  if (!isPlaceholderValue(davaciTelRaw)) {
+	    console.log("ℹ️ Davacı telefonu bulunamadı, vekil telefonu kullanılıyor.");
+	  }
+	}
+	const telValue = normalizeTrMobile(davaciTelRaw);
 	await setValueWithEvents(tel, telValue);
 	await sleep(BASE_DELAY);
 
@@ -743,6 +895,13 @@ async function fillBasvuruKonusuSirketForm(dosyalar, davali) {
   );
   await sleep(WAITS.dynamic);
 
+  // 3.5 - Davalı şirket(ler) seçimi (pick list)
+  const davaliSirketler = collectCompanyNames(davali, dosyalar);
+  if (davaliSirketler.length > 0) {
+    console.log("🏢 Davalı şirketler bulundu:", davaliSirketler);
+  }
+  await selectCompaniesFromPickList(davaliSirketler);
+
   // 4- Davacı plaka il kodu (dinamik)
   const davaciPlakaStr = dosyalar["Davacı Plaka"];
   const davaciPlaka = splitPlate(davaciPlakaStr);
@@ -953,7 +1112,7 @@ async function fillCurrentFormWithGaia() {
 
   if (url.includes("/basvuruYapan.sbm")) {
     console.log("➡️ Form 1'e yönlendiriliyor: Başvuruyu Yapan");
-    await fillBasvuruyuYapanForm(dosyalar);
+    await fillBasvuruyuYapanForm(dosyalar, vekil);
   } else if (url.includes("/vekilBilgileri.sbm")) {
     console.log("➡️ Form 2'ye yönlendiriliyor: Vekil Bilgileri");
     await fillVekilBilgileriForm(vekil, dosyalar);
@@ -967,10 +1126,222 @@ async function fillCurrentFormWithGaia() {
   }
 }
 
+const AUTO_FILL_PAUSE_KEY = "gaiaAutoFillPaused";
+let autoFillTriggeredForPage = false;
+let autoFillRetryCount = 0;
+const AUTO_FILL_MAX_RETRIES = 10;
+let autoAssistTriggeredForPage = false;
+let autoAssistRetryCount = 0;
+const AUTO_ASSIST_MAX_RETRIES = 8;
+
+const AUTO_FILL_URLS = [
+  "/basvuruYapan.sbm",
+  "/vekilBilgileri.sbm",
+  "/basvuruKonusuSirket.sbm"
+];
+
+const AUTO_ASSIST_URLS = [
+  "/basvur.sbm",
+  "/sozlesme"
+];
+
+function isAutoFillSupportedUrl() {
+  return AUTO_FILL_URLS.some((path) =>
+    window.location.pathname.includes(path)
+  );
+}
+
+function isAutoAssistSupportedUrl() {
+  return AUTO_ASSIST_URLS.some((path) =>
+    window.location.pathname.includes(path)
+  );
+}
+
+function scheduleAutoFillRetry(reason) {
+  if (autoFillTriggeredForPage) return;
+  if (autoFillRetryCount >= AUTO_FILL_MAX_RETRIES) {
+    console.log("⏹️ Otomatik doldurma tekrar limitine ulaşıldı.");
+    return;
+  }
+  autoFillRetryCount += 1;
+  const delay = 600 * autoFillRetryCount;
+  console.log(
+    `🔁 Otomatik doldurma yeniden denenecek (${reason}) → ${delay}ms sonra (deneme #${autoFillRetryCount})`
+  );
+  setTimeout(() => triggerAutoFill(`${reason}-retry${autoFillRetryCount}`), delay);
+}
+
+function scheduleAutoAssistRetry(reason) {
+  if (autoAssistTriggeredForPage) return;
+  if (autoAssistRetryCount >= AUTO_ASSIST_MAX_RETRIES) {
+    console.log("⏹️ Otomatik yardımcı adımlar tekrar limitine ulaşıldı.");
+    return;
+  }
+  autoAssistRetryCount += 1;
+  const delay = 500 * autoAssistRetryCount;
+  console.log(
+    `🔁 Otomatik yardımcı adımlar yeniden denenecek (${reason}) → ${delay}ms sonra (deneme #${autoAssistRetryCount})`
+  );
+  setTimeout(
+    () => triggerPageAssists(`${reason}-retry${autoAssistRetryCount}`),
+    delay
+  );
+}
+
+function autoSelectBasvuruSecim() {
+  const radioNew = document.getElementById("basvuruSecim1");
+  const radioGroup = document.querySelectorAll(
+    'input[name="basvuruSecim"]'
+  );
+  if (!radioNew) return false;
+  const anyChecked = Array.from(radioGroup).some((radio) => radio.checked);
+  if (anyChecked) {
+    console.log("ℹ️ Başvuru seçimi zaten yapılmış, atlanıyor.");
+    return true;
+  }
+  radioNew.checked = true;
+  dispatchEvents(radioNew);
+  console.log("✅ Başvuru seçimi otomatik işaretlendi (Yeni Başvuru Oluştur).");
+  return true;
+}
+
+function autoCheckSozlesmeOnaylari() {
+  const aydinlatma = document.getElementById("aydinlatmaMetniOnay1");
+  const bilgilendirme = document.getElementById("bilgilendirmeMetniOnay1");
+  if (!aydinlatma && !bilgilendirme) return false;
+
+  if (aydinlatma && !aydinlatma.checked) {
+    aydinlatma.checked = true;
+    dispatchEvents(aydinlatma);
+    console.log("✅ Aydınlatma Metni onayı işaretlendi.");
+  }
+
+  if (bilgilendirme && !bilgilendirme.checked) {
+    bilgilendirme.checked = true;
+    dispatchEvents(bilgilendirme);
+    console.log("✅ Bilgilendirme Metni onayı işaretlendi.");
+  }
+  return true;
+}
+
+function triggerAutoFill(reason = "unknown") {
+  console.log(
+    `🔍 Otomatik doldurma kontrolü (${reason}) — path: ${window.location.pathname}`
+  );
+  if (autoFillTriggeredForPage) {
+    console.log(`ℹ️ Otomatik doldurma (${reason}) zaten tetiklenmiş.`);
+    return;
+  }
+  if (!isAutoFillSupportedUrl()) {
+    console.log(`ℹ️ Otomatik doldurma (${reason}) uygun URL değil.`);
+    return;
+  }
+
+  chrome.storage.local.get(
+    ["gaiaJsonRaw", AUTO_FILL_PAUSE_KEY],
+    (res) => {
+      if (res && res[AUTO_FILL_PAUSE_KEY]) {
+        console.log("⏸️ Otomatik doldurma durduruldu.");
+        return;
+      }
+      if (!res || !res.gaiaJsonRaw) {
+        console.log(
+          `ℹ️ Otomatik doldurma (${reason}) pasif: GAIA JSON bulunamadı.`
+        );
+        scheduleAutoFillRetry("await-json");
+        return;
+      }
+
+      autoFillTriggeredForPage = true;
+      console.log(`🤖 Otomatik doldurma başlatılıyor (${reason}).`);
+      fillCurrentFormWithGaia()
+        .then(() => {
+          console.log("🤖 Otomatik doldurma tamamlandı.");
+        })
+        .catch((err) => {
+          console.warn("⚠️ Otomatik doldurma başarısız:", err);
+          autoFillTriggeredForPage = false; // yeniden denemeye izin ver
+          scheduleAutoFillRetry("autofill-error");
+        });
+    }
+  );
+}
+
+function triggerPageAssists(reason = "unknown") {
+  console.log(
+    `🧭 Otomatik yardımcı adımlar kontrolü (${reason}) — path: ${window.location.pathname}`
+  );
+  if (autoAssistTriggeredForPage) {
+    console.log("ℹ️ Otomatik yardımcı adımlar zaten tetiklenmiş.");
+    return;
+  }
+  if (!isAutoAssistSupportedUrl()) {
+    console.log("ℹ️ Otomatik yardımcı adımlar için uygun URL değil.");
+    return;
+  }
+
+  chrome.storage.local.get([AUTO_FILL_PAUSE_KEY], (res) => {
+    if (res && res[AUTO_FILL_PAUSE_KEY]) {
+      console.log("⏸️ Otomatik yardımcı adımlar durduruldu.");
+      return;
+    }
+
+    const hasBasvuruSecim = !!document.getElementById("basvuruSecim1");
+    const hasSozlesmeOnay =
+      !!document.getElementById("aydinlatmaMetniOnay1") ||
+      !!document.getElementById("bilgilendirmeMetniOnay1");
+
+    if (!hasBasvuruSecim && !hasSozlesmeOnay) {
+      scheduleAutoAssistRetry("await-elements");
+      return;
+    }
+
+    autoAssistTriggeredForPage = true;
+    autoSelectBasvuruSecim();
+    autoCheckSozlesmeOnaylari();
+  });
+}
+
+function initializeAutoFillHooks() {
+  // İlk deneme (script yüklendiğinde)
+  setTimeout(() => {
+    triggerAutoFill("initial-timeout");
+    triggerPageAssists("initial-timeout");
+  }, 400);
+
+  // DOM hazır olduğunda tekrar dene
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    triggerAutoFill("document-ready");
+    triggerPageAssists("document-ready");
+  } else {
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        triggerAutoFill("DOMContentLoaded");
+        triggerPageAssists("DOMContentLoaded");
+      },
+      { once: true }
+    );
+  }
+
+  // BFCache / sayfa geri getirildiğinde
+  window.addEventListener("pageshow", (evt) => {
+    if (evt.persisted) {
+      autoFillTriggeredForPage = false;
+      autoAssistTriggeredForPage = false;
+    }
+    triggerAutoFill("pageshow");
+    triggerPageAssists("pageshow");
+  });
+}
+
 // Popup'tan gelen mesajları dinle
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("📨 Popup'tan mesaj alındı:", message);
-  
+
   if (message && message.action === "fillFromGaia") {
     console.log("🎯 'fillFromGaia' aksiyonu tetiklendi");
     fillCurrentFormWithGaia()
@@ -980,104 +1351,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ok: true,
           message: "Form doldurma işlemi başlatıldı."
         });
-
-//
-// Sayfa yüklenince otomatik doldurma
-//
-let autoFillTriggeredForPage = false;
-let autoFillRetryCount = 0;
-const AUTO_FILL_MAX_RETRIES = 10;
-
-function scheduleAutoFillRetry(reason) {
-  if (autoFillTriggeredForPage) return;
-  if (autoFillRetryCount >= AUTO_FILL_MAX_RETRIES) {
-    console.log("⏹️ Otomatik doldurma tekrar limitine ulaşıldı.");
-    return;
-  }
-  autoFillRetryCount += 1;
-  const delay = 600 * autoFillRetryCount;
-  console.log(
-    `🔁 Otomatik doldurma yeniden denenecek (${reason}) → ${delay}ms sonra (deneme #${autoFillRetryCount})`
-  );
-  setTimeout(() => triggerAutoFill(`${reason}-retry${autoFillRetryCount}`), delay);
-}
-
-const AUTO_FILL_URLS = [
-  "/basvuruYapan.sbm",
-  "/vekilBilgileri.sbm",
-  "/basvuruKonusuSirket.sbm"
-];
-
-function isAutoFillSupportedUrl() {
-  return AUTO_FILL_URLS.some((path) =>
-    window.location.pathname.includes(path)
-  );
-}
-
-function triggerAutoFill(reason = "unknown") {
-  console.log(
-    `🔍 Otomatik doldurma kontrolü (${reason}) — path: ${window.location.pathname}`
-  );
-  if (autoFillTriggeredForPage) {
-    console.log(`ℹ️ Otomatik doldurma (${reason}) zaten tetiklenmiş.`);
-    return;
-  }
-  if (!isAutoFillSupportedUrl()) {
-    console.log(`ℹ️ Otomatik doldurma (${reason}) uygun URL değil.`);
-    return;
-  }
-
-  chrome.storage.local.get(["gaiaJsonRaw"], (res) => {
-    if (!res || !res.gaiaJsonRaw) {
-      console.log(
-        `ℹ️ Otomatik doldurma (${reason}) pasif: GAIA JSON bulunamadı.`
-      );
-      scheduleAutoFillRetry("await-json");
-      return;
-    }
-
-    autoFillTriggeredForPage = true;
-    console.log(`🤖 Otomatik doldurma başlatılıyor (${reason}).`);
-    fillCurrentFormWithGaia()
-      .then(() => {
-        console.log("🤖 Otomatik doldurma tamamlandı.");
-      })
-      .catch((err) => {
-        console.warn("⚠️ Otomatik doldurma başarısız:", err);
-        autoFillTriggeredForPage = false; // yeniden denemeye izin ver
-        scheduleAutoFillRetry("autofill-error");
-      });
-  });
-}
-
-function initializeAutoFillHooks() {
-  // İlk deneme (script yüklendiğinde)
-  setTimeout(() => triggerAutoFill("initial-timeout"), 400);
-
-  // DOM hazır olduğunda tekrar dene
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    triggerAutoFill("document-ready");
-  } else {
-    document.addEventListener(
-      "DOMContentLoaded",
-      () => triggerAutoFill("DOMContentLoaded"),
-      { once: true }
-    );
-  }
-
-  // BFCache / sayfa geri getirildiğinde
-  window.addEventListener("pageshow", (evt) => {
-    if (evt.persisted) {
-      autoFillTriggeredForPage = false; // BFCache'ten dönünce yeniden dene
-    }
-    triggerAutoFill("pageshow");
-  });
-}
-
-initializeAutoFillHooks();
       })
       .catch((err) => {
         console.error("❌ GAIA doldurma hatası:", err);
@@ -1087,106 +1360,34 @@ initializeAutoFillHooks();
           message: "Form doldurulamadı: " + err.message
         });
       });
-
-    // async sendResponse kullanacağımız için true döndürüyoruz
     return true;
   }
-});
 
-//
-// Sayfa yüklenince otomatik doldurma
-//
-let autoFillTriggeredForPage = false;
-let autoFillRetryCount = 0;
-const AUTO_FILL_MAX_RETRIES = 10;
-
-function scheduleAutoFillRetry(reason) {
-  if (autoFillTriggeredForPage) return;
-  if (autoFillRetryCount >= AUTO_FILL_MAX_RETRIES) {
-    console.log("⏹️ Otomatik doldurma tekrar limitine ulaşıldı.");
-    return;
-  }
-  autoFillRetryCount += 1;
-  const delay = 600 * autoFillRetryCount;
-  console.log(
-    `🔁 Otomatik doldurma yeniden denenecek (${reason}) → ${delay}ms sonra (deneme #${autoFillRetryCount})`
-  );
-  setTimeout(() => triggerAutoFill(`${reason}-retry${autoFillRetryCount}`), delay);
-}
-
-const AUTO_FILL_URLS = [
-  "/basvuruYapan.sbm",
-  "/vekilBilgileri.sbm",
-  "/basvuruKonusuSirket.sbm"
-];
-
-function isAutoFillSupportedUrl() {
-  return AUTO_FILL_URLS.some((path) =>
-    window.location.pathname.includes(path)
-  );
-}
-
-function triggerAutoFill(reason = "unknown") {
-  console.log(
-    `🔍 Otomatik doldurma kontrolü (${reason}) — path: ${window.location.pathname}`
-  );
-  if (autoFillTriggeredForPage) {
-    console.log(`ℹ️ Otomatik doldurma (${reason}) zaten tetiklenmiş.`);
-    return;
-  }
-  if (!isAutoFillSupportedUrl()) {
-    console.log(`ℹ️ Otomatik doldurma (${reason}) uygun URL değil.`);
-    return;
-  }
-
-  chrome.storage.local.get(["gaiaJsonRaw"], (res) => {
-    if (!res || !res.gaiaJsonRaw) {
-      console.log(
-        `ℹ️ Otomatik doldurma (${reason}) pasif: GAIA JSON bulunamadı.`
+  if (message && message.action === "setAutoFillPaused") {
+    const paused = Boolean(message.paused);
+    chrome.storage.local.set({ [AUTO_FILL_PAUSE_KEY]: paused }, () => {
+      showToast(
+        paused ? "Otomatik doldurma durduruldu." : "Otomatik doldurma aktif.",
+        paused ? "error" : "success",
+        2000
       );
-      scheduleAutoFillRetry("await-json");
-      return;
-    }
-
-    autoFillTriggeredForPage = true;
-    console.log(`🤖 Otomatik doldurma başlatılıyor (${reason}).`);
-    fillCurrentFormWithGaia()
-      .then(() => {
-        console.log("🤖 Otomatik doldurma tamamlandı.");
-      })
-      .catch((err) => {
-        console.warn("⚠️ Otomatik doldurma başarısız:", err);
-        autoFillTriggeredForPage = false; // yeniden denemeye izin ver
-        scheduleAutoFillRetry("autofill-error");
-      });
-  });
-}
-
-function initializeAutoFillHooks() {
-  // İlk deneme (script yüklendiğinde)
-  setTimeout(() => triggerAutoFill("initial-timeout"), 400);
-
-  // DOM hazır olduğunda tekrar dene
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    triggerAutoFill("document-ready");
-  } else {
-    document.addEventListener(
-      "DOMContentLoaded",
-      () => triggerAutoFill("DOMContentLoaded"),
-      { once: true }
-    );
+      sendResponse({ ok: true, paused });
+    });
+    return true;
   }
 
-  // BFCache / sayfa geri getirildiğinde
-  window.addEventListener("pageshow", (evt) => {
-    if (evt.persisted) {
-      autoFillTriggeredForPage = false; // BFCache'ten dönünce yeniden dene
-    }
-    triggerAutoFill("pageshow");
-  });
-}
+  if (message && message.action === "retryAutoFill") {
+    autoFillTriggeredForPage = false;
+    autoFillRetryCount = 0;
+    autoAssistTriggeredForPage = false;
+    autoAssistRetryCount = 0;
+    triggerAutoFill("manual-retry");
+    triggerPageAssists("manual-retry");
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  return false;
+});
 
 initializeAutoFillHooks();
