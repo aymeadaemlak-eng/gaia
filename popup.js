@@ -4,10 +4,34 @@ const jsonInput = document.getElementById("jsonInput");
 const saveBtn = document.getElementById("saveBtn");
 const clearBtn = document.getElementById("clearBtn");
 const fillBtn = document.getElementById("fillBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const retryBtn = document.getElementById("retryBtn");
 const gotoFormBtn = document.getElementById("gotoFormBtn");
 const statusEl = document.getElementById("status");
 
 let statusTimeout = null;
+let isPaused = false;
+
+function updatePauseButton() {
+  pauseBtn.textContent = isPaused ? "▶️ Devam Et" : "⏸️ Durdur";
+}
+
+function sendMessageToActiveTab(payload, onErrorMessage) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (!tab || !tab.id) {
+      if (onErrorMessage) {
+        setStatus(onErrorMessage, "error");
+      }
+      return;
+    }
+    chrome.tabs.sendMessage(tab.id, payload, () => {
+      if (chrome.runtime.lastError && onErrorMessage) {
+        setStatus(onErrorMessage, "error");
+      }
+    });
+  });
+}
 
 function setStatus(message, type = "ok", autohide = true) {
   statusEl.textContent = message || "";
@@ -36,7 +60,7 @@ function setStatus(message, type = "ok", autohide = true) {
 // Popup açıldığında kaydedilmiş JSON'u yükle
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🎨 Popup açıldı, kaydedilmiş JSON aranıyor...");
-  chrome.storage.local.get(["gaiaJsonRaw"], (res) => {
+  chrome.storage.local.get(["gaiaJsonRaw", "gaiaAutoFillPaused"], (res) => {
     if (res.gaiaJsonRaw) {
       console.log("✅ Kaydedilmiş JSON bulundu, textarea'ya yükleniyor");
       jsonInput.value = res.gaiaJsonRaw;
@@ -44,6 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       console.log("ℹ️ Kaydedilmiş JSON bulunamadı");
     }
+    isPaused = Boolean(res.gaiaAutoFillPaused);
+    updatePauseButton();
   });
 });
 
@@ -158,6 +184,30 @@ fillBtn.addEventListener("click", () => {
       );
     });
   });
+});
+
+pauseBtn.addEventListener("click", () => {
+  isPaused = !isPaused;
+  chrome.storage.local.set({ gaiaAutoFillPaused: isPaused }, () => {
+    updatePauseButton();
+    setStatus(
+      isPaused ? "⏸️ Otomatik doldurma durduruldu." : "▶️ Otomatik doldurma aktif.",
+      "ok"
+    );
+    sendMessageToActiveTab(
+      { action: "setAutoFillPaused", paused: isPaused },
+      "❌ Aktif sekmede içerik scripti bulunamadı."
+    );
+  });
+});
+
+retryBtn.addEventListener("click", () => {
+  console.log("🔁 Tekrar dene butonuna tıklandı");
+  sendMessageToActiveTab(
+    { action: "retryAutoFill" },
+    "❌ Aktif sekmede içerik scripti bulunamadı."
+  );
+  setStatus("🔁 Otomatik işlemler tekrar denenecek.", "ok");
 });
 
 gotoFormBtn.addEventListener("click", () => {
