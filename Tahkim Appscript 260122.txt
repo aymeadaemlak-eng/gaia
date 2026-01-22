@@ -467,15 +467,6 @@ const KEYMAP = {
   'Talep_Tutari_Eksper_R_Ucreti': 'Talep_Tutari_Eksper_R_Ucreti',
   'Talep Tutarı Eksper R Ücreti': 'Talep_Tutari_Eksper_R_Ucreti',
 
-  // 🔁 GERİYE DÖNÜK FALLBACK (Sen alanları kaldırdım dedin ama eski json’lar gelebilir)
-  // Eğer yine "Talep Tutarı DK/HF" gelirse onu da yeni alanlara yaz
-  'Talep Tutarı DK': 'Uyusmazlik_Tutari_DK',
-  'Talep Tutarı HF': 'Uyusmazlik_Tutari_HF',
-
- 
-
-
-
   // Tahkim
   'Tahkim Başvuru Ücreti': 'Tahkim_Basvuru_Ucreti',
   'Tahkim Uyuşmazlık Tutarı': 'Tahkim_Uyusmazlik_Tutari',
