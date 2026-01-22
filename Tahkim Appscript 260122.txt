@@ -164,16 +164,29 @@ function prepareDynamicFields(map) {
     }
   }
 
+  const hasDK = hasValue_(map['Uyusmazlik_Tutari_DK']);
+  const hasHF = hasValue_(map['Uyusmazlik_Tutari_HF']);
+  const dkAmount = hasDK ? toNumber(map['Uyusmazlik_Tutari_DK']) : NaN;
+  const hfAmount = hasHF ? toNumber(map['Uyusmazlik_Tutari_HF']) : NaN;
+  const tazminatTotal = !isNaN(dkAmount) && !isNaN(hfAmount) ? dkAmount + hfAmount : NaN;
+
   // Türkçe dilbilgisine uygun birleştirme
+  let talepKalemleri = '';
   if (parts.length === 0) {
-    map['Talep_Kalemleri'] = '';
+    talepKalemleri = '';
   } else if (parts.length === 1) {
-    map['Talep_Kalemleri'] = parts[0];
+    talepKalemleri = parts[0];
   } else if (parts.length === 2) {
-    map['Talep_Kalemleri'] = parts.join(' ve ');
+    talepKalemleri = parts.join(' ve ');
   } else {
-    map['Talep_Kalemleri'] = parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
+    talepKalemleri = parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
   }
+
+  if (hasDK && hasHF && !isNaN(tazminatTotal)) {
+    talepKalemleri = `${talepKalemleri} TOPLAMDA ${formatTRY(tazminatTotal)} TAZMİNATIN`;
+  }
+
+  map['Talep_Kalemleri'] = talepKalemleri;
 
   // Talep_Turu (sadece DK/HF üzerinden)
   const turParts = [];
