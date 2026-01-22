@@ -1,0 +1,530 @@
+/**
+ * GAIA -> Tahkim Dilekçesi -> Google Docs Template Merge -> PDF Base64
+ * - organisation_id ile Google Sheet'ten template + folder bulur
+ * - Yeni JSON (req.DOSYALAR) alanlarını placeholder anahtarlarına map'ler
+ * - Tahkim template seçimi: Sigorta_Alt_Brans dropdown değerine göre
+ * - Response: organisation_id + unique id + filename + base64
+ */
+
+const TENANT_SHEET_ID = '1Op0apkXwX0aQo7d87cybwaNkgcpcTlP-vHf5t_sfuEU';
+const TENANT_SHEET_GID = 605323814;
+
+function doPost(e) {
+  try {
+    const req = JSON.parse(e.postData.contents || '{}');
+
+    // Yeni payload: her şey DOSYALAR altında
+    const payload = req.DOSYALAR || {};
+    const organisationId = String(payload.organisation_id || req.organisation_id || '').trim();
+    if (!organisationId) throw new Error('organisation_id bulunamadı (req.DOSYALAR.organisation_id bekleniyor).');
+
+    // unique id: GAIA gönderiyorsa onu kullan; yoksa timestamp
+    const uniqueId = String(payload.id || req.id || '').trim() || ('doc-' + Date.now());
+
+    // 1) Sheet’ten tenant/config bul
+    const cfg = getTenantConfigByOrganisationId_(organisationId);
+    if (!cfg) throw new Error('Bu organisation_id için sheet satırı bulunamadı: ' + organisationId);
+
+    // 2) JSON -> placeholders
+    const placeholders = buildPlaceholdersFromPayload_(payload);
+
+    // 3) Dinamik alanlar + formatlar
+    prepareDynamicFields(placeholders);
+
+    Logger.log(JSON.stringify({
+      DK: placeholders.Uyusmazlik_Tutari_DK,
+      HF: placeholders.Uyusmazlik_Tutari_HF,
+      Eksper: placeholders.Talep_Tutari_Eksper_R_Ucreti,
+      Kalemler: placeholders.Talep_Kalemleri
+    }, null, 2));
+
+
+    formatAmountsTR(placeholders);
+
+    // yüzde alanları (şablonda kullanıyorsan)
+    placeholders.Kusur_Orani_Yuzde = asPercent(placeholders.Kusur_Orani);
+    placeholders.On_Odeme_Komisyon_Orani_Yuzde = asPercent(placeholders.On_Odeme_Komisyon_Orani);
+
+    // Dosya adı
+    const filenameBase = `Tahkim-${placeholders['Davaci_Plaka'] || 'Tur'}-${placeholders['Davaci_Ad_Soyad'] || 'Dosya'}`;
+    const filename = filenameBase + ".pdf";
+
+    // 4) Template seç + çıktı klasörü
+    const templateId = pickTahkimTemplateId_(cfg, placeholders);
+    const folderId = String(cfg.drive_folder_id_cikti_tahkim || cfg.drive_folder_id || '').trim();
+
+    // 5) Kopyala + merge + pdf
+    const docId = copyTemplate(templateId, filenameBase, folderId);
+    mergePlaceholdersStrict(docId, placeholders);
+
+    const pdfB64 = exportPdfBase64(docId);
+
+    return json({
+      ok: true,
+      organisation_id: organisationId,
+      id: uniqueId,
+      filename: filename,
+      base64: pdfB64,
+      docId: docId
+    });
+
+  } catch (err) {
+    return json({ ok: false, error: String(err) });
+  }
+}
+
+/** ŞABLONUN EVRENSEL ALAN SETİ (ihtardakiyle uyumlu) */
+const FIXED_KEYS = [
+  'Sigorta_Alt_Brans',
+
+  'Uyusmazlik_Tutari_DK',
+  'Uyusmazlik_Tutari_HF',
+  'Talep_Tutari_Eksper_R_Ucreti',
+  'Talep_Kalemleri',
+  'Talep_Turu',
+
+
+  'Vekil_Adi','Vekil_TCKN_VKN','Vekil_Adresi','Vekil_IBAN','Vekil_Tel','Vekil_E_Mail','Vekil_Kep',
+  'Vekil_Buro_IBAN','Vekil_Buro_Tel','Vekil_Buro_e_mail','Vekil_Banka_Adi','Vekil_Banka_Subesi',
+
+  'Davaci_Ad_Soyad','Davaci_TCKN_VKN','Davaci_Adresi','Davaci_Tel','Davaci_Email','Davaci_Kep','Davaci_IBAN',
+  'Vekalet_Tarihi',
+
+  'Kaza_Tarihi','Kaza_Saati','Kaza_Yeri','Kaza_Ozeti','Kaza_Analiz',
+
+  'Davaci_Sase_No','Davaci_Plaka','Davaci_Marka_Model','Davaci_Arac','Davaci_Arac_Surucusu',
+
+  'Karsi_Ad_Soyad','Karsi_TCKN_VKN','Karsi_Marka_Model','Karsi_Plaka','Karsi_Arac','Karsi_Arac_Surucusu',
+  'Karsi_Police_Turu','Karsi_Police_No','Karsi_Police_Bas_Tarihi','Karsi_Police_Bitis_Tarihi',
+
+  'Davali_Adi','Davali_Adresi','Davali_Mail','Davali_Kep',
+
+  'Kusur_Orani','Kusur_Orani_Yuzde',
+
+  'SBM_Dosya_No','Hasar_Dosya_No','Eksper_Dosya_No',
+
+  'Davali_Evrak_Talep_Tarihi',
+  'Ihtar_Tarihi','Ihtar_Cevap_Durumu','Ihtar_Cevap_Tarihi',
+
+  'Talep_Turu','Talep_Kalemleri',
+  'Talep_Tutari_DK','Talep_Tutari_HF','Talep_Tutari_DK_HF','Talep_Tutari_AMB',
+  'Talep_Tutari_EksperRaporUcreti','Talep_Tutari_Toplam',
+
+  'Hasar_Onarim_Tutari','Arac_Kilometresi',
+
+  'Eksper_Adi','Eksper_Mail','Eksper_Telefon','Eksper_Rapor_No','Eksper_Rapor_Tarihi',
+
+  'Ihtar_On_Odeme_Tutari','Ihtar_On_Odeme_Tarihi',
+  'On_Odeme_Komisyon_Orani','On_Odeme_Komisyon_Orani_Yuzde',
+
+  // Tahkim
+  'Tahkim_Basvuru_Tarihi',
+  'Tahkim_Basvuru_Ucreti',
+  'Tahkim_Uyusmazlik_Tutari',
+  'Uyusmazlik_Tutari',
+  'Tahkim_Deliller'
+];
+
+/** === DİNAMİK ALANLAR === */
+function prepareDynamicFields(map) {
+  const DATE_KEYS = [
+    'Vekalet_Tarihi','Kaza_Tarihi','Ihtar_Tarihi','Davali_Evrak_Talep_Tarihi','Eksper_Rapor_Tarihi',
+    'Ihtar_Cevap_Tarihi','Ihtar_On_Odeme_Tarihi','Ihtar_Temerrut_Tarihi','Faiz_Baslangic_Tarihi',
+    'Bilirkisi_Odeme_Tarihi','Tahkim_Basvuru_Tarihi','Tahkim_Karar_Tarihi','Tahkim_Itiraz_Basvuru_Tarihi',
+    'Tahkim_Itiraz_Karar_Tarihi','Dava_Acilis_Tarihi','Islah_Basvuru_Tarihi','Dava_Bilirkisi_Rapor_Tarihi',
+    'Dava_Hukum_Tarihi','Tahsilat_Tarihi','Karsi_Police_Bas_Tarihi','Karsi_Police_Bitis_Tarihi'
+  ];
+  for (const k of DATE_KEYS) {
+    if (map[k]) map[k] = formatDateTR(map[k]);
+  }
+
+  // ==========================================================
+  // ✅ TAHKİM: TALEP_KALEMLERİ (Yeni alanlara göre)
+  // Referans alanlar:
+  //   - Uyusmazlik_Tutari_DK
+  //   - Uyusmazlik_Tutari_HF
+  //   - Talep_Tutari_Eksper_R_Ucreti
+  // ==========================================================
+  const ITEMS = [
+    { amt: 'Uyusmazlik_Tutari_DK',         label: 'DEĞER KAYBI BEDELİ', generic: 'Değer Kaybı bedeli' },
+    { amt: 'Uyusmazlik_Tutari_HF',         label: 'HASAR FARKI BEDELİ', generic: 'Hasar Farkı bedeli' },
+    { amt: 'Talep_Tutari_Eksper_R_Ucreti', label: 'EKSPERTİZ BEDELİ',   generic: 'Ekspertiz bedeli' },
+  ];
+
+  const parts = [];
+  for (const it of ITEMS) {
+    // checkbox yok: alan doluysa ekle
+    if (hasValue_(map[it.amt])) {
+      const n = toNumber(map[it.amt]);
+      if (!isNaN(n)) {
+        parts.push(`${formatTRY(n)} ${it.label}`);
+      } else {
+        parts.push(it.generic || it.label);
+      }
+    }
+  }
+
+  // Türkçe dilbilgisine uygun birleştirme
+  if (parts.length === 0) {
+    map['Talep_Kalemleri'] = '';
+  } else if (parts.length === 1) {
+    map['Talep_Kalemleri'] = parts[0];
+  } else if (parts.length === 2) {
+    map['Talep_Kalemleri'] = parts.join(' ve ');
+  } else {
+    map['Talep_Kalemleri'] = parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
+  }
+
+  // Talep_Turu (sadece DK/HF üzerinden)
+  const turParts = [];
+  if (hasValue_(map['Uyusmazlik_Tutari_DK'])) turParts.push('Değer Kaybı');
+  if (hasValue_(map['Uyusmazlik_Tutari_HF'])) turParts.push('Hasar Farkı');
+
+  if (turParts.length > 1) {
+    map['Talep_Turu'] = turParts.join(' ve ');
+  } else if (turParts.length === 1) {
+    map['Talep_Turu'] = turParts[0];
+  } else {
+    map['Talep_Turu'] = '';
+  }
+}
+
+function hasValue_(v) {
+  if (v === null || v === undefined) return false;
+  return String(v).trim() !== '';
+}
+
+function isTrue(v) {
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  if (v == null) return false;
+  const s = String(v).trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'on' || s === 'yes';
+}
+
+function formatTRY(n) {
+  try {
+    if (n === null || n === undefined || n === '') return '';
+    var num = Number(String(n).replace(/[^\d.-]/g, ''));
+    if (isNaN(num)) return String(n);
+    var isNeg = num < 0;
+    var absInt = Math.floor(Math.abs(num)).toString();
+    var withDots = absInt.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return (isNeg ? '-' : '') + withDots + ' TL';
+  } catch (e) {
+    return String(n);
+  }
+}
+
+function formatAmountsTR(map) {
+  if (!map || typeof map !== 'object') return map;
+  var AMOUNT_KEYS = [
+    'Hasar_Onarim_Tutari',
+    'Talep_Tutari_EksperRaporUcreti',
+    'Talep_Tutari_Toplam',
+    'Bilirkisi_Odeme_Tutari',
+    'Ihtar_On_Odeme_Tutari',
+    'Tahkim_Uyusmazlik_Tutari',
+    'Tahkim_Basvuru_Ucreti',
+    'Talep_Tutari_DK',
+    'Talep_Tutari_HF',
+    'Talep_Tutari_AMB',
+
+    'Uyusmazlik_Tutari_DK',
+    'Uyusmazlik_Tutari_HF',
+    'Talep_Tutari_Eksper_R_Ucreti'
+
+  ];
+  AMOUNT_KEYS.forEach(function(k){
+    if (map[k] !== undefined && map[k] !== null && String(map[k]).trim() !== '') {
+      map[k] = formatTRY(map[k]);
+    }
+  });
+  return map;
+}
+
+function formatDateTR(input) {
+  try {
+    if (!input) return '';
+    if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(input)) {
+      const [yyyy, mm, dd] = input.slice(0, 10).split('-');
+      return `${dd}.${mm}.${yyyy}`;
+    }
+    if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+      const [yyyy, mm, dd] = input.split('-');
+      return `${dd}.${mm}.${yyyy}`;
+    }
+    if (typeof input === 'string' && /^\d{1,2}[./]\d{1,2}[./]\d{4}$/.test(input)) {
+      const parts = input.split(/[./]/);
+      const dd = parts[0].padStart(2, '0');
+      const mm = parts[1].padStart(2, '0');
+      const yyyy = parts[2];
+      return `${dd}.${mm}.${yyyy}`;
+    }
+    const d = new Date(input);
+    if (isNaN(d.getTime())) return String(input);
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = d.getUTCFullYear();
+    return `${dd}.${mm}.${yyyy}`;
+  } catch (e) {
+    return String(input);
+  }
+}
+
+function toNumber(v) {
+  if (typeof v === 'number') return v;
+  if (!v) return NaN;
+  const s = String(v).replace(/\./g, '').replace(',', '.');
+  return Number(s);
+}
+
+function mergePlaceholdersStrict(docId, map) {
+  const doc = DocumentApp.openById(docId);
+  const body = doc.getBody();
+  const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const k of FIXED_KEYS) {
+    const val = map[k] == null ? '' : String(map[k]);
+    const pattern = '\\{\\{' + esc(k) + '\\}\\}';
+    body.replaceText(pattern, val);
+  }
+  doc.saveAndClose();
+}
+
+function asPercent(n) {
+  try {
+    if (n === null || n === undefined || n === '') return '';
+    var s = String(n).trim();
+    var m = s.match(/-?\d+(?:[.,]\d+)?/);
+    var num = m ? m[0] : s.replace(/[^\d.-]/g, '');
+    var v = Number(num.replace(/\./g, '').replace(',', '.'));
+    if (isNaN(v)) return String(n);
+    return '%' + Math.round(v);
+  } catch (e) {
+    return String(n);
+  }
+}
+
+function copyTemplate(templateId, name, folderId) {
+  const f = DriveApp.getFileById(templateId);
+  const copy = folderId ? f.makeCopy(name, DriveApp.getFolderById(folderId)) : f.makeCopy(name);
+  return copy.getId();
+}
+
+function exportPdfBase64(fileId) {
+  const blob = DriveApp.getFileById(fileId).getAs(MimeType.PDF);
+  return Utilities.base64Encode(blob.getBytes());
+}
+
+function json(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ==========================
+   SHEET LOOKUP
+   ========================== */
+
+function getTenantConfigByOrganisationId_(organisationId) {
+  const ss = SpreadsheetApp.openById(TENANT_SHEET_ID);
+  const sheet = getSheetByGid_(ss, TENANT_SHEET_GID) || ss.getSheets()[0];
+  const values = sheet.getDataRange().getValues();
+  if (!values || values.length < 2) return null;
+
+  const headers = values[0].map(h => String(h || '').trim());
+  const idx = indexByHeader_(headers);
+
+  const orgCol = idx['organisation_id'];
+  if (orgCol == null) throw new Error('Sheet header içinde "organisation_id" bulunamadı.');
+
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const org = String(row[orgCol] || '').trim();
+    if (org === String(organisationId).trim()) {
+      const out = {};
+      headers.forEach((h, i) => out[h] = row[i]);
+      return out;
+    }
+  }
+  return null;
+}
+
+function getSheetByGid_(ss, gid) {
+  const sheets = ss.getSheets();
+  for (const sh of sheets) if (sh.getSheetId() === Number(gid)) return sh;
+  return null;
+}
+
+function indexByHeader_(headers) {
+  const m = {};
+  headers.forEach((h, i) => { if (h) m[h] = i; });
+  return m;
+}
+
+/* ==========================
+   PAYLOAD -> PLACEHOLDERS (KEYMAP)
+   ========================== */
+
+function buildPlaceholdersFromPayload_(payload) {
+  const p = {};
+  applyKeyMap_(p, payload);
+  if (payload.Vekil && typeof payload.Vekil === 'object') applyKeyMap_(p, payload.Vekil);
+  if (payload.Davalı && typeof payload.Davalı === 'object') applyKeyMap_(p, payload.Davalı);
+  for (const k in p) if (typeof p[k] === 'string') p[k] = p[k].trim();
+  return p;
+}
+
+const KEYMAP = {
+  // ✅ Tahkim template seçimi için
+  'Sigorta Alt Branş': 'Sigorta_Alt_Brans',
+  'Sigorta Alt Brans': 'Sigorta_Alt_Brans',
+
+
+
+  // Vekil
+  'Vekil Adı': 'Vekil_Adi',
+  'Vekil TCKN/VKN': 'Vekil_TCKN_VKN',
+  'Vekil Adresi': 'Vekil_Adresi',
+  'Vekil IBAN': 'Vekil_IBAN',
+  'Vekil Tel': 'Vekil_Tel',
+  'Vekil E-Mail': 'Vekil_E_Mail',
+  'Vekil Kep': 'Vekil_Kep',
+  'Vekil Büro IBAN': 'Vekil_Buro_IBAN',
+  'Vekil Büro Tel': 'Vekil_Buro_Tel',
+  'Vekil Büro E-Mail': 'Vekil_Buro_e_mail',
+  'Vekil Banka Adı': 'Vekil_Banka_Adi',
+  'Vekil Banka Şubesi': 'Vekil_Banka_Subesi',
+
+  // Davacı
+  'Davacı Ad Soyad': 'Davaci_Ad_Soyad',
+  'Davacı TCKN/VKN': 'Davaci_TCKN_VKN',
+  'Davacı Adresi': 'Davaci_Adresi',
+  'Davacı Tel': 'Davaci_Tel',
+  'Davacı Email': 'Davaci_Email',
+  'Davacı Kep': 'Davaci_Kep',
+  'Davacı IBAN': 'Davaci_IBAN',
+  'Davacı Plaka': 'Davaci_Plaka',
+  'Davacı Marka Model': 'Davaci_Marka_Model',
+  'Davacı Şase No': 'Davaci_Sase_No',
+  'Davacı Araç': 'Davaci_Arac',
+  'Davacı Araç Sürücüsü': 'Davaci_Arac_Surucusu',
+
+  // Karşı
+  'Karşı Ad Soyad': 'Karsi_Ad_Soyad',
+  'Karşı TCKN/VKN': 'Karsi_TCKN_VKN',
+  'Karşı Plaka': 'Karsi_Plaka',
+  'Karşı Araç': 'Karsi_Arac',
+  'Karşı Araç Sürücüsü': 'Karsi_Arac_Surucusu',
+  'Karşı Poliçe Türü': 'Karsi_Police_Turu',
+  'Karşı Poliçe No': 'Karsi_Police_No',
+
+  // Tarihler
+  'Vekalet Tarihi': 'Vekalet_Tarihi',
+  'Kaza Tarihi': 'Kaza_Tarihi',
+  'İhtar Tarihi': 'Ihtar_Tarihi',
+  'Tahkim Başvuru Tarihi': 'Tahkim_Basvuru_Tarihi',
+
+  // Davalı
+  'Davalı Adı': 'Davali_Adi',
+  'Davalı Adresi': 'Davali_Adresi',
+  'Davalı Mail': 'Davali_Mail',
+  'Davalı Kep': 'Davali_Kep',
+
+  // Talep kalemleri (Talep_Kalemleri için)
+  'Değer Kaybı Talebi': 'Deger_Kaybi_Talebi',
+  'Hasar Farkı Talebi': 'Hasar_Farki_Talebi',
+  'Ekspertiz Bedeli Talebi': 'Ekspertiz_Bedeli_Talebi',
+  'AMB Talebi': 'AMB_Talebi',
+
+  'Talep Tutarı DK': 'Talep_Tutari_DK',
+  'Talep Tutarı HF': 'Talep_Tutari_HF',
+  'Talep Tutarı AMB': 'Talep_Tutari_AMB',
+  'Talep Tutarı Eksper R Ücreti': 'Talep_Tutari_EksperRaporUcreti',
+  'Talep Tutarı Toplam': 'Talep_Tutari_Toplam',
+
+  // ✅ Yeni doğru alanlar (Tahkim formun)
+  'Uyusmazlik_Tutari_DK': 'Uyusmazlik_Tutari_DK',
+  'Uyusmazlik_Tutari_HF': 'Uyusmazlik_Tutari_HF',
+
+  // Eğer GAIA bazen Türkçe/boşluklu gönderirse (güvenli)
+  'Uyuşmazlık Tutarı DK': 'Uyusmazlik_Tutari_DK',
+  'Uyuşmazlık Tutarı HF': 'Uyusmazlik_Tutari_HF',
+
+  // ✅ Eksper ücreti (senin referans alanın)
+  'Talep_Tutari_Eksper_R_Ucreti': 'Talep_Tutari_Eksper_R_Ucreti',
+  'Talep Tutarı Eksper R Ücreti': 'Talep_Tutari_Eksper_R_Ucreti',
+
+  // 🔁 GERİYE DÖNÜK FALLBACK (Sen alanları kaldırdım dedin ama eski json’lar gelebilir)
+  // Eğer yine "Talep Tutarı DK/HF" gelirse onu da yeni alanlara yaz
+  'Talep Tutarı DK': 'Uyusmazlik_Tutari_DK',
+  'Talep Tutarı HF': 'Uyusmazlik_Tutari_HF',
+
+ 
+
+
+
+  // Tahkim
+  'Tahkim Başvuru Ücreti': 'Tahkim_Basvuru_Ucreti',
+  'Tahkim Uyuşmazlık Tutarı': 'Tahkim_Uyusmazlik_Tutari',
+  'Uyuşmazlık Tutarı': 'Uyusmazlik_Tutari',  
+
+  // Deliller
+  'Tahkim Deliller': 'Tahkim_Deliller'
+};
+
+function applyKeyMap_(out, src) {
+  if (!src || typeof src !== 'object') return;
+  for (const k in src) {
+    if (!Object.prototype.hasOwnProperty.call(src, k)) continue;
+    const target = KEYMAP[k];
+    if (target) out[target] = src[k];
+  }
+}
+
+/* ==========================
+   TEMPLATE PICK (Tahkim) - Sigorta_Alt_Brans'a göre
+   ========================== */
+
+function pickTahkimTemplateId_(cfg, placeholders) {
+  // Sheet kolonları:
+  // docs_id_TemplateTahkim_DK
+  // docs_id_TemplateTahkim_HF
+  // docs_id_TemplateTahkim_DK_HF
+  // docs_id_Template_Tahkim_Genel
+
+  const bransRaw = String(placeholders.Sigorta_Alt_Brans || '').trim();
+  const brans = normalizeTr_(bransRaw);
+
+  // Tam eşleşme / içerik kontrolleri (TR karakter farklarına dayanıklı)
+  const isDKHF =
+    brans.includes('hasar') && brans.includes('deger kaybi'); // "Hasar + Değer Kaybı"
+
+  const isDKOnly =
+    brans.includes('deger kaybi') && !brans.includes('hasar'); // "Değer Kaybı" tek
+
+  const isHFOnly =
+    brans.includes('arac hasarlari') || (brans.includes('hasar') && !brans.includes('deger kaybi')); // "Araç Hasarları" veya sadece hasar
+
+  if (isDKHF && cfg.docs_id_TemplateTahkim_DK_HF) return String(cfg.docs_id_TemplateTahkim_DK_HF).trim();
+  if (isDKOnly && cfg.docs_id_TemplateTahkim_DK) return String(cfg.docs_id_TemplateTahkim_DK).trim();
+  if (isHFOnly && cfg.docs_id_TemplateTahkim_HF) return String(cfg.docs_id_TemplateTahkim_HF).trim();
+
+  if (cfg.docs_id_Template_Tahkim_Genel) return String(cfg.docs_id_Template_Tahkim_Genel).trim();
+
+  throw new Error('Uygun tahkim template id bulunamadı (sheet kolon adlarını kontrol et). Sigorta_Alt_Brans=' + bransRaw);
+}
+
+/** Türkçe karakterleri normalize edip karşılaştırmayı kolaylaştırır */
+function normalizeTr_(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+/* ===== Yetki testi (istersen sil) ===== */
+function testAuth() {
+  const ss = SpreadsheetApp.openById(TENANT_SHEET_ID);
+  Logger.log(ss.getName());
+}
