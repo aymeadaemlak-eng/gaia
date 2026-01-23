@@ -1,1 +1,165 @@
+/************ TEST AYARLARI (ELLE DEĞİŞTİRİLECEK) ************/
+const CONFIG = {
+  ORGANIZATION_ID: "test-org-001",
+  WEBHOOK_URL: "https://webhook-test.com/634ead9b3772b6dd801d26f41d3b3ab7", // <- burayı değiştir
+  MAX_THREADS_PER_RUN: 10,
 
+  // Script kendisi label basacak
+  INBOX_QUERY: 'newer_than:2d in:inbox', // istersen daraltırız
+  LABEL_PROCESSED: "AUTO/PROCESSED_TEST",
+  LABEL_MATCHED: "AUTO/MATCHED_TEST",
+  LABEL_FAILED: "AUTO/FAILED_TEST"
+};
+
+/************ ANA ************/
+function runTestParser() {
+  ensureLabel_(CONFIG.LABEL_PROCESSED);
+  ensureLabel_(CONFIG.LABEL_MATCHED);
+  ensureLabel_(CONFIG.LABEL_FAILED);
+
+  const processed = GmailApp.getUserLabelByName(CONFIG.LABEL_PROCESSED);
+  const matched = GmailApp.getUserLabelByName(CONFIG.LABEL_MATCHED);
+  const failed = GmailApp.getUserLabelByName(CONFIG.LABEL_FAILED);
+
+  // Son 2 gün inbox taraması (gerekirse query’yi daha spesifik yaparız)
+  const threads = GmailApp.search(CONFIG.INBOX_QUERY, 0, CONFIG.MAX_THREADS_PER_RUN);
+
+  for (const thread of threads) {
+    // thread daha önce işlendi ise geç
+    if (threadHasLabel_(thread, CONFIG.LABEL_PROCESSED)) continue;
+
+    const messages = thread.getMessages();
+    // thread’deki son mesaj üzerinden gidelim
+    const msg = messages[messages.length - 1];
+
+    const subject = msg.getSubject() || "";
+    const from = msg.getFrom() || "";
+    const body = msg.getPlainBody() || "";
+
+    // Bu mail türünü kaba şekilde yakalayalım (test için)
+    // İstersen subject/from ile daha da daraltırız
+    const looksLikeThisMail =
+      /Sigorta Tahkim Komisyonu/i.test(body) &&
+      /Bilirkişi/i.test(subject + " " + body) &&
+      /Başvuru\s*no\s*:/i.test(body);
+
+    if (!looksLikeThisMail) continue; // hiç dokunma
+
+    matched.addToThread(thread);
+
+    const parsed = parseMail_(subject, from, body);
+
+    if (!parsed.ok) {
+      failed.addToThread(thread);
+      // Parse fail olursa yine de webhook’a hata yollayalım (debug için)
+      postWebhook_({
+        organization_id: CONFIG.ORGANIZATION_ID,
+        event_type: "TEST_PARSE_FAILED",
+        schema_version: 1,
+        message: envelopeMessage_(msg),
+        error: parsed.reason,
+        raw_excerpt: body.slice(0, 1200)
+      });
+      processed.addToThread(thread);
+      continue;
+    }
+
+    const payload = {
+      organization_id: CONFIG.ORGANIZATION_ID,
+      event_type: "SIGORTA_TAHKIM_BILIRKISI_ATAMA_TEST",
+      schema_version: 1,
+      message: envelopeMessage_(msg),
+      payload: parsed.data
+    };
+
+    postWebhook_(payload);
+    processed.addToThread(thread);
+  }
+}
+
+/************ PARSE ************/
+function parseMail_(subject, from, body) {
+  const text = body || "";
+
+  const esasNo =
+    firstMatch_(text, /Başvuru\s*no\s*:\s*([^\n\r]+)/i) ||
+    firstMatch_(text, /Başvuru\s*No\s*:\s*([^\n\r]+)/i);
+
+  // "16/11/2022 tarihine kadar" kısmı
+  const sonOdemeTarihi = firstMatch_(text, /(\d{1,2}\/\d{1,2}\/\d{4})\s*tarihine\s*kadar/i);
+
+  // İlk TL tutarını yakala (400.0 TL, 400,00 TL vs)
+  const tutarRaw = firstMatch_(text, /([0-9]+(?:[.,][0-9]+)?)\s*TL\b/i);
+  const odemeTutariTl = tutarRaw ? tutarRaw.replace(",", ".") : "";
+
+  // IBAN (TR ile başlar)
+  const iban = firstMatch_(text, /(TR[0-9]{2}[0-9A-Z\s]{20,34})/i);
+  const bilirkişiIban = iban ? iban.replace(/\s+/g, "") : "";
+
+  // Minimum alan kontrolü (test için)
+  if (!esasNo) return { ok: false, reason: "Esas/Başvuru no bulunamadı" };
+  if (!sonOdemeTarihi) return { ok: false, reason: "Son ödeme tarihi bulunamadı" };
+  if (!odemeTutariTl) return { ok: false, reason: "Ödeme tutarı bulunamadı" };
+  if (!bilirkişiIban) return { ok: false, reason: "IBAN bulunamadı" };
+
+  return {
+    ok: true,
+    data: {
+      esas_no: clean_(esasNo),
+      son_odeme_tarihi: sonOdemeTarihi,
+      odeme_tutari_tl: odemeTutariTl,
+      bilirkişi_iban: bilirkişiIban
+    }
+  };
+}
+
+/************ WEBHOOK ************/
+function postWebhook_(payloadObj) {
+  const params = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payloadObj),
+    muteHttpExceptions: true
+  };
+
+  const res = UrlFetchApp.fetch(CONFIG.WEBHOOK_URL, params);
+  Logger.log("Webhook status: " + res.getResponseCode());
+  Logger.log("Webhook response: " + res.getContentText());
+}
+
+/************ ENVELOPE ************/
+function envelopeMessage_(msg) {
+  return {
+    gmail_message_id: msg.getId(),
+    thread_id: msg.getThread().getId(),
+    date: msg.getDate() ? msg.getDate().toISOString() : null,
+    from: msg.getFrom() || "",
+    subject: msg.getSubject() || ""
+  };
+}
+
+/************ YARDIMCILAR ************/
+function firstMatch_(text, regex) {
+  const m = (text || "").match(regex);
+  return m ? m[1] : "";
+}
+
+function clean_(s) {
+  return (s || "").replace(/\r/g, "").replace(/\s+/g, " ").trim();
+}
+
+function ensureLabel_(name) {
+  const lbl = GmailApp.getUserLabelByName(name);
+  if (!lbl) GmailApp.createLabel(name);
+}
+
+function threadHasLabel_(thread, labelName) {
+  return thread.getLabels().some(l => l.getName() === labelName);
+}
+
+/************ TRIGGER ************/
+function setupTestTrigger() {
+  // 1 dakikada bir test (istersen 5 dk yaparız)
+  ScriptApp.newTrigger("runTestParser").timeBased().everyMinutes(30).create();
+}
+30
