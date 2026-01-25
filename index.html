@@ -256,244 +256,92 @@
 </head>
 <body>
   <div id="app">
-    <section class="card hero">
+    <section class="card hero" id="stageIntro">
       <div class="stack">
         <span class="badge">Değer Kaybı B2C SaaS</span>
-        <h1>Evraklarını yükle, tahmini değer kaybını hemen gör</h1>
-        <p>
-          Trafik kazası dosyan için gerekli evrakları tek noktadan topla. Sistem, ekspertiz raporunu ve ek belgeleri
-          analiz ederek sana özel tahmini tutarı çıkarır ve dilekçeni hazırlar.
-        </p>
-        <div class="hero-actions">
-          <button type="button" id="scrollUpload">Evrak yüklemeye başla</button>
-          <div class="meta">
-            <div><strong>Ortalama süre:</strong> 3-5 dakika</div>
-            <div><strong>Sonuç:</strong> Tahmini tutar + dilekçe</div>
-          </div>
-        </div>
-      </div>
-      <div class="progress">
-        <div class="progress-step">
-          <span>1</span>
-          <div>
-            <strong>Evrakları yükle</strong>
-            <p>Eksper raporu ve ek belgeleri sisteme ekle.</p>
-          </div>
-        </div>
-        <div class="progress-step">
-          <span>2</span>
-          <div>
-            <strong>Otomatik inceleme</strong>
-            <p>Sistem raporları doğrular, tamamlanması gerekenleri listeler.</p>
-          </div>
-        </div>
-        <div class="progress-step">
-          <span>3</span>
-          <div>
-            <strong>Sonucu indir</strong>
-            <p>Tahmini değer kaybı ve dilekçeyi anında al.</p>
-          </div>
-        </div>
+        <h1>Evraklarınızı yükleyin, yapay zeka tahmini değer kaybı tutarınızı hesaplasın ve sigorta başvuru dilekçeniz anında hazırlansın.</h1>
       </div>
     </section>
 
-    <section class="grid">
+    <section class="grid" id="stageOne">
       <div class="card stack" id="uploadSection">
-        <h2>Evrak yükleme</h2>
+        <h2>Evrakları Yükle Toplu</h2>
         <p class="note">
-          Başvurunun tamamlanması için eksper raporu zorunlu. Diğer belgeler sonucu hızlandırır ve tutarı netleştirir.
+          Evrakları yükledikten sonra sistemde işleme alınacaktır. Yükleme alanı aşağıdadır; bu bölümü sizin yükleme
+          elementiniz dolduracaktır.
         </p>
-        <div class="stack">
-          <div class="input-group">
-            <label for="expertReport">Eksper raporu (zorunlu)</label>
-            <input id="expertReport" type="file" accept="application/pdf,image/*" required />
-            <p class="note">
-              Eksper raporunu e-Devlet üzerinden &ldquo;Sigorta Bilgi ve Gözetim Merkezi (SBM)&rdquo; hizmetlerinden
-              indirebilirsin. Genellikle e-Devlet &gt; Kurumlar &gt; SBM &gt; Eksper Raporu / Kaza Dosyası
-              Sorgulama adımlarından erişilir.
-            </p>
-          </div>
-          <div class="input-group">
-            <label for="optionalDocs">Diğer evraklar (opsiyonel)</label>
-            <input id="optionalDocs" type="file" accept="application/pdf,image/*" multiple />
-            <p class="note">
-              Ruhsat (siz ve karşı taraf), kaza tespit tutanağı ve sigorta poliçeleri gibi belgeler yükleyebilirsin.
-              Ne kadar çok evrak varsa sonuç o kadar netleşir.
-            </p>
-          </div>
+        <div class="card note" id="externalUploadSlot">
+          Bu alan sizin evrak yükleme elementiniz için ayrılmıştır.
         </div>
-        <div class="upload-actions">
-          <button id="uploadButton" type="button">Evrakları yükle ve hesaplamayı başlat</button>
-          <span class="meta"><strong>Gizlilik:</strong> Evraklar sadece dosyan için kullanılır.</span>
-        </div>
-        <div id="statusArea" class="status" hidden>Evraklar hazırlanıyor...</div>
-        <div class="result" id="resultArea" hidden>
-          <strong>Hazırlanan çıktı</strong>
-          <p id="resultAmount"></p>
-          <a id="resultLink" href="#" target="_blank" rel="noopener">Dilekçeyi indir</a>
-        </div>
-        <div class="info" id="waitingNote" hidden>
-          <strong>Başvurun hazırlandıktan sonra:</strong>
-          <p>
-            İşlemler birkaç dakika sürebilir. Bu süreçte başvurun hazırlık aşamasındadır. Değer kaybı konusunda
-            sigorta hukuku alanında uzman bir avukatla çalışmak, hak kaybını önlemek açısından önemlidir. Birçok
-            uzman avukat, vekâlet ücreti, harç ve bilirkişi giderlerini karşı taraftan tahsil ederek sana ek maliyet
-            çıkarmadan süreci yönetebilir.
-          </p>
-          <p>
-            Avukatla başvuru yapacak kullanıcılarımız için süreç daha hızlı ilerler; bireysel kullanıcılar ise
-            sonuçlanana kadar sistem üzerinden güncel bildirim alacaktır.
-          </p>
-        </div>
-        <ul class="list" id="fileList"></ul>
       </div>
 
       <aside class="stack">
         <div class="card help-card stack">
-          <h3>Kontrol listesi</h3>
+          <h3>Yüklenmesi gereken evraklar</h3>
           <ul>
-            <li>Eksper raporu (PDF veya fotoğraf).</li>
+            <li>Eksper/hasar raporu (kesin zorunlu).</li>
             <li>Ruhsat fotokopileri (siz + karşı taraf).</li>
             <li>Kaza tespit tutanağı (varsa).</li>
             <li>Sigorta poliçesi ve hasar dosya no.</li>
           </ul>
         </div>
         <div class="card stack">
-          <h3>Sık sorulanlar</h3>
-          <p><strong>Ne kadar sürede sonuç alırım?</strong> Evraklara göre 3-15 dakika.</p>
-          <p><strong>Evraklarım güvende mi?</strong> Veriler yalnızca hesaplama için kullanılır.</p>
-          <p><strong>Eksik evrakla başvurabilir miyim?</strong> Evet, ama sonuç netliği azalır.</p>
+          <h3>Önemli not</h3>
+          <p>
+            Eksper/hasar raporu eklenmediğinde değer kaybı hesaplaması yapılamaz ve sigorta başvuru evrağı belirsiz
+            alacak olarak hazırlanır.
+          </p>
         </div>
       </aside>
+    </section>
+
+    <section class="card stack" id="stageThree" hidden>
+      <h2>Başvuru tam sayfa görünüm</h2>
+      <p class="note">
+        Evraklarınız yüklendi ve işleme alındı. Bu aşamada başvuru sonucu tam sayfa görünüm ile sunulacaktır.
+      </p>
+      <div class="result">
+        <strong>Hazırlanan çıktı</strong>
+        <p id="resultAmount"></p>
+        <a id="resultLink" href="#" target="_blank" rel="noopener">Dilekçeyi indir</a>
+      </div>
     </section>
   </div>
 
   <script>
+    // Evraklar yüklendiğinde true yaparak stage 3'e geçebilirsiniz.
+    const EVRAKLAR_YUKLENDI = false;
+
     // Bubble üzerinden JSON girileceği alan (örnek):
     // const RESULT_DATA_JSON = '{"estimatedAmount":"120.000 TL","petitionUrl":"https://example.com/dilekce.pdf"}';
     const RESULT_DATA_JSON = "";
 
-    const resultArea = document.getElementById("resultArea");
+    const stageOne = document.getElementById("stageOne");
+    const stageThree = document.getElementById("stageThree");
     const resultAmount = document.getElementById("resultAmount");
     const resultLink = document.getElementById("resultLink");
+
+    if (EVRAKLAR_YUKLENDI) {
+      stageOne.hidden = true;
+      stageThree.hidden = false;
+    }
 
     if (RESULT_DATA_JSON) {
       try {
         const parsed = JSON.parse(RESULT_DATA_JSON);
-        if (parsed?.estimatedAmount && parsed?.petitionUrl) {
+        if (parsed?.estimatedAmount) {
           resultAmount.textContent = `Tahmini sigorta alacağı: ${parsed.estimatedAmount}`;
+        }
+        if (parsed?.petitionUrl) {
           resultLink.href = parsed.petitionUrl;
-          resultArea.hidden = false;
+        } else {
+          resultLink.removeAttribute("href");
+          resultLink.textContent = "Dilekçe bağlantısı hazırlanıyor";
         }
       } catch (error) {
         console.warn("RESULT_DATA_JSON parse hatası", error);
       }
     }
-
-    const expertInput = document.getElementById("expertReport");
-    const optionalInput = document.getElementById("optionalDocs");
-    const uploadButton = document.getElementById("uploadButton");
-    const statusArea = document.getElementById("statusArea");
-    const waitingNote = document.getElementById("waitingNote");
-    const fileList = document.getElementById("fileList");
-    const scrollUpload = document.getElementById("scrollUpload");
-
-    scrollUpload.addEventListener("click", () => {
-      document.getElementById("uploadSection").scrollIntoView({ behavior: "smooth" });
-    });
-
-    const toBase64 = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-    const compressIfPossible = async (file, base64) => {
-      if (!("CompressionStream" in window)) {
-        return base64;
-      }
-      if (file.type === "application/pdf") {
-        return base64;
-      }
-      const response = await fetch(base64);
-      const blob = await response.blob();
-      const stream = blob.stream().pipeThrough(new CompressionStream("gzip"));
-      const compressed = await new Response(stream).blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(compressed);
-      });
-    };
-
-    const refreshFileList = (files) => {
-      fileList.innerHTML = "";
-      files.forEach((file) => {
-        const item = document.createElement("li");
-        item.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-        fileList.appendChild(item);
-      });
-    };
-
-    const safeText = (value) => (value === null || value === undefined ? "" : String(value));
-
-    uploadButton.addEventListener("click", async () => {
-      const expertFile = expertInput.files?.[0];
-      if (!expertFile) {
-        alert("Eksper raporu yüklemek zorunludur.");
-        return;
-      }
-
-      const otherFiles = Array.from(optionalInput.files || []);
-      const allFiles = [expertFile, ...otherFiles];
-
-      refreshFileList(allFiles);
-      statusArea.hidden = false;
-      waitingNote.hidden = false;
-      uploadButton.disabled = true;
-
-      try {
-        const expertBase64 = await compressIfPossible(expertFile, await toBase64(expertFile));
-        const otherBase64List = [];
-        for (const file of otherFiles) {
-          const base64 = await toBase64(file);
-          const compressed = await compressIfPossible(file, base64);
-          otherBase64List.push(compressed);
-        }
-
-        const outputList1 = [expertBase64, ...otherBase64List];
-        const output1 = "evraklar_hazir";
-        const output2 = new Date().toISOString();
-        const output3 = "";
-        const output4 = "";
-
-        if (typeof window.bubble_fn_evraklar_hazir === "function") {
-          window.bubble_fn_evraklar_hazir({
-            value: safeText(output1),
-            output1: safeText(output1),
-            output2: safeText(output2),
-            output3: safeText(output3),
-            output4: safeText(output4),
-            outputlist1: outputList1.map((item) => safeText(item)),
-          });
-        } else {
-          window.outputlist1 = outputList1;
-          window.output1 = output1;
-          window.output2 = output2;
-          window.output3 = output3;
-          window.output4 = output4;
-        }
-
-        statusArea.textContent = "Evraklar hazır! Hesaplama süreci başladı.";
-      } catch (error) {
-        console.error(error);
-        statusArea.textContent = "Bir hata oluştu. Lütfen tekrar deneyin.";
-      } finally {
-        uploadButton.disabled = false;
-      }
-    });
   </script>
 </body>
 </html>
