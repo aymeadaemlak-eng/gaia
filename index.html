@@ -41,6 +41,11 @@
       padding: 20px;
     }
 
+    .layout {
+      display: grid;
+      gap: 24px;
+    }
+
     .card {
       background: var(--card);
       border-radius: 16px;
@@ -49,7 +54,7 @@
       border: 1px solid var(--border);
     }
 
-    h1, h2, h3 {
+    h1, h2, h3, h4 {
       margin: 0 0 12px;
     }
 
@@ -70,6 +75,12 @@
       gap: 20px;
     }
 
+    .main-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
     .hero {
       display: grid;
       gap: 16px;
@@ -82,6 +93,56 @@
       align-items: center;
     }
 
+    .hero-card {
+      padding: 28px;
+      border-radius: 20px;
+      background: linear-gradient(140deg, #ffffff 20%, #f3f7ff 100%);
+      border: 1px solid #dbe4f5;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .hero-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .hero-actions-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(31, 111, 235, 0.12);
+    }
+
+    .hero-actions-link:hover {
+      text-decoration: underline;
+    }
+
+    .secure-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #eef7f2;
+      color: #0a5f38;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     .badge {
       display: inline-flex;
       padding: 6px 12px;
@@ -92,6 +153,30 @@
       font-size: 12px;
       letter-spacing: 0.3px;
       text-transform: uppercase;
+    }
+
+    .toast {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .toast-success {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .toast-error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
     }
 
     .progress {
@@ -188,6 +273,244 @@
       font-size: 14px;
     }
 
+    .status-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .status-title {
+      font-size: 18px;
+      margin-bottom: 0;
+    }
+
+    .status-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .status-subtitle {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .status-progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8eef9;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .status-progress::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 45%;
+      background: linear-gradient(90deg, rgba(31, 111, 235, 0.2), rgba(31, 111, 235, 0.8));
+      animation: progressMove 2s infinite ease-in-out;
+    }
+
+    @keyframes progressMove {
+      0% {
+        transform: translateX(-60%);
+      }
+      100% {
+        transform: translateX(200%);
+      }
+    }
+
+    .result-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .result-empty {
+      display: grid;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+      padding: 12px 8px 18px;
+    }
+
+    .result-empty-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
+    .result-amount {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .result-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .petition-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .preview {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px dashed #cfd8e6;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(4px);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .preview.active::after {
+      display: none;
+    }
+
+    .petition-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .petition-actions button {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid #d7e3f8;
+    }
+
+    .petition-actions button.primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+    }
+
+    .card-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .action-bar {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .action-info {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .action-button {
+      min-width: 220px;
+    }
+
+    .state-section {
+      display: none;
+    }
+
+    [data-ui-state="empty"] .state-empty,
+    [data-ui-state="loading"] .state-loading,
+    [data-ui-state="success"] .state-success,
+    [data-ui-state="error"] .state-error {
+      display: block;
+    }
+
+    [data-ui-state="success"] .toast-success,
+    [data-ui-state="error"] .toast-error {
+      display: flex;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 560px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-close {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .steps {
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .step span {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
     .list {
       margin: 0;
       padding-left: 18px;
@@ -249,22 +572,27 @@
         margin: 0 auto;
       }
 
-      .grid {
-        grid-template-columns: minmax(0, 1fr);
+      .layout {
+        grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
         align-items: start;
       }
+    }
 
-      .hero {
-        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.6fr);
-        align-items: center;
+    @media (min-width: 960px) {
+      .card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card-grid .card:last-child {
+        grid-column: span 2;
       }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <section class="grid" id="stageOne">
-      <div class="card stack">
+    <section class="layout">
+      <div class="card stack" id="stageOne">
         <h1>Değer kaybı hesaplama ve dilekçe hazırlama otomasyonu</h1>
         <p>
           Evraklarınızı soldaki yükleme alanlarından sırayla ekleyin. Eksper/hasar raporunu servisinizden, ruhsat
@@ -280,30 +608,239 @@
           <button type="button" id="calculateButton">Değer Kaybımı Hesapla</button>
         </div>
       </div>
-    </section>
+      <main class="main-panel" id="stageTwo" data-ui-state="empty">
+        <div class="toast toast-error state-error">
+          Bazı belgeler okunamıyor. Lütfen sol panelden kontrol edin.
+        </div>
+        <div class="toast toast-success state-success">
+          Hesaplama tamamlandı. Dilekçeniz hazır.
+        </div>
 
-    <section class="card" id="stageTwo" hidden></section>
+        <header class="hero-card">
+          <div class="hero-top">
+            <div>
+              <span class="badge">Güvenli Başvuru</span>
+              <h1 class="hero-title">Değer Kaybı Hesaplama ve Dilekçe Oluşturma</h1>
+              <p>
+                Belgeleriniz yüklendikten sonra sistemimiz tahmini değer kaybı tutarını hesaplar ve başvuru dilekçenizi
+                otomatik hazırlar.
+              </p>
+            </div>
+            <div class="hero-actions">
+              <a class="hero-actions-link" href="#" id="howItWorksLink">Nasıl Çalışır?</a>
+              <span class="secure-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Verileriniz güvenle işlenir
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <section class="card-grid">
+          <article class="card status-card">
+            <h2 class="status-title">Başvuru Durumu</h2>
+            <div class="status-text" id="statusStateLabel">Belgeler kontrol ediliyor</div>
+            <p class="status-subtitle">
+              Zorunlu belgeler yüklendiğinde hesaplama otomatik başlar.
+            </p>
+            <div class="status-progress" aria-hidden="true"></div>
+            <p class="result-meta">
+              Belgeleriniz yalnızca bu başvuru için kullanılır ve 256-bit şifreleme ile korunur.
+            </p>
+          </article>
+
+          <article class="card result-card">
+            <h2 class="status-title">Hesaplama Çıktısı</h2>
+            <div class="state-section state-empty">
+              <div class="result-empty">
+                <div class="result-empty-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="5" y="6" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </div>
+                <strong>Hesaplama için belgelerinizi sol panelden yükleyin.</strong>
+                <span class="result-meta">Genellikle işlem 30–60 saniye sürer.</span>
+              </div>
+            </div>
+            <div class="state-section state-loading">
+              <div class="status-text">Hesaplama sürüyor</div>
+              <p class="status-subtitle">Sonuç oluşturulduğunda burada görünecek.</p>
+              <div class="status-progress" aria-hidden="true"></div>
+            </div>
+            <div class="state-section state-success">
+              <div class="result-amount" id="resultAmount">₺ 24.750</div>
+              <p class="status-subtitle">Tahmini Değer Kaybı Tutarı</p>
+              <p class="status-subtitle">
+                Bu tutar yüklenen belgelere göre hesaplanmıştır ve resmi başvuruda kullanılabilir.
+              </p>
+              <div class="result-meta" id="resultDate">Hesaplama tarihi: 12/04/2024</div>
+            </div>
+            <div class="state-section state-error">
+              <div class="status-text">Hesaplama tamamlanamadı</div>
+              <p class="status-subtitle">Belgeler kontrol edilip yeniden denenecek.</p>
+            </div>
+          </article>
+
+          <article class="card petition-card">
+            <h2 class="status-title">Başvuru Dilekçesi</h2>
+            <p class="status-subtitle">
+              Hesaplanan tutara göre resmi başvuru metni otomatik oluşturulur.
+            </p>
+            <div class="state-section state-empty">
+              <p class="status-subtitle">Hesaplama tamamlandığında dilekçe hazır olacaktır.</p>
+            </div>
+            <div class="state-section state-loading">
+              <p class="status-subtitle">Dilekçe hazırlanıyor. Kısa süre içinde paylaşılacak.</p>
+            </div>
+            <div class="state-section state-success">
+              <div class="preview active">
+                Sayın ilgili makam,<br/>
+                Trafik kazası sonrası oluşan değer kaybı için başvurumu iletiyorum. Eklerde yer alan belgeler doğrultusunda
+                yapılan hesaplamaya göre talebim tarafınıza sunulmuştur...
+              </div>
+              <div class="petition-actions">
+                <button type="button">PDF İndir</button>
+                <button type="button">Word İndir</button>
+                <button type="button" class="primary">Kopyala</button>
+              </div>
+            </div>
+            <div class="state-section state-error">
+              <p class="status-subtitle">Dilekçe hazırlanamadı. Belgeler kontrol edilince otomatik devam eder.</p>
+            </div>
+          </article>
+        </section>
+
+        <div class="action-bar">
+          <div class="action-info">Ortalama işlem süresi: 2–4 dakika</div>
+          <button class="action-button" id="actionButton" type="button" disabled>Belgeler Bekleniyor</button>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="howItWorksModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="howItWorksTitle">
+      <div class="modal-header">
+        <h3 id="howItWorksTitle">Nasıl Çalışır?</h3>
+        <button class="modal-close" type="button" id="closeModalButton">Kapat</button>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span>1</span>
+          <div>
+            <strong>Belgeler doğrulanır.</strong>
+            <p>Yüklediğiniz evraklar okunabilirlik ve doğruluk açısından kontrol edilir.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>2</span>
+          <div>
+            <strong>Değer kaybı hesaplanır.</strong>
+            <p>Belgelerinizden alınan bilgilerle tahmini tutar hızlıca oluşturulur.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>3</span>
+          <div>
+            <strong>Dilekçe hazırlanır.</strong>
+            <p>Hesaplama sonucuna göre başvuru metni otomatik olarak hazırlanır.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const { EVRAKLAR_YUKLENDI } = window;
+    const { RESULT_DATA_JSON } = window;
 
     const stageOne = document.getElementById("stageOne");
     const stageTwo = document.getElementById("stageTwo");
     const calculateButton = document.getElementById("calculateButton");
+    const actionButton = document.getElementById("actionButton");
+    const statusStateLabel = document.getElementById("statusStateLabel");
+    const resultAmount = document.getElementById("resultAmount");
+    const resultDate = document.getElementById("resultDate");
+    const howItWorksLink = document.getElementById("howItWorksLink");
+    const howItWorksModal = document.getElementById("howItWorksModal");
+    const closeModalButton = document.getElementById("closeModalButton");
 
-    if (EVRAKLAR_YUKLENDI) {
-      stageOne.hidden = true;
-      stageTwo.hidden = false;
+    function setUiState(state) {
+      stageTwo.dataset.uiState = state;
     }
 
     function hesapla_fn_suffix() {
-      stageOne.hidden = true;
-      stageTwo.hidden = false;
+      stageTwo.dataset.uiState = "loading";
+      statusStateLabel.textContent = "Hesaplamaya Hazır";
+      actionButton.disabled = false;
+      actionButton.textContent = "Hesaplamayı Başlat";
     }
 
     if (calculateButton) {
       calculateButton.addEventListener("click", hesapla_fn_suffix);
+    }
+
+    let parsedResult = null;
+    if (RESULT_DATA_JSON) {
+      try {
+        parsedResult = JSON.parse(RESULT_DATA_JSON);
+      } catch (error) {
+        parsedResult = null;
+      }
+    }
+
+    if (EVRAKLAR_YUKLENDI) {
+      statusStateLabel.textContent = "Hesaplamaya Hazır";
+      actionButton.disabled = false;
+      actionButton.textContent = "Hesaplamayı Başlat";
+      setUiState("loading");
+    } else {
+      statusStateLabel.textContent = "Belgeler kontrol ediliyor";
+      actionButton.disabled = true;
+      actionButton.textContent = "Belgeler Bekleniyor";
+      setUiState("empty");
+    }
+
+    if (parsedResult && parsedResult.status === "error") {
+      setUiState("error");
+    }
+
+    if (parsedResult && parsedResult.amount) {
+      setUiState("success");
+      resultAmount.textContent = parsedResult.amount;
+      resultDate.textContent = `Hesaplama tarihi: ${parsedResult.date || "GG/AA/YYYY"}`;
+    }
+
+    function toggleModal(isOpen) {
+      if (!howItWorksModal) {
+        return;
+      }
+      howItWorksModal.classList.toggle("active", isOpen);
+      howItWorksModal.setAttribute("aria-hidden", String(!isOpen));
+    }
+
+    if (howItWorksLink) {
+      howItWorksLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        toggleModal(true);
+      });
+    }
+
+    if (closeModalButton) {
+      closeModalButton.addEventListener("click", () => toggleModal(false));
+    }
+
+    if (howItWorksModal) {
+      howItWorksModal.addEventListener("click", (event) => {
+        if (event.target === howItWorksModal) {
+          toggleModal(false);
+        }
+      });
     }
   </script>
 </body>
