@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Değer Kaybı SaaS Modülü</title>
+  <script>
+    // === KONFIGURASYON (en üst) ===
+    // Evraklar yüklendi ise true yapın. False ise Stage 1'deyiz ve sadece evrak listesi görünür.
+    window.EVRAKLAR_YUKLENDI = false;
+
+    // Bubble üzerinden JSON girileceği alan (örnek):
+    // window.RESULT_DATA_JSON = '{"estimatedAmount":"120.000 TL","petitionUrl":"https://example.com/dilekce.pdf"}';
+    window.RESULT_DATA_JSON = "";
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -264,27 +273,21 @@
     </section>
 
     <section class="grid" id="stageOne">
-      <div class="card stack" id="uploadSection">
-        <h2>Evrakları Yükle Toplu</h2>
+      <div class="card stack">
+        <h2>Stage 1: Yüklenecek evrakların listesi</h2>
         <p class="note">
-          Evrakları yükledikten sonra sistemde işleme alınacaktır. Yükleme alanı aşağıdadır; bu bölümü sizin yükleme
-          elementiniz dolduracaktır.
+          Evraklar yüklenmediyse sadece aşağıdaki evrak listesini gösteriyoruz. Kullanıcıya bu evrakların hazırlanması
+          gerektiğini iletin.
         </p>
-        <div class="card note" id="externalUploadSlot">
-          Bu alan sizin evrak yükleme elementiniz için ayrılmıştır.
-        </div>
+        <ul class="list">
+          <li>Eksper/hasar raporu (kesin zorunlu).</li>
+          <li>Ruhsat fotokopileri (siz + karşı taraf).</li>
+          <li>Kaza tespit tutanağı (varsa).</li>
+          <li>Sigorta poliçesi ve hasar dosya no.</li>
+        </ul>
       </div>
 
       <aside class="stack">
-        <div class="card help-card stack">
-          <h3>Yüklenmesi gereken evraklar</h3>
-          <ul>
-            <li>Eksper/hasar raporu (kesin zorunlu).</li>
-            <li>Ruhsat fotokopileri (siz + karşı taraf).</li>
-            <li>Kaza tespit tutanağı (varsa).</li>
-            <li>Sigorta poliçesi ve hasar dosya no.</li>
-          </ul>
-        </div>
         <div class="card stack">
           <h3>Önemli not</h3>
           <p>
@@ -309,12 +312,7 @@
   </div>
 
   <script>
-    // Evraklar yüklendiğinde true yaparak stage 3'e geçebilirsiniz.
-    const EVRAKLAR_YUKLENDI = false;
-
-    // Bubble üzerinden JSON girileceği alan (örnek):
-    // const RESULT_DATA_JSON = '{"estimatedAmount":"120.000 TL","petitionUrl":"https://example.com/dilekce.pdf"}';
-    const RESULT_DATA_JSON = "";
+    const { EVRAKLAR_YUKLENDI, RESULT_DATA_JSON } = window;
 
     const stageOne = document.getElementById("stageOne");
     const stageThree = document.getElementById("stageThree");
