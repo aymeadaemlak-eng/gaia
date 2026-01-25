@@ -450,14 +450,15 @@
       uploadButton.disabled = true;
 
       try {
-        const base64List = [];
-        for (const file of allFiles) {
+        const expertBase64 = await compressIfPossible(await toBase64(expertFile));
+        const otherBase64List = [];
+        for (const file of otherFiles) {
           const base64 = await toBase64(file);
           const compressed = await compressIfPossible(base64);
-          base64List.push(compressed);
+          otherBase64List.push(compressed);
         }
 
-        window.outputlist1 = base64List;
+        window.outputlist1 = [expertBase64, ...otherBase64List];
         window.output1 = "evraklar_hazir";
         window.output2 = new Date().toISOString();
         window.output3 = "";
