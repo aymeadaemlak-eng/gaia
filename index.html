@@ -143,6 +143,14 @@
       font-weight: 600;
     }
 
+    .secure-meta {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
     .badge {
       display: inline-flex;
       padding: 6px 12px;
@@ -630,6 +638,43 @@
       color: var(--muted);
     }
 
+    .doc-requirements {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #dbeafe;
+      background: #f0f7ff;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .doc-requirements strong {
+      font-size: 15px;
+    }
+
+    .doc-requirements ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .trust-card {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .trust-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
     @media (min-width: 720px) {
       #app {
         padding: 40px;
@@ -663,6 +708,21 @@
     <section class="layout">
       <div class="card stack" id="stageOne">
         <h1>Değer kaybı hesaplama ve dilekçe hazırlama otomasyonu</h1>
+        <div class="upload-actions">
+          <button type="button" id="calculateButton">Değer Kaybımı Hesapla</button>
+        </div>
+        <div class="doc-requirements">
+          <strong>Toplu yükleme alanına eklenecek evraklar</strong>
+          <ul>
+            <li><strong>Hasar/eksper raporu zorunlu:</strong> Bu evrak yüklenmezse değer kaybı hesaplanamaz.</li>
+            <li>Kaza tespit tutanağı (varsa olay yerinde düzenlenen form).</li>
+            <li>Her iki tarafa ait ruhsat fotokopileri (dilekçe için gereklidir).</li>
+          </ul>
+          <p>
+            <strong>Hasar/eksper raporu e-Devlet’ten nasıl alınır?</strong> e-Devlet’e giriş yapın, arama bölümüne
+            “Sigorta Bilgi ve Gözetim Merkezi Eksper Raporu” yazın ve ilgili hizmetten raporu indirip yükleyin.
+          </p>
+        </div>
         <p>
           Evraklarınızı soldaki yükleme alanlarından sırayla ekleyin. Eksper/hasar raporunu servisinizden, ruhsat
           fotokopilerini e-Devlet veya noter onaylı kopyalarından, kaza tespit tutanağını ise varsa olay yerinde düzenlenen
@@ -673,8 +733,14 @@
           <li>Eksper/hasar raporu zorunludur; diğer belgeler hesaplamayı destekler.</li>
           <li>Eksik veya okunmayan evraklar işlemi geciktirebilir.</li>
         </ul>
-        <div class="upload-actions">
-          <button type="button" id="calculateButton">Değer Kaybımı Hesapla</button>
+        <div class="trust-card">
+          <strong>Güvenli ve şeffaf süreç</strong>
+          <ul>
+            <li>256-bit şifreleme ve KVKK uyumlu işlem.</li>
+            <li>Belgeler yalnızca başvurunuz için kullanılır, üçüncü taraflarla paylaşılmaz.</li>
+            <li>İşlem sonunda verileriniz güvenli şekilde silinir.</li>
+            <li>Her adımda durumunuzu görebilir, süreç bitmeden onay vermezsiniz.</li>
+          </ul>
         </div>
       </div>
       <main class="main-panel" id="stageTwo" data-ui-state="empty">
@@ -714,13 +780,16 @@
             </div>
             <div class="hero-actions">
               <a class="hero-actions-link" href="#" id="howItWorksLink">Nasıl Çalışır?</a>
-              <span class="secure-note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Verileriniz güvenle işlenir
-              </span>
+              <div>
+                <span class="secure-note">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Verileriniz güvenle işlenir
+                </span>
+                <span class="secure-meta">Verileriniz işlem bittikten sonra otomatik silinir.</span>
+              </div>
             </div>
           </div>
         </header>
@@ -738,7 +807,7 @@
             </p>
           </article>
 
-          <article class="card result-card">
+          <article class="card result-card is-hidden" id="resultCard">
             <h2 class="status-title">Hesaplama Çıktısı</h2>
             <div class="state-section state-empty">
               <div class="result-empty">
@@ -772,7 +841,7 @@
             </div>
           </article>
 
-          <article class="card petition-card">
+          <article class="card petition-card is-hidden" id="petitionCard">
             <h2 class="status-title">Başvuru Dilekçesi</h2>
             <p class="status-subtitle">
               Hesaplanan tutara göre resmi başvuru metni otomatik oluşturulur.
@@ -852,6 +921,8 @@
     const statusStateLabel = document.getElementById("statusStateLabel");
     const resultAmount = document.getElementById("resultAmount");
     const resultDate = document.getElementById("resultDate");
+    const resultCard = document.getElementById("resultCard");
+    const petitionCard = document.getElementById("petitionCard");
     const howItWorksLink = document.getElementById("howItWorksLink");
     const howItWorksModal = document.getElementById("howItWorksModal");
     const closeModalButton = document.getElementById("closeModalButton");
@@ -879,6 +950,7 @@
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
       setStageOneHidden(true);
+      setOutputVisibility(true);
       triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
     }
 
@@ -901,12 +973,14 @@
       actionButton.textContent = "Hesaplamayı Başlat";
       setUiState("loading");
       setStageOneHidden(true);
+      setOutputVisibility(true);
     } else {
       statusStateLabel.textContent = "Belgeler kontrol ediliyor";
       actionButton.disabled = true;
       actionButton.textContent = "Belgeler Bekleniyor";
       setUiState("empty");
       setStageOneHidden(false);
+      setOutputVisibility(false);
     }
 
     if (parsedResult && parsedResult.status === "error") {
@@ -933,6 +1007,15 @@
       }
       stageOne.classList.toggle("is-hidden", isHidden);
       stageOne.setAttribute("aria-hidden", String(isHidden));
+    }
+
+    function setOutputVisibility(isVisible) {
+      if (resultCard) {
+        resultCard.classList.toggle("is-hidden", !isVisible);
+      }
+      if (petitionCard) {
+        petitionCard.classList.toggle("is-hidden", !isVisible);
+      }
     }
 
     if (howItWorksLink) {
