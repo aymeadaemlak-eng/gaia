@@ -16,6 +16,7 @@
       --primary-dark: #164fc5;
       --border: #e4e8f0;
       --success: #0a7b42;
+      --warning: #f59e0b;
     }
 
     * {
@@ -31,9 +32,6 @@
     #app {
       min-height: 100vh;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
     }
 
     .card {
@@ -60,6 +58,23 @@
       gap: 16px;
     }
 
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
     .badge {
       display: inline-flex;
       padding: 6px 12px;
@@ -70,6 +85,34 @@
       font-size: 12px;
       letter-spacing: 0.3px;
       text-transform: uppercase;
+    }
+
+    .progress {
+      display: grid;
+      gap: 12px;
+    }
+
+    .progress-step {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fdfdff;
+      align-items: center;
+    }
+
+    .progress-step span {
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(31, 111, 235, 0.1);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     .input-group {
@@ -84,9 +127,9 @@
     }
 
     input[type="file"] {
-      padding: 12px;
-      border: 1px dashed var(--border);
-      border-radius: 12px;
+      padding: 16px;
+      border: 2px dashed #cfd8e6;
+      border-radius: 14px;
       background: #f9fafc;
     }
 
@@ -119,6 +162,15 @@
       font-size: 14px;
     }
 
+    .info {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+      font-size: 14px;
+    }
+
     .status {
       padding: 12px;
       border-radius: 12px;
@@ -131,7 +183,7 @@
 
     .list {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 18px;
       color: var(--muted);
     }
 
@@ -150,64 +202,169 @@
       text-decoration: none;
     }
 
+    .result a:hover {
+      text-decoration: underline;
+    }
+
+    .meta {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .meta strong {
+      color: var(--text);
+    }
+
+    .upload-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .upload-actions button {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .help-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
     @media (min-width: 720px) {
       #app {
         padding: 40px;
-        max-width: 860px;
+        max-width: 1100px;
         margin: 0 auto;
+      }
+
+      .grid {
+        grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+        align-items: start;
+      }
+
+      .hero {
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.6fr);
+        align-items: center;
       }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <section class="card stack">
-      <span class="badge">SaaS Modülü</span>
-      <h1>Değer Kaybı Tahmini &amp; Dilekçe Hazırlama</h1>
-      <p>
-        Trafik kazası değer kaybı başvurularınız için gerekli evrakları buradan kolayca yükleyin.
-        Evraklarınızı aldıktan sonra değer kaybı tahmini ve sigortaya başvuru dilekçesini sizin adınıza hazırlayacağız.
-      </p>
-      <div class="result" id="resultArea" hidden>
-        <strong>Hazırladığımız çıktılar</strong>
-        <p id="resultAmount"></p>
-        <a id="resultLink" href="#" target="_blank" rel="noopener">Dilekçeyi indir</a>
-      </div>
+    <section class="card hero">
       <div class="stack">
-        <div class="input-group">
-          <label for="expertReport">Eksper raporu (zorunlu)</label>
-          <input id="expertReport" type="file" accept="application/pdf,image/*" required />
-          <p class="note">
-            Eksper raporunu e-Devlet üzerinden &ldquo;Sigorta Bilgi ve Gözetim Merkezi (SBM)&rdquo; hizmetlerinde
-            kaza dosyanızı bularak indirebilirsiniz. Genellikle e-Devlet &gt; Kurumlar &gt; SBM &gt;
-            Eksper Raporu / Kaza Dosyası Sorgulama adımlarından erişilir.
-          </p>
-        </div>
-        <div class="input-group">
-          <label for="optionalDocs">Diğer evraklar (opsiyonel)</label>
-          <input id="optionalDocs" type="file" accept="application/pdf,image/*" multiple />
-          <p class="note">
-            Ruhsat (siz ve karşı taraf), kaza tespit tutanağı ve sigorta poliçeleri gibi belgeler yüklenebilir.
-            Ne kadar çok evrak yüklenirse o kadar sağlıklı sonuç elde edilir.
-          </p>
+        <span class="badge">Değer Kaybı B2C SaaS</span>
+        <h1>Evraklarını yükle, tahmini değer kaybını hemen gör</h1>
+        <p>
+          Trafik kazası dosyan için gerekli evrakları tek noktadan topla. Sistem, ekspertiz raporunu ve ek belgeleri
+          analiz ederek sana özel tahmini tutarı çıkarır ve dilekçeni hazırlar.
+        </p>
+        <div class="hero-actions">
+          <button type="button" id="scrollUpload">Evrak yüklemeye başla</button>
+          <div class="meta">
+            <div><strong>Ortalama süre:</strong> 3-5 dakika</div>
+            <div><strong>Sonuç:</strong> Tahmini tutar + dilekçe</div>
+          </div>
         </div>
       </div>
-      <button id="uploadButton" type="button">Evrakları Yükle ve Devam Et</button>
-      <div id="statusArea" class="status" hidden>Evraklar hazırlanıyor...</div>
-      <div class="note" id="waitingNote" hidden>
-        <strong>Bireysel başvuru yapanlar için bilgi:</strong>
-        <p>
-          İşlemler birkaç dakika sürebilir. Bu süreçte başvurunuz hazırlık aşamasındadır. Değer kaybı konusunda
-          sigorta hukuku alanında uzman bir avukatla çalışmak, hak kaybını önlemek açısından önemlidir. Birçok
-          uzman avukat, vekâlet ücreti, harç ve bilirkişi giderlerini karşı taraftan tahsil ederek size ek maliyet
-          çıkarmadan süreci yönetebilir.
-        </p>
-        <p>
-          Avukatla başvuru yapacak kullanıcılarımız için süreç daha hızlı ilerler; bireysel kullanıcılar ise
-          sonuçlanana kadar sistem üzerinden güncel bildirim alacaktır.
-        </p>
+      <div class="progress">
+        <div class="progress-step">
+          <span>1</span>
+          <div>
+            <strong>Evrakları yükle</strong>
+            <p>Eksper raporu ve ek belgeleri sisteme ekle.</p>
+          </div>
+        </div>
+        <div class="progress-step">
+          <span>2</span>
+          <div>
+            <strong>Otomatik inceleme</strong>
+            <p>Sistem raporları doğrular, tamamlanması gerekenleri listeler.</p>
+          </div>
+        </div>
+        <div class="progress-step">
+          <span>3</span>
+          <div>
+            <strong>Sonucu indir</strong>
+            <p>Tahmini değer kaybı ve dilekçeyi anında al.</p>
+          </div>
+        </div>
       </div>
-      <ul class="list" id="fileList"></ul>
+    </section>
+
+    <section class="grid">
+      <div class="card stack" id="uploadSection">
+        <h2>Evrak yükleme</h2>
+        <p class="note">
+          Başvurunun tamamlanması için eksper raporu zorunlu. Diğer belgeler sonucu hızlandırır ve tutarı netleştirir.
+        </p>
+        <div class="stack">
+          <div class="input-group">
+            <label for="expertReport">Eksper raporu (zorunlu)</label>
+            <input id="expertReport" type="file" accept="application/pdf,image/*" required />
+            <p class="note">
+              Eksper raporunu e-Devlet üzerinden &ldquo;Sigorta Bilgi ve Gözetim Merkezi (SBM)&rdquo; hizmetlerinden
+              indirebilirsin. Genellikle e-Devlet &gt; Kurumlar &gt; SBM &gt; Eksper Raporu / Kaza Dosyası
+              Sorgulama adımlarından erişilir.
+            </p>
+          </div>
+          <div class="input-group">
+            <label for="optionalDocs">Diğer evraklar (opsiyonel)</label>
+            <input id="optionalDocs" type="file" accept="application/pdf,image/*" multiple />
+            <p class="note">
+              Ruhsat (siz ve karşı taraf), kaza tespit tutanağı ve sigorta poliçeleri gibi belgeler yükleyebilirsin.
+              Ne kadar çok evrak varsa sonuç o kadar netleşir.
+            </p>
+          </div>
+        </div>
+        <div class="upload-actions">
+          <button id="uploadButton" type="button">Evrakları yükle ve hesaplamayı başlat</button>
+          <span class="meta"><strong>Gizlilik:</strong> Evraklar sadece dosyan için kullanılır.</span>
+        </div>
+        <div id="statusArea" class="status" hidden>Evraklar hazırlanıyor...</div>
+        <div class="result" id="resultArea" hidden>
+          <strong>Hazırlanan çıktı</strong>
+          <p id="resultAmount"></p>
+          <a id="resultLink" href="#" target="_blank" rel="noopener">Dilekçeyi indir</a>
+        </div>
+        <div class="info" id="waitingNote" hidden>
+          <strong>Başvurun hazırlandıktan sonra:</strong>
+          <p>
+            İşlemler birkaç dakika sürebilir. Bu süreçte başvurun hazırlık aşamasındadır. Değer kaybı konusunda
+            sigorta hukuku alanında uzman bir avukatla çalışmak, hak kaybını önlemek açısından önemlidir. Birçok
+            uzman avukat, vekâlet ücreti, harç ve bilirkişi giderlerini karşı taraftan tahsil ederek sana ek maliyet
+            çıkarmadan süreci yönetebilir.
+          </p>
+          <p>
+            Avukatla başvuru yapacak kullanıcılarımız için süreç daha hızlı ilerler; bireysel kullanıcılar ise
+            sonuçlanana kadar sistem üzerinden güncel bildirim alacaktır.
+          </p>
+        </div>
+        <ul class="list" id="fileList"></ul>
+      </div>
+
+      <aside class="stack">
+        <div class="card help-card stack">
+          <h3>Kontrol listesi</h3>
+          <ul>
+            <li>Eksper raporu (PDF veya fotoğraf).</li>
+            <li>Ruhsat fotokopileri (siz + karşı taraf).</li>
+            <li>Kaza tespit tutanağı (varsa).</li>
+            <li>Sigorta poliçesi ve hasar dosya no.</li>
+          </ul>
+        </div>
+        <div class="card stack">
+          <h3>Sık sorulanlar</h3>
+          <p><strong>Ne kadar sürede sonuç alırım?</strong> Evraklara göre 3-15 dakika.</p>
+          <p><strong>Evraklarım güvende mi?</strong> Veriler yalnızca hesaplama için kullanılır.</p>
+          <p><strong>Eksik evrakla başvurabilir miyim?</strong> Evet, ama sonuç netliği azalır.</p>
+        </div>
+      </aside>
     </section>
   </div>
 
@@ -239,6 +396,11 @@
     const statusArea = document.getElementById("statusArea");
     const waitingNote = document.getElementById("waitingNote");
     const fileList = document.getElementById("fileList");
+    const scrollUpload = document.getElementById("scrollUpload");
+
+    scrollUpload.addEventListener("click", () => {
+      document.getElementById("uploadSection").scrollIntoView({ behavior: "smooth" });
+    });
 
     const toBase64 = (file) => new Promise((resolve, reject) => {
       const reader = new FileReader();
