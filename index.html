@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Değer Kaybı SaaS Modülü</title>
+  <title>Değer Kaybı Otomasyonu</title>
   <script>
     // === KONFIGURASYON (en üst) ===
-    // Evraklar yüklendi ise true yapın. False ise Stage 1'deyiz ve sadece evrak listesi görünür.
+    // Evraklar yüklendi ise true yapın. False ise ilk aşamadaki açıklama görünür.
     window.EVRAKLAR_YUKLENDI = false;
 
-    // Bubble üzerinden JSON girileceği alan (örnek):
-    // window.RESULT_DATA_JSON = '{"estimatedAmount":"120.000 TL","petitionUrl":"https://example.com/dilekce.pdf"}';
     window.RESULT_DATA_JSON = "";
   </script>
   <style>
@@ -252,7 +250,7 @@
       }
 
       .grid {
-        grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+        grid-template-columns: minmax(0, 1fr);
         align-items: start;
       }
 
@@ -265,80 +263,47 @@
 </head>
 <body>
   <div id="app">
-    <section class="card hero" id="stageIntro">
-      <div class="stack">
-        <span class="badge">Değer Kaybı B2C SaaS</span>
-        <h1>Evraklarınızı yükleyin, yapay zeka tahmini değer kaybı tutarınızı hesaplasın ve sigorta başvuru dilekçeniz anında hazırlansın.</h1>
-      </div>
-    </section>
-
     <section class="grid" id="stageOne">
       <div class="card stack">
-        <h2>Stage 1: Yüklenecek evrakların listesi</h2>
-        <p class="note">
-          Evraklar yüklenmediyse sadece aşağıdaki evrak listesini gösteriyoruz. Kullanıcıya bu evrakların hazırlanması
-          gerektiğini iletin.
+        <h1>Değer kaybı hesaplama ve dilekçe hazırlama otomasyonu</h1>
+        <p>
+          Evraklarınızı soldaki yükleme alanlarından sırayla ekleyin. Eksper/hasar raporunu servisinizden, ruhsat
+          fotokopilerini e-Devlet veya noter onaylı kopyalarından, kaza tespit tutanağını ise varsa olay yerinde düzenlenen
+          tutanaktan alabilirsiniz.
         </p>
         <ul class="list">
-          <li>Eksper/hasar raporu (kesin zorunlu).</li>
-          <li>Ruhsat fotokopileri (siz + karşı taraf).</li>
-          <li>Kaza tespit tutanağı (varsa).</li>
-          <li>Sigorta poliçesi ve hasar dosya no.</li>
+          <li>Dosyaları net, okunabilir ve tam görünür şekilde yükleyin.</li>
+          <li>Eksper/hasar raporu zorunludur; diğer belgeler hesaplamayı destekler.</li>
+          <li>Eksik veya okunmayan evraklar işlemi geciktirebilir.</li>
         </ul>
-      </div>
-
-      <aside class="stack">
-        <div class="card stack">
-          <h3>Önemli not</h3>
-          <p>
-            Eksper/hasar raporu eklenmediğinde değer kaybı hesaplaması yapılamaz ve sigorta başvuru evrağı belirsiz
-            alacak olarak hazırlanır.
-          </p>
+        <div class="upload-actions">
+          <button type="button" id="calculateButton">Değer Kaybımı Hesapla</button>
         </div>
-      </aside>
-    </section>
-
-    <section class="card stack" id="stageThree" hidden>
-      <h2>Başvuru tam sayfa görünüm</h2>
-      <p class="note">
-        Evraklarınız yüklendi ve işleme alındı. Bu aşamada başvuru sonucu tam sayfa görünüm ile sunulacaktır.
-      </p>
-      <div class="result">
-        <strong>Hazırlanan çıktı</strong>
-        <p id="resultAmount"></p>
-        <a id="resultLink" href="#" target="_blank" rel="noopener">Dilekçeyi indir</a>
       </div>
     </section>
+
+    <section class="card" id="stageTwo" hidden></section>
   </div>
 
   <script>
-    const { EVRAKLAR_YUKLENDI, RESULT_DATA_JSON } = window;
+    const { EVRAKLAR_YUKLENDI } = window;
 
     const stageOne = document.getElementById("stageOne");
-    const stageThree = document.getElementById("stageThree");
-    const resultAmount = document.getElementById("resultAmount");
-    const resultLink = document.getElementById("resultLink");
+    const stageTwo = document.getElementById("stageTwo");
+    const calculateButton = document.getElementById("calculateButton");
 
     if (EVRAKLAR_YUKLENDI) {
       stageOne.hidden = true;
-      stageThree.hidden = false;
+      stageTwo.hidden = false;
     }
 
-    if (RESULT_DATA_JSON) {
-      try {
-        const parsed = JSON.parse(RESULT_DATA_JSON);
-        if (parsed?.estimatedAmount) {
-          resultAmount.textContent = `Tahmini sigorta alacağı: ${parsed.estimatedAmount}`;
-        }
-        if (parsed?.petitionUrl) {
-          resultLink.href = parsed.petitionUrl;
-        } else {
-          resultLink.removeAttribute("href");
-          resultLink.textContent = "Dilekçe bağlantısı hazırlanıyor";
-        }
-      } catch (error) {
-        console.warn("RESULT_DATA_JSON parse hatası", error);
-      }
+    function hesapla_fn_suffix() {
+      stageOne.hidden = true;
+      stageTwo.hidden = false;
+    }
+
+    if (calculateButton) {
+      calculateButton.addEventListener("click", hesapla_fn_suffix);
     }
   </script>
 </body>
