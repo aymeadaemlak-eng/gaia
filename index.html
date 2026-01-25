@@ -409,8 +409,11 @@
       reader.readAsDataURL(file);
     });
 
-    const compressIfPossible = async (base64) => {
+    const compressIfPossible = async (file, base64) => {
       if (!("CompressionStream" in window)) {
+        return base64;
+      }
+      if (file.type === "application/pdf") {
         return base64;
       }
       const response = await fetch(base64);
@@ -452,11 +455,11 @@
       uploadButton.disabled = true;
 
       try {
-        const expertBase64 = await compressIfPossible(await toBase64(expertFile));
+        const expertBase64 = await compressIfPossible(expertFile, await toBase64(expertFile));
         const otherBase64List = [];
         for (const file of otherFiles) {
           const base64 = await toBase64(file);
-          const compressed = await compressIfPossible(base64);
+          const compressed = await compressIfPossible(file, base64);
           otherBase64List.push(compressed);
         }
 
