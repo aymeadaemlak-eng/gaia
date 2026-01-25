@@ -517,6 +517,71 @@
       color: var(--muted);
     }
 
+    .app-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .app-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .app-bar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .app-bar-title {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 719px) {
+      .layout {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #stageTwo {
+        order: 1;
+      }
+
+      #stageOne {
+        order: 2;
+        padding: 14px;
+      }
+
+      #stageOne h1 {
+        font-size: 18px;
+      }
+
+      #stageOne .list {
+        display: none;
+      }
+    }
+
     .result {
       border: 1px solid #d7e3f8;
       background: #f3f7ff;
@@ -576,6 +641,10 @@
         grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
         align-items: start;
       }
+
+      .app-bar {
+        display: none;
+      }
     }
 
     @media (min-width: 960px) {
@@ -614,6 +683,23 @@
         </div>
         <div class="toast toast-success state-success">
           Hesaplama tamamlandı. Dilekçeniz hazır.
+        </div>
+
+        <div class="app-bar" aria-label="Uygulama üst barı">
+          <div class="app-bar-brand">
+            <div class="app-bar-logo" aria-hidden="true">DK</div>
+            <div>
+              <div>Değer Kaybı</div>
+              <div class="app-bar-title">Hızlı Hesaplama</div>
+            </div>
+          </div>
+          <span class="secure-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Güvenli başvuru
+          </span>
         </div>
 
         <header class="hero-card">
@@ -792,6 +878,7 @@
       statusStateLabel.textContent = "Hesaplamaya Hazır";
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
+      setStageOneHidden(true);
       triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
     }
 
@@ -813,11 +900,13 @@
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
       setUiState("loading");
+      setStageOneHidden(true);
     } else {
       statusStateLabel.textContent = "Belgeler kontrol ediliyor";
       actionButton.disabled = true;
       actionButton.textContent = "Belgeler Bekleniyor";
       setUiState("empty");
+      setStageOneHidden(false);
     }
 
     if (parsedResult && parsedResult.status === "error") {
@@ -836,6 +925,14 @@
       }
       howItWorksModal.classList.toggle("active", isOpen);
       howItWorksModal.setAttribute("aria-hidden", String(!isOpen));
+    }
+
+    function setStageOneHidden(isHidden) {
+      if (!stageOne) {
+        return;
+      }
+      stageOne.classList.toggle("is-hidden", isHidden);
+      stageOne.setAttribute("aria-hidden", String(isHidden));
     }
 
     if (howItWorksLink) {
