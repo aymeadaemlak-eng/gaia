@@ -774,15 +774,29 @@
       stageTwo.dataset.uiState = state;
     }
 
-    function hesapla_fn_suffix() {
+    const BUBBLE_FN_SUFFIX = "hesapla";
+
+    function triggerBubbleFunction(suffix, payload) {
+      const fnName = `bubble_fn_${suffix}`;
+      const bubbleFn = window[fnName];
+      if (typeof bubbleFn === "function") {
+        bubbleFn(payload);
+        return true;
+      }
+      console.warn(`Bubble function not found: ${fnName}`);
+      return false;
+    }
+
+    function handleCalculateClick() {
       stageTwo.dataset.uiState = "loading";
       statusStateLabel.textContent = "Hesaplamaya Hazır";
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
+      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
     }
 
     if (calculateButton) {
-      calculateButton.addEventListener("click", hesapla_fn_suffix);
+      calculateButton.addEventListener("click", handleCalculateClick);
     }
 
     let parsedResult = null;
