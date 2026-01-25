@@ -434,6 +434,8 @@
       });
     };
 
+    const safeText = (value) => (value === null || value === undefined ? "" : String(value));
+
     uploadButton.addEventListener("click", async () => {
       const expertFile = expertInput.files?.[0];
       if (!expertFile) {
@@ -458,14 +460,27 @@
           otherBase64List.push(compressed);
         }
 
-        window.outputlist1 = [expertBase64, ...otherBase64List];
-        window.output1 = "evraklar_hazir";
-        window.output2 = new Date().toISOString();
-        window.output3 = "";
-        window.output4 = "";
+        const outputList1 = [expertBase64, ...otherBase64List];
+        const output1 = "evraklar_hazir";
+        const output2 = new Date().toISOString();
+        const output3 = "";
+        const output4 = "";
 
         if (typeof window.bubble_fn_evraklar_hazir === "function") {
-          window.bubble_fn_evraklar_hazir();
+          window.bubble_fn_evraklar_hazir({
+            value: safeText(output1),
+            output1: safeText(output1),
+            output2: safeText(output2),
+            output3: safeText(output3),
+            output4: safeText(output4),
+            outputlist1: outputList1.map((item) => safeText(item)),
+          });
+        } else {
+          window.outputlist1 = outputList1;
+          window.output1 = output1;
+          window.output2 = output2;
+          window.output3 = output3;
+          window.output4 = output4;
         }
 
         statusArea.textContent = "Evraklar hazır! Hesaplama süreci başladı.";
