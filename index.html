@@ -32,7 +32,7 @@
 
     body {
       margin: 0;
-      background: var(--bg);
+      background: radial-gradient(circle at top, #ffffff 0%, #f7f8fb 45%, #eef2f7 100%);
       color: var(--text);
     }
 
@@ -52,6 +52,12 @@
       padding: 20px;
       box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
       border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
     }
 
     h1, h2, h3, h4 {
@@ -96,7 +102,7 @@
     .hero-card {
       padding: 28px;
       border-radius: 20px;
-      background: linear-gradient(140deg, #ffffff 20%, #f3f7ff 100%);
+      background: linear-gradient(135deg, #ffffff 15%, #eef4ff 65%, #f7fbff 100%);
       border: 1px solid #dbe4f5;
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
     }
@@ -125,10 +131,13 @@
       padding: 6px 10px;
       border-radius: 999px;
       background: rgba(31, 111, 235, 0.12);
+      transition: background 0.2s ease, transform 0.2s ease;
     }
 
     .hero-actions-link:hover {
       text-decoration: underline;
+      background: rgba(31, 111, 235, 0.2);
+      transform: translateY(-1px);
     }
 
     .secure-note {
@@ -573,11 +582,11 @@
       }
 
       #stageTwo {
-        order: 1;
+        order: 2;
       }
 
       #stageOne {
-        order: 2;
+        order: 1;
         padding: 14px;
       }
 
@@ -795,7 +804,7 @@
         </header>
 
         <section class="card-grid">
-          <article class="card status-card">
+          <article class="card status-card" id="statusCard">
             <h2 class="status-title">Başvuru Durumu</h2>
             <div class="status-text" id="statusStateLabel">Belgeler kontrol ediliyor</div>
             <p class="status-subtitle">
@@ -870,7 +879,7 @@
           </article>
         </section>
 
-        <div class="action-bar">
+        <div class="action-bar" id="actionBar">
           <div class="action-info">Ortalama işlem süresi: 2–4 dakika</div>
           <button class="action-button" id="actionButton" type="button" disabled>Belgeler Bekleniyor</button>
         </div>
@@ -923,9 +932,13 @@
     const resultDate = document.getElementById("resultDate");
     const resultCard = document.getElementById("resultCard");
     const petitionCard = document.getElementById("petitionCard");
+    const statusCard = document.getElementById("statusCard");
+    const actionBar = document.getElementById("actionBar");
     const howItWorksLink = document.getElementById("howItWorksLink");
     const howItWorksModal = document.getElementById("howItWorksModal");
     const closeModalButton = document.getElementById("closeModalButton");
+
+    const hasResultData = Boolean(RESULT_DATA_JSON && RESULT_DATA_JSON.trim());
 
     function setUiState(state) {
       stageTwo.dataset.uiState = state;
@@ -949,8 +962,10 @@
       statusStateLabel.textContent = "Hesaplamaya Hazır";
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
-      setStageOneHidden(true);
-      setOutputVisibility(true);
+      if (hasResultData) {
+        setStageOneHidden(true);
+        setOutputVisibility(true);
+      }
       triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
     }
 
@@ -966,6 +981,8 @@
         parsedResult = null;
       }
     }
+
+    setProcessVisibility(hasResultData);
 
     if (EVRAKLAR_YUKLENDI) {
       statusStateLabel.textContent = "Hesaplamaya Hazır";
@@ -1010,11 +1027,26 @@
     }
 
     function setOutputVisibility(isVisible) {
+      if (!hasResultData) {
+        return;
+      }
       if (resultCard) {
         resultCard.classList.toggle("is-hidden", !isVisible);
       }
       if (petitionCard) {
         petitionCard.classList.toggle("is-hidden", !isVisible);
+      }
+    }
+
+    function setProcessVisibility(isVisible) {
+      if (statusCard) {
+        statusCard.classList.toggle("is-hidden", !isVisible);
+      }
+      if (actionBar) {
+        actionBar.classList.toggle("is-hidden", !isVisible);
+      }
+      if (howItWorksLink) {
+        howItWorksLink.classList.toggle("is-hidden", !isVisible);
       }
     }
 
