@@ -597,6 +597,26 @@
       #stageOne .list {
         display: none;
       }
+
+      .stage-one {
+        gap: 14px;
+      }
+
+      .hero-title-lg {
+        font-size: 22px;
+      }
+
+      .cta-block {
+        order: 1;
+      }
+
+      .hero-block {
+        order: 0;
+      }
+
+      .trust-bar {
+        order: -1;
+      }
     }
 
     .result {
@@ -684,6 +704,216 @@
       padding-left: 18px;
     }
 
+    .stage-one {
+      display: grid;
+      gap: 18px;
+    }
+
+    .trust-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f0f6ff;
+      border: 1px solid #dbe7ff;
+      font-size: 13px;
+      color: #2b3b55;
+    }
+
+    .trust-bar-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .trust-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .trust-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1f6feb;
+    }
+
+    .trust-link {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .trust-link:hover {
+      text-decoration: underline;
+    }
+
+    .hero-block {
+      padding: 24px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-title-lg {
+      font-size: 26px;
+      line-height: 1.25;
+    }
+
+    .hero-subtitle {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(31, 111, 235, 0.12);
+      color: #1747b8;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .steps-block {
+      display: grid;
+      gap: 12px;
+    }
+
+    .steps-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .step-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .step-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+    }
+
+    .lawyers-block {
+      display: grid;
+      gap: 14px;
+    }
+
+    .lawyers-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .lawyer-card {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      display: grid;
+      gap: 10px;
+    }
+
+    .lawyer-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lawyer-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e3ecff, #f8fbff);
+      display: grid;
+      place-items: center;
+      color: #3558b8;
+      font-weight: 700;
+    }
+
+    .lawyer-meta {
+      display: grid;
+      gap: 4px;
+    }
+
+    .lawyer-name {
+      font-weight: 700;
+    }
+
+    .lawyer-title {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .lawyer-city {
+      font-size: 12px;
+      color: #4b5563;
+      font-weight: 600;
+    }
+
+    .lawyer-note {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .cta-block {
+      display: grid;
+      gap: 10px;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #dbeafe;
+      background: #f7faff;
+    }
+
+    .cta-button {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 16px;
+      border-radius: 14px;
+    }
+
+    .cta-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .cta-warning {
+      font-size: 12px;
+      color: #92400e;
+      background: #fff7ed;
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid #fed7aa;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     @media (min-width: 720px) {
       #app {
         padding: 40px;
@@ -716,40 +946,139 @@
   <div id="app">
     <section class="layout">
       <div class="card stack" id="stageOne">
-        <h1>Değer kaybı hesaplama ve dilekçe hazırlama otomasyonu</h1>
-        <div class="upload-actions">
-          <button type="button" id="calculateButton">Değer Kaybımı Hesapla</button>
-        </div>
-        <div class="doc-requirements">
-          <strong>Toplu yükleme alanına eklenecek evraklar</strong>
-          <ul>
-            <li><strong>Hasar/eksper raporu zorunlu:</strong> Bu evrak yüklenmezse değer kaybı hesaplanamaz.</li>
-            <li>Kaza tespit tutanağı (varsa olay yerinde düzenlenen form).</li>
-            <li>Her iki tarafa ait ruhsat fotokopileri (dilekçe için gereklidir).</li>
-          </ul>
-          <p>
-            <strong>Hasar/eksper raporu e-Devlet’ten nasıl alınır?</strong> e-Devlet’e giriş yapın, arama bölümüne
-            “Sigorta Bilgi ve Gözetim Merkezi Eksper Raporu” yazın ve ilgili hizmetten raporu indirip yükleyin.
-          </p>
-        </div>
-        <p>
-          Evraklarınızı soldaki yükleme alanlarından sırayla ekleyin. Eksper/hasar raporunu servisinizden, ruhsat
-          fotokopilerini e-Devlet veya noter onaylı kopyalarından, kaza tespit tutanağını ise varsa olay yerinde düzenlenen
-          tutanaktan alabilirsiniz.
-        </p>
-        <ul class="list">
-          <li>Dosyaları net, okunabilir ve tam görünür şekilde yükleyin.</li>
-          <li>Eksper/hasar raporu zorunludur; diğer belgeler hesaplamayı destekler.</li>
-          <li>Eksik veya okunmayan evraklar işlemi geciktirebilir.</li>
-        </ul>
-        <div class="trust-card">
-          <strong>Güvenli ve şeffaf süreç</strong>
-          <ul>
-            <li>256-bit şifreleme ve KVKK uyumlu işlem.</li>
-            <li>Belgeler yalnızca başvurunuz için kullanılır, üçüncü taraflarla paylaşılmaz.</li>
-            <li>İşlem sonunda verileriniz güvenli şekilde silinir.</li>
-            <li>Her adımda durumunuzu görebilir, süreç bitmeden onay vermezsiniz.</li>
-          </ul>
+        <div class="stage-one">
+          <div class="trust-bar">
+            <div class="trust-bar-items">
+              <span class="trust-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Belgeleriniz şifreli işlenir.
+              </span>
+              <span class="trust-item">
+                <span class="trust-dot" aria-hidden="true"></span>
+                Hesaplama tamamlanınca otomatik silinir.
+              </span>
+            </div>
+            <a class="trust-link" href="#" id="trustDetailsLink">Detaylar</a>
+          </div>
+
+          <section class="hero-block">
+            <h1 class="hero-title-lg">Değer Kaybı Hesaplama ve Başvuru Otomasyonu</h1>
+            <p class="hero-subtitle">
+              Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza hazırlar.
+            </p>
+            <div class="pill-row" aria-label="Güven rozetleri">
+              <span class="pill">Şifreli İşleme</span>
+              <span class="pill">Otomatik Silme</span>
+              <span class="pill">Avukat Destekli</span>
+            </div>
+          </section>
+
+          <section class="steps-block">
+            <h2>Nasıl İlerler?</h2>
+            <div class="steps-grid">
+              <div class="step-card">
+                <span class="step-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="4" y="7" width="16" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong>Evrakları yükleyin</strong>
+                  <p>Belgeler net ve eksiksiz olmalı.</p>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12l4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong>Okunabilirlik kontrolü</strong>
+                  <p>Uygunluk ve netlik otomatik doğrulanır.</p>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 6v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong>Hesaplamayı başlatın</strong>
+                  <p>Tek tıkla tutar oluşturulur.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="lawyers-block">
+            <div>
+              <h2>Bizimle Çalışan Avukatlar</h2>
+              <p class="hero-subtitle">
+                Otomasyonumuz, trafik ve sigorta hukuku alanında çalışan avukatların süreç standartlarına göre hazırlanmıştır.
+              </p>
+            </div>
+            <div class="lawyers-grid">
+              <article class="lawyer-card">
+                <div class="lawyer-profile">
+                  <div class="lawyer-avatar" aria-hidden="true">AK</div>
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Aylin Kaya</div>
+                    <div class="lawyer-title">Trafik Hukuku Avukatı</div>
+                    <div class="lawyer-city">İstanbul</div>
+                  </div>
+                </div>
+              </article>
+              <article class="lawyer-card">
+                <div class="lawyer-profile">
+                  <div class="lawyer-avatar" aria-hidden="true">MS</div>
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Mehmet Şahin</div>
+                    <div class="lawyer-title">Sigorta Hukuku Uzmanı</div>
+                    <div class="lawyer-city">Ankara</div>
+                  </div>
+                </div>
+              </article>
+              <article class="lawyer-card">
+                <div class="lawyer-profile">
+                  <div class="lawyer-avatar" aria-hidden="true">ED</div>
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Elif Demir</div>
+                    <div class="lawyer-title">Trafik Hukuku Avukatı</div>
+                    <div class="lawyer-city">İzmir</div>
+                  </div>
+                </div>
+              </article>
+              <article class="lawyer-card">
+                <div class="lawyer-profile">
+                  <div class="lawyer-avatar" aria-hidden="true">OK</div>
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Onur Karaca</div>
+                    <div class="lawyer-title">Sigorta Hukuku Uzmanı</div>
+                    <div class="lawyer-city">Bursa</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <p class="lawyer-note">
+              Avukatlar, sürecin hukuki çerçevesini belirler. Başvurular sizin adınıza otomatik hazırlanır.
+            </p>
+          </section>
+
+          <section class="cta-block">
+            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
+            <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
+            <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
+            <div class="cta-warning is-hidden" id="missingDocsNote">
+              Devam etmek için zorunlu evrakları yükleyin.
+            </div>
+          </section>
         </div>
       </div>
       <main class="main-panel" id="stageTwo" data-ui-state="empty">
@@ -887,6 +1216,21 @@
     </section>
   </div>
 
+  <div class="modal-backdrop" id="trustDetailsModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="trustDetailsTitle">
+      <div class="modal-header">
+        <h3 id="trustDetailsTitle">Detaylar</h3>
+        <button class="modal-close" type="button" id="closeTrustModalButton">Kapat</button>
+      </div>
+      <ul class="list">
+        <li>Belgeler sadece hesaplama ve dilekçe üretimi için kullanılır.</li>
+        <li>Hesaplama tamamlandığında otomatik olarak silinir.</li>
+        <li>Paylaşım yapılmaz, üçüncü taraf erişimi yoktur.</li>
+        <li>Yasal saklama zorunluluğu olmadıkça sistemde tutulmaz.</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="howItWorksModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="howItWorksTitle">
       <div class="modal-header">
@@ -937,6 +1281,10 @@
     const howItWorksLink = document.getElementById("howItWorksLink");
     const howItWorksModal = document.getElementById("howItWorksModal");
     const closeModalButton = document.getElementById("closeModalButton");
+    const trustDetailsLink = document.getElementById("trustDetailsLink");
+    const trustDetailsModal = document.getElementById("trustDetailsModal");
+    const closeTrustModalButton = document.getElementById("closeTrustModalButton");
+    const missingDocsNote = document.getElementById("missingDocsNote");
 
     const hasResultData = Boolean(RESULT_DATA_JSON && RESULT_DATA_JSON.trim());
 
@@ -973,6 +1321,16 @@
       calculateButton.addEventListener("click", handleCalculateClick);
     }
 
+    function setCalculateButtonState(isReady) {
+      if (!calculateButton) {
+        return;
+      }
+      calculateButton.disabled = !isReady;
+      if (missingDocsNote) {
+        missingDocsNote.classList.toggle("is-hidden", isReady);
+      }
+    }
+
     let parsedResult = null;
     if (RESULT_DATA_JSON) {
       try {
@@ -985,6 +1343,7 @@
     setProcessVisibility(hasResultData);
 
     if (EVRAKLAR_YUKLENDI) {
+      setCalculateButtonState(true);
       statusStateLabel.textContent = "Hesaplamaya Hazır";
       actionButton.disabled = false;
       actionButton.textContent = "Hesaplamayı Başlat";
@@ -992,6 +1351,7 @@
       setStageOneHidden(true);
       setOutputVisibility(true);
     } else {
+      setCalculateButtonState(false);
       statusStateLabel.textContent = "Belgeler kontrol ediliyor";
       actionButton.disabled = true;
       actionButton.textContent = "Belgeler Bekleniyor";
@@ -1016,6 +1376,14 @@
       }
       howItWorksModal.classList.toggle("active", isOpen);
       howItWorksModal.setAttribute("aria-hidden", String(!isOpen));
+    }
+
+    function toggleTrustModal(isOpen) {
+      if (!trustDetailsModal) {
+        return;
+      }
+      trustDetailsModal.classList.toggle("active", isOpen);
+      trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
     }
 
     function setStageOneHidden(isHidden) {
@@ -1057,14 +1425,33 @@
       });
     }
 
+    if (trustDetailsLink) {
+      trustDetailsLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        toggleTrustModal(true);
+      });
+    }
+
     if (closeModalButton) {
       closeModalButton.addEventListener("click", () => toggleModal(false));
+    }
+
+    if (closeTrustModalButton) {
+      closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
     }
 
     if (howItWorksModal) {
       howItWorksModal.addEventListener("click", (event) => {
         if (event.target === howItWorksModal) {
           toggleModal(false);
+        }
+      });
+    }
+
+    if (trustDetailsModal) {
+      trustDetailsModal.addEventListener("click", (event) => {
+        if (event.target === trustDetailsModal) {
+          toggleTrustModal(false);
         }
       });
     }
