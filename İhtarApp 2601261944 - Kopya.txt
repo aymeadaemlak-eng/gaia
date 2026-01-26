@@ -9,6 +9,7 @@
 
 const TENANT_SHEET_ID = '1Op0apkXwX0aQo7d87cybwaNkgcpcTlP-vHf5t_sfuEU';
 const TENANT_SHEET_GID = 605323814;
+const VEKILSIZ_TEMPLATE_ID = '1DovsQE15jRz0jgTkOUe9sUaT-8ovI6pu6XpDh8GBs_8';
 
 
 function doPost(e) {
@@ -429,6 +430,7 @@ function buildPlaceholdersFromPayload_(payload) {
   if (payload.Vekil && typeof payload.Vekil === 'object') applyKeyMap_(p, payload.Vekil);
   if (payload.Davalı && typeof payload.Davalı === 'object') applyKeyMap_(p, payload.Davalı);
   for (const k in p) if (typeof p[k] === 'string') p[k] = p[k].trim();
+  applyDavaliDirectory_(p);
   return p;
 }
 
@@ -498,6 +500,7 @@ const KEYMAP = {
   'Davalı Mail': 'Davali_Mail',
   'Davalı E-Mail': 'Davali_Mail',
   'Davalı Kep': 'Davali_Kep',
+  'Davali Adi': 'Davali_Adi_Lookup',
 
 
   // Eksper
@@ -549,6 +552,58 @@ const KEYMAP = {
 };
 
 
+const DAVALI_DIRECTORY = {
+  'AcnTurk Sigorta A.Ş.': 'Fulya Mah. Büyükdere Cad. Quasar No:76 Kat:4 İç Kapı No:142, Şişli / İstanbul',
+  'AKSigorta A.Ş.': 'Poligon Cad. Buyaka 2 Sitesi No:8 Kule:1, Kat:0-6 Ümraniye 34771/İstanbul',
+  'Allianz Sigorta A.Ş.': 'Allianz Tower, Küçükbakkalköy Mah. Kayışdağı Cad. No:1, 34750 Ataşehir / İstanbul',
+  'Anadolu Anonim Türk Sigorta Şirketi (Anadolu Sigorta)': 'Rüzgarlıbahçe Mah. Çam Pınarı Sok. No:6, 34805 Beykoz / İstanbul',
+  'Ankara Anonim Türk Sigorta Şirketi': 'Ünalan Mah., Libadiye Cad. No:84/2 Üsküdar / İstanbul',
+  'Arex Sigorta A.Ş.': 'Maslak Mah. Maslak Meydan Sk. Veko Giz Plaza No:3 Kat:8 Sarıyer / İstanbul',
+  'S.S. Atlas Sigorta Kooperatifi (Atlas Mutuel)': 'Akdeniz Mah. Halit Ziya Bulvarı 1353 Sok. No:2 Kat:6 İç Kapı No:61, Konak / İzmir',
+  'AXA Sigorta A.Ş.': 'Meclis-i Mebusan Cad. No:15 34433 Salıpazarı / İstanbul',
+  'Bereket Sigorta A.Ş.': 'Saray Mah. Dr. Adnan Büyükdeniz Cad. B Blok No:8 Kat:1-2 34768 Ümraniye / İstanbul',
+  'Corpus Sigorta A.Ş.': 'Quick Tower, İçerenköy Mah. Umut Sok. No:10-12 K:8 D:37 Ataşehir - İstanbul',
+  'Doğa Sigorta A.Ş.': 'Maslak Spine Tower No:243 Büyükdere Cad. 34398 Sarıyer / İstanbul',
+  'Emaa Sigorta A.Ş.': 'Altunizade Mah. Mahir İz Cad. Ofton İş Merkezi 13/2 İç Kapı No:3 Üsküdar / İstanbul',
+  'Eureko Sigorta A.Ş.': 'Altunizade Mah. Ord. Prof. Dr. Fahrettin Kerim Gökay Cad. No:20 Üsküdar / İstanbul',
+  'GRI Sigorta A.Ş.': 'Karacaoğlan Mah. 6166 Sok. No:32/1, Bornova – İzmir',
+  'HDI Sigorta A.Ş.': 'Sahrayıcedit Mah. Batman Sok. No:6 34734 Kadıköy / İstanbul',
+  'Hepiyi Sigorta A.Ş.': 'Fatih Sultan Mehmet Mah. Poligon Cad. Buyaka 2 Sitesi No:8 Kule 1 Kat:21 34771 Ümraniye / İstanbul',
+  'Koru Sigorta A.Ş.': '19 Mayıs Mah. İnönü Cad. Ali İhsan Tüzün İş Merkezi No:96 Kat:5-6, 34742 Kadıköy / İstanbul',
+  'Magdeburger Sigorta A.Ş.': 'İnkılap Mah., Dr. Adnan Büyükdeniz Cad., Akkom Ofispark 2. Blok, K:12, Ümraniye / İstanbul',
+  'Mapfre Sigorta A.Ş.': 'Torun Center, Fulya Mah., Büyükdere Cad. No:74-D Şişli / İstanbul',
+  'Neova Katılım Sigorta A.Ş.': '',
+  'Orient Sigorta A.Ş.': 'Değirmen Sok. No:18 Nida Kule Kat:4 Kozyatağı, Kadıköy / İstanbul',
+  'Quick Sigorta A.Ş.': 'Quick Tower, İçerenköy Mah. Umut Sok. No:10-12, 34752 Ataşehir / İstanbul',
+  'Prive Sigorta A.Ş.': 'Torun Center D Blok No:74 Kat:12 34394 Şişli / İstanbul',
+  'Ray Sigorta A.Ş.': 'Cumhuriyet Mah. Haydar Aliyev Cad. No:28 34457 Sarıyer / İstanbul',
+  'Sompo Sigorta A.Ş.': 'Rüzgarlıbahçe Mah. Çam Pınarı Sok. No:10, Kavacık / Beykoz / İstanbul',
+  'Şeker Sigorta A.Ş.': 'Büyükdere Cad. No:171 Metrocity A Blok Kat:2 34394 Levent / İstanbul',
+  'Türk Nippon Sigorta A.Ş.': 'Altunizade Mah. Mahir İz Cad. No:24, 34662 Üsküdar / İstanbul',
+  'Türkiye Katılım Sigorta A.Ş.': 'İnkılap Mah., Dr. Adnan Büyükdeniz Cad., Akkom Ofis Park Kelif Plaza No:2, Kat:16-17, 34768 Ümraniye / İstanbul',
+  'Türkiye Sigorta A.Ş.': 'Büyükdere Cad. Güneş Plaza No:110 34394 Esentepe / Şişli / İstanbul',
+  'Unico Sigorta A.Ş.': 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1 Kat:22-24 Kadıköy / İstanbul',
+  'Zurich Sigorta A.Ş.': 'Orjin Maslak İş Merkezi, Eski Büyükdere Cad. No:27 Kat:12-13 34485 Sarıyer / İstanbul',
+  'Allianz Hayat ve Emeklilik A.Ş.': 'Allianz Tower, Küçükbakkalköy Mah. Kayışdağı Cad. No:1, 34750 Ataşehir / İstanbul',
+  'Allianz Yaşam ve Emeklilik A.Ş.': 'Allianz Tower, Küçükbakkalköy Mah. Kayışdağı Cad. No:1, 34750 Ataşehir / İstanbul',
+  'AgeSA Hayat ve Emeklilik A.Ş.': 'İçerenköy Mah. Umut Sok. Quick Tower Sitesi No:10-12/9 Kat:1 Ataşehir / İstanbul',
+  'Katılım Emeklilik ve Hayat A.Ş.': 'İnkılap Mah. Dr. Adnan Büyükdeniz Cad. Kelif Plaza 3. Blok No:2 İç Kapı No:3 Ümraniye / İstanbul',
+  'MetLife Emeklilik ve Hayat A.Ş.': 'Kavacık Ticaret Merkezi Rüzgarlıbahçe Mah. Kavak Sokak B Blok No:18 Kavacık – İstanbul',
+  'Türkiye Hayat ve Emeklilik A.Ş.': 'Levent Mah. Çayır Çimen Sok. No:7 34330 Levent / Beşiktaş / İstanbul',
+  'Quick Hayat Sigorta A.Ş.': 'Quick Tower İçerenköy Mah. Umut Sok. No:10-12 34752 Ataşehir / İstanbul'
+};
+
+
+function applyDavaliDirectory_(map) {
+  const raw = map.Davali_Adi_Lookup;
+  if (!hasValue_(raw)) return;
+  const key = String(raw).trim();
+  if (!Object.prototype.hasOwnProperty.call(DAVALI_DIRECTORY, key)) return;
+  map.Davali_Adi = key;
+  map.Davali_Adresi = DAVALI_DIRECTORY[key] || '';
+}
+
+
 function applyKeyMap_(out, src) {
   if (!src || typeof src !== 'object') return;
   for (const k in src) {
@@ -565,6 +620,7 @@ function applyKeyMap_(out, src) {
 
 
 function pickIhtarTemplateId_(cfg, placeholders) {
+  if (!hasValue_(placeholders.Vekil_Adi)) return VEKILSIZ_TEMPLATE_ID;
   const dk = isTrue(placeholders.Deger_Kaybi_Talebi);
   const hf = isTrue(placeholders.Hasar_Farki_Talebi);
   const amb = isTrue(placeholders.AMB_Talebi);
