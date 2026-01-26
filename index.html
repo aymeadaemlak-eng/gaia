@@ -7,9 +7,13 @@
   <script>
     // === KONFIGURASYON (en üst) ===
     // Evraklar yüklendi ise true yapın. False ise ilk aşamadaki açıklama görünür.
-    window.EVRAKLAR_YUKLENDI = false;
+    if (typeof window.EVRAKLAR_YUKLENDI === "undefined") {
+      window.EVRAKLAR_YUKLENDI = false;
+    }
 
-    window.RESULT_DATA_JSON = "";
+    if (typeof window.RESULT_DATA_JSON === "undefined") {
+      window.RESULT_DATA_JSON = "";
+    }
   </script>
   <style>
     :root {
@@ -1593,15 +1597,34 @@
 
     const BUBBLE_FN_SUFFIX = "hesapla";
 
+    function resolveBubbleFunction(fnName) {
+      if (typeof window[fnName] === "function") {
+        return window[fnName];
+      }
+      if (window.parent && typeof window.parent[fnName] === "function") {
+        return window.parent[fnName];
+      }
+      if (window.top && typeof window.top[fnName] === "function") {
+        return window.top[fnName];
+      }
+      return null;
+    }
+
     function triggerBubbleFunction(suffix, payload) {
       const fnName = `bubble_fn_${suffix}`;
-      const bubbleFn = window[fnName] || (window.parent && window.parent[fnName]);
+      const bubbleFn = resolveBubbleFunction(fnName);
       if (typeof bubbleFn === "function") {
-        const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
-        bubbleFn(bubblePayload);
+        if (payload === undefined || payload === null) {
+          console.info(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
+          bubbleFn();
+        } else {
+          const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
+          console.info(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
+          bubbleFn(bubblePayload);
+        }
         return true;
       }
-      console.warn(`Bubble function not found: ${fnName}`);
+      console.warn(`[Bubble] Fonksiyon bulunamadı: ${fnName}`);
       return false;
     }
 
@@ -1614,11 +1637,15 @@
         setStageOneHidden(true);
         setOutputVisibility(true);
       }
-      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready", ts: Date.now() });
+      console.info("[UI] Hesaplama butonu tıklandı, Bubble tetikleniyor.");
+      triggerBubbleFunction(BUBBLE_FN_SUFFIX);
     }
 
     if (calculateButton) {
       calculateButton.addEventListener("click", handleCalculateClick);
+    }
+    if (actionButton) {
+      actionButton.addEventListener("click", handleCalculateClick);
     }
 
     function setCalculateButtonState(isReady) {
