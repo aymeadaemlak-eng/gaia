@@ -1108,6 +1108,15 @@
     <section class="layout">
       <div class="card stack" id="stageOne">
         <div class="stage-one">
+          <section class="cta-block">
+            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
+            <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
+            <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
+            <div class="cta-warning is-hidden" id="missingDocsNote">
+              Devam etmek için zorunlu evrakları yükleyin.
+            </div>
+          </section>
+
           <div class="trust-bar">
             <div class="trust-bar-items">
               <span class="trust-item">
@@ -1352,15 +1361,6 @@
               </article>
             </div>
           </section>
-
-          <section class="cta-block">
-            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
-            <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
-            <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
-            <div class="cta-warning is-hidden" id="missingDocsNote">
-              Devam etmek için zorunlu evrakları yükleyin.
-            </div>
-          </section>
         </div>
       </div>
       <main class="main-panel" id="stageTwo" data-ui-state="empty">
@@ -1590,8 +1590,6 @@
       const lawyerReferralModal = document.getElementById("lawyerReferralModal");
       const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
 
-      const hasResultData = Boolean(resultDataJson && resultDataJson.trim());
-
       function setUiState(state) {
         stageTwo.dataset.uiState = state;
       }
@@ -1630,14 +1628,10 @@
       }
 
       function handleCalculateClick() {
-        stageTwo.dataset.uiState = "loading";
-        statusStateLabel.textContent = "Hesaplamaya Hazır";
-        actionButton.disabled = false;
-        actionButton.textContent = "Hesaplamayı Başlat";
-        if (hasResultData) {
-          setStageOneHidden(true);
-          setOutputVisibility(true);
-        }
+        setUiState("loading");
+        statusStateLabel.textContent = "Hesaplama sürüyor";
+        setStageOneHidden(true);
+        setOutputVisibility(true);
         triggerBubbleFunction(BUBBLE_FN_SUFFIX);
       }
 
@@ -1667,16 +1661,20 @@
         }
       }
 
-      setProcessVisibility(hasResultData);
+      const hasResultData = Boolean(
+        parsedResult && (parsedResult.amount || parsedResult.status === "error")
+      );
+
+      setProcessVisibility(evraklarYuklendi || hasResultData);
 
       if (evraklarYuklendi) {
         setCalculateButtonState(true);
         statusStateLabel.textContent = "Hesaplamaya Hazır";
         actionButton.disabled = false;
         actionButton.textContent = "Hesaplamayı Başlat";
-        setUiState("loading");
-        setStageOneHidden(true);
-        setOutputVisibility(true);
+        setUiState("empty");
+        setStageOneHidden(false);
+        setOutputVisibility(hasResultData);
       } else {
         setCalculateButtonState(false);
         statusStateLabel.textContent = "Belgeler kontrol ediliyor";
@@ -1689,12 +1687,14 @@
 
       if (parsedResult && parsedResult.status === "error") {
         setUiState("error");
+        setOutputVisibility(true);
       }
 
       if (parsedResult && parsedResult.amount) {
         setUiState("success");
         resultAmount.textContent = parsedResult.amount;
         resultDate.textContent = `Hesaplama tarihi: ${parsedResult.date || "GG/AA/YYYY"}`;
+        setOutputVisibility(true);
       }
 
       function toggleModal(isOpen) {
@@ -1730,9 +1730,6 @@
       }
 
       function setOutputVisibility(isVisible) {
-        if (!hasResultData) {
-          return;
-        }
         if (resultCard) {
           resultCard.classList.toggle("is-hidden", !isVisible);
         }
