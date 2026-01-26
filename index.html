@@ -1208,6 +1208,35 @@
       gap: 6px;
     }
 
+    .catch-cta {
+      display: grid;
+      gap: 12px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #f3f7ff 100%);
+      border: 1px solid #dbe7ff;
+      padding: 20px;
+    }
+
+    .catch-cta p {
+      margin: 0;
+    }
+
+    .outline-button {
+      border: 1px solid #c7d2e7;
+      background: transparent;
+      color: #1f3f7a;
+    }
+
+    .outline-button:hover {
+      background: #f2f6ff;
+    }
+
+    .catch-cta .outline-button {
+      width: 100%;
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+
     @media (min-width: 720px) {
       #app {
         padding: 40px;
@@ -1241,6 +1270,16 @@
       .founders-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .catch-cta {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+      }
+
+      .catch-cta .outline-button {
+        width: auto;
+        min-width: 220px;
+      }
     }
   </style>
 </head>
@@ -1249,10 +1288,11 @@
     <section class="layout">
       <div class="card stack" id="stageOne">
         <div class="stage-one">
-          <section class="cta-block">
+          <section class="cta-block" id="primaryCta">
             <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
             <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
             <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
+            <div class="cta-meta">Bu hesaplama bir tahmindir; nihai tutar tahkim bilirkişisiyle belirlenir.</div>
             <div class="cta-warning is-hidden" id="missingDocsNote">
               Devam etmek için zorunlu evrakları yükleyin.
             </div>
@@ -1502,6 +1542,14 @@
               </article>
             </div>
           </section>
+
+          <section class="catch-cta card">
+            <div>
+              <h2>Hızlıca hesaplayın</h2>
+              <p>1–2 dakikada tahmini tutarı görün, başvuru için hazırlanın.</p>
+            </div>
+            <button type="button" class="outline-button" id="catchCtaButton">Yukarı çık ve Hesapla</button>
+          </section>
         </div>
       </div>
       <main class="main-panel" id="stageTwo" data-ui-state="empty">
@@ -1549,7 +1597,7 @@
                   </svg>
                   Verileriniz güvenle işlenir
                 </span>
-                <span class="secure-meta">Verileriniz işlem bittikten sonra otomatik silinir.</span>
+                <span class="secure-meta">256-bit şifreleme ile korunur.</span>
               </div>
             </div>
           </div>
@@ -1740,12 +1788,14 @@
 
   <script>
     (function () {
-      const evraklarYuklendi = window.EVRAKLAR_YUKLENDI;
+      let evraklarYuklendi = window.EVRAKLAR_YUKLENDI;
       const resultDataJson = window.RESULT_DATA_JSON;
 
       const stageOne = document.getElementById("stageOne");
       const stageTwo = document.getElementById("stageTwo");
+      const primaryCta = document.getElementById("primaryCta");
       const calculateButton = document.getElementById("calculateButton");
+      const catchCtaButton = document.getElementById("catchCtaButton");
       const actionButton = document.getElementById("actionButton");
       const statusStateLabel = document.getElementById("statusStateLabel");
       const resultAmount = document.getElementById("resultAmount");
@@ -1823,6 +1873,17 @@
       }
       if (actionButton) {
         actionButton.addEventListener("click", handleCalculateClick);
+      }
+
+      function scrollToPrimaryCta() {
+        if (!primaryCta) {
+          return;
+        }
+        primaryCta.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      if (catchCtaButton) {
+        catchCtaButton.addEventListener("click", scrollToPrimaryCta);
       }
 
       function setCalculateButtonState(isReady) {
@@ -2055,9 +2116,9 @@
           processTag.textContent = "Hazırlanıyor";
           processTitle.textContent = "Değer kaybı tahmini hazırlanıyor";
           processSubtitle.textContent =
-            "Bu hesaplama bir tahmindir. Nihai tutar, sigorta tahkim sürecinde atanan bilirkişi tarafından belirlenir.";
+            "Bu hesaplama bir tahmindir; nihai tutar tahkim bilirkişisiyle belirlenir.";
           processNote.textContent =
-            "Sigorta başvurularında bir sigorta hukuku avukatıyla ilerlemek, hakkınızın sigortada kalmamasına yardımcı olabilir.";
+            "Sigorta başvurularında bir sigorta hukuku avukatıyla ilerlemek, hakkınızın eksik kalmamasına yardımcı olabilir.";
           processNote.classList.remove("is-hidden");
           setProcessStepState(3, false);
           return;
@@ -2088,43 +2149,54 @@
       }
 
       let parsedResult = safeParseResultData(resultDataJson);
+      function hasResultDataValue(resultData) {
+        return Boolean(resultData && (resultData.amount || resultData.status === "error"));
+      }
 
-      const hasResultData = Boolean(
-        parsedResult && (parsedResult.amount || parsedResult.status === "error")
-      );
+      function applyResultState(resultData) {
+        if (resultData && resultData.status === "error") {
+          setUiState("error");
+          setOutputVisibility(true);
+          return;
+        }
+        if (resultData && resultData.amount) {
+          setUiState("success");
+          resultAmount.textContent = resultData.amount;
+          resultDate.textContent = `Hesaplama tarihi: ${resultData.date || "GG/AA/YYYY"}`;
+          setOutputVisibility(true);
+        }
+      }
 
-      setProcessVisibility(evraklarYuklendi || hasResultData);
+      function applyEvrakState(isReady, resultPresent) {
+        setProcessVisibility(isReady || resultPresent);
+        if (isReady) {
+          setCalculateButtonState(true);
+          statusStateLabel.textContent = "Hesaplamaya Hazır";
+          actionButton.disabled = false;
+          actionButton.textContent = "Hesaplamayı Başlat";
+          if (!resultPresent) {
+            setUiState("empty");
+          }
+          setStageOneHidden(false);
+          setOutputVisibility(resultPresent);
+        } else {
+          setCalculateButtonState(false);
+          statusStateLabel.textContent = "Belgeler kontrol ediliyor";
+          actionButton.disabled = true;
+          actionButton.textContent = "Belgeler Bekleniyor";
+          if (!resultPresent) {
+            setUiState("empty");
+          }
+          setStageOneHidden(false);
+          setOutputVisibility(resultPresent);
+        }
+      }
+
+      const hasResultData = hasResultDataValue(parsedResult);
+
       updateProcessUI(parsedResult);
-
-      if (evraklarYuklendi) {
-        setCalculateButtonState(true);
-        statusStateLabel.textContent = "Hesaplamaya Hazır";
-        actionButton.disabled = false;
-        actionButton.textContent = "Hesaplamayı Başlat";
-        setUiState("empty");
-        setStageOneHidden(false);
-        setOutputVisibility(hasResultData);
-      } else {
-        setCalculateButtonState(false);
-        statusStateLabel.textContent = "Belgeler kontrol ediliyor";
-        actionButton.disabled = true;
-        actionButton.textContent = "Belgeler Bekleniyor";
-        setUiState("empty");
-        setStageOneHidden(false);
-        setOutputVisibility(false);
-      }
-
-      if (parsedResult && parsedResult.status === "error") {
-        setUiState("error");
-        setOutputVisibility(true);
-      }
-
-      if (parsedResult && parsedResult.amount) {
-        setUiState("success");
-        resultAmount.textContent = parsedResult.amount;
-        resultDate.textContent = `Hesaplama tarihi: ${parsedResult.date || "GG/AA/YYYY"}`;
-        setOutputVisibility(true);
-      }
+      applyEvrakState(evraklarYuklendi, hasResultData);
+      applyResultState(parsedResult);
 
       function toggleModal(isOpen) {
         if (!howItWorksModal) {
@@ -2234,15 +2306,26 @@
       }
 
       let lastResultJson = resultDataJson || "";
+      let lastEvrakState = Boolean(evraklarYuklendi);
       setInterval(() => {
         const currentJson = window.RESULT_DATA_JSON || "";
-        if (currentJson === lastResultJson) {
-          return;
+        const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
+        let didUpdate = false;
+
+        if (currentJson !== lastResultJson) {
+          lastResultJson = currentJson;
+          const nextParsed = safeParseResultData(currentJson);
+          parsedResult = nextParsed;
+          updateProcessUI(nextParsed);
+          applyResultState(nextParsed);
+          didUpdate = true;
         }
-        lastResultJson = currentJson;
-        const nextParsed = safeParseResultData(currentJson);
-        parsedResult = nextParsed;
-        updateProcessUI(nextParsed);
+
+        if (currentEvrakState !== lastEvrakState || didUpdate) {
+          lastEvrakState = currentEvrakState;
+          evraklarYuklendi = currentEvrakState;
+          applyEvrakState(currentEvrakState, hasResultDataValue(parsedResult));
+        }
       }, 900);
     })();
   </script>
