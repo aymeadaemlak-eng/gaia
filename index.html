@@ -1564,247 +1564,249 @@
   </div>
 
   <script>
-    const { EVRAKLAR_YUKLENDI } = window;
-    const { RESULT_DATA_JSON } = window;
+    (function () {
+      const evraklarYuklendi = window.EVRAKLAR_YUKLENDI;
+      const resultDataJson = window.RESULT_DATA_JSON;
 
-    const stageOne = document.getElementById("stageOne");
-    const stageTwo = document.getElementById("stageTwo");
-    const calculateButton = document.getElementById("calculateButton");
-    const actionButton = document.getElementById("actionButton");
-    const statusStateLabel = document.getElementById("statusStateLabel");
-    const resultAmount = document.getElementById("resultAmount");
-    const resultDate = document.getElementById("resultDate");
-    const resultCard = document.getElementById("resultCard");
-    const petitionCard = document.getElementById("petitionCard");
-    const statusCard = document.getElementById("statusCard");
-    const actionBar = document.getElementById("actionBar");
-    const howItWorksLink = document.getElementById("howItWorksLink");
-    const howItWorksModal = document.getElementById("howItWorksModal");
-    const closeModalButton = document.getElementById("closeModalButton");
-    const trustDetailsLink = document.getElementById("trustDetailsLink");
-    const trustDetailsModal = document.getElementById("trustDetailsModal");
-    const closeTrustModalButton = document.getElementById("closeTrustModalButton");
-    const missingDocsNote = document.getElementById("missingDocsNote");
-    const lawyerReferralButton = document.getElementById("lawyerReferralButton");
-    const lawyerReferralModal = document.getElementById("lawyerReferralModal");
-    const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
+      const stageOne = document.getElementById("stageOne");
+      const stageTwo = document.getElementById("stageTwo");
+      const calculateButton = document.getElementById("calculateButton");
+      const actionButton = document.getElementById("actionButton");
+      const statusStateLabel = document.getElementById("statusStateLabel");
+      const resultAmount = document.getElementById("resultAmount");
+      const resultDate = document.getElementById("resultDate");
+      const resultCard = document.getElementById("resultCard");
+      const petitionCard = document.getElementById("petitionCard");
+      const statusCard = document.getElementById("statusCard");
+      const actionBar = document.getElementById("actionBar");
+      const howItWorksLink = document.getElementById("howItWorksLink");
+      const howItWorksModal = document.getElementById("howItWorksModal");
+      const closeModalButton = document.getElementById("closeModalButton");
+      const trustDetailsLink = document.getElementById("trustDetailsLink");
+      const trustDetailsModal = document.getElementById("trustDetailsModal");
+      const closeTrustModalButton = document.getElementById("closeTrustModalButton");
+      const missingDocsNote = document.getElementById("missingDocsNote");
+      const lawyerReferralButton = document.getElementById("lawyerReferralButton");
+      const lawyerReferralModal = document.getElementById("lawyerReferralModal");
+      const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
 
-    const hasResultData = Boolean(RESULT_DATA_JSON && RESULT_DATA_JSON.trim());
+      const hasResultData = Boolean(resultDataJson && resultDataJson.trim());
 
-    function setUiState(state) {
-      stageTwo.dataset.uiState = state;
-    }
-
-    const BUBBLE_FN_SUFFIX = "hesapla";
-
-    function resolveBubbleFunction(fnName) {
-      if (typeof window[fnName] === "function") {
-        return window[fnName];
+      function setUiState(state) {
+        stageTwo.dataset.uiState = state;
       }
-      if (window.parent && typeof window.parent[fnName] === "function") {
-        return window.parent[fnName];
-      }
-      if (window.top && typeof window.top[fnName] === "function") {
-        return window.top[fnName];
-      }
-      return null;
-    }
 
-    function triggerBubbleFunction(suffix, payload) {
-      const fnName = `bubble_fn_${suffix}`;
-      const bubbleFn = resolveBubbleFunction(fnName);
-      if (typeof bubbleFn === "function") {
-        if (payload === undefined || payload === null) {
-          console.info(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
-          bubbleFn();
-        } else {
-          const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
-          console.info(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
-          bubbleFn(bubblePayload);
+      const BUBBLE_FN_SUFFIX = "hesapla";
+
+      function resolveBubbleFunction(fnName) {
+        if (typeof window[fnName] === "function") {
+          return window[fnName];
         }
-        return true;
+        if (window.parent && typeof window.parent[fnName] === "function") {
+          return window.parent[fnName];
+        }
+        if (window.top && typeof window.top[fnName] === "function") {
+          return window.top[fnName];
+        }
+        return null;
       }
-      console.warn(`[Bubble] Fonksiyon bulunamadı: ${fnName}`);
-      return false;
-    }
 
-    function handleCalculateClick() {
-      stageTwo.dataset.uiState = "loading";
-      statusStateLabel.textContent = "Hesaplamaya Hazır";
-      actionButton.disabled = false;
-      actionButton.textContent = "Hesaplamayı Başlat";
-      if (hasResultData) {
+      function triggerBubbleFunction(suffix, payload) {
+        const fnName = `bubble_fn_${suffix}`;
+        const bubbleFn = resolveBubbleFunction(fnName);
+        if (typeof bubbleFn === "function") {
+          if (payload === undefined || payload === null) {
+            console.info(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
+            bubbleFn();
+          } else {
+            const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
+            console.info(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
+            bubbleFn(bubblePayload);
+          }
+          return true;
+        }
+        console.warn(`[Bubble] Fonksiyon bulunamadı: ${fnName}`);
+        return false;
+      }
+
+      function handleCalculateClick() {
+        stageTwo.dataset.uiState = "loading";
+        statusStateLabel.textContent = "Hesaplamaya Hazır";
+        actionButton.disabled = false;
+        actionButton.textContent = "Hesaplamayı Başlat";
+        if (hasResultData) {
+          setStageOneHidden(true);
+          setOutputVisibility(true);
+        }
+        triggerBubbleFunction(BUBBLE_FN_SUFFIX);
+      }
+
+      if (calculateButton) {
+        calculateButton.addEventListener("click", handleCalculateClick);
+      }
+      if (actionButton) {
+        actionButton.addEventListener("click", handleCalculateClick);
+      }
+
+      function setCalculateButtonState(isReady) {
+        if (!calculateButton) {
+          return;
+        }
+        calculateButton.disabled = !isReady;
+        if (missingDocsNote) {
+          missingDocsNote.classList.toggle("is-hidden", isReady);
+        }
+      }
+
+      let parsedResult = null;
+      if (resultDataJson) {
+        try {
+          parsedResult = JSON.parse(resultDataJson);
+        } catch (error) {
+          parsedResult = null;
+        }
+      }
+
+      setProcessVisibility(hasResultData);
+
+      if (evraklarYuklendi) {
+        setCalculateButtonState(true);
+        statusStateLabel.textContent = "Hesaplamaya Hazır";
+        actionButton.disabled = false;
+        actionButton.textContent = "Hesaplamayı Başlat";
+        setUiState("loading");
         setStageOneHidden(true);
         setOutputVisibility(true);
+      } else {
+        setCalculateButtonState(false);
+        statusStateLabel.textContent = "Belgeler kontrol ediliyor";
+        actionButton.disabled = true;
+        actionButton.textContent = "Belgeler Bekleniyor";
+        setUiState("empty");
+        setStageOneHidden(false);
+        setOutputVisibility(false);
       }
-      triggerBubbleFunction(BUBBLE_FN_SUFFIX);
-    }
 
-    if (calculateButton) {
-      calculateButton.addEventListener("click", handleCalculateClick);
-    }
-    if (actionButton) {
-      actionButton.addEventListener("click", handleCalculateClick);
-    }
-
-    function setCalculateButtonState(isReady) {
-      if (!calculateButton) {
-        return;
+      if (parsedResult && parsedResult.status === "error") {
+        setUiState("error");
       }
-      calculateButton.disabled = !isReady;
-      if (missingDocsNote) {
-        missingDocsNote.classList.toggle("is-hidden", isReady);
-      }
-    }
 
-    let parsedResult = null;
-    if (RESULT_DATA_JSON) {
-      try {
-        parsedResult = JSON.parse(RESULT_DATA_JSON);
-      } catch (error) {
-        parsedResult = null;
+      if (parsedResult && parsedResult.amount) {
+        setUiState("success");
+        resultAmount.textContent = parsedResult.amount;
+        resultDate.textContent = `Hesaplama tarihi: ${parsedResult.date || "GG/AA/YYYY"}`;
       }
-    }
 
-    setProcessVisibility(hasResultData);
-
-    if (EVRAKLAR_YUKLENDI) {
-      setCalculateButtonState(true);
-      statusStateLabel.textContent = "Hesaplamaya Hazır";
-      actionButton.disabled = false;
-      actionButton.textContent = "Hesaplamayı Başlat";
-      setUiState("loading");
-      setStageOneHidden(true);
-      setOutputVisibility(true);
-    } else {
-      setCalculateButtonState(false);
-      statusStateLabel.textContent = "Belgeler kontrol ediliyor";
-      actionButton.disabled = true;
-      actionButton.textContent = "Belgeler Bekleniyor";
-      setUiState("empty");
-      setStageOneHidden(false);
-      setOutputVisibility(false);
-    }
-
-    if (parsedResult && parsedResult.status === "error") {
-      setUiState("error");
-    }
-
-    if (parsedResult && parsedResult.amount) {
-      setUiState("success");
-      resultAmount.textContent = parsedResult.amount;
-      resultDate.textContent = `Hesaplama tarihi: ${parsedResult.date || "GG/AA/YYYY"}`;
-    }
-
-    function toggleModal(isOpen) {
-      if (!howItWorksModal) {
-        return;
+      function toggleModal(isOpen) {
+        if (!howItWorksModal) {
+          return;
+        }
+        howItWorksModal.classList.toggle("active", isOpen);
+        howItWorksModal.setAttribute("aria-hidden", String(!isOpen));
       }
-      howItWorksModal.classList.toggle("active", isOpen);
-      howItWorksModal.setAttribute("aria-hidden", String(!isOpen));
-    }
 
-    function toggleTrustModal(isOpen) {
-      if (!trustDetailsModal) {
-        return;
+      function toggleTrustModal(isOpen) {
+        if (!trustDetailsModal) {
+          return;
+        }
+        trustDetailsModal.classList.toggle("active", isOpen);
+        trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
       }
-      trustDetailsModal.classList.toggle("active", isOpen);
-      trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
-    }
 
-    function toggleLawyerReferralModal(isOpen) {
-      if (!lawyerReferralModal) {
-        return;
+      function toggleLawyerReferralModal(isOpen) {
+        if (!lawyerReferralModal) {
+          return;
+        }
+        lawyerReferralModal.classList.toggle("active", isOpen);
+        lawyerReferralModal.setAttribute("aria-hidden", String(!isOpen));
       }
-      lawyerReferralModal.classList.toggle("active", isOpen);
-      lawyerReferralModal.setAttribute("aria-hidden", String(!isOpen));
-    }
 
-    function setStageOneHidden(isHidden) {
-      if (!stageOne) {
-        return;
+      function setStageOneHidden(isHidden) {
+        if (!stageOne) {
+          return;
+        }
+        stageOne.classList.toggle("is-hidden", isHidden);
+        stageOne.setAttribute("aria-hidden", String(isHidden));
       }
-      stageOne.classList.toggle("is-hidden", isHidden);
-      stageOne.setAttribute("aria-hidden", String(isHidden));
-    }
 
-    function setOutputVisibility(isVisible) {
-      if (!hasResultData) {
-        return;
+      function setOutputVisibility(isVisible) {
+        if (!hasResultData) {
+          return;
+        }
+        if (resultCard) {
+          resultCard.classList.toggle("is-hidden", !isVisible);
+        }
+        if (petitionCard) {
+          petitionCard.classList.toggle("is-hidden", !isVisible);
+        }
       }
-      if (resultCard) {
-        resultCard.classList.toggle("is-hidden", !isVisible);
-      }
-      if (petitionCard) {
-        petitionCard.classList.toggle("is-hidden", !isVisible);
-      }
-    }
 
-    function setProcessVisibility(isVisible) {
-      if (statusCard) {
-        statusCard.classList.toggle("is-hidden", !isVisible);
+      function setProcessVisibility(isVisible) {
+        if (statusCard) {
+          statusCard.classList.toggle("is-hidden", !isVisible);
+        }
+        if (actionBar) {
+          actionBar.classList.toggle("is-hidden", !isVisible);
+        }
+        if (howItWorksLink) {
+          howItWorksLink.classList.toggle("is-hidden", !isVisible);
+        }
       }
-      if (actionBar) {
-        actionBar.classList.toggle("is-hidden", !isVisible);
-      }
+
       if (howItWorksLink) {
-        howItWorksLink.classList.toggle("is-hidden", !isVisible);
+        howItWorksLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          toggleModal(true);
+        });
       }
-    }
 
-    if (howItWorksLink) {
-      howItWorksLink.addEventListener("click", (event) => {
-        event.preventDefault();
-        toggleModal(true);
-      });
-    }
+      if (trustDetailsLink) {
+        trustDetailsLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          toggleTrustModal(true);
+        });
+      }
 
-    if (trustDetailsLink) {
-      trustDetailsLink.addEventListener("click", (event) => {
-        event.preventDefault();
-        toggleTrustModal(true);
-      });
-    }
+      if (closeModalButton) {
+        closeModalButton.addEventListener("click", () => toggleModal(false));
+      }
 
-    if (closeModalButton) {
-      closeModalButton.addEventListener("click", () => toggleModal(false));
-    }
+      if (closeTrustModalButton) {
+        closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
+      }
 
-    if (closeTrustModalButton) {
-      closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
-    }
+      if (lawyerReferralButton) {
+        lawyerReferralButton.addEventListener("click", () => toggleLawyerReferralModal(true));
+      }
 
-    if (lawyerReferralButton) {
-      lawyerReferralButton.addEventListener("click", () => toggleLawyerReferralModal(true));
-    }
+      if (closeLawyerReferralModal) {
+        closeLawyerReferralModal.addEventListener("click", () => toggleLawyerReferralModal(false));
+      }
 
-    if (closeLawyerReferralModal) {
-      closeLawyerReferralModal.addEventListener("click", () => toggleLawyerReferralModal(false));
-    }
+      if (howItWorksModal) {
+        howItWorksModal.addEventListener("click", (event) => {
+          if (event.target === howItWorksModal) {
+            toggleModal(false);
+          }
+        });
+      }
 
-    if (howItWorksModal) {
-      howItWorksModal.addEventListener("click", (event) => {
-        if (event.target === howItWorksModal) {
-          toggleModal(false);
-        }
-      });
-    }
+      if (trustDetailsModal) {
+        trustDetailsModal.addEventListener("click", (event) => {
+          if (event.target === trustDetailsModal) {
+            toggleTrustModal(false);
+          }
+        });
+      }
 
-    if (trustDetailsModal) {
-      trustDetailsModal.addEventListener("click", (event) => {
-        if (event.target === trustDetailsModal) {
-          toggleTrustModal(false);
-        }
-      });
-    }
-
-    if (lawyerReferralModal) {
-      lawyerReferralModal.addEventListener("click", (event) => {
-        if (event.target === lawyerReferralModal) {
-          toggleLawyerReferralModal(false);
-        }
-      });
-    }
+      if (lawyerReferralModal) {
+        lawyerReferralModal.addEventListener("click", (event) => {
+          if (event.target === lawyerReferralModal) {
+            toggleLawyerReferralModal(false);
+          }
+        });
+      }
+    })();
   </script>
 </body>
 </html>
