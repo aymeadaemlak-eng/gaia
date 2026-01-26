@@ -1614,7 +1614,7 @@
         setStageOneHidden(true);
         setOutputVisibility(true);
       }
-      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
+      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready", ts: Date.now() });
     }
 
     if (calculateButton) {
