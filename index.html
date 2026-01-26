@@ -1595,9 +1595,10 @@
 
     function triggerBubbleFunction(suffix, payload) {
       const fnName = `bubble_fn_${suffix}`;
-      const bubbleFn = window[fnName];
+      const bubbleFn = window[fnName] || (window.parent && window.parent[fnName]);
       if (typeof bubbleFn === "function") {
-        bubbleFn(payload);
+        const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
+        bubbleFn(bubblePayload);
         return true;
       }
       console.warn(`Bubble function not found: ${fnName}`);
@@ -1613,7 +1614,7 @@
         setStageOneHidden(true);
         setOutputVisibility(true);
       }
-      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready" });
+      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready", ts: Date.now() });
     }
 
     if (calculateButton) {
