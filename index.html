@@ -1827,19 +1827,36 @@
         stageTwo.dataset.uiState = state;
       }
 
-      function showProcessCardAtTop() {
+      let hasStartedCalculation = false;
+
+      function setProcessCardVisibility(isVisible) {
+        if (!processCard) {
+          return;
+        }
+        processCard.classList.toggle("is-hidden", !isVisible);
+        processCard.setAttribute("aria-hidden", String(!isVisible));
+      }
+
+      function moveProcessCardToTop() {
         if (!processCard || !stageTwo) {
           return;
         }
-        processCard.classList.remove("is-hidden");
-        processCard.setAttribute("aria-hidden", "false");
-        processTag.textContent = "İşleniyor";
-        processTitle.textContent = "Belgeler işleniyor";
-        processSubtitle.textContent = "Bu işlem sırasında aşamalar otomatik güncellenecek.";
         const grid = stageTwo.querySelector(".card-grid");
         if (grid && grid.firstElementChild !== processCard) {
           grid.prepend(processCard);
         }
+      }
+
+      function showProcessCardAtTop() {
+        if (!processCard || !stageTwo) {
+          return;
+        }
+        hasStartedCalculation = true;
+        setProcessCardVisibility(true);
+        moveProcessCardToTop();
+        processTag.textContent = "İşleniyor";
+        processTitle.textContent = "Belgeler işleniyor";
+        processSubtitle.textContent = "Bu işlem sırasında aşamalar otomatik güncellenecek.";
       }
 
       const BUBBLE_FN_SUFFIX = "hesapla";
@@ -2185,6 +2202,12 @@
 
       function applyEvrakState(isReady, resultPresent) {
         setProcessVisibility(isReady || resultPresent);
+        if (!hasStartedCalculation) {
+          setProcessCardVisibility(false);
+        } else {
+          setProcessCardVisibility(true);
+          moveProcessCardToTop();
+        }
         if (isReady) {
           setCalculateButtonState(true);
           statusStateLabel.textContent = "Hesaplamaya Hazır";
