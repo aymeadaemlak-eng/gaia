@@ -1604,7 +1604,7 @@
         </header>
 
         <section class="card-grid">
-          <article class="card process-card" id="processCard">
+          <article class="card process-card is-hidden" id="processCard" aria-hidden="true">
             <div class="process-header">
               <h2 class="status-title">Süreç Takibi</h2>
               <span class="process-tag" id="processTag">Belgeler bekleniyor</span>
@@ -1827,6 +1827,21 @@
         stageTwo.dataset.uiState = state;
       }
 
+      function showProcessCardAtTop() {
+        if (!processCard || !stageTwo) {
+          return;
+        }
+        processCard.classList.remove("is-hidden");
+        processCard.setAttribute("aria-hidden", "false");
+        processTag.textContent = "İşleniyor";
+        processTitle.textContent = "Belgeler işleniyor";
+        processSubtitle.textContent = "Bu işlem sırasında aşamalar otomatik güncellenecek.";
+        const grid = stageTwo.querySelector(".card-grid");
+        if (grid && grid.firstElementChild !== processCard) {
+          grid.prepend(processCard);
+        }
+      }
+
       const BUBBLE_FN_SUFFIX = "hesapla";
 
       function resolveBubbleFunction(fnName) {
@@ -1862,6 +1877,7 @@
 
       function handleCalculateClick() {
         setUiState("loading");
+        showProcessCardAtTop();
         statusStateLabel.textContent = "Hesaplama sürüyor";
         setStageOneHidden(true);
         setOutputVisibility(true);
