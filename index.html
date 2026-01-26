@@ -605,18 +605,6 @@
       .hero-title-lg {
         font-size: 22px;
       }
-
-      .cta-block {
-        order: 1;
-      }
-
-      .hero-block {
-        order: 0;
-      }
-
-      .trust-bar {
-        order: -1;
-      }
     }
 
     .result {
@@ -830,6 +818,7 @@
     }
 
     .lawyer-card {
+      position: relative;
       padding: 16px;
       border-radius: 16px;
       border: 1px solid var(--border);
@@ -837,6 +826,18 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
       display: grid;
       gap: 10px;
+    }
+
+    .lawyer-tag {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
     }
 
     .lawyer-profile {
@@ -876,9 +877,157 @@
       font-weight: 600;
     }
 
+    .lawyer-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .lawyer-link {
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid #dbe4f5;
+      background: #f8fbff;
+      color: #2b4a8f;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     .lawyer-note {
       font-size: 13px;
       color: var(--muted);
+    }
+
+    .lawyer-referral {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .lawyer-referral label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .secondary-button {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid #c7d2e7;
+      background: transparent;
+      color: #1f3f7a;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .secondary-button:hover {
+      background: #f2f6ff;
+    }
+
+    .automation-block {
+      display: grid;
+      gap: 16px;
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid #dbe7ff;
+      background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    .automation-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .automation-card {
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    }
+
+    .automation-card strong {
+      font-size: 15px;
+    }
+
+    .automation-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+    }
+
+    .founders-block {
+      display: grid;
+      gap: 14px;
+    }
+
+    .founders-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .founder-card {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    }
+
+    .founder-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .founder-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e6f0ff, #f9fbff);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #2e4aa1;
+    }
+
+    .founder-name {
+      font-weight: 700;
+    }
+
+    .founder-role {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .modal-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .modal-form input {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #d6deea;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .cta-block {
@@ -939,6 +1088,14 @@
       .card-grid .card:last-child {
         grid-column: span 2;
       }
+
+      .automation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .founders-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
@@ -958,7 +1115,7 @@
               </span>
               <span class="trust-item">
                 <span class="trust-dot" aria-hidden="true"></span>
-                Hesaplama tamamlanınca otomatik silinir.
+                Hesaplama tamamlandığında belgeleriniz otomatik silinir.
               </span>
             </div>
             <a class="trust-link" href="#" id="trustDetailsLink">Detaylar</a>
@@ -967,7 +1124,7 @@
           <section class="hero-block">
             <h1 class="hero-title-lg">Değer Kaybı Hesaplama ve Başvuru Otomasyonu</h1>
             <p class="hero-subtitle">
-              Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza hazırlar.
+              Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza güvenle hazırlar.
             </p>
             <div class="pill-row" aria-label="Güven rozetleri">
               <span class="pill">Şifreli İşleme</span>
@@ -1017,58 +1174,179 @@
             </div>
           </section>
 
+          <section class="automation-block">
+            <div>
+              <h2>GAIA Otomasyonu ile Tam Şeffaf Takip</h2>
+              <p class="hero-subtitle">
+                Tahkim dosyalarında her adım kayıtlıdır. Müvekkil ve ofisler için otomatik bilgilendirme ve takip
+                kolaylığı sunar.
+              </p>
+            </div>
+            <div class="automation-grid">
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 6h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </div>
+                <strong>Tahkim dosyalarında tam şeffaflık</strong>
+                <p>Süreç, belgeler ve adımlar tek ekranda izlenir.</p>
+              </article>
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 4h10v16H7z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 8h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <strong>Müvekkil dosya takip ekranı</strong>
+                <p>Müvekkiller her aşamayı kendi panelinden görür.</p>
+              </article>
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 6v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <strong>SMS ile anlık bilgilendirme</strong>
+                <p>Her kritik adımda otomatik SMS gider.</p>
+              </article>
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 8h16v10H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M4 8l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <strong>Avukatlık ofislerine e-posta güncellemeleri</strong>
+                <p>Sürekli manuel takip ihtiyacını azaltır.</p>
+              </article>
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 12h8l2 3 4-6 2 3h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <strong>Yapay zekâ ile daha hızlı takip</strong>
+                <p>Özetler, uyarılar ve aksiyon önerileri üretir.</p>
+              </article>
+              <article class="automation-card">
+                <div class="automation-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <strong>Ödeme/harç/bilirkişi uyarı sistemi</strong>
+                <p>Dosyayı aksatabilecek gecikmeleri önceden bildirir.</p>
+              </article>
+            </div>
+          </section>
+
           <section class="lawyers-block">
             <div>
-              <h2>Bizimle Çalışan Avukatlar</h2>
+              <h2>Otomasyonumuzu Kullanan Avukatlar</h2>
               <p class="hero-subtitle">
-                Otomasyonumuz, trafik ve sigorta hukuku alanında çalışan avukatların süreç standartlarına göre hazırlanmıştır.
+                Süreç tasarımımız, trafik ve sigorta hukuku alanında çalışan avukatların sahadaki uygulamalarıyla
+                uyumludur.
               </p>
             </div>
             <div class="lawyers-grid">
               <article class="lawyer-card">
+                <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
                   <div class="lawyer-avatar" aria-hidden="true">AK</div>
                   <div class="lawyer-meta">
                     <div class="lawyer-name">Aylin Kaya</div>
-                    <div class="lawyer-title">Trafik Hukuku Avukatı</div>
+                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
                     <div class="lawyer-city">İstanbul</div>
                   </div>
                 </div>
+                <div class="lawyer-actions">
+                  <button type="button" class="lawyer-link">Profili gör</button>
+                </div>
               </article>
               <article class="lawyer-card">
+                <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
                   <div class="lawyer-avatar" aria-hidden="true">MS</div>
                   <div class="lawyer-meta">
                     <div class="lawyer-name">Mehmet Şahin</div>
-                    <div class="lawyer-title">Sigorta Hukuku Uzmanı</div>
+                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
                     <div class="lawyer-city">Ankara</div>
                   </div>
                 </div>
+                <div class="lawyer-actions">
+                  <button type="button" class="lawyer-link">Profili gör</button>
+                </div>
               </article>
               <article class="lawyer-card">
+                <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
                   <div class="lawyer-avatar" aria-hidden="true">ED</div>
                   <div class="lawyer-meta">
                     <div class="lawyer-name">Elif Demir</div>
-                    <div class="lawyer-title">Trafik Hukuku Avukatı</div>
+                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
                     <div class="lawyer-city">İzmir</div>
                   </div>
                 </div>
+                <div class="lawyer-actions">
+                  <button type="button" class="lawyer-link">Profili gör</button>
+                </div>
               </article>
               <article class="lawyer-card">
+                <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
                   <div class="lawyer-avatar" aria-hidden="true">OK</div>
                   <div class="lawyer-meta">
                     <div class="lawyer-name">Onur Karaca</div>
-                    <div class="lawyer-title">Sigorta Hukuku Uzmanı</div>
+                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
                     <div class="lawyer-city">Bursa</div>
                   </div>
                 </div>
+                <div class="lawyer-actions">
+                  <button type="button" class="lawyer-link">Profili gör</button>
+                </div>
               </article>
             </div>
-            <p class="lawyer-note">
-              Avukatlar, sürecin hukuki çerçevesini belirler. Başvurular sizin adınıza otomatik hazırlanır.
-            </p>
+            <div class="lawyer-referral">
+              <label>
+                <input type="checkbox" id="lawyerReferralCheck" />
+                İsterseniz danışmanlık için avukat yönlendirmesi isteyebilirsiniz.
+              </label>
+              <button type="button" class="secondary-button" id="lawyerReferralButton">Avukat yönlendirmesi iste</button>
+            </div>
+          </section>
+
+          <section class="founders-block">
+            <div>
+              <h2>Biz Kimiz?</h2>
+              <p class="hero-subtitle">Sigorta hukuku süreçlerini otomasyonla sadeleştiriyoruz.</p>
+            </div>
+            <div class="founders-grid">
+              <article class="founder-card">
+                <div class="founder-header">
+                  <div class="founder-avatar" aria-hidden="true">SK</div>
+                  <div>
+                    <div class="founder-name">Saltuk Kıraç</div>
+                    <div class="founder-role">GAIA Kurucusu</div>
+                  </div>
+                </div>
+                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
+              </article>
+              <article class="founder-card">
+                <div class="founder-header">
+                  <div class="founder-avatar" aria-hidden="true">MK</div>
+                  <div>
+                    <div class="founder-name">Mevlüt Kıraç</div>
+                    <div class="founder-role">Sigorta Hukuku Otomasyonu Kurucusu</div>
+                  </div>
+                </div>
+                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
+              </article>
+            </div>
           </section>
 
           <section class="cta-block">
@@ -1224,10 +1502,28 @@
       </div>
       <ul class="list">
         <li>Belgeler sadece hesaplama ve dilekçe üretimi için kullanılır.</li>
-        <li>Hesaplama tamamlandığında otomatik olarak silinir.</li>
+        <li>Hesaplama tamamlandığında belgeleriniz otomatik silinir.</li>
         <li>Paylaşım yapılmaz, üçüncü taraf erişimi yoktur.</li>
         <li>Yasal saklama zorunluluğu olmadıkça sistemde tutulmaz.</li>
+        <li>Silme süreci otomatik çalışır, manuel işlem gerekmez.</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="lawyerReferralModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lawyerReferralTitle">
+      <div class="modal-header">
+        <h3 id="lawyerReferralTitle">Avukat Yönlendirmesi</h3>
+        <button class="modal-close" type="button" id="closeLawyerReferralModal">Kapat</button>
+      </div>
+      <p class="hero-subtitle">İletişim bilgilerinizi bırakın, sizinle dönüş yapalım.</p>
+      <form class="modal-form">
+        <input type="text" name="fullName" placeholder="Ad Soyad" />
+        <input type="tel" name="phone" placeholder="Telefon numarası" />
+        <div class="modal-actions">
+          <button type="button" class="secondary-button">Gönder</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1285,6 +1581,9 @@
     const trustDetailsModal = document.getElementById("trustDetailsModal");
     const closeTrustModalButton = document.getElementById("closeTrustModalButton");
     const missingDocsNote = document.getElementById("missingDocsNote");
+    const lawyerReferralButton = document.getElementById("lawyerReferralButton");
+    const lawyerReferralModal = document.getElementById("lawyerReferralModal");
+    const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
 
     const hasResultData = Boolean(RESULT_DATA_JSON && RESULT_DATA_JSON.trim());
 
@@ -1386,6 +1685,14 @@
       trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
     }
 
+    function toggleLawyerReferralModal(isOpen) {
+      if (!lawyerReferralModal) {
+        return;
+      }
+      lawyerReferralModal.classList.toggle("active", isOpen);
+      lawyerReferralModal.setAttribute("aria-hidden", String(!isOpen));
+    }
+
     function setStageOneHidden(isHidden) {
       if (!stageOne) {
         return;
@@ -1440,6 +1747,14 @@
       closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
     }
 
+    if (lawyerReferralButton) {
+      lawyerReferralButton.addEventListener("click", () => toggleLawyerReferralModal(true));
+    }
+
+    if (closeLawyerReferralModal) {
+      closeLawyerReferralModal.addEventListener("click", () => toggleLawyerReferralModal(false));
+    }
+
     if (howItWorksModal) {
       howItWorksModal.addEventListener("click", (event) => {
         if (event.target === howItWorksModal) {
@@ -1452,6 +1767,14 @@
       trustDetailsModal.addEventListener("click", (event) => {
         if (event.target === trustDetailsModal) {
           toggleTrustModal(false);
+        }
+      });
+    }
+
+    if (lawyerReferralModal) {
+      lawyerReferralModal.addEventListener("click", (event) => {
+        if (event.target === lawyerReferralModal) {
+          toggleLawyerReferralModal(false);
         }
       });
     }
