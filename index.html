@@ -1879,7 +1879,41 @@
         stageTwo.dataset.uiState = state;
       }
 
+      const PROCESS_ACTIVE_KEY = "processActive";
       let hasStartedCalculation = false;
+
+      function readPersistedProcessActive() {
+        try {
+          const sessionValue = sessionStorage.getItem(PROCESS_ACTIVE_KEY);
+          if (sessionValue !== null) {
+            return sessionValue === "true";
+          }
+        } catch (error) {
+          console.warn("processActive sessionStorage okunamadı", error);
+        }
+        try {
+          const localValue = localStorage.getItem(PROCESS_ACTIVE_KEY);
+          if (localValue !== null) {
+            return localValue === "true";
+          }
+        } catch (error) {
+          console.warn("processActive localStorage okunamadı", error);
+        }
+        return false;
+      }
+
+      function persistProcessActive(isActive) {
+        try {
+          sessionStorage.setItem(PROCESS_ACTIVE_KEY, String(isActive));
+        } catch (error) {
+          console.warn("processActive sessionStorage yazılamadı", error);
+        }
+        try {
+          localStorage.setItem(PROCESS_ACTIVE_KEY, String(isActive));
+        } catch (error) {
+          console.warn("processActive localStorage yazılamadı", error);
+        }
+      }
 
       function setProcessCardVisibility(isVisible) {
         if (!processCard) {
@@ -1904,6 +1938,7 @@
           return;
         }
         hasStartedCalculation = true;
+        persistProcessActive(true);
         setProcessCardVisibility(true);
         moveProcessCardToTop();
         processTag.textContent = "İşleniyor";
@@ -2064,11 +2099,6 @@
         const allUrls = Array.from(urlSet);
         const fileUrls = allUrls.filter((url) => /\.(pdf|png|jpg|jpeg)(\?|$)/i.test(url));
 
-        const stage1Count = BASIC_KEYS_STAGE1.filter((key) => {
-          const value = getValueByKey(resultData, key);
-          return value !== undefined && value !== null && String(value).trim() !== "";
-        }).length;
-
         const stage2Count = BASIC_KEYS_STAGE2.filter((key) => {
           const value = getValueByKey(resultData, key);
           return value !== undefined && value !== null && String(value).trim() !== "";
@@ -2095,11 +2125,11 @@
           return { stage: 3 };
         }
 
-        if (stage2Count >= 2) {
+        if (stage2Count >= 1) {
           return { stage: 2 };
         }
 
-        if (fileUrls.length > 0 && stage1Count === 0) {
+        if (fileUrls.length > 0 && stage2Count === 0) {
           return { stage: 1 };
         }
 
@@ -2185,13 +2215,17 @@
         if (stage === 4) {
           processTag.textContent = "Tamamlandı";
           processTitle.textContent = "İhtar dilekçeniz hazır";
-          processSubtitle.textContent = "Dilekçeyi indirebilir ve başvurunuzda kullanabilirsiniz.";
-          processNote.textContent = "İndirme sonrası belgeler işlem tamamlandığında otomatik silinir.";
+          processSubtitle.textContent = "İhtar hazır — indirebilirsiniz. Belgeler işlem bitince otomatik silinir.";
+          processNote.textContent = "İhtar hazır — indirebilirsiniz. Belgeler işlem bitince otomatik silinir.";
           processNote.classList.remove("is-hidden");
           if (ihtarUrl) {
             processCta.href = ihtarUrl;
             processCta.setAttribute("download", "");
             processCta.classList.remove("is-hidden");
+          }
+          setUiState("success");
+          if (statusStateLabel) {
+            statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
           setProcessStepState(4, false);
           return;
@@ -2219,17 +2253,22 @@
         }
 
         if (stage === 1) {
-          processTag.textContent = "Başladı";
-          processTitle.textContent = "Belgeleriniz alındı";
-          processSubtitle.textContent =
-            "Okunabilirlik kontrolü başlıyor. Belgeleriniz şifreli işlenir ve işlem tamamlanınca otomatik silinir.";
+          processTag.textContent = "Belgeler alındı";
+          processTitle.textContent = "Belgeler alındı";
+          processSubtitle.textContent = "Okunabilirlik kontrolü yapılıyor. Belgeleriniz işlem tamamlanınca silinir.";
           setProcessStepState(1, false);
           return;
         }
 
-        processTag.textContent = "Bekleniyor";
-        processTitle.textContent = "Belgeler bekleniyor";
-        processSubtitle.textContent = "Süreç başladığında adım adım bilgilendirileceksiniz.";
+        if (hasStartedCalculation) {
+          processTag.textContent = "İşleniyor";
+          processTitle.textContent = "Belgeler işleniyor";
+          processSubtitle.textContent = "Veriler geldikçe süreç adımları güncellenecek.";
+        } else {
+          processTag.textContent = "Bekleniyor";
+          processTitle.textContent = "Belgeler bekleniyor";
+          processSubtitle.textContent = "Süreç başladığında adım adım bilgilendirileceksiniz.";
+        }
         setProcessStepState(1, false);
       }
 
@@ -2253,37 +2292,45 @@
       }
 
       function applyEvrakState(isReady, resultPresent) {
-        setProcessVisibility(isReady || resultPresent);
-        if (!hasStartedCalculation) {
-          setProcessCardVisibility(false);
-        } else {
+        const processActive = hasStartedCalculation;
+        setProcessVisibility(processActive || isReady || resultPresent);
+        if (processActive) {
           setProcessCardVisibility(true);
           moveProcessCardToTop();
+        } else {
+          setProcessCardVisibility(false);
         }
         if (isReady) {
           setCalculateButtonState(true);
           statusStateLabel.textContent = "Hesaplamaya Hazır";
           actionButton.disabled = false;
           actionButton.textContent = "Hesaplamayı Başlat";
-          if (!resultPresent) {
+          if (!resultPresent && !processActive) {
             setUiState("empty");
           }
           setStageOneHidden(false);
-          setOutputVisibility(resultPresent);
+          setOutputVisibility(processActive || resultPresent);
         } else {
           setCalculateButtonState(false);
           statusStateLabel.textContent = "Belgeler kontrol ediliyor";
           actionButton.disabled = true;
           actionButton.textContent = "Belgeler Bekleniyor";
-          if (!resultPresent) {
+          if (!resultPresent && !processActive) {
             setUiState("empty");
           }
           setStageOneHidden(false);
-          setOutputVisibility(resultPresent);
+          setOutputVisibility(processActive || resultPresent);
         }
       }
 
       const hasResultData = hasResultDataValue(parsedResult);
+
+      hasStartedCalculation = readPersistedProcessActive();
+      if (hasStartedCalculation) {
+        setProcessCardVisibility(true);
+        moveProcessCardToTop();
+        setOutputVisibility(true);
+      }
 
       updateProcessUI(parsedResult);
       applyEvrakState(evraklarYuklendi, hasResultData);
