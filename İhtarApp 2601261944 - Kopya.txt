@@ -507,6 +507,8 @@ const KEYMAP = {
   'Eksper Rp No': 'Eksper_Rapor_No',
   'Eksper Rp Tarihi': 'Eksper_Rapor_Tarihi',
 
+  // Talep
+  'Talep Eden': 'Talep_Eden',
 
   // Talepler
   'Kusur Oranı': 'Kusur_Orani',
@@ -565,6 +567,9 @@ function applyKeyMap_(out, src) {
 
 
 function pickIhtarTemplateId_(cfg, placeholders) {
+  const talepEden = String(placeholders.Talep_Eden || '').trim();
+  if (talepEden === 'Kendisi') return '1DovsQE15jRz0jgTkOUe9sUaT-8ovI6pu6XpDh8GBs_8';
+
   const dk = isTrue(placeholders.Deger_Kaybi_Talebi);
   const hf = isTrue(placeholders.Hasar_Farki_Talebi);
   const amb = isTrue(placeholders.AMB_Talebi);
