@@ -566,7 +566,7 @@
 
     .card-grid {
       display: grid;
-      gap: 20px;
+      gap: 16px;
     }
 
     .action-bar {
@@ -839,7 +839,7 @@
 
     .stage-one {
       display: grid;
-      gap: 18px;
+      gap: 16px;
     }
 
     .trust-bar {
@@ -1245,16 +1245,68 @@
       }
 
       .layout {
-        grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
-        align-items: start;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+      }
+
+      #stageOne,
+      #stageTwo {
+        width: 100%;
+        max-width: 780px;
+        margin: 0 auto;
       }
 
       .app-bar {
         display: none;
       }
+
+      .hero-card {
+        padding: 20px;
+      }
+
+      .hero-title {
+        font-size: 22px;
+      }
+
+      #processCard {
+        max-width: 780px;
+        margin: 0 auto;
+      }
+
+      .card:hover {
+        transform: none;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+      }
     }
 
     @media (min-width: 960px) {
+      .stage-one {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+
+      .stage-one > :nth-child(1) {
+        grid-column: 1;
+      }
+
+      .stage-one > :nth-child(3) {
+        grid-column: 2;
+      }
+
+      .trust-bar {
+        grid-column: 1 / -1;
+      }
+
+      .steps-block,
+      .automation-block,
+      .lawyers-block,
+      .founders-block {
+        grid-column: 1 / -1;
+      }
+
       .card-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
