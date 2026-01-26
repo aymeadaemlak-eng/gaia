@@ -1593,15 +1593,34 @@
 
     const BUBBLE_FN_SUFFIX = "hesapla";
 
+    function resolveBubbleFunction(fnName) {
+      if (typeof window[fnName] === "function") {
+        return window[fnName];
+      }
+      if (window.parent && typeof window.parent[fnName] === "function") {
+        return window.parent[fnName];
+      }
+      if (window.top && typeof window.top[fnName] === "function") {
+        return window.top[fnName];
+      }
+      return null;
+    }
+
     function triggerBubbleFunction(suffix, payload) {
       const fnName = `bubble_fn_${suffix}`;
-      const bubbleFn = window[fnName] || (window.parent && window.parent[fnName]);
+      const bubbleFn = resolveBubbleFunction(fnName);
       if (typeof bubbleFn === "function") {
-        const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
-        bubbleFn(bubblePayload);
+        if (payload === undefined || payload === null) {
+          console.debug(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
+          bubbleFn();
+        } else {
+          const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
+          console.debug(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
+          bubbleFn(bubblePayload);
+        }
         return true;
       }
-      console.warn(`Bubble function not found: ${fnName}`);
+      console.warn(`[Bubble] Fonksiyon bulunamadı: ${fnName}`);
       return false;
     }
 
@@ -1614,7 +1633,7 @@
         setStageOneHidden(true);
         setOutputVisibility(true);
       }
-      triggerBubbleFunction(BUBBLE_FN_SUFFIX, { status: "ready", ts: Date.now() });
+      triggerBubbleFunction(BUBBLE_FN_SUFFIX);
     }
 
     if (calculateButton) {
