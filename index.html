@@ -299,6 +299,147 @@
       gap: 16px;
     }
 
+    .process-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .process-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .process-tag {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(31, 111, 235, 0.12);
+      color: var(--primary);
+    }
+
+    .process-stepper {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      padding: 0 6px;
+    }
+
+    .process-stepper::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 28px;
+      right: 28px;
+      height: 2px;
+      background: #e6ecf5;
+      z-index: 0;
+    }
+
+    .process-step {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      padding: 0 6px;
+    }
+
+    .process-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      background: #eef2f8;
+      color: #7b8798;
+      border: 2px solid #dde4ef;
+    }
+
+    .process-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .process-step.done .process-circle {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .process-step.active .process-circle {
+      background: rgba(31, 111, 235, 0.12);
+      border-color: rgba(31, 111, 235, 0.45);
+      color: var(--primary);
+    }
+
+    .process-step.active .process-label {
+      color: var(--text);
+    }
+
+    .process-step.error .process-circle {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    .process-body {
+      display: grid;
+      gap: 10px;
+    }
+
+    .process-title {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .process-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .process-mini {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .process-mini span strong {
+      color: var(--text);
+    }
+
+    .process-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      width: fit-content;
+    }
+
+    .process-cta:hover {
+      background: var(--primary-dark);
+    }
+
+    .process-note {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     .status-title {
       font-size: 18px;
       margin-bottom: 0;
@@ -1415,6 +1556,40 @@
         </header>
 
         <section class="card-grid">
+          <article class="card process-card" id="processCard">
+            <div class="process-header">
+              <h2 class="status-title">Süreç Takibi</h2>
+              <span class="process-tag" id="processTag">Belgeler bekleniyor</span>
+            </div>
+            <div class="process-stepper" id="processStepper" aria-label="Süreç adımları">
+              <div class="process-step pending" data-step="1">
+                <span class="process-circle">1</span>
+                <span class="process-label">Belgeler alındı</span>
+              </div>
+              <div class="process-step pending" data-step="2">
+                <span class="process-circle">2</span>
+                <span class="process-label">Bilgiler çıkarılıyor</span>
+              </div>
+              <div class="process-step pending" data-step="3">
+                <span class="process-circle">3</span>
+                <span class="process-label">Değer kaybı tahmini</span>
+              </div>
+              <div class="process-step pending" data-step="4">
+                <span class="process-circle">4</span>
+                <span class="process-label">İhtar dilekçesi</span>
+              </div>
+            </div>
+            <div class="process-body">
+              <h3 class="process-title" id="processTitle">Belgeler bekleniyor</h3>
+              <p class="process-subtitle" id="processSubtitle">
+                Süreç başladığında adım adım bilgilendirileceksiniz.
+              </p>
+              <div class="process-mini is-hidden" id="processMini"></div>
+              <a class="process-cta is-hidden" id="processCta" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
+              <div class="process-note is-hidden" id="processNote"></div>
+            </div>
+          </article>
+
           <article class="card status-card" id="statusCard">
             <h2 class="status-title">Başvuru Durumu</h2>
             <div class="status-text" id="statusStateLabel">Belgeler kontrol ediliyor</div>
@@ -1589,6 +1764,14 @@
       const lawyerReferralButton = document.getElementById("lawyerReferralButton");
       const lawyerReferralModal = document.getElementById("lawyerReferralModal");
       const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
+      const processCard = document.getElementById("processCard");
+      const processTag = document.getElementById("processTag");
+      const processTitle = document.getElementById("processTitle");
+      const processSubtitle = document.getElementById("processSubtitle");
+      const processMini = document.getElementById("processMini");
+      const processCta = document.getElementById("processCta");
+      const processNote = document.getElementById("processNote");
+      const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
 
       function setUiState(state) {
         stageTwo.dataset.uiState = state;
@@ -1652,20 +1835,266 @@
         }
       }
 
-      let parsedResult = null;
-      if (resultDataJson) {
+      function safeParseResultData(jsonString) {
+        if (!jsonString || typeof jsonString !== "string") {
+          return null;
+        }
         try {
-          parsedResult = JSON.parse(resultDataJson);
+          const parsed = JSON.parse(jsonString);
+          return parsed && typeof parsed === "object" ? parsed : null;
         } catch (error) {
-          parsedResult = null;
+          return null;
         }
       }
+
+      function getValueByKey(data, key) {
+        if (!data || typeof data !== "object") {
+          return undefined;
+        }
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          return data[key];
+        }
+        const lowerKey = key.toLowerCase();
+        for (const [entryKey, entryValue] of Object.entries(data)) {
+          if (entryKey.toLowerCase() === lowerKey) {
+            return entryValue;
+          }
+        }
+        return undefined;
+      }
+
+      function normalizeUrlList(value) {
+        if (!value) {
+          return [];
+        }
+        if (Array.isArray(value)) {
+          return value.filter((item) => typeof item === "string" && item.includes("http"));
+        }
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            const inner = trimmed.slice(1, -1);
+            return inner
+              .split(";")
+              .map((entry) => entry.replace(/['"]/g, "").trim())
+              .filter((entry) => entry.includes("http"));
+          }
+          return trimmed
+            .split(";")
+            .map((entry) => entry.trim())
+            .filter((entry) => entry.includes("http"));
+        }
+        return [];
+      }
+
+      function collectUrlsFromValue(value, urlSet) {
+        if (!value) {
+          return;
+        }
+        if (typeof value === "string") {
+          const matches = value.match(/https?:\/\/[^\s"'<>]+/g);
+          if (matches) {
+            matches.forEach((match) => urlSet.add(match));
+          }
+          return;
+        }
+        if (Array.isArray(value)) {
+          value.forEach((entry) => collectUrlsFromValue(entry, urlSet));
+          return;
+        }
+        if (typeof value === "object") {
+          Object.values(value).forEach((entry) => collectUrlsFromValue(entry, urlSet));
+        }
+      }
+
+      function buildProcessState(resultData) {
+        const BASIC_KEYS_STAGE1 = ["Karşı Ad Soyad", "Karşı Plaka", "Kaza Tarihi"];
+        const BASIC_KEYS_STAGE2 = ["Karşı Ad Soyad", "Karşı Plaka", "Kaza Tarihi", "Kaza Yeri"];
+        const STAGE3_KEYS = ["Hasar Onarım Tutarı", "Eksper Rp Tarihi", "Kusur Oranı", "HR Genel Hasar Toplamı"];
+        const errorPresent = resultData && (resultData.status === "error" || resultData.error);
+
+        const urlSet = new Set();
+        collectUrlsFromValue(resultData, urlSet);
+        const allUrls = Array.from(urlSet);
+        const fileUrls = allUrls.filter((url) => /\.(pdf|png|jpg|jpeg)(\?|$)/i.test(url));
+
+        const stage1Count = BASIC_KEYS_STAGE1.filter((key) => {
+          const value = getValueByKey(resultData, key);
+          return value !== undefined && value !== null && String(value).trim() !== "";
+        }).length;
+
+        const stage2Count = BASIC_KEYS_STAGE2.filter((key) => {
+          const value = getValueByKey(resultData, key);
+          return value !== undefined && value !== null && String(value).trim() !== "";
+        }).length;
+
+        const stage3Ready = STAGE3_KEYS.some((key) => {
+          const value = getValueByKey(resultData, key);
+          return value !== undefined && value !== null && String(value).trim() !== "";
+        });
+
+        const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
+        const ihtarUrls = normalizeUrlList(ihtarValue);
+        const ihtarUrl = ihtarUrls[0];
+
+        if (errorPresent) {
+          return { stage: "error" };
+        }
+
+        if (ihtarUrl) {
+          return { stage: 4, ihtarUrl };
+        }
+
+        if (stage3Ready) {
+          return { stage: 3 };
+        }
+
+        if (stage2Count >= 2) {
+          return { stage: 2 };
+        }
+
+        if (fileUrls.length > 0 && stage1Count === 0) {
+          return { stage: 1 };
+        }
+
+        return { stage: 0 };
+      }
+
+      function setProcessStepState(activeStep, isError) {
+        if (!processSteps || !processSteps.length) {
+          return;
+        }
+        processSteps.forEach((step) => {
+          const stepNumber = Number(step.dataset.step);
+          step.classList.remove("done", "active", "pending", "error");
+          if (isError) {
+            step.classList.add("error");
+            const circle = step.querySelector(".process-circle");
+            if (circle) {
+              circle.textContent = String(stepNumber);
+            }
+            return;
+          }
+          if (stepNumber < activeStep) {
+            step.classList.add("done");
+          } else if (stepNumber === activeStep) {
+            step.classList.add("active");
+          } else {
+            step.classList.add("pending");
+          }
+          const circle = step.querySelector(".process-circle");
+          if (circle) {
+            circle.textContent = stepNumber < activeStep ? "✓" : String(stepNumber);
+          }
+        });
+      }
+
+      function updateProcessUI(resultData) {
+        if (!processCard || !processMini || !processCta || !processNote || !processTitle || !processSubtitle || !processTag) {
+          return;
+        }
+        const { stage, ihtarUrl } = buildProcessState(resultData);
+        const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
+        const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
+
+        const miniLines = [];
+        if (karsiPlaka) {
+          miniLines.push(`Karşı Plaka: ${karsiPlaka}`);
+        }
+        if (kazaTarihi) {
+          miniLines.push(`Kaza Tarihi: ${kazaTarihi}`);
+        }
+
+        processMini.innerHTML = "";
+        if (miniLines.length > 0) {
+          processMini.classList.remove("is-hidden");
+          miniLines.slice(0, 2).forEach((line) => {
+            const span = document.createElement("span");
+            const separatorIndex = line.indexOf(":");
+            const label = separatorIndex === -1 ? line : line.slice(0, separatorIndex);
+            const value = separatorIndex === -1 ? "" : line.slice(separatorIndex + 1);
+            span.innerHTML = `<strong>${label.trim()}:</strong>${value ? ` ${value.trim()}` : ""}`;
+            processMini.appendChild(span);
+          });
+        } else {
+          processMini.classList.add("is-hidden");
+        }
+
+        processCta.classList.add("is-hidden");
+        processNote.classList.add("is-hidden");
+        processCta.removeAttribute("href");
+        processCta.removeAttribute("download");
+
+        if (stage === "error") {
+          processTag.textContent = "Sorun oluştu";
+          processTitle.textContent = "Belgeler okunamadı";
+          processSubtitle.textContent =
+            "Lütfen daha net/okunabilir belge yükleyin. Sorun devam ederse destek ekibimiz yardımcı olur.";
+          processNote.classList.add("is-hidden");
+          processCard.classList.remove("process-ready");
+          setProcessStepState(1, true);
+          return;
+        }
+
+        if (stage === 4) {
+          processTag.textContent = "Tamamlandı";
+          processTitle.textContent = "İhtar dilekçeniz hazır";
+          processSubtitle.textContent = "Dilekçeyi indirebilir ve başvurunuzda kullanabilirsiniz.";
+          processNote.textContent = "İndirme sonrası belgeler işlem tamamlandığında otomatik silinir.";
+          processNote.classList.remove("is-hidden");
+          if (ihtarUrl) {
+            processCta.href = ihtarUrl;
+            processCta.setAttribute("download", "");
+            processCta.classList.remove("is-hidden");
+          }
+          setProcessStepState(4, false);
+          return;
+        }
+
+        if (stage === 3) {
+          processTag.textContent = "Hazırlanıyor";
+          processTitle.textContent = "Değer kaybı tahmini hazırlanıyor";
+          processSubtitle.textContent =
+            "Bu hesaplama bir tahmindir. Nihai tutar, sigorta tahkim sürecinde atanan bilirkişi tarafından belirlenir.";
+          processNote.textContent =
+            "Sigorta başvurularında bir sigorta hukuku avukatıyla ilerlemek, hakkınızın sigortada kalmamasına yardımcı olabilir.";
+          processNote.classList.remove("is-hidden");
+          setProcessStepState(3, false);
+          return;
+        }
+
+        if (stage === 2) {
+          processTag.textContent = "İşleniyor";
+          processTitle.textContent = "Bilgiler çıkarılıyor";
+          processSubtitle.textContent =
+            "Evraklardan gerekli alanlar otomatik alınır. Eksik/okunmayan kısım varsa sizden istenir.";
+          setProcessStepState(2, false);
+          return;
+        }
+
+        if (stage === 1) {
+          processTag.textContent = "Başladı";
+          processTitle.textContent = "Belgeleriniz alındı";
+          processSubtitle.textContent =
+            "Okunabilirlik kontrolü başlıyor. Belgeleriniz şifreli işlenir ve işlem tamamlanınca otomatik silinir.";
+          setProcessStepState(1, false);
+          return;
+        }
+
+        processTag.textContent = "Bekleniyor";
+        processTitle.textContent = "Belgeler bekleniyor";
+        processSubtitle.textContent = "Süreç başladığında adım adım bilgilendirileceksiniz.";
+        setProcessStepState(1, false);
+      }
+
+      let parsedResult = safeParseResultData(resultDataJson);
 
       const hasResultData = Boolean(
         parsedResult && (parsedResult.amount || parsedResult.status === "error")
       );
 
       setProcessVisibility(evraklarYuklendi || hasResultData);
+      updateProcessUI(parsedResult);
 
       if (evraklarYuklendi) {
         setCalculateButtonState(true);
@@ -1803,6 +2232,18 @@
           }
         });
       }
+
+      let lastResultJson = resultDataJson || "";
+      setInterval(() => {
+        const currentJson = window.RESULT_DATA_JSON || "";
+        if (currentJson === lastResultJson) {
+          return;
+        }
+        lastResultJson = currentJson;
+        const nextParsed = safeParseResultData(currentJson);
+        parsedResult = nextParsed;
+        updateProcessUI(nextParsed);
+      }, 900);
     })();
   </script>
 </body>
