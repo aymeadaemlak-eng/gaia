@@ -7,9 +7,13 @@
   <script>
     // === KONFIGURASYON (en üst) ===
     // Evraklar yüklendi ise true yapın. False ise ilk aşamadaki açıklama görünür.
-    window.EVRAKLAR_YUKLENDI = false;
+    if (typeof window.EVRAKLAR_YUKLENDI === "undefined") {
+      window.EVRAKLAR_YUKLENDI = false;
+    }
 
-    window.RESULT_DATA_JSON = "";
+    if (typeof window.RESULT_DATA_JSON === "undefined") {
+      window.RESULT_DATA_JSON = "";
+    }
   </script>
   <style>
     :root {
@@ -1611,11 +1615,11 @@
       const bubbleFn = resolveBubbleFunction(fnName);
       if (typeof bubbleFn === "function") {
         if (payload === undefined || payload === null) {
-          console.debug(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
+          console.info(`[Bubble] ${fnName} tetikleniyor (payload yok).`);
           bubbleFn();
         } else {
           const bubblePayload = typeof payload === "string" ? payload : JSON.stringify(payload);
-          console.debug(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
+          console.info(`[Bubble] ${fnName} tetikleniyor (payload var).`, bubblePayload);
           bubbleFn(bubblePayload);
         }
         return true;
@@ -1638,6 +1642,9 @@
 
     if (calculateButton) {
       calculateButton.addEventListener("click", handleCalculateClick);
+    }
+    if (actionButton) {
+      actionButton.addEventListener("click", handleCalculateClick);
     }
 
     function setCalculateButtonState(isReady) {
