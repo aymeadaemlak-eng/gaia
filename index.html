@@ -1,14 +1,29 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <script>
+    /*
+      === EXTERNAL CONTROL POINT ===
+      Do NOT set true/false inside this file.
+
+      Set this variable from Bubble / backend / parent frame / external JS:
+
+        window.setEvraklarYuklendi(true);   // enable Calculate button
+        window.setEvraklarYuklendi(false);  // disable Calculate button
+    */
+
+    window.EVRAKLAR_YUKLENDI = false;
+
+    window.setEvraklarYuklendi = function (value) {
+      window.EVRAKLAR_YUKLENDI = value === true;
+    };
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Değer Kaybı Otomasyonu</title>
   <script>
     // === KONFIGURASYON (en üst) ===
     // Evraklar yüklendiyse true, değilse false yapın.
-    window.EVRAKLAR_YUKLENDI = (window.EVRAKLAR_YUKLENDI === true);
-
     if (typeof window.RESULT_DATA_JSON === "undefined") {
       window.RESULT_DATA_JSON = "";
     }
