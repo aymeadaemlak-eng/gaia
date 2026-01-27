@@ -76,6 +76,14 @@
       gap: 24px;
     }
 
+    #app[data-result-mode="true"] #stageTwo {
+      order: 0;
+    }
+
+    #app[data-result-mode="true"] #stageOne {
+      order: 1;
+    }
+
     .card {
       background: var(--card);
       border-radius: 16px;
@@ -163,6 +171,11 @@
 
     .summary-meta {
       font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-security-note {
+      font-size: 13px;
       color: var(--muted);
     }
 
@@ -1713,6 +1726,9 @@
               İhtar Dilekçesini İndir
             </a>
           </div>
+          <p class="summary-security-note" id="summarySecurityNote">
+            Belgeleriniz yalnızca bu başvuru için kullanılır ve 256-bit şifreleme ile korunur.
+          </p>
           <div class="summary-meta" id="summaryDate">Hesaplama tarihi: --</div>
         </section>
 
@@ -1754,13 +1770,7 @@
           <article class="card status-card" id="statusCard">
             <h2 class="status-title">Başvuru Durumu</h2>
             <div class="status-text" id="statusStateLabel">Belgeler kontrol ediliyor</div>
-            <p class="status-subtitle">
-              Zorunlu belgeler yüklendiğinde hesaplama otomatik başlar.
-            </p>
             <div class="status-progress" aria-hidden="true"></div>
-            <p class="result-meta">
-              Belgeleriniz yalnızca bu başvuru için kullanılır ve 256-bit şifreleme ile korunur.
-            </p>
           </article>
 
           <article class="card result-card is-hidden" id="resultCard">
@@ -1797,33 +1807,6 @@
             </div>
           </article>
 
-          <article class="card petition-card is-hidden" id="petitionCard">
-            <h2 class="status-title">Başvuru Dilekçesi</h2>
-            <p class="status-subtitle">
-              Hesaplanan tutara göre resmi başvuru metni otomatik oluşturulur.
-            </p>
-            <div class="state-section state-empty">
-              <p class="status-subtitle">Hesaplama tamamlandığında dilekçe hazır olacaktır.</p>
-            </div>
-            <div class="state-section state-loading">
-              <p class="status-subtitle">Dilekçe hazırlanıyor. Kısa süre içinde paylaşılacak.</p>
-            </div>
-            <div class="state-section state-success">
-              <div class="preview active">
-                Sayın ilgili makam,<br/>
-                Trafik kazası sonrası oluşan değer kaybı için başvurumu iletiyorum. Eklerde yer alan belgeler doğrultusunda
-                yapılan hesaplamaya göre talebim tarafınıza sunulmuştur...
-              </div>
-              <div class="petition-actions">
-                <a class="process-cta is-hidden" id="petitionDownload" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
-                <button type="button" class="outline-button">Word İndir</button>
-                <button type="button" class="primary">Kopyala</button>
-              </div>
-            </div>
-            <div class="state-section state-error">
-              <p class="status-subtitle">Dilekçe hazırlanamadı. Belgeler kontrol edilince otomatik devam eder.</p>
-            </div>
-          </article>
         </section>
 
         <header class="hero-card">
@@ -2038,6 +2021,7 @@
       let evraklarYuklendi = (window.EVRAKLAR_YUKLENDI === true);
       const resultDataJson = resolveResultJsonSource();
 
+      const appRoot = document.getElementById("app");
       const stageOne = document.getElementById("stageOne");
       const stageTwo = document.getElementById("stageTwo");
       const primaryCta = document.getElementById("primaryCta");
@@ -2048,7 +2032,6 @@
       const resultAmount = document.getElementById("resultAmount");
       const resultDate = document.getElementById("resultDate");
       const resultCard = document.getElementById("resultCard");
-      const petitionCard = document.getElementById("petitionCard");
       const statusCard = document.getElementById("statusCard");
       const actionBar = document.getElementById("actionBar");
       const howItWorksLink = document.getElementById("howItWorksLink");
@@ -2068,7 +2051,6 @@
       const processMini = document.getElementById("processMini");
       const processCta = document.getElementById("processCta");
       const processNote = document.getElementById("processNote");
-      const petitionDownload = document.getElementById("petitionDownload");
       const summaryCard = document.getElementById("summaryCard");
       const summaryStatus = document.getElementById("summaryStatus");
       const summaryAmount = document.getElementById("summaryAmount");
@@ -2079,6 +2061,13 @@
 
       function setUiState(state) {
         stageTwo.dataset.uiState = state;
+      }
+
+      function setResultModeLayout(isActive) {
+        if (!appRoot) {
+          return;
+        }
+        appRoot.dataset.resultMode = isActive ? "true" : "false";
       }
 
       const PROCESS_ACTIVE_KEY = "processActive";
@@ -2638,7 +2627,7 @@
         const { stage, ihtarUrl } = buildProcessState(resultData);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
-        const tahminiTutar = getResultAmount(resultData);
+        const tahminiTutar = formatAmount(getResultAmount(resultData));
 
         const miniLines = [];
         if (karsiPlaka) {
@@ -2672,11 +2661,6 @@
         processCta.removeAttribute("download");
         if (actionButton) {
           actionButton.removeAttribute("data-download-url");
-        }
-        if (petitionDownload) {
-          petitionDownload.classList.add("is-hidden");
-          petitionDownload.removeAttribute("href");
-          petitionDownload.removeAttribute("download");
         }
 
         const shouldShowProcess =
@@ -2712,12 +2696,6 @@
               actionButton.disabled = false;
               actionButton.textContent = "İhtar Dilekçesini İndir";
               actionButton.dataset.downloadUrl = ihtarUrl;
-            }
-            if (petitionDownload) {
-              petitionDownload.href = ihtarUrl;
-              petitionDownload.target = "_blank";
-              petitionDownload.removeAttribute("download");
-              petitionDownload.classList.remove("is-hidden");
             }
             try {
               processCard && processCard.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2820,6 +2798,20 @@
         return "";
       }
 
+      function formatAmount(amountValue) {
+        if (amountValue === null || amountValue === undefined) {
+          return "";
+        }
+        const raw = String(amountValue).trim();
+        if (!raw) {
+          return "";
+        }
+        if (/₺|TL/i.test(raw)) {
+          return raw;
+        }
+        return `₺ ${raw}`;
+      }
+
       function getResultDate(resultData) {
         if (!resultData || typeof resultData !== "object") {
           return "";
@@ -2857,9 +2849,11 @@
       }
 
       function applyResultModeVisibility(isActive, resultData) {
+        setResultModeLayout(isActive);
         if (!isActive) {
           return;
         }
+        setStageOneHidden(false);
         const amountValue = getResultAmount(resultData);
         const ihtarUrl = getIhtarUrl(resultData);
         if (amountValue) {
@@ -2869,7 +2863,6 @@
         setOutputVisibility(true);
         setProcessVisibility(true);
         setProcessCardVisibility(true);
-        setStageOneHidden(true);
         setPrimaryCtaHidden(true);
         setCalculationControlsVisibility(false);
         if (calculateButton) {
@@ -2903,7 +2896,7 @@
         const amountValue = getResultAmount(resultData);
         if (resultData && amountValue) {
           setUiState("success");
-          resultAmount.textContent = amountValue;
+          resultAmount.textContent = formatAmount(amountValue);
           const resultDateValue = getResultDate(resultData);
           resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
           setOutputVisibility(true);
@@ -2919,7 +2912,7 @@
         const dateValue = getResultDate(resultData);
 
         if (amountValue) {
-          summaryAmount.textContent = amountValue;
+          summaryAmount.textContent = formatAmount(amountValue);
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
         } else if (hasCreatedItem) {
@@ -3072,7 +3065,7 @@
         setProcessCardVisibility(true);
         setPrimaryCtaHidden(true);
         setCalculationControlsVisibility(false);
-        setStageOneHidden(true);
+        setStageOneHidden(!resultModeActive);
       }
       applyEvrakState(evraklarYuklendi, hasResultData);
       applyResultState(parsedResult);
@@ -3136,9 +3129,6 @@
       function setOutputVisibility(isVisible) {
         if (resultCard) {
           resultCard.classList.toggle("is-hidden", !isVisible);
-        }
-        if (petitionCard) {
-          petitionCard.classList.toggle("is-hidden", !isVisible);
         }
       }
 
