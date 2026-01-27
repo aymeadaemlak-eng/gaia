@@ -84,6 +84,10 @@
       order: 1;
     }
 
+    #app[data-result-mode="true"] .required-docs {
+      display: none;
+    }
+
     .card {
       background: var(--card);
       border-radius: 16px;
@@ -464,6 +468,33 @@
       color: var(--text);
     }
 
+    .process-step.active:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(31, 111, 235, 0.25), rgba(31, 111, 235, 0.85));
+      animation: process-flow 1.6s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes process-flow {
+      0% {
+        opacity: 0.2;
+        transform: scaleX(0.6);
+      }
+      50% {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+      100% {
+        opacity: 0.2;
+        transform: scaleX(0.6);
+      }
+    }
+
     .process-step.error .process-circle {
       background: #fef2f2;
       border-color: #fecaca;
@@ -647,6 +678,11 @@
     .card-grid {
       display: grid;
       gap: 16px;
+    }
+
+    #referencesSlot {
+      display: grid;
+      grid-column: 1 / -1;
     }
 
     .action-bar {
@@ -1011,6 +1047,28 @@
       gap: 12px;
     }
 
+    .required-docs {
+      display: grid;
+      gap: 8px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px dashed #c7d2fe;
+      background: #f8faff;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .required-docs a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .required-docs a:hover {
+      text-decoration: underline;
+    }
+
     .step-card {
       display: flex;
       align-items: center;
@@ -1122,21 +1180,6 @@
       color: var(--muted);
     }
 
-    .lawyer-referral {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .lawyer-referral label {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     .secondary-button {
       border-radius: 999px;
       padding: 8px 14px;
@@ -1227,6 +1270,20 @@
       color: #2e4aa1;
     }
 
+    .founder-photo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid #dbe4f5;
+      background: #f8fafc;
+    }
+
+    .founder-details {
+      display: grid;
+      gap: 6px;
+    }
+
     .founder-name {
       font-weight: 700;
     }
@@ -1235,6 +1292,29 @@
       font-size: 13px;
       color: var(--muted);
       font-weight: 600;
+    }
+
+    .founder-links {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .founder-links a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .founder-links a:hover {
+      text-decoration: underline;
+    }
+
+    .founder-photo-only {
+      display: grid;
+      place-items: center;
+      padding: 20px;
     }
 
     .modal-form {
@@ -1421,6 +1501,23 @@
       <div class="card stack" id="stageOne">
         <div class="stage-one">
           <section class="cta-block" id="primaryCta">
+            <div class="required-docs" id="requiredDocs">
+              <strong>Gereken evraklar:</strong>
+              <span>Hasar eksper raporu, ruhsatlar ve kaza tespit tutanağınızı yükleyiniz.</span>
+              <span>
+                Not: Hasar eksper raporunuzu
+                <a
+                  href="https://www.turkiye.gov.tr/sbvgm-trafik-ve-kasko-eksper-raporlari-sorgulama"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  e-Devlet'ten indirebilirsiniz
+                </a>.
+              </span>
+              <span>
+                Veya e-Devlet'e giriş yaptıktan sonra "eksper" diye aratarak raporunuza ulaşabilirsiniz.
+              </span>
+            </div>
             <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
             <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
             <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
@@ -1453,9 +1550,9 @@
               Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza güvenle hazırlar.
             </p>
             <div class="pill-row" aria-label="Güven rozetleri">
-              <span class="pill">Şifreli İşleme</span>
+              <span class="pill">Şifreli işlem</span>
               <span class="pill">Otomatik Silme</span>
-              <span class="pill">Avukat Destekli</span>
+              <span class="pill">Verileriniz 24 saat içinde otomatik silinir.</span>
             </div>
           </section>
 
@@ -1571,6 +1668,7 @@
             </div>
           </section>
 
+          <div id="lawyersBlockHome"></div>
           <section class="lawyers-block">
             <div>
               <h2>Otomasyonumuzu Kullanan Avukatlar</h2>
@@ -1637,13 +1735,6 @@
                 </div>
               </article>
             </div>
-            <div class="lawyer-referral">
-              <label>
-                <input type="checkbox" id="lawyerReferralCheck" />
-                İsterseniz danışmanlık için avukat yönlendirmesi isteyebilirsiniz.
-              </label>
-              <button type="button" class="secondary-button" id="lawyerReferralButton">Avukat yönlendirmesi iste</button>
-            </div>
           </section>
 
           <section class="founders-block">
@@ -1654,23 +1745,32 @@
             <div class="founders-grid">
               <article class="founder-card">
                 <div class="founder-header">
-                  <div class="founder-avatar" aria-hidden="true">SK</div>
-                  <div>
+                  <img
+                    class="founder-photo"
+                    src="https://media.licdn.com/dms/image/v2/D4D03AQHglv8dSDhzNA/profile-displayphoto-shrink_200_200/B4DZWCznHZGcAY-/0/1741656322902?e=2147483647&v=beta&t=Vc6xk5EdkJPz3nZaS9Hv3Q7oI0VHjIs74swwThCv-h0"
+                    alt="Saltuk Kıraç"
+                  />
+                  <div class="founder-details">
                     <div class="founder-name">Saltuk Kıraç</div>
-                    <div class="founder-role">GAIA Kurucusu</div>
+                    <div class="founder-role">Founder of GAIA Sphere</div>
+                    <div class="founder-links">
+                      <span>Email: <a href="mailto:saltukkirac@gmail.com">saltukkirac@gmail.com</a></span>
+                      <span>Twitter: <a href="https://x.com/Saltuk_Kirac" target="_blank" rel="noopener">x.com/Saltuk_Kirac</a></span>
+                      <span>Reddit: u/saltukkirac ve u/saltukirac</span>
+                      <span>Instagram: <a href="https://www.instagram.com/saltukirac/" target="_blank" rel="noopener">instagram.com/saltukirac</a></span>
+                      <span>LinkedIn: <a href="https://www.linkedin.com/in/saltuk-kirac/" target="_blank" rel="noopener">linkedin.com/in/saltuk-kirac</a></span>
+                    </div>
                   </div>
                 </div>
-                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
               </article>
               <article class="founder-card">
-                <div class="founder-header">
-                  <div class="founder-avatar" aria-hidden="true">MK</div>
-                  <div>
-                    <div class="founder-name">Mevlüt Kıraç</div>
-                    <div class="founder-role">Sigorta Hukuku Otomasyonu Kurucusu</div>
-                  </div>
+                <div class="founder-photo-only">
+                  <img
+                    class="founder-photo"
+                    src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1769547936836x581124338683655000/WhatsApp%20Image%202026-01-28%20at%2000.05.10.jpeg?_gl=1*ll8fas*_gcl_au*NjcyMjkyMTM4LjE3NjU3MjIyMTI.*_ga*MTUxNDExNjAyNS4xNzQyMzI4OTA1*_ga_BFPVR2DEE2*czE3Njk1MTA5MzIkbzIxMiRnMSR0MTc2OTU0Nzc3NiRqNjAkbDAkaDA."
+                    alt="Mevlüt Kıraç"
+                  />
                 </div>
-                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
               </article>
             </div>
           </section>
@@ -1717,7 +1817,7 @@
                 Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.
               </p>
             </div>
-            <div class="summary-amount" id="summaryAmount">₺ --</div>
+            <div class="summary-amount" id="summaryAmount">TL--</div>
           </div>
           <div class="summary-actions">
             <button type="button" class="primary" id="summaryCalculateButton">Hesapla</button>
@@ -1727,6 +1827,7 @@
           </div>
           <p class="summary-security-note" id="summarySecurityNote">
             Belgeleriniz yalnızca bu başvuru için kullanılır ve 256-bit şifreleme ile korunur.
+            <strong>İşleminiz bittikten sonra belgeleriniz otomatik olarak silinir.</strong>
           </p>
           <div class="summary-meta" id="summaryDate">Hesaplama tarihi: --</div>
         </section>
@@ -1765,6 +1866,7 @@
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
           </article>
+          <div id="referencesSlot"></div>
 
         </section>
 
@@ -1815,23 +1917,6 @@
         <li>Yasal saklama zorunluluğu olmadıkça sistemde tutulmaz.</li>
         <li>Silme süreci otomatik çalışır, manuel işlem gerekmez.</li>
       </ul>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="lawyerReferralModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lawyerReferralTitle">
-      <div class="modal-header">
-        <h3 id="lawyerReferralTitle">Avukat Yönlendirmesi</h3>
-        <button class="modal-close" type="button" id="closeLawyerReferralModal">Kapat</button>
-      </div>
-      <p class="hero-subtitle">İletişim bilgilerinizi bırakın, sizinle dönüş yapalım.</p>
-      <form class="modal-form">
-        <input type="text" name="fullName" placeholder="Ad Soyad" />
-        <input type="tel" name="phone" placeholder="Telefon numarası" />
-        <div class="modal-actions">
-          <button type="button" class="secondary-button">Gönder</button>
-        </div>
-      </form>
     </div>
   </div>
 
@@ -2000,9 +2085,6 @@
       const trustDetailsModal = document.getElementById("trustDetailsModal");
       const closeTrustModalButton = document.getElementById("closeTrustModalButton");
       const missingDocsNote = document.getElementById("missingDocsNote");
-      const lawyerReferralButton = document.getElementById("lawyerReferralButton");
-      const lawyerReferralModal = document.getElementById("lawyerReferralModal");
-      const closeLawyerReferralModal = document.getElementById("closeLawyerReferralModal");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
       const processTitle = document.getElementById("processTitle");
@@ -2017,6 +2099,10 @@
       const summaryDownload = document.getElementById("summaryDownload");
       const summaryCalculateButton = document.getElementById("summaryCalculateButton");
       const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
+      const lawyersBlock = document.querySelector(".lawyers-block");
+      const lawyersBlockHome = document.getElementById("lawyersBlockHome");
+      const referencesSlot = document.getElementById("referencesSlot");
+      let hasScrolledToSummary = false;
 
       function setUiState(state) {
         stageTwo.dataset.uiState = state;
@@ -2117,6 +2203,17 @@
         // Zıplamayı önlemek için taşıma yapmıyoruz.
       }
 
+      function placeReferences(isResultMode) {
+        if (!lawyersBlock || !lawyersBlockHome || !referencesSlot) {
+          return;
+        }
+        if (isResultMode) {
+          referencesSlot.appendChild(lawyersBlock);
+        } else if (lawyersBlock.parentElement !== lawyersBlockHome.parentElement) {
+          lawyersBlockHome.after(lawyersBlock);
+        }
+      }
+
       function showProcessCardAtTop() {
         if (!processCard) {
           return;
@@ -2201,7 +2298,20 @@
         if (!primaryCta) {
           return;
         }
+        const rect = primaryCta.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset - 12;
+        window.scrollTo({ top, behavior: "smooth" });
         primaryCta.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function scrollToSummaryCard() {
+        if (!summaryCard) {
+          return;
+        }
+        const rect = summaryCard.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
       if (catchCtaButton) {
@@ -2765,10 +2875,18 @@
         if (!raw) {
           return "";
         }
-        if (/₺|TL/i.test(raw)) {
+        const numericCandidate = raw.replace(/[^0-9,.-]/g, "");
+        const normalized = numericCandidate.replace(/\./g, "").replace(",", ".");
+        const parsed = Number(normalized);
+        if (!Number.isFinite(parsed)) {
           return raw;
         }
-        return `₺ ${raw}`;
+        const hasDecimal = normalized.includes(".");
+        const formatted = new Intl.NumberFormat("tr-TR", {
+          minimumFractionDigits: hasDecimal ? 2 : 0,
+          maximumFractionDigits: hasDecimal ? 2 : 0,
+        }).format(parsed);
+        return `TL${formatted}`;
       }
 
       function getResultDate(resultData) {
@@ -2809,6 +2927,7 @@
 
       function applyResultModeVisibility(isActive, resultData) {
         setResultModeLayout(isActive);
+        placeReferences(isActive);
         if (!isActive) {
           return;
         }
@@ -2875,11 +2994,11 @@
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
         } else if (hasCreatedItem) {
-          summaryAmount.textContent = "₺ --";
+          summaryAmount.textContent = "TL--";
           summaryStatus.textContent =
             "Hesaplama başlatıldı. Sonuç oluştuğunda tutar ve dilekçe burada görünecek.";
         } else {
-          summaryAmount.textContent = "₺ --";
+          summaryAmount.textContent = "TL--";
           summaryStatus.textContent =
             "Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.";
         }
@@ -2901,7 +3020,7 @@
         }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
-        const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal;
+        const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal || isReady;
         setSummaryVisibility(shouldShowSummary);
 
         if (summaryCalculateButton) {
@@ -2968,6 +3087,10 @@
           }
           setStageOneHidden(false);
           setOutputVisibility(resultPresent);
+          if (!hasScrolledToSummary) {
+            hasScrolledToSummary = true;
+            scrollToSummaryCard();
+          }
         } else {
           setCalculateButtonState(false);
           setPrimaryCtaHidden(false);
@@ -3055,14 +3178,6 @@
         trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
       }
 
-      function toggleLawyerReferralModal(isOpen) {
-        if (!lawyerReferralModal) {
-          return;
-        }
-        lawyerReferralModal.classList.toggle("active", isOpen);
-        lawyerReferralModal.setAttribute("aria-hidden", String(!isOpen));
-      }
-
       function setStageOneHidden(isHidden) {
         if (!stageOne) {
           return;
@@ -3135,14 +3250,6 @@
         closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
       }
 
-      if (lawyerReferralButton) {
-        lawyerReferralButton.addEventListener("click", () => toggleLawyerReferralModal(true));
-      }
-
-      if (closeLawyerReferralModal) {
-        closeLawyerReferralModal.addEventListener("click", () => toggleLawyerReferralModal(false));
-      }
-
       if (howItWorksModal) {
         howItWorksModal.addEventListener("click", (event) => {
           if (event.target === howItWorksModal) {
@@ -3155,14 +3262,6 @@
         trustDetailsModal.addEventListener("click", (event) => {
           if (event.target === trustDetailsModal) {
             toggleTrustModal(false);
-          }
-        });
-      }
-
-      if (lawyerReferralModal) {
-        lawyerReferralModal.addEventListener("click", (event) => {
-          if (event.target === lawyerReferralModal) {
-            toggleLawyerReferralModal(false);
           }
         });
       }
