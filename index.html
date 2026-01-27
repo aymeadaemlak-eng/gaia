@@ -2051,7 +2051,6 @@
 
         return [
           `urls=${urlSet.size}`,
-          `pred=${pick("predictedAction") || pick("action")}`,
           `ihtar=${pick("İhtar Dilekçesi")}`,
           `dk=${pick("Hesaplanan DK") || pick("Tahmini Değer Kaybı") || pick("Değer Kaybı Tutarı")}`,
           `plaka=${pick("Karşı Plaka")}`,
@@ -2081,24 +2080,59 @@
         if (!value) {
           return [];
         }
+        const entries = [];
         if (Array.isArray(value)) {
-          return value.filter((item) => typeof item === "string" && item.includes("http"));
-        }
-        if (typeof value === "string") {
+          value.forEach((item) => {
+            if (typeof item === "string") {
+              entries.push(item);
+            }
+          });
+        } else if (typeof value === "string") {
           const trimmed = value.trim();
           if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
             const inner = trimmed.slice(1, -1);
-            return inner
-              .split(";")
-              .map((entry) => entry.replace(/['"]/g, "").trim())
-              .filter((entry) => entry.includes("http"));
+            entries.push(
+              ...inner
+                .split(";")
+                .map((entry) => entry.replace(/['"]/g, "").trim())
+            );
+          } else {
+            entries.push(
+              ...trimmed
+                .split(";")
+                .map((entry) => entry.trim())
+            );
           }
-          return trimmed
-            .split(";")
-            .map((entry) => entry.trim())
-            .filter((entry) => entry.includes("http"));
         }
-        return [];
+        return entries
+          .map((entry) => entry.trim())
+          .filter((entry) => entry.length > 0);
+      }
+
+      function normalizeIhtarUrl(urlCandidate) {
+        if (!urlCandidate || typeof urlCandidate !== "string") {
+          return "";
+        }
+        const trimmed = urlCandidate.trim();
+        if (!trimmed) {
+          return "";
+        }
+        const withProtocol = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+        if (/^https?:\/\/\S+$/i.test(withProtocol)) {
+          return withProtocol;
+        }
+        return "";
+      }
+
+      function findFirstValidUrl(value) {
+        const items = normalizeUrlList(value);
+        for (const item of items) {
+          const normalized = normalizeIhtarUrl(item);
+          if (normalized) {
+            return normalized;
+          }
+        }
+        return "";
       }
 
       function collectUrlsFromValue(value, urlSet) {
@@ -2122,7 +2156,6 @@
       }
 
       function buildProcessState(resultData) {
-        const BASIC_KEYS_STAGE1 = ["Karşı Ad Soyad", "Karşı Plaka", "Kaza Tarihi"];
         const BASIC_KEYS_STAGE2 = ["Karşı Ad Soyad", "Karşı Plaka", "Kaza Tarihi", "Kaza Yeri"];
         const STAGE3_KEYS = ["Hasar Onarım Tutarı", "Eksper Rp Tarihi", "Kusur Oranı", "HR Genel Hasar Toplamı"];
         const errorPresent = resultData && (resultData.status === "error" || resultData.error);
@@ -2142,22 +2175,18 @@
           return value !== undefined && value !== null && String(value).trim() !== "";
         });
 
-        const predictedAction = String(getValueByKey(resultData, "predictedAction") || getValueByKey(resultData, "action") || "")
-          .toLowerCase();
-
         const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
-        const ihtarUrls = normalizeUrlList(ihtarValue);
-        const ihtarUrl = ihtarUrls[0];
+        const ihtarUrl = findFirstValidUrl(ihtarValue);
 
         if (errorPresent) {
           return { stage: "error" };
         }
 
-        if (ihtarUrl || predictedAction.includes("ihtar")) {
+        if (ihtarUrl) {
           return { stage: 4, ihtarUrl };
         }
 
-        if (stage3Ready || predictedAction.includes("dk hesapla") || predictedAction.includes("dk hesaba taşı")) {
+        if (stage3Ready) {
           return { stage: 3 };
         }
 
@@ -2165,7 +2194,7 @@
           return { stage: 2 };
         }
 
-        if (fileUrls.length > 0 && stage2Count === 0) {
+        if (fileUrls.length > 0) {
           return { stage: 1 };
         }
 
@@ -2414,9 +2443,10 @@
 
       function applyEvrakState(isReady, resultPresent) {
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
+        const hasAnyPayloadLocal = hasResultPayload(currentResultJson);
 
         if (processActive) {
-          setStageOneHidden(false);
+          setStageOneHidden(true);
           setOutputVisibility(true);
           setProcessVisibility(true);
 
@@ -2433,7 +2463,14 @@
           return;
         }
 
-        const hasAnyPayloadLocal = hasResultPayload(currentResultJson);
+        if (hasAnyPayloadLocal) {
+          setStageOneHidden(true);
+          setProcessVisibility(true);
+          setOutputVisibility(true);
+          setProcessCardVisibility(true);
+          return;
+        }
+
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
 
