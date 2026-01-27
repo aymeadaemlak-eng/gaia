@@ -2307,7 +2307,10 @@
           }
           return null;
         } catch (error) {
-          console.warn("invalid JSON", error);
+          console.warn("invalid JSON", error, {
+            jsonPreview: jsonString.slice(0, 200),
+            jsonLength: jsonString.length,
+          });
           return null;
         }
       }
@@ -2373,6 +2376,12 @@
         }
         if (typeof rawValue === "string") {
           const normalized = normalizeJsonString(rawValue);
+          console.log("[result-debug] resolveResultPayload", {
+            rawLength: rawValue.length,
+            normalizedLength: normalized.length,
+            rawPreview: rawValue.slice(0, 200),
+            normalizedPreview: normalized.slice(0, 200),
+          });
           return {
             raw: normalized,
             parsed: safeParseResultData(normalized),
@@ -2751,7 +2760,15 @@
           parsedValue && typeof parsedValue === "object" && Object.keys(parsedValue).length > 0;
         const normalizedRaw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
         const rawHasContent = typeof rawValue === "string" ? normalizedRaw !== "" : Boolean(rawValue);
-        return Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
+        const isMeaningful = Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
+        console.log("[result-debug] isMeaningfulResultData", {
+          ihtarUrl: Boolean(ihtarUrl),
+          amountValue: Boolean(amountValue),
+          parsedHasKeys,
+          rawHasContent,
+          isMeaningful,
+        });
+        return isMeaningful;
       }
 
       function applyResultModeVisibility(isActive, resultData) {
@@ -2947,6 +2964,13 @@
       updateSummary(parsedResult);
       applyResultModeVisibility(resultModeActive, parsedResult);
       const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+      console.log("[result-debug] initial state", {
+        hasResultData,
+        hasInitialPayload,
+        resultModeActive,
+        hasAnyPayload,
+        evraklarYuklendi,
+      });
       if (hasAnyPayload) {
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -3113,6 +3137,10 @@
         const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
 
         if (changed) {
+          console.log("[result-debug] tick change", {
+            rawLength: typeof rawValue === "string" ? rawValue.length : 0,
+            nextSig,
+          });
           currentResultJson = rawValue;
           lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
