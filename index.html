@@ -6,7 +6,7 @@
   <title>Değer Kaybı Otomasyonu</title>
   <script>
     // === KONFIGURASYON (en üst) ===
-    // Evraklar yüklendi ise true yapın. False ise ilk aşamadaki açıklama görünür.
+    // Evraklar yüklendiyse true, değilse false yapın.
     if (typeof window.EVRAKLAR_YUKLENDI === "undefined") {
       window.EVRAKLAR_YUKLENDI = false;
     }
@@ -14,13 +14,18 @@
     if (typeof window.RESULT_DATA_JSON === "undefined") {
       window.RESULT_DATA_JSON = "";
     }
-    // JSON'u buraya yapıştıracaksanız backtick (`) kullanın.
-    // Örnek:
-    // window.RESULT_DATA_JSON = `{"ornek":"deger"}`;
+    // JSON'u buraya yapıştırmak yerine aşağıdaki <script id="resultDataJson"> içine
+    // ham JSON olarak (tırnak/backtick olmadan) yapıştırmanız önerilir.
+    // Bu durumda window.RESULT_DATA_JSON boş kalabilir.
   </script>
   <!--
-    Aşağıdaki script etiketi içine JSON verisini yapıştırabilirsiniz.
+    JSON'u tam olarak aşağıdaki script etiketi içine yapıştırın:
+    <script id="resultDataJson" type="application/json">
+      { ... JSON BURAYA ... }
+    </script>
+
     Bu yöntem, çok satırlı veri ve özel karakterlerde SyntaxError hatasını engeller.
+    Evraklar yüklendiyse yukarıda window.EVRAKLAR_YUKLENDI = true yapın.
   -->
   <script id="resultDataJson" type="application/json"></script>
   <style>
