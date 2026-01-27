@@ -1716,32 +1716,6 @@
           <div class="summary-meta" id="summaryDate">Hesaplama tarihi: --</div>
         </section>
 
-        <header class="hero-card">
-          <div class="hero-top">
-            <div>
-              <span class="badge">Güvenli Başvuru</span>
-              <h1 class="hero-title">Değer Kaybı Hesaplama ve Dilekçe Oluşturma</h1>
-              <p>
-                Belgeleriniz yüklendikten sonra sistemimiz tahmini değer kaybı tutarını hesaplar ve başvuru dilekçenizi
-                otomatik hazırlar.
-              </p>
-            </div>
-            <div class="hero-actions">
-              <a class="hero-actions-link" href="#" id="howItWorksLink">Nasıl Çalışır?</a>
-              <div>
-                <span class="secure-note">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  Verileriniz güvenle işlenir
-                </span>
-                <span class="secure-meta">256-bit şifreleme ile korunur.</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <section class="card-grid">
           <article class="card process-card is-hidden" id="processCard" aria-hidden="true" tabindex="-1">
             <div class="process-header">
@@ -1851,6 +1825,32 @@
             </div>
           </article>
         </section>
+
+        <header class="hero-card">
+          <div class="hero-top">
+            <div>
+              <span class="badge">Güvenli Başvuru</span>
+              <h1 class="hero-title">Değer Kaybı Hesaplama ve Dilekçe Oluşturma</h1>
+              <p>
+                Belgeleriniz yüklendikten sonra sistemimiz tahmini değer kaybı tutarını hesaplar ve başvuru dilekçenizi
+                otomatik hazırlar.
+              </p>
+            </div>
+            <div class="hero-actions">
+              <a class="hero-actions-link" href="#" id="howItWorksLink">Nasıl Çalışır?</a>
+              <div>
+                <span class="secure-note">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Verileriniz güvenle işlenir
+                </span>
+                <span class="secure-meta">256-bit şifreleme ile korunur.</span>
+              </div>
+            </div>
+          </div>
+        </header>
 
         <div class="action-bar" id="actionBar">
           <div class="action-info">Ortalama işlem süresi: 2–4 dakika</div>
@@ -2152,6 +2152,18 @@
         calculateButton.disabled = !isReady;
         if (missingDocsNote) {
           missingDocsNote.classList.toggle("is-hidden", isReady);
+        }
+      }
+
+      function setCalculationControlsVisibility(isVisible) {
+        if (calculateButton) {
+          calculateButton.classList.toggle("is-hidden", !isVisible);
+        }
+        if (summaryCalculateButton) {
+          summaryCalculateButton.classList.toggle("is-hidden", !isVisible);
+        }
+        if (actionBar) {
+          actionBar.classList.toggle("is-hidden", !isVisible);
         }
       }
 
@@ -2690,6 +2702,7 @@
         }
 
         if (processActive && !hasAnyPayloadLocal) {
+          setCalculationControlsVisibility(true);
           setStageOneHidden(true);
           setPrimaryCtaHidden(false);
           setOutputVisibility(true);
@@ -2715,11 +2728,12 @@
           if (missingDocsNote) {
             missingDocsNote.classList.add("is-hidden");
           }
+          setCalculationControlsVisibility(false);
           if (actionButton) {
             actionButton.disabled = true;
             actionButton.textContent = "Sonuç Hazır";
           }
-          setStageOneHidden(false);
+          setStageOneHidden(true);
           setPrimaryCtaHidden(true);
           setProcessVisibility(true);
           setOutputVisibility(true);
@@ -2727,6 +2741,7 @@
           return;
         }
 
+        setCalculationControlsVisibility(true);
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setSummaryVisibility(shouldShowSummary);
@@ -2785,6 +2800,8 @@
         setOutputVisibility(true);
         setProcessCardVisibility(true);
         setPrimaryCtaHidden(true);
+        setCalculationControlsVisibility(false);
+        setStageOneHidden(true);
       }
       applyEvrakState(evraklarYuklendi, hasResultData);
       applyResultState(parsedResult);
