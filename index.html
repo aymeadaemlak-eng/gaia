@@ -1937,7 +1937,20 @@
         return readInlineResultJson();
       }
 
-      let evraklarYuklendi = window.EVRAKLAR_YUKLENDI;
+      function normalizeEvrakFlag(value) {
+        if (typeof value === "string") {
+          const normalized = value.trim().toLowerCase();
+          if (["true", "1", "evet", "yes"].includes(normalized)) {
+            return true;
+          }
+          if (["false", "0", "hayir", "hayır", "no"].includes(normalized)) {
+            return false;
+          }
+        }
+        return Boolean(value);
+      }
+
+      let evraklarYuklendi = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
       const resultDataJson = resolveResultJsonSource();
 
       const stageOne = document.getElementById("stageOne");
@@ -2682,6 +2695,11 @@
         }
 
         if (hasAnyPayloadLocal) {
+          setCalculateButtonState(isReady);
+          if (actionButton) {
+            actionButton.disabled = !isReady;
+            actionButton.textContent = isReady ? "Hesaplamayı Başlat" : "Belgeler Bekleniyor";
+          }
           setStageOneHidden(false);
           setPrimaryCtaHidden(true);
           setProcessVisibility(true);
@@ -2892,12 +2910,12 @@
       let lastResultJson = initialResultPayload.raw;
       let lastParsed = initialResultPayload.parsed;
       let lastSig = buildResultSignature(initialResultPayload.raw, initialResultPayload.parsed);
-      let lastEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
+      let lastEvrakState = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
       let intervalId = null;
 
       function tick() {
         const rawValue = resolveResultJsonSource();
-        const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
+        const currentEvrakState = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
         const nextPayload = resolveResultPayload(rawValue);
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
