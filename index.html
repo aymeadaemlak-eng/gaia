@@ -7,9 +7,7 @@
   <script>
     // === KONFIGURASYON (en üst) ===
     // Evraklar yüklendiyse true, değilse false yapın.
-    if (typeof window.EVRAKLAR_YUKLENDI === "undefined") {
-      window.EVRAKLAR_YUKLENDI = false;
-    }
+    window.EVRAKLAR_YUKLENDI = (window.EVRAKLAR_YUKLENDI === true);
 
     if (typeof window.RESULT_DATA_JSON === "undefined") {
       window.RESULT_DATA_JSON = "";
@@ -1950,7 +1948,8 @@
         return Boolean(value);
       }
 
-      let evraklarYuklendi = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
+      window.EVRAKLAR_YUKLENDI = (window.EVRAKLAR_YUKLENDI === true);
+      let evraklarYuklendi = (window.EVRAKLAR_YUKLENDI === true);
       const resultDataJson = resolveResultJsonSource();
 
       const stageOne = document.getElementById("stageOne");
@@ -2910,12 +2909,12 @@
       let lastResultJson = initialResultPayload.raw;
       let lastParsed = initialResultPayload.parsed;
       let lastSig = buildResultSignature(initialResultPayload.raw, initialResultPayload.parsed);
-      let lastEvrakState = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
+      let lastEvrakState = (window.EVRAKLAR_YUKLENDI === true);
       let intervalId = null;
 
       function tick() {
         const rawValue = resolveResultJsonSource();
-        const currentEvrakState = normalizeEvrakFlag(window.EVRAKLAR_YUKLENDI);
+        const currentEvrakState = (window.EVRAKLAR_YUKLENDI === true);
         const nextPayload = resolveResultPayload(rawValue);
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
