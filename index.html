@@ -2220,6 +2220,16 @@
         if (!normalized) {
           return "";
         }
+        if (normalized.includes("&")) {
+          normalized = normalized
+            .replace(/&quot;/g, '"')
+            .replace(/&#34;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#39;/g, "'")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&amp;/g, "&");
+        }
         if (normalized.startsWith("'") && normalized.endsWith("'")) {
           normalized = normalized.slice(1, -1).trim();
         }
@@ -2246,7 +2256,17 @@
         }
         try {
           const parsed = JSON.parse(jsonString);
-          return parsed && typeof parsed === "object" ? parsed : null;
+          if (parsed && typeof parsed === "object") {
+            return parsed;
+          }
+          if (typeof parsed === "string") {
+            const nested = normalizeJsonString(parsed);
+            if (nested) {
+              const reparsed = JSON.parse(nested);
+              return reparsed && typeof reparsed === "object" ? reparsed : null;
+            }
+          }
+          return null;
         } catch (error) {
           console.warn("invalid JSON", error);
           return null;
