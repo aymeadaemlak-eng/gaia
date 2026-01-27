@@ -2011,7 +2011,9 @@
       }
 
       const PROCESS_ACTIVE_KEY = "processActive";
+      const OBJECT_CREATED_KEY = "objectCreated";
       let hasStartedCalculation = false;
+      let hasCreatedItem = false;
       let PIN_PROCESS_CARD = false;
       const initialPayload = resolveResultPayload(resultDataJson);
       let currentResultJson = initialPayload.raw;
@@ -2046,6 +2048,39 @@
           localStorage.setItem(PROCESS_ACTIVE_KEY, String(isActive));
         } catch (error) {
           console.warn("processActive localStorage yazılamadı", error);
+        }
+      }
+
+      function readPersistedObjectCreated() {
+        try {
+          const sessionValue = sessionStorage.getItem(OBJECT_CREATED_KEY);
+          if (sessionValue !== null) {
+            return sessionValue === "true";
+          }
+        } catch (error) {
+          console.warn("objectCreated sessionStorage okunamadı", error);
+        }
+        try {
+          const localValue = localStorage.getItem(OBJECT_CREATED_KEY);
+          if (localValue !== null) {
+            return localValue === "true";
+          }
+        } catch (error) {
+          console.warn("objectCreated localStorage okunamadı", error);
+        }
+        return false;
+      }
+
+      function persistObjectCreated(isCreated) {
+        try {
+          sessionStorage.setItem(OBJECT_CREATED_KEY, String(isCreated));
+        } catch (error) {
+          console.warn("objectCreated sessionStorage yazılamadı", error);
+        }
+        try {
+          localStorage.setItem(OBJECT_CREATED_KEY, String(isCreated));
+        } catch (error) {
+          console.warn("objectCreated localStorage yazılamadı", error);
         }
       }
 
@@ -2109,6 +2144,8 @@
 
       function handleCalculateClick() {
         PIN_PROCESS_CARD = true;
+        hasCreatedItem = true;
+        persistObjectCreated(true);
         setUiState("loading");
         setStageOneHidden(true);
         setProcessVisibility(true);
@@ -2674,6 +2711,10 @@
           summaryAmount.textContent = amountValue;
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
+        } else if (hasCreatedItem) {
+          summaryAmount.textContent = "₺ --";
+          summaryStatus.textContent =
+            "Hesaplama başlatıldı. Sonuç oluştuğunda tutar ve dilekçe burada görünecek.";
         } else {
           summaryAmount.textContent = "₺ --";
           summaryStatus.textContent =
@@ -2694,17 +2735,17 @@
       function applyEvrakState(isReady, resultPresent) {
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
-        const shouldShowSummary = processActive || hasAnyPayloadLocal;
+        const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal;
         setSummaryVisibility(shouldShowSummary);
 
         if (summaryCalculateButton) {
-          summaryCalculateButton.disabled = hasAnyPayloadLocal ? true : !isReady;
+          summaryCalculateButton.disabled = hasAnyPayloadLocal || hasCreatedItem ? true : !isReady;
         }
 
-        if (processActive && !hasAnyPayloadLocal) {
-          setCalculationControlsVisibility(true);
+        if ((processActive || hasCreatedItem) && !hasAnyPayloadLocal) {
+          setCalculationControlsVisibility(false);
           setStageOneHidden(true);
-          setPrimaryCtaHidden(false);
+          setPrimaryCtaHidden(true);
           setOutputVisibility(true);
           setProcessVisibility(true);
 
@@ -2721,7 +2762,7 @@
           return;
         }
 
-        if (hasAnyPayloadLocal) {
+        if (hasAnyPayloadLocal || hasCreatedItem) {
           if (calculateButton) {
             calculateButton.disabled = true;
           }
@@ -2782,11 +2823,16 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
 
-      hasStartedCalculation = readPersistedProcessActive() && hasInitialPayload;
-      if (!hasInitialPayload) {
+      hasCreatedItem = readPersistedObjectCreated() || hasInitialPayload || hasResultData;
+      if (hasCreatedItem) {
+        persistObjectCreated(true);
+      }
+
+      hasStartedCalculation = readPersistedProcessActive() || hasCreatedItem;
+      if (!hasInitialPayload && !hasCreatedItem) {
         persistProcessActive(false);
       }
-      if (hasStartedCalculation) {
+      if (hasStartedCalculation || hasCreatedItem) {
         setProcessCardVisibility(true);
         moveProcessCardToTop();
         setOutputVisibility(true);
@@ -2796,6 +2842,8 @@
       updateSummary(parsedResult);
       const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
       if (hasAnyPayload) {
+        hasCreatedItem = true;
+        persistObjectCreated(true);
         setProcessVisibility(true);
         setOutputVisibility(true);
         setProcessCardVisibility(true);
@@ -2965,6 +3013,8 @@
 
           parsedResult = nextParsed;
           if (hasResultPayload(rawValue) || Boolean(getIhtarUrl(nextParsed))) {
+            hasCreatedItem = true;
+            persistObjectCreated(true);
             setProcessVisibility(true);
             setOutputVisibility(true);
             setProcessCardVisibility(true);
