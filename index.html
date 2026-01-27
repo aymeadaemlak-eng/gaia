@@ -2686,7 +2686,7 @@
         setSummaryVisibility(shouldShowSummary);
 
         if (summaryCalculateButton) {
-          summaryCalculateButton.disabled = !isReady;
+          summaryCalculateButton.disabled = hasAnyPayloadLocal ? true : !isReady;
         }
 
         if (processActive && !hasAnyPayloadLocal) {
@@ -2709,10 +2709,15 @@
         }
 
         if (hasAnyPayloadLocal) {
-          setCalculateButtonState(isReady);
+          if (calculateButton) {
+            calculateButton.disabled = true;
+          }
+          if (missingDocsNote) {
+            missingDocsNote.classList.add("is-hidden");
+          }
           if (actionButton) {
-            actionButton.disabled = !isReady;
-            actionButton.textContent = isReady ? "Hesaplamayı Başlat" : "Belgeler Bekleniyor";
+            actionButton.disabled = true;
+            actionButton.textContent = "Sonuç Hazır";
           }
           setStageOneHidden(false);
           setPrimaryCtaHidden(true);
