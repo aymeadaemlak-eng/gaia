@@ -15,6 +15,11 @@
       window.RESULT_DATA_JSON = "";
     }
   </script>
+  <!--
+    Aşağıdaki script etiketi içine JSON verisini yapıştırabilirsiniz.
+    Bu yöntem, çok satırlı veri ve özel karakterlerde SyntaxError hatasını engeller.
+  -->
+  <script id="resultDataJson" type="application/json"></script>
   <style>
     :root {
       color-scheme: light;
@@ -1901,8 +1906,31 @@
 
   <script>
     (function () {
+      function readInlineResultJson() {
+        const inlineScript = document.getElementById("resultDataJson");
+        if (inlineScript) {
+          return inlineScript.textContent || "";
+        }
+        const inlineTextarea = document.getElementById("resultDataJsonTextarea");
+        if (inlineTextarea && "value" in inlineTextarea) {
+          return inlineTextarea.value || "";
+        }
+        return "";
+      }
+
+      function resolveResultJsonSource() {
+        const windowValue = window.RESULT_DATA_JSON;
+        if (windowValue && typeof windowValue === "object") {
+          return windowValue;
+        }
+        if (typeof windowValue === "string" && windowValue.trim() !== "") {
+          return windowValue;
+        }
+        return readInlineResultJson();
+      }
+
       let evraklarYuklendi = window.EVRAKLAR_YUKLENDI;
-      const resultDataJson = window.RESULT_DATA_JSON;
+      const resultDataJson = resolveResultJsonSource();
 
       const stageOne = document.getElementById("stageOne");
       const stageTwo = document.getElementById("stageTwo");
@@ -2113,6 +2141,7 @@
         if (normalized && !normalized.includes('"') && normalized.includes("'")) {
           normalized = normalized.replace(/'/g, '"');
         }
+        normalized = normalized.replace(/,\s*([}\]])/g, "$1");
         return normalized;
       }
 
@@ -2850,7 +2879,7 @@
         window[WATCHER_KEY].stop();
       }
 
-      const initialResultPayload = resolveResultPayload(window.RESULT_DATA_JSON || "");
+      const initialResultPayload = resolveResultPayload(resolveResultJsonSource());
       let lastResultJson = initialResultPayload.raw;
       let lastParsed = initialResultPayload.parsed;
       let lastSig = buildResultSignature(initialResultPayload.raw, initialResultPayload.parsed);
@@ -2858,7 +2887,7 @@
       let intervalId = null;
 
       function tick() {
-        const rawValue = window.RESULT_DATA_JSON || "";
+        const rawValue = resolveResultJsonSource();
         const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
         const nextPayload = resolveResultPayload(rawValue);
         const nextParsed = nextPayload.parsed;
