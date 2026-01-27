@@ -2208,7 +2208,13 @@
         return false;
       }
 
-      function handleCalculateClick() {
+      function handleCalculateClick(event) {
+        const target = event && event.currentTarget ? event.currentTarget : null;
+        const downloadUrl = target && target.dataset ? target.dataset.downloadUrl : "";
+        if (downloadUrl) {
+          window.open(downloadUrl, "_blank", "noopener");
+          return;
+        }
         PIN_PROCESS_CARD = true;
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -2658,6 +2664,9 @@
         processNote.classList.add("is-hidden");
         processCta.removeAttribute("href");
         processCta.removeAttribute("download");
+        if (actionButton) {
+          actionButton.removeAttribute("data-download-url");
+        }
         if (petitionDownload) {
           petitionDownload.classList.add("is-hidden");
           petitionDownload.removeAttribute("href");
@@ -2693,6 +2702,11 @@
             processCta.target = "_blank";
             processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
+            if (actionButton) {
+              actionButton.disabled = false;
+              actionButton.textContent = "İhtar Dilekçesini İndir";
+              actionButton.dataset.downloadUrl = ihtarUrl;
+            }
             if (petitionDownload) {
               petitionDownload.href = ihtarUrl;
               petitionDownload.target = "_blank";
@@ -2841,6 +2855,7 @@
           return;
         }
         const amountValue = getResultAmount(resultData);
+        const ihtarUrl = getIhtarUrl(resultData);
         if (amountValue) {
           setUiState("success");
         }
@@ -2858,8 +2873,15 @@
           summaryCalculateButton.disabled = true;
         }
         if (actionButton) {
-          actionButton.disabled = true;
-          actionButton.textContent = "Sonuç Hazır";
+          if (ihtarUrl) {
+            actionButton.disabled = false;
+            actionButton.textContent = "İhtar Dilekçesini İndir";
+            actionButton.dataset.downloadUrl = ihtarUrl;
+          } else {
+            actionButton.disabled = true;
+            actionButton.textContent = "Sonuç Hazır";
+            actionButton.removeAttribute("data-download-url");
+          }
         }
         if (statusStateLabel) {
           statusStateLabel.textContent = "Sonuç Hazır";
