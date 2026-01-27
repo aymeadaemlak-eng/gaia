@@ -1929,25 +1929,49 @@
     (function () {
       function readInlineResultJson() {
         const inlineScript = document.getElementById("resultDataJson");
+        let inlineScriptValue = "";
         if (inlineScript) {
-          return inlineScript.textContent || "";
+          inlineScriptValue = inlineScript.textContent || "";
+          if (!inlineScriptValue && "value" in inlineScript) {
+            inlineScriptValue = inlineScript.value || "";
+          }
         }
         const inlineTextarea = document.getElementById("resultDataJsonTextarea");
-        if (inlineTextarea && "value" in inlineTextarea) {
-          return inlineTextarea.value || "";
-        }
-        return "";
+        const inlineTextareaValue =
+          inlineTextarea && "value" in inlineTextarea ? inlineTextarea.value || "" : "";
+        const dataElement = document.querySelector("[data-result-json]");
+        const dataAttributeValue = dataElement
+          ? (dataElement.getAttribute("data-result-json") || dataElement.textContent || "")
+          : "";
+        console.log("[result-debug] inline sources", {
+          scriptLength: inlineScriptValue.length,
+          textareaLength: inlineTextareaValue.length,
+          dataAttrLength: dataAttributeValue.length,
+          dataAttrTag: dataElement ? dataElement.tagName : null,
+        });
+        return inlineScriptValue || inlineTextareaValue || dataAttributeValue || "";
       }
 
       function resolveResultJsonSource() {
         const windowValue = window.RESULT_DATA_JSON;
+        const windowValueType = typeof windowValue;
+        const windowValueLength = windowValueType === "string" ? windowValue.length : 0;
+        const windowValueKeys =
+          windowValue && windowValueType === "object" ? Object.keys(windowValue).length : 0;
         if (windowValue && typeof windowValue === "object") {
           return windowValue;
         }
         if (typeof windowValue === "string" && windowValue.trim() !== "") {
           return windowValue;
         }
-        return readInlineResultJson();
+        const inlineValue = readInlineResultJson();
+        console.log("[result-debug] resolveResultJsonSource", {
+          windowValueType,
+          windowValueLength,
+          windowValueKeys,
+          inlineLength: inlineValue.length,
+        });
+        return inlineValue;
       }
 
       function normalizeEvrakFlag(value) {
