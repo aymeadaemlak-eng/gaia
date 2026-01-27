@@ -2135,6 +2135,11 @@
         return "";
       }
 
+      function getIhtarUrl(resultData) {
+        const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
+        return findFirstValidUrl(ihtarValue);
+      }
+
       function collectUrlsFromValue(value, urlSet) {
         if (!value) {
           return;
@@ -2175,8 +2180,7 @@
           return value !== undefined && value !== null && String(value).trim() !== "";
         });
 
-        const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
-        const ihtarUrl = findFirstValidUrl(ihtarValue);
+        const ihtarUrl = getIhtarUrl(resultData);
 
         if (errorPresent) {
           return { stage: "error" };
@@ -2300,10 +2304,12 @@
           processNote.classList.remove("is-hidden");
           if (ihtarUrl) {
             processCta.href = ihtarUrl;
+            processCta.target = "_blank";
             processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
             if (petitionDownload) {
               petitionDownload.href = ihtarUrl;
+              petitionDownload.target = "_blank";
               petitionDownload.removeAttribute("download");
               petitionDownload.classList.remove("is-hidden");
             }
@@ -2443,10 +2449,11 @@
 
       function applyEvrakState(isReady, resultPresent) {
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
-        const hasAnyPayloadLocal = hasResultPayload(currentResultJson);
+        const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
 
-        if (processActive) {
+        if (processActive && !hasAnyPayloadLocal) {
           setStageOneHidden(true);
+          setPrimaryCtaHidden(false);
           setOutputVisibility(true);
           setProcessVisibility(true);
 
@@ -2464,7 +2471,8 @@
         }
 
         if (hasAnyPayloadLocal) {
-          setStageOneHidden(true);
+          setStageOneHidden(false);
+          setPrimaryCtaHidden(true);
           setProcessVisibility(true);
           setOutputVisibility(true);
           setProcessCardVisibility(true);
@@ -2476,6 +2484,7 @@
 
         if (isReady) {
           setCalculateButtonState(true);
+          setPrimaryCtaHidden(false);
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplamaya Hazır";
           }
@@ -2490,6 +2499,7 @@
           setOutputVisibility(resultPresent);
         } else {
           setCalculateButtonState(false);
+          setPrimaryCtaHidden(false);
           if (statusStateLabel) {
             statusStateLabel.textContent = "Belgeler kontrol ediliyor";
           }
@@ -2519,11 +2529,12 @@
       }
 
       updateProcessUI(parsedResult);
-      const hasAnyPayload = hasResultPayload(currentResultJson);
+      const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
       if (hasAnyPayload) {
         setProcessVisibility(true);
         setOutputVisibility(true);
         setProcessCardVisibility(true);
+        setPrimaryCtaHidden(true);
       }
       applyEvrakState(evraklarYuklendi, hasResultData);
       applyResultState(parsedResult);
@@ -2566,6 +2577,14 @@
         stageOne.classList.toggle("is-hidden", isHidden);
         stageOne.setAttribute("aria-hidden", String(isHidden));
         stageOne.toggleAttribute("inert", isHidden);
+      }
+
+      function setPrimaryCtaHidden(isHidden) {
+        if (!primaryCta) {
+          return;
+        }
+        primaryCta.classList.toggle("is-hidden", isHidden);
+        primaryCta.setAttribute("aria-hidden", String(isHidden));
       }
 
       function setOutputVisibility(isVisible) {
@@ -2669,10 +2688,11 @@
           lastSig = nextSig;
 
           parsedResult = nextParsed;
-          if (hasResultPayload(currentJson)) {
+          if (hasResultPayload(currentJson) || Boolean(getIhtarUrl(nextParsed))) {
             setProcessVisibility(true);
             setOutputVisibility(true);
             setProcessCardVisibility(true);
+            setPrimaryCtaHidden(true);
           }
           updateProcessUI(nextParsed);
           applyResultState(nextParsed);
