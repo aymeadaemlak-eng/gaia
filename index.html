@@ -3029,9 +3029,19 @@
 
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
+      const hasMeaningfulPayload = hasInitialPayload || hasResultData;
       resultModeActive = isMeaningfulResultData(currentResultJson, parsedResult);
 
-      hasCreatedItem = readPersistedObjectCreated() || hasInitialPayload || hasResultData;
+      let hasPersistedCreated = readPersistedObjectCreated();
+      if (!hasMeaningfulPayload) {
+        if (hasPersistedCreated) {
+          persistObjectCreated(false);
+        }
+        persistProcessActive(false);
+        hasPersistedCreated = false;
+      }
+
+      hasCreatedItem = hasPersistedCreated || hasMeaningfulPayload;
       if (hasCreatedItem) {
         persistObjectCreated(true);
       }
@@ -3218,6 +3228,8 @@
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
         const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
+        const nextHasResultData = hasResultDataValue(nextParsed);
+        const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
         if (changed) {
           console.log("[result-debug] tick change", {
@@ -3231,13 +3243,18 @@
 
           parsedResult = nextParsed;
           resultModeActive = nextResultMode;
-          if (hasResultPayload(rawValue) || Boolean(getIhtarUrl(nextParsed))) {
+          if (nextHasPayload || Boolean(getIhtarUrl(nextParsed))) {
             hasCreatedItem = true;
             persistObjectCreated(true);
             setProcessVisibility(true);
             setOutputVisibility(true);
             setProcessCardVisibility(true);
             setPrimaryCtaHidden(true);
+          } else {
+            persistObjectCreated(false);
+            persistProcessActive(false);
+            hasCreatedItem = false;
+            hasStartedCalculation = false;
           }
           updateProcessUI(nextParsed);
           updateSummary(nextParsed);
