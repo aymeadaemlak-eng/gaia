@@ -1943,17 +1943,33 @@
         const dataAttributeValue = dataElement
           ? (dataElement.getAttribute("data-result-json") || dataElement.textContent || "")
           : "";
+        const jsonScripts = Array.from(document.querySelectorAll("script[type='application/json']"));
+        const jsonScriptCandidate = jsonScripts.find((script) => {
+          const content = script.textContent || "";
+          return content.trim() !== "";
+        });
+        const jsonScriptValue = jsonScriptCandidate ? jsonScriptCandidate.textContent || "" : "";
         console.log("[result-debug] inline sources", {
           scriptLength: inlineScriptValue.length,
           textareaLength: inlineTextareaValue.length,
           dataAttrLength: dataAttributeValue.length,
           dataAttrTag: dataElement ? dataElement.tagName : null,
+          jsonScriptCount: jsonScripts.length,
+          jsonScriptLength: jsonScriptValue.length,
+          jsonScriptId: jsonScriptCandidate ? jsonScriptCandidate.id || null : null,
         });
-        return inlineScriptValue || inlineTextareaValue || dataAttributeValue || "";
+        return (
+          inlineScriptValue ||
+          inlineTextareaValue ||
+          dataAttributeValue ||
+          jsonScriptValue ||
+          ""
+        );
       }
 
       function resolveResultJsonSource() {
         const windowValue = window.RESULT_DATA_JSON;
+        const fallbackValue = window.RESULT_DATA;
         const windowValueType = typeof windowValue;
         const windowValueLength = windowValueType === "string" ? windowValue.length : 0;
         const windowValueKeys =
@@ -1964,11 +1980,19 @@
         if (typeof windowValue === "string" && windowValue.trim() !== "") {
           return windowValue;
         }
+        if (fallbackValue && typeof fallbackValue === "object") {
+          return fallbackValue;
+        }
+        if (typeof fallbackValue === "string" && fallbackValue.trim() !== "") {
+          return fallbackValue;
+        }
         const inlineValue = readInlineResultJson();
         console.log("[result-debug] resolveResultJsonSource", {
           windowValueType,
           windowValueLength,
           windowValueKeys,
+          fallbackType: typeof fallbackValue,
+          fallbackLength: typeof fallbackValue === "string" ? fallbackValue.length : 0,
           inlineLength: inlineValue.length,
         });
         return inlineValue;
