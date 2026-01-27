@@ -1950,7 +1950,8 @@
       const PROCESS_ACTIVE_KEY = "processActive";
       let hasStartedCalculation = false;
       let PIN_PROCESS_CARD = false;
-      let currentResultJson = resultDataJson;
+      const initialPayload = resolveResultPayload(resultDataJson);
+      let currentResultJson = initialPayload.raw;
 
       function readPersistedProcessActive() {
         try {
@@ -2091,12 +2092,42 @@
         }
       }
 
-      function hasResultPayload(jsonString) {
-        return typeof jsonString === "string" && jsonString.trim() !== "";
+      function hasResultPayload(payload) {
+        if (payload && typeof payload === "object") {
+          return Object.keys(payload).length > 0;
+        }
+        return typeof payload === "string" && payload.trim() !== "";
       }
 
-      function safeParseResultData(jsonString) {
-        if (!jsonString || typeof jsonString !== "string") {
+      function normalizeJsonString(value) {
+        if (typeof value !== "string") {
+          return "";
+        }
+        let normalized = value.trim();
+        if (!normalized) {
+          return "";
+        }
+        if (normalized.startsWith("'") && normalized.endsWith("'")) {
+          normalized = normalized.slice(1, -1).trim();
+        }
+        if (normalized && !normalized.includes('"') && normalized.includes("'")) {
+          normalized = normalized.replace(/'/g, '"');
+        }
+        return normalized;
+      }
+
+      function safeParseResultData(payload) {
+        if (!payload) {
+          return null;
+        }
+        if (payload && typeof payload === "object") {
+          return payload;
+        }
+        if (typeof payload !== "string") {
+          return null;
+        }
+        const jsonString = normalizeJsonString(payload);
+        if (!jsonString) {
           return null;
         }
         try {
@@ -2144,6 +2175,43 @@
           }
         }
         return undefined;
+      }
+
+      function stableStringify(value) {
+        if (value === null || value === undefined) {
+          return "";
+        }
+        if (typeof value !== "object") {
+          return String(value);
+        }
+        if (Array.isArray(value)) {
+          return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+        }
+        const keys = Object.keys(value).sort();
+        return `{${keys.map((key) => `${key}:${stableStringify(value[key])}`).join(",")}}`;
+      }
+
+      function resolveResultPayload(rawValue) {
+        if (rawValue && typeof rawValue === "object") {
+          return {
+            raw: stableStringify(rawValue),
+            parsed: rawValue,
+          };
+        }
+        if (typeof rawValue === "string") {
+          const normalized = normalizeJsonString(rawValue);
+          return {
+            raw: normalized,
+            parsed: safeParseResultData(normalized),
+          };
+        }
+        return { raw: "", parsed: null };
+      }
+
+      function buildResultSignature(rawValue, parsedValue) {
+        const base = parsedValue ? stableStringify(parsedValue) : "";
+        const raw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
+        return `${base}::${raw}`.trim();
       }
 
       function normalizeUrlList(value) {
@@ -2449,7 +2517,7 @@
         setProcessStepState(1, false);
       }
 
-      let parsedResult = safeParseResultData(resultDataJson);
+      let parsedResult = initialPayload.parsed;
       function getResultAmount(resultData) {
         if (!resultData || typeof resultData !== "object") {
           return "";
@@ -2549,6 +2617,8 @@
       function applyEvrakState(isReady, resultPresent) {
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+        const shouldShowSummary = processActive || hasAnyPayloadLocal;
+        setSummaryVisibility(shouldShowSummary);
 
         if (summaryCalculateButton) {
           summaryCalculateButton.disabled = !isReady;
@@ -2584,6 +2654,7 @@
 
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
+        setSummaryVisibility(shouldShowSummary);
 
         if (isReady) {
           setCalculateButtonState(true);
@@ -2691,6 +2762,14 @@
         primaryCta.setAttribute("aria-hidden", String(isHidden));
       }
 
+      function setSummaryVisibility(isVisible) {
+        if (!summaryCard) {
+          return;
+        }
+        summaryCard.classList.toggle("is-hidden", !isVisible);
+        summaryCard.setAttribute("aria-hidden", String(!isVisible));
+      }
+
       function setOutputVisibility(isVisible) {
         if (resultCard) {
           resultCard.classList.toggle("is-hidden", !isVisible);
@@ -2771,28 +2850,29 @@
         window[WATCHER_KEY].stop();
       }
 
-      let lastResultJson = window.RESULT_DATA_JSON || "";
-      let lastParsed = safeParseResultData(lastResultJson);
-      let lastSig = makeSignature(lastParsed);
+      const initialResultPayload = resolveResultPayload(window.RESULT_DATA_JSON || "");
+      let lastResultJson = initialResultPayload.raw;
+      let lastParsed = initialResultPayload.parsed;
+      let lastSig = buildResultSignature(initialResultPayload.raw, initialResultPayload.parsed);
       let lastEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
       let intervalId = null;
 
       function tick() {
-        const currentJson = window.RESULT_DATA_JSON || "";
+        const rawValue = window.RESULT_DATA_JSON || "";
         const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
-
-        const nextParsed = safeParseResultData(currentJson);
-        const nextSig = makeSignature(nextParsed);
-        const changed = currentJson !== lastResultJson || nextSig !== lastSig;
+        const nextPayload = resolveResultPayload(rawValue);
+        const nextParsed = nextPayload.parsed;
+        const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
+        const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
 
         if (changed) {
-          currentResultJson = currentJson;
-          lastResultJson = currentJson;
+          currentResultJson = rawValue;
+          lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
           lastSig = nextSig;
 
           parsedResult = nextParsed;
-          if (hasResultPayload(currentJson) || Boolean(getIhtarUrl(nextParsed))) {
+          if (hasResultPayload(rawValue) || Boolean(getIhtarUrl(nextParsed))) {
             setProcessVisibility(true);
             setOutputVisibility(true);
             setProcessCardVisibility(true);
