@@ -1927,29 +1927,17 @@
       }
 
       function moveProcessCardToTop() {
-        if (!processCard || !stageTwo) {
-          return;
-        }
-        const heroCard = stageTwo.querySelector(".hero-card");
-        if (heroCard && heroCard.parentElement === stageTwo) {
-          if (heroCard.previousElementSibling !== processCard) {
-            stageTwo.insertBefore(processCard, heroCard);
-          }
-          return;
-        }
-        if (stageTwo.firstElementChild !== processCard) {
-          stageTwo.prepend(processCard);
-        }
+        // Artık DOM sırası sabit: processCard card-grid içinde en üstte duruyor.
+        // Zıplamayı önlemek için taşıma yapmıyoruz.
       }
 
       function showProcessCardAtTop() {
-        if (!processCard || !stageTwo) {
+        if (!processCard) {
           return;
         }
         hasStartedCalculation = true;
         persistProcessActive(true);
         setProcessCardVisibility(true);
-        moveProcessCardToTop();
         processTag.textContent = "İşleniyor";
         processTitle.textContent = "Belgeler işleniyor";
         processSubtitle.textContent = "Bu işlem sırasında aşamalar otomatik güncellenecek.";
@@ -1991,9 +1979,17 @@
       function handleCalculateClick() {
         PIN_PROCESS_CARD = true;
         setUiState("loading");
-        showProcessCardAtTop();
-        statusStateLabel.textContent = "Hesaplama sürüyor";
+        setStageOneHidden(true);
+        setProcessVisibility(true);
         setOutputVisibility(true);
+        setProcessCardVisibility(true);
+        showProcessCardAtTop();
+        if (statusStateLabel) {
+          statusStateLabel.textContent = "Hesaplama sürüyor";
+        }
+        if (processCard) {
+          processCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
         triggerBubbleFunction(BUBBLE_FN_SUFFIX);
       }
 
@@ -2037,6 +2033,7 @@
           const parsed = JSON.parse(jsonString);
           return parsed && typeof parsed === "object" ? parsed : null;
         } catch (error) {
+          console.warn("invalid JSON", error);
           return null;
         }
       }
@@ -2274,14 +2271,30 @@
           processNote.classList.remove("is-hidden");
           if (ihtarUrl) {
             processCta.href = ihtarUrl;
-            processCta.setAttribute("download", "");
+            processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
             if (petitionDownload) {
               petitionDownload.href = ihtarUrl;
-              petitionDownload.setAttribute("download", "");
+              petitionDownload.removeAttribute("download");
               petitionDownload.classList.remove("is-hidden");
             }
+            try {
+              processCard && processCard.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch (e) {}
           }
+          try {
+            if ("Notification" in window) {
+              if (Notification.permission === "granted") {
+                new Notification("İhtar dilekçeniz hazır", { body: "İndirmek için butona tıklayın." });
+              } else if (Notification.permission === "default") {
+                Notification.requestPermission().then((perm) => {
+                  if (perm === "granted") {
+                    new Notification("İhtar dilekçeniz hazır", { body: "İndirmek için butona tıklayın." });
+                  }
+                });
+              }
+            }
+          } catch (e) {}
           setUiState("success");
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplama tamamlandı";
@@ -2420,8 +2433,9 @@
           return;
         }
 
-        setProcessVisibility(isReady || resultPresent);
-        setProcessCardVisibility(false);
+        const hasAnyPayloadLocal = hasResultPayload(currentResultJson);
+        setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
+        setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
 
         if (isReady) {
           setCalculateButtonState(true);
@@ -2468,6 +2482,12 @@
       }
 
       updateProcessUI(parsedResult);
+      const hasAnyPayload = hasResultPayload(currentResultJson);
+      if (hasAnyPayload) {
+        setProcessVisibility(true);
+        setOutputVisibility(true);
+        setProcessCardVisibility(true);
+      }
       applyEvrakState(evraklarYuklendi, hasResultData);
       applyResultState(parsedResult);
 
@@ -2586,11 +2606,18 @@
         });
       }
 
+      const WATCHER_KEY = "__DK_WATCHER__";
+      if (window[WATCHER_KEY] && typeof window[WATCHER_KEY].stop === "function") {
+        window[WATCHER_KEY].stop();
+      }
+
       let lastResultJson = window.RESULT_DATA_JSON || "";
       let lastParsed = safeParseResultData(lastResultJson);
       let lastSig = makeSignature(lastParsed);
       let lastEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
-      setInterval(() => {
+      let intervalId = null;
+
+      function tick() {
         const currentJson = window.RESULT_DATA_JSON || "";
         const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
 
@@ -2605,6 +2632,11 @@
           lastSig = nextSig;
 
           parsedResult = nextParsed;
+          if (hasResultPayload(currentJson)) {
+            setProcessVisibility(true);
+            setOutputVisibility(true);
+            setProcessCardVisibility(true);
+          }
           updateProcessUI(nextParsed);
           applyResultState(nextParsed);
         }
@@ -2614,7 +2646,18 @@
           evraklarYuklendi = currentEvrakState;
           applyEvrakState(currentEvrakState, hasResultDataValue(parsedResult));
         }
-      }, 700);
+      }
+
+      intervalId = window.setInterval(tick, 700);
+
+      window[WATCHER_KEY] = {
+        stop: () => {
+          if (intervalId) {
+            window.clearInterval(intervalId);
+          }
+          intervalId = null;
+        },
+      };
     })();
   </script>
 </body>
