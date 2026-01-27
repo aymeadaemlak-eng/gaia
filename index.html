@@ -2015,6 +2015,7 @@
       let hasStartedCalculation = false;
       let hasCreatedItem = false;
       let PIN_PROCESS_CARD = false;
+      let resultModeActive = false;
       const initialPayload = resolveResultPayload(resultDataJson);
       let currentResultJson = initialPayload.raw;
 
@@ -2530,7 +2531,8 @@
           petitionDownload.removeAttribute("download");
         }
 
-        const shouldShowProcess = stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
+        const shouldShowProcess =
+          resultModeActive || stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
         setProcessCardVisibility(shouldShowProcess);
         if (shouldShowProcess) {
           moveProcessCardToTop();
@@ -2683,6 +2685,46 @@
         return Boolean(resultData && (getResultAmount(resultData) || resultData.status === "error"));
       }
 
+      function isMeaningfulResultData(rawValue, parsedValue) {
+        const ihtarUrl = getIhtarUrl(parsedValue);
+        const amountValue = getResultAmount(parsedValue);
+        const parsedHasKeys =
+          parsedValue && typeof parsedValue === "object" && Object.keys(parsedValue).length > 0;
+        const normalizedRaw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
+        const rawHasContent = typeof rawValue === "string" ? normalizedRaw !== "" : Boolean(rawValue);
+        return Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
+      }
+
+      function applyResultModeVisibility(isActive, resultData) {
+        if (!isActive) {
+          return;
+        }
+        const amountValue = getResultAmount(resultData);
+        if (amountValue) {
+          setUiState("success");
+        }
+        setSummaryVisibility(true);
+        setOutputVisibility(true);
+        setProcessVisibility(true);
+        setProcessCardVisibility(true);
+        setStageOneHidden(true);
+        setPrimaryCtaHidden(true);
+        setCalculationControlsVisibility(false);
+        if (calculateButton) {
+          calculateButton.disabled = true;
+        }
+        if (summaryCalculateButton) {
+          summaryCalculateButton.disabled = true;
+        }
+        if (actionButton) {
+          actionButton.disabled = true;
+          actionButton.textContent = "Sonuç Hazır";
+        }
+        if (statusStateLabel) {
+          statusStateLabel.textContent = "Sonuç Hazır";
+        }
+      }
+
       function applyResultState(resultData) {
         if (resultData && resultData.status === "error") {
           setUiState("error");
@@ -2733,6 +2775,9 @@
       }
 
       function applyEvrakState(isReady, resultPresent) {
+        if (resultModeActive) {
+          return;
+        }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
         const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal;
@@ -2822,6 +2867,7 @@
 
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
+      resultModeActive = isMeaningfulResultData(currentResultJson, parsedResult);
 
       hasCreatedItem = readPersistedObjectCreated() || hasInitialPayload || hasResultData;
       if (hasCreatedItem) {
@@ -2840,6 +2886,7 @@
 
       updateProcessUI(parsedResult);
       updateSummary(parsedResult);
+      applyResultModeVisibility(resultModeActive, parsedResult);
       const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
       if (hasAnyPayload) {
         hasCreatedItem = true;
@@ -3004,6 +3051,7 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
+        const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
 
         if (changed) {
           currentResultJson = rawValue;
@@ -3012,6 +3060,7 @@
           lastSig = nextSig;
 
           parsedResult = nextParsed;
+          resultModeActive = nextResultMode;
           if (hasResultPayload(rawValue) || Boolean(getIhtarUrl(nextParsed))) {
             hasCreatedItem = true;
             persistObjectCreated(true);
@@ -3022,12 +3071,14 @@
           }
           updateProcessUI(nextParsed);
           updateSummary(nextParsed);
+          applyResultModeVisibility(resultModeActive, nextParsed);
           applyResultState(nextParsed);
         }
 
         if (currentEvrakState !== lastEvrakState || changed) {
           lastEvrakState = currentEvrakState;
           evraklarYuklendi = currentEvrakState;
+          resultModeActive = nextResultMode;
           applyEvrakState(currentEvrakState, hasResultDataValue(parsedResult));
         }
       }
