@@ -1882,6 +1882,7 @@
 
       const PROCESS_ACTIVE_KEY = "processActive";
       let hasStartedCalculation = false;
+      let PIN_PROCESS_CARD = false;
 
       function readPersistedProcessActive() {
         try {
@@ -1987,6 +1988,7 @@
       }
 
       function handleCalculateClick() {
+        PIN_PROCESS_CARD = true;
         setUiState("loading");
         showProcessCardAtTop();
         statusStateLabel.textContent = "Hesaplama sürüyor";
@@ -2033,6 +2035,29 @@
         } catch (error) {
           return null;
         }
+      }
+
+      function makeSignature(obj) {
+        if (!obj || typeof obj !== "object") {
+          return "null";
+        }
+        const pick = (key) => {
+          const value = getValueByKey(obj, key);
+          return value === undefined || value === null ? "" : String(value);
+        };
+        const urlSet = new Set();
+        collectUrlsFromValue(obj, urlSet);
+
+        return [
+          `urls=${urlSet.size}`,
+          `pred=${pick("predictedAction") || pick("action")}`,
+          `ihtar=${pick("İhtar Dilekçesi")}`,
+          `dk=${pick("Hesaplanan DK") || pick("Tahmini Değer Kaybı") || pick("Değer Kaybı Tutarı")}`,
+          `plaka=${pick("Karşı Plaka")}`,
+          `tarih=${pick("Kaza Tarihi")}`,
+          `yer=${pick("Kaza Yeri")}`,
+          `status=${pick("status") || pick("error")}`,
+        ].join("|");
       }
 
       function getValueByKey(data, key) {
@@ -2371,34 +2396,57 @@
       }
 
       function applyEvrakState(isReady, resultPresent) {
-        const processActive = hasStartedCalculation;
-        setProcessVisibility(processActive || isReady || resultPresent);
+        const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
+
         if (processActive) {
+          setStageOneHidden(true);
+          setOutputVisibility(true);
+          setProcessVisibility(true);
+
           setProcessCardVisibility(true);
           moveProcessCardToTop();
-        } else {
-          setProcessCardVisibility(false);
+
+          if (actionButton) {
+            actionButton.disabled = true;
+            actionButton.textContent = "İşleniyor";
+          }
+          if (statusStateLabel) {
+            statusStateLabel.textContent = "İşlem sürüyor";
+          }
+          return;
         }
+
+        setProcessVisibility(isReady || resultPresent);
+        setProcessCardVisibility(false);
+
         if (isReady) {
           setCalculateButtonState(true);
-          statusStateLabel.textContent = "Hesaplamaya Hazır";
-          actionButton.disabled = false;
-          actionButton.textContent = "Hesaplamayı Başlat";
-          if (!resultPresent && !processActive) {
+          if (statusStateLabel) {
+            statusStateLabel.textContent = "Hesaplamaya Hazır";
+          }
+          if (actionButton) {
+            actionButton.disabled = false;
+            actionButton.textContent = "Hesaplamayı Başlat";
+          }
+          if (!resultPresent) {
             setUiState("empty");
           }
           setStageOneHidden(false);
-          setOutputVisibility(processActive || resultPresent);
+          setOutputVisibility(resultPresent);
         } else {
           setCalculateButtonState(false);
-          statusStateLabel.textContent = "Belgeler kontrol ediliyor";
-          actionButton.disabled = true;
-          actionButton.textContent = "Belgeler Bekleniyor";
-          if (!resultPresent && !processActive) {
+          if (statusStateLabel) {
+            statusStateLabel.textContent = "Belgeler kontrol ediliyor";
+          }
+          if (actionButton) {
+            actionButton.disabled = true;
+            actionButton.textContent = "Belgeler Bekleniyor";
+          }
+          if (!resultPresent) {
             setUiState("empty");
           }
           setStageOneHidden(false);
-          setOutputVisibility(processActive || resultPresent);
+          setOutputVisibility(resultPresent);
         }
       }
 
@@ -2522,28 +2570,34 @@
         });
       }
 
-      let lastResultJson = resultDataJson || "";
-      let lastEvrakState = Boolean(evraklarYuklendi);
+      let lastResultJson = window.RESULT_DATA_JSON || "";
+      let lastParsed = safeParseResultData(lastResultJson);
+      let lastSig = makeSignature(lastParsed);
+      let lastEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
       setInterval(() => {
         const currentJson = window.RESULT_DATA_JSON || "";
         const currentEvrakState = Boolean(window.EVRAKLAR_YUKLENDI);
-        let didUpdate = false;
 
-        if (currentJson !== lastResultJson) {
+        const nextParsed = safeParseResultData(currentJson);
+        const nextSig = makeSignature(nextParsed);
+        const changed = currentJson !== lastResultJson || nextSig !== lastSig;
+
+        if (changed) {
           lastResultJson = currentJson;
-          const nextParsed = safeParseResultData(currentJson);
+          lastParsed = nextParsed;
+          lastSig = nextSig;
+
           parsedResult = nextParsed;
           updateProcessUI(nextParsed);
           applyResultState(nextParsed);
-          didUpdate = true;
         }
 
-        if (currentEvrakState !== lastEvrakState || didUpdate) {
+        if (currentEvrakState !== lastEvrakState || changed) {
           lastEvrakState = currentEvrakState;
           evraklarYuklendi = currentEvrakState;
           applyEvrakState(currentEvrakState, hasResultDataValue(parsedResult));
         }
-      }, 900);
+      }, 700);
     })();
   </script>
 </body>
