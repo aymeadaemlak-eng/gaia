@@ -229,10 +229,10 @@ function prepareDynamicFields(map) {
 
 
 
-  if (parts.length === 0) map['Talep_Kalemleri'] = '';
-  else if (parts.length === 1) map['Talep_Kalemleri'] = parts[0];
+  if (parts.length === 1) map['Talep_Kalemleri'] = parts[0];
   else if (parts.length === 2) map['Talep_Kalemleri'] = parts.join(' ve ');
-  else map['Talep_Kalemleri'] = parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
+  else if (parts.length > 2) map['Talep_Kalemleri'] = parts.slice(0, -1).join(', ') + ' ve ' + parts[parts.length - 1];
+  else if (!hasValue_(map['Talep_Kalemleri'])) map['Talep_Kalemleri'] = '';
 
 
   let turParts = [];
@@ -242,7 +242,7 @@ function prepareDynamicFields(map) {
 
   if (turParts.length > 1) map['Talep_Turu'] = turParts.join(' ve ');
   else if (turParts.length === 1) map['Talep_Turu'] = turParts[0];
-  else map['Talep_Turu'] = '';
+  else if (!hasValue_(map['Talep_Turu'])) map['Talep_Turu'] = '';
 }
 
 
@@ -517,6 +517,8 @@ const KEYMAP = {
   'Hasar Farkı Talebi': 'Hasar_Farki_Talebi',
   'AMB Talebi': 'AMB_Talebi',
   'Ekspertiz Bedeli Talebi': 'Ekspertiz_Bedeli_Talebi',
+  'Talep Türü': 'Talep_Turu',
+  'Talep Kalemleri': 'Talep_Kalemleri',
   // Dropdown (checkboxlar kaldırıldığında buradan beslenecek)
   'Sigorta Alt Brans': 'Sigorta_Alt_Brans',
   'Sigorta Alt Branş': 'Sigorta_Alt_Brans',
