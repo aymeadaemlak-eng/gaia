@@ -166,26 +166,13 @@ function hasValue_(v) {
 }
 
 function applyAltBransToClaims_(map) {
-  const raw = map['Sigorta_Alt_Brans'];
-  if (!hasValue_(raw)) return; // dropdown yoksa/boşsa mevcut değerleri bozma
+  const hasDK = hasValue_(map['Talep_Tutari_DK']);
+  const hasHF = hasValue_(map['Talep_Tutari_HF']);
 
-  const v = String(raw).trim();
+  if (!hasDK && !hasHF) return;
 
-  // Dropdown geldiyse checkbox bayraklarını buna göre set ediyoruz (override)
-  map['Deger_Kaybi_Talebi'] = false;
-  map['Hasar_Farki_Talebi'] = false;
-  map['AMB_Talebi']         = false;
-
-  if (v === 'Zorunlu Trafik (Değer Kaybı)') {
-    map['Deger_Kaybi_Talebi'] = true;
-  } else if (v === 'Zorunlu Trafik (Araç Hasarları)') {
-    map['Hasar_Farki_Talebi'] = true;
-  } else if (v === 'Zorunlu Trafik (Araç Mahrumiyeti)') {
-    map['AMB_Talebi'] = true;
-  } else if (v === 'Zorunlu Trafik (Hasar + Değer Kaybı)') {
-    map['Deger_Kaybi_Talebi'] = true;
-    map['Hasar_Farki_Talebi'] = true;
-  }
+  map['Deger_Kaybi_Talebi'] = hasDK;
+  map['Hasar_Farki_Talebi'] = hasHF;
 }
 
 /** === DİNAMİK ALANLAR === */
