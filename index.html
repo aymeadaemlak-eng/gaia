@@ -1929,25 +1929,96 @@
     (function () {
       function readInlineResultJson() {
         const inlineScript = document.getElementById("resultDataJson");
+        let inlineScriptValue = "";
         if (inlineScript) {
-          return inlineScript.textContent || "";
+          inlineScriptValue = inlineScript.textContent || "";
+          if (!inlineScriptValue && "value" in inlineScript) {
+            inlineScriptValue = inlineScript.value || "";
+          }
         }
         const inlineTextarea = document.getElementById("resultDataJsonTextarea");
-        if (inlineTextarea && "value" in inlineTextarea) {
-          return inlineTextarea.value || "";
+        const inlineTextareaValue =
+          inlineTextarea && "value" in inlineTextarea ? inlineTextarea.value || "" : "";
+        const dataElement = document.querySelector("[data-result-json]");
+        const dataAttributeValue = dataElement
+          ? (dataElement.getAttribute("data-result-json") || dataElement.textContent || "")
+          : "";
+        const jsonScripts = Array.from(document.querySelectorAll("script[type='application/json']"));
+        const jsonScriptCandidate = jsonScripts.find((script) => {
+          const content = script.textContent || "";
+          return content.trim() !== "";
+        });
+        const jsonScriptValue = jsonScriptCandidate ? jsonScriptCandidate.textContent || "" : "";
+        let commentValue = "";
+        try {
+          const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_COMMENT);
+          let node = walker.nextNode();
+          while (node) {
+            const content = node.nodeValue || "";
+            if (content.includes("{") && content.includes("}")) {
+              const start = content.indexOf("{");
+              const end = content.lastIndexOf("}");
+              if (start !== -1 && end !== -1 && end > start) {
+                commentValue = content.slice(start, end + 1);
+              } else {
+                commentValue = content;
+              }
+              break;
+            }
+            node = walker.nextNode();
+          }
+        } catch (error) {
+          console.warn("[result-debug] comment scan failed", error);
         }
-        return "";
+        console.log("[result-debug] inline sources", {
+          scriptLength: inlineScriptValue.length,
+          textareaLength: inlineTextareaValue.length,
+          dataAttrLength: dataAttributeValue.length,
+          dataAttrTag: dataElement ? dataElement.tagName : null,
+          jsonScriptCount: jsonScripts.length,
+          jsonScriptLength: jsonScriptValue.length,
+          jsonScriptId: jsonScriptCandidate ? jsonScriptCandidate.id || null : null,
+          commentLength: commentValue.length,
+        });
+        return (
+          inlineScriptValue ||
+          inlineTextareaValue ||
+          dataAttributeValue ||
+          jsonScriptValue ||
+          commentValue ||
+          ""
+        );
       }
 
       function resolveResultJsonSource() {
         const windowValue = window.RESULT_DATA_JSON;
+        const fallbackValue = window.RESULT_DATA;
+        const windowValueType = typeof windowValue;
+        const windowValueLength = windowValueType === "string" ? windowValue.length : 0;
+        const windowValueKeys =
+          windowValue && windowValueType === "object" ? Object.keys(windowValue).length : 0;
         if (windowValue && typeof windowValue === "object") {
           return windowValue;
         }
         if (typeof windowValue === "string" && windowValue.trim() !== "") {
           return windowValue;
         }
-        return readInlineResultJson();
+        if (fallbackValue && typeof fallbackValue === "object") {
+          return fallbackValue;
+        }
+        if (typeof fallbackValue === "string" && fallbackValue.trim() !== "") {
+          return fallbackValue;
+        }
+        const inlineValue = readInlineResultJson();
+        console.log("[result-debug] resolveResultJsonSource", {
+          windowValueType,
+          windowValueLength,
+          windowValueKeys,
+          fallbackType: typeof fallbackValue,
+          fallbackLength: typeof fallbackValue === "string" ? fallbackValue.length : 0,
+          inlineLength: inlineValue.length,
+        });
+        return inlineValue;
       }
 
       function normalizeEvrakFlag(value) {
@@ -2143,7 +2214,13 @@
         return false;
       }
 
-      function handleCalculateClick() {
+      function handleCalculateClick(event) {
+        const target = event && event.currentTarget ? event.currentTarget : null;
+        const downloadUrl = target && target.dataset ? target.dataset.downloadUrl : "";
+        if (downloadUrl) {
+          window.open(downloadUrl, "_blank", "noopener");
+          return;
+        }
         PIN_PROCESS_CARD = true;
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -2220,11 +2297,60 @@
         if (!normalized) {
           return "";
         }
+        if (normalized.includes("&")) {
+          normalized = normalized
+            .replace(/&quot;/g, '"')
+            .replace(/&#34;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#39;/g, "'")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&amp;/g, "&");
+        }
         if (normalized.startsWith("'") && normalized.endsWith("'")) {
           normalized = normalized.slice(1, -1).trim();
         }
         if (normalized && !normalized.includes('"') && normalized.includes("'")) {
           normalized = normalized.replace(/'/g, '"');
+        }
+        if (normalized) {
+          let result = "";
+          let inString = false;
+          let escaped = false;
+          for (let i = 0; i < normalized.length; i += 1) {
+            const char = normalized[i];
+            if (escaped) {
+              result += char;
+              escaped = false;
+              continue;
+            }
+            if (char === "\\") {
+              result += char;
+              escaped = true;
+              continue;
+            }
+            if (char === '"') {
+              result += char;
+              inString = !inString;
+              continue;
+            }
+            if (inString) {
+              if (char === "\n") {
+                result += "\\n";
+                continue;
+              }
+              if (char === "\r") {
+                result += "\\r";
+                continue;
+              }
+              if (char === "\t") {
+                result += "\\t";
+                continue;
+              }
+            }
+            result += char;
+          }
+          normalized = result;
         }
         normalized = normalized.replace(/,\s*([}\]])/g, "$1");
         return normalized;
@@ -2246,9 +2372,22 @@
         }
         try {
           const parsed = JSON.parse(jsonString);
-          return parsed && typeof parsed === "object" ? parsed : null;
+          if (parsed && typeof parsed === "object") {
+            return parsed;
+          }
+          if (typeof parsed === "string") {
+            const nested = normalizeJsonString(parsed);
+            if (nested) {
+              const reparsed = JSON.parse(nested);
+              return reparsed && typeof reparsed === "object" ? reparsed : null;
+            }
+          }
+          return null;
         } catch (error) {
-          console.warn("invalid JSON", error);
+          console.warn("invalid JSON", error, {
+            jsonPreview: jsonString.slice(0, 200),
+            jsonLength: jsonString.length,
+          });
           return null;
         }
       }
@@ -2314,6 +2453,12 @@
         }
         if (typeof rawValue === "string") {
           const normalized = normalizeJsonString(rawValue);
+          console.log("[result-debug] resolveResultPayload", {
+            rawLength: rawValue.length,
+            normalizedLength: normalized.length,
+            rawPreview: rawValue.slice(0, 200),
+            normalizedPreview: normalized.slice(0, 200),
+          });
           return {
             raw: normalized,
             parsed: safeParseResultData(normalized),
@@ -2525,6 +2670,9 @@
         processNote.classList.add("is-hidden");
         processCta.removeAttribute("href");
         processCta.removeAttribute("download");
+        if (actionButton) {
+          actionButton.removeAttribute("data-download-url");
+        }
         if (petitionDownload) {
           petitionDownload.classList.add("is-hidden");
           petitionDownload.removeAttribute("href");
@@ -2560,6 +2708,11 @@
             processCta.target = "_blank";
             processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
+            if (actionButton) {
+              actionButton.disabled = false;
+              actionButton.textContent = "İhtar Dilekçesini İndir";
+              actionButton.dataset.downloadUrl = ihtarUrl;
+            }
             if (petitionDownload) {
               petitionDownload.href = ihtarUrl;
               petitionDownload.target = "_blank";
@@ -2692,7 +2845,15 @@
           parsedValue && typeof parsedValue === "object" && Object.keys(parsedValue).length > 0;
         const normalizedRaw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
         const rawHasContent = typeof rawValue === "string" ? normalizedRaw !== "" : Boolean(rawValue);
-        return Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
+        const isMeaningful = Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
+        console.log("[result-debug] isMeaningfulResultData", {
+          ihtarUrl: Boolean(ihtarUrl),
+          amountValue: Boolean(amountValue),
+          parsedHasKeys,
+          rawHasContent,
+          isMeaningful,
+        });
+        return isMeaningful;
       }
 
       function applyResultModeVisibility(isActive, resultData) {
@@ -2700,6 +2861,7 @@
           return;
         }
         const amountValue = getResultAmount(resultData);
+        const ihtarUrl = getIhtarUrl(resultData);
         if (amountValue) {
           setUiState("success");
         }
@@ -2717,8 +2879,15 @@
           summaryCalculateButton.disabled = true;
         }
         if (actionButton) {
-          actionButton.disabled = true;
-          actionButton.textContent = "Sonuç Hazır";
+          if (ihtarUrl) {
+            actionButton.disabled = false;
+            actionButton.textContent = "İhtar Dilekçesini İndir";
+            actionButton.dataset.downloadUrl = ihtarUrl;
+          } else {
+            actionButton.disabled = true;
+            actionButton.textContent = "Sonuç Hazır";
+            actionButton.removeAttribute("data-download-url");
+          }
         }
         if (statusStateLabel) {
           statusStateLabel.textContent = "Sonuç Hazır";
@@ -2888,6 +3057,13 @@
       updateSummary(parsedResult);
       applyResultModeVisibility(resultModeActive, parsedResult);
       const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+      console.log("[result-debug] initial state", {
+        hasResultData,
+        hasInitialPayload,
+        resultModeActive,
+        hasAnyPayload,
+        evraklarYuklendi,
+      });
       if (hasAnyPayload) {
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -3054,6 +3230,10 @@
         const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
 
         if (changed) {
+          console.log("[result-debug] tick change", {
+            rawLength: typeof rawValue === "string" ? rawValue.length : 0,
+            nextSig,
+          });
           currentResultJson = rawValue;
           lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
