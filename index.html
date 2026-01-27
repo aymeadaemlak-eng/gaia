@@ -1656,7 +1656,7 @@
         </header>
 
         <section class="card-grid">
-          <article class="card process-card is-hidden" id="processCard" aria-hidden="true">
+          <article class="card process-card is-hidden" id="processCard" aria-hidden="true" tabindex="-1">
             <div class="process-header">
               <h2 class="status-title">Süreç Takibi</h2>
               <span class="process-tag" id="processTag">Belgeler bekleniyor</span>
@@ -1993,7 +1993,6 @@
         setUiState("loading");
         showProcessCardAtTop();
         statusStateLabel.textContent = "Hesaplama sürüyor";
-        setStageOneHidden(true);
         setOutputVisibility(true);
         triggerBubbleFunction(BUBBLE_FN_SUFFIX);
       }
@@ -2404,7 +2403,7 @@
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
 
         if (processActive) {
-          setStageOneHidden(true);
+          setStageOneHidden(false);
           setOutputVisibility(true);
           setProcessVisibility(true);
 
@@ -2500,8 +2499,16 @@
         if (!stageOne) {
           return;
         }
+        if (isHidden && stageOne.contains(document.activeElement)) {
+          if (processCard) {
+            processCard.focus();
+          } else {
+            document.body.focus();
+          }
+        }
         stageOne.classList.toggle("is-hidden", isHidden);
         stageOne.setAttribute("aria-hidden", String(isHidden));
+        stageOne.toggleAttribute("inert", isHidden);
       }
 
       function setOutputVisibility(isVisible) {
