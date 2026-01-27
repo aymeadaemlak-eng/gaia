@@ -1754,8 +1754,8 @@
                 yapılan hesaplamaya göre talebim tarafınıza sunulmuştur...
               </div>
               <div class="petition-actions">
-                <button type="button">PDF İndir</button>
-                <button type="button">Word İndir</button>
+                <a class="process-cta is-hidden" id="petitionDownload" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
+                <button type="button" class="outline-button">Word İndir</button>
                 <button type="button" class="primary">Kopyala</button>
               </div>
             </div>
@@ -1873,6 +1873,7 @@
       const processMini = document.getElementById("processMini");
       const processCta = document.getElementById("processCta");
       const processNote = document.getElementById("processNote");
+      const petitionDownload = document.getElementById("petitionDownload");
       const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
 
       function setUiState(state) {
@@ -1927,9 +1928,15 @@
         if (!processCard || !stageTwo) {
           return;
         }
-        const grid = stageTwo.querySelector(".card-grid");
-        if (grid && grid.firstElementChild !== processCard) {
-          grid.prepend(processCard);
+        const heroCard = stageTwo.querySelector(".hero-card");
+        if (heroCard && heroCard.parentElement === stageTwo) {
+          if (heroCard.previousElementSibling !== processCard) {
+            stageTwo.insertBefore(processCard, heroCard);
+          }
+          return;
+        }
+        if (stageTwo.firstElementChild !== processCard) {
+          stageTwo.prepend(processCard);
         }
       }
 
@@ -2109,6 +2116,9 @@
           return value !== undefined && value !== null && String(value).trim() !== "";
         });
 
+        const predictedAction = String(getValueByKey(resultData, "predictedAction") || getValueByKey(resultData, "action") || "")
+          .toLowerCase();
+
         const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
         const ihtarUrls = normalizeUrlList(ihtarValue);
         const ihtarUrl = ihtarUrls[0];
@@ -2117,11 +2127,11 @@
           return { stage: "error" };
         }
 
-        if (ihtarUrl) {
+        if (ihtarUrl || predictedAction.includes("ihtar")) {
           return { stage: 4, ihtarUrl };
         }
 
-        if (stage3Ready) {
+        if (stage3Ready || predictedAction.includes("dk hesapla") || predictedAction.includes("dk hesaba taşı")) {
           return { stage: 3 };
         }
 
@@ -2172,6 +2182,7 @@
         const { stage, ihtarUrl } = buildProcessState(resultData);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
+        const tahminiTutar = getResultAmount(resultData);
 
         const miniLines = [];
         if (karsiPlaka) {
@@ -2179,6 +2190,9 @@
         }
         if (kazaTarihi) {
           miniLines.push(`Kaza Tarihi: ${kazaTarihi}`);
+        }
+        if (tahminiTutar) {
+          miniLines.push(`Tahmini Değer Kaybı: ${tahminiTutar}`);
         }
 
         processMini.innerHTML = "";
@@ -2200,6 +2214,17 @@
         processNote.classList.add("is-hidden");
         processCta.removeAttribute("href");
         processCta.removeAttribute("download");
+        if (petitionDownload) {
+          petitionDownload.classList.add("is-hidden");
+          petitionDownload.removeAttribute("href");
+          petitionDownload.removeAttribute("download");
+        }
+
+        const shouldShowProcess = stage !== 0 || hasStartedCalculation;
+        setProcessCardVisibility(shouldShowProcess);
+        if (shouldShowProcess) {
+          moveProcessCardToTop();
+        }
 
         if (stage === "error") {
           processTag.textContent = "Sorun oluştu";
@@ -2222,6 +2247,11 @@
             processCta.href = ihtarUrl;
             processCta.setAttribute("download", "");
             processCta.classList.remove("is-hidden");
+            if (petitionDownload) {
+              petitionDownload.href = ihtarUrl;
+              petitionDownload.setAttribute("download", "");
+              petitionDownload.classList.remove("is-hidden");
+            }
           }
           setUiState("success");
           if (statusStateLabel) {
@@ -2273,8 +2303,55 @@
       }
 
       let parsedResult = safeParseResultData(resultDataJson);
+      function getResultAmount(resultData) {
+        if (!resultData || typeof resultData !== "object") {
+          return "";
+        }
+        if (resultData.amount) {
+          return String(resultData.amount);
+        }
+        const candidateKeys = [
+          "Tahmini Değer Kaybı",
+          "Tahmini Değer Kaybı Tutarı",
+          "Değer Kaybı Tutarı",
+          "Deger Kaybi Tutari",
+          "Tahmini Deger Kaybi Tutari",
+          "DK Tutarı",
+          "DK Tutari",
+          "Tazminat Tutarı",
+        ];
+        for (const key of candidateKeys) {
+          const value = getValueByKey(resultData, key);
+          if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value);
+          }
+        }
+        for (const [entryKey, entryValue] of Object.entries(resultData)) {
+          if (typeof entryKey === "string" && /değer kaybı|deger kaybi/i.test(entryKey)) {
+            if (entryValue !== undefined && entryValue !== null && String(entryValue).trim() !== "") {
+              return String(entryValue);
+            }
+          }
+        }
+        return "";
+      }
+
+      function getResultDate(resultData) {
+        if (!resultData || typeof resultData !== "object") {
+          return "";
+        }
+        const dateKeys = ["Hesaplama Tarihi", "Hesaplama tarihi", "İhtar Tarihi", "Tarih", "Date"];
+        for (const key of dateKeys) {
+          const value = getValueByKey(resultData, key);
+          if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value);
+          }
+        }
+        return "";
+      }
+
       function hasResultDataValue(resultData) {
-        return Boolean(resultData && (resultData.amount || resultData.status === "error"));
+        return Boolean(resultData && (getResultAmount(resultData) || resultData.status === "error"));
       }
 
       function applyResultState(resultData) {
@@ -2283,10 +2360,12 @@
           setOutputVisibility(true);
           return;
         }
-        if (resultData && resultData.amount) {
+        const amountValue = getResultAmount(resultData);
+        if (resultData && amountValue) {
           setUiState("success");
-          resultAmount.textContent = resultData.amount;
-          resultDate.textContent = `Hesaplama tarihi: ${resultData.date || "GG/AA/YYYY"}`;
+          resultAmount.textContent = amountValue;
+          const resultDateValue = getResultDate(resultData);
+          resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
           setOutputVisibility(true);
         }
       }
