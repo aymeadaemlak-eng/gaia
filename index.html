@@ -2236,6 +2236,45 @@
         if (normalized && !normalized.includes('"') && normalized.includes("'")) {
           normalized = normalized.replace(/'/g, '"');
         }
+        if (normalized) {
+          let result = "";
+          let inString = false;
+          let escaped = false;
+          for (let i = 0; i < normalized.length; i += 1) {
+            const char = normalized[i];
+            if (escaped) {
+              result += char;
+              escaped = false;
+              continue;
+            }
+            if (char === "\\") {
+              result += char;
+              escaped = true;
+              continue;
+            }
+            if (char === '"') {
+              result += char;
+              inString = !inString;
+              continue;
+            }
+            if (inString) {
+              if (char === "\n") {
+                result += "\\n";
+                continue;
+              }
+              if (char === "\r") {
+                result += "\\r";
+                continue;
+              }
+              if (char === "\t") {
+                result += "\\t";
+                continue;
+              }
+            }
+            result += char;
+          }
+          normalized = result;
+        }
         normalized = normalized.replace(/,\s*([}\]])/g, "$1");
         return normalized;
       }
