@@ -1956,7 +1956,13 @@
           while (node) {
             const content = node.nodeValue || "";
             if (content.includes("{") && content.includes("}")) {
-              commentValue = content;
+              const start = content.indexOf("{");
+              const end = content.lastIndexOf("}");
+              if (start !== -1 && end !== -1 && end > start) {
+                commentValue = content.slice(start, end + 1);
+              } else {
+                commentValue = content;
+              }
               break;
             }
             node = walker.nextNode();
