@@ -866,6 +866,56 @@
       .hero-title-lg {
         font-size: 22px;
       }
+
+      .cta-block {
+        padding: 14px;
+        gap: 8px;
+      }
+
+      .required-docs {
+        padding: 10px 12px;
+        gap: 6px;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .required-docs-summary {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .required-docs-details {
+        display: none;
+      }
+
+      .required-docs.is-expanded .required-docs-details {
+        display: grid;
+        gap: 6px;
+      }
+
+      .required-docs-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .cta-button {
+        margin-top: 4px;
+        margin-bottom: 4px;
+        position: sticky;
+        bottom: 12px;
+        z-index: 2;
+      }
+
+      .cta-meta {
+        font-size: 12px;
+      }
+
+      .cta-warning {
+        font-size: 12px;
+      }
     }
 
     .result {
@@ -1067,6 +1117,19 @@
 
     .required-docs a:hover {
       text-decoration: underline;
+    }
+
+    .required-docs-toggle {
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 0;
+      text-align: left;
+      cursor: pointer;
+      width: fit-content;
+      display: none;
     }
 
     .step-card {
@@ -1503,29 +1566,41 @@
           <section class="cta-block" id="primaryCta">
             <div class="required-docs" id="requiredDocs">
               <strong>Gereken evraklar:</strong>
-              <span>Eksper raporu, ruhsat ve kaza tespit tutanağı yükleyin.</span>
-              <span>PDF için PDF, foto için foto ikonuna tıklayın.</span>
-              <span>
-                Not: Hasar eksper raporunuzu
-                <a
-                  href="https://www.turkiye.gov.tr/sbvgm-trafik-ve-kasko-eksper-raporlari-sorgulama"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  e-Devlet'ten indirebilirsiniz
-                </a>.
-              </span>
-              <span>
-                Veya e-Devlet'e giriş yaptıktan sonra "eksper" diye aratarak raporunuza ulaşabilirsiniz.
-              </span>
+              <div class="required-docs-summary">
+                Eksper raporu, ruhsat ve kaza tespit tutanağı yükleyin. PDF için PDF, foto için foto ikonuna tıklayın.
+              </div>
+              <div class="required-docs-details" id="requiredDocsDetails">
+                <span>
+                  Not: Hasar eksper raporunuzu
+                  <a
+                    href="https://www.turkiye.gov.tr/sbvgm-trafik-ve-kasko-eksper-raporlari-sorgulama"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    e-Devlet'ten indirebilirsiniz
+                  </a>.
+                </span>
+                <span>
+                  Veya e-Devlet'e giriş yaptıktan sonra "eksper" diye aratarak raporunuza ulaşabilirsiniz.
+                </span>
+              </div>
+              <button
+                type="button"
+                class="required-docs-toggle"
+                id="requiredDocsToggle"
+                aria-expanded="false"
+                aria-controls="requiredDocsDetails"
+              >
+                Detaylar
+              </button>
             </div>
-            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
             <div class="cta-meta">Ortalama süre: 1–2 dakika</div>
             <div class="cta-meta">Hesaplama tamamlandığında belgeleriniz otomatik silinir.</div>
             <div class="cta-meta">Bu hesaplama bir tahmindir; nihai tutar tahkim bilirkişisiyle belirlenir.</div>
             <div class="cta-warning is-hidden" id="missingDocsNote">
               Devam etmek için zorunlu evrakları yükleyin.
             </div>
+            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
           </section>
 
           <div class="trust-bar">
@@ -2092,6 +2167,8 @@
       const trustDetailsLink = document.getElementById("trustDetailsLink");
       const trustDetailsModal = document.getElementById("trustDetailsModal");
       const closeTrustModalButton = document.getElementById("closeTrustModalButton");
+      const requiredDocs = document.getElementById("requiredDocs");
+      const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
@@ -3247,6 +3324,14 @@
         trustDetailsLink.addEventListener("click", (event) => {
           event.preventDefault();
           toggleTrustModal(true);
+        });
+      }
+
+      if (requiredDocs && requiredDocsToggle) {
+        requiredDocsToggle.addEventListener("click", () => {
+          const isExpanded = requiredDocs.classList.toggle("is-expanded");
+          requiredDocsToggle.setAttribute("aria-expanded", String(isExpanded));
+          requiredDocsToggle.textContent = isExpanded ? "Detayları Gizle" : "Detaylar";
         });
       }
 
