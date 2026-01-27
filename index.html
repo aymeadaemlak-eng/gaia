@@ -468,6 +468,33 @@
       color: var(--text);
     }
 
+    .process-step.active:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(31, 111, 235, 0.25), rgba(31, 111, 235, 0.85));
+      animation: process-flow 1.6s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes process-flow {
+      0% {
+        opacity: 0.2;
+        transform: scaleX(0.6);
+      }
+      50% {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+      100% {
+        opacity: 0.2;
+        transform: scaleX(0.6);
+      }
+    }
+
     .process-step.error .process-circle {
       background: #fef2f2;
       border-color: #fecaca;
@@ -1243,6 +1270,20 @@
       color: #2e4aa1;
     }
 
+    .founder-photo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid #dbe4f5;
+      background: #f8fafc;
+    }
+
+    .founder-details {
+      display: grid;
+      gap: 6px;
+    }
+
     .founder-name {
       font-weight: 700;
     }
@@ -1251,6 +1292,29 @@
       font-size: 13px;
       color: var(--muted);
       font-weight: 600;
+    }
+
+    .founder-links {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .founder-links a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .founder-links a:hover {
+      text-decoration: underline;
+    }
+
+    .founder-photo-only {
+      display: grid;
+      place-items: center;
+      padding: 20px;
     }
 
     .modal-form {
@@ -1486,9 +1550,9 @@
               Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza güvenle hazırlar.
             </p>
             <div class="pill-row" aria-label="Güven rozetleri">
-              <span class="pill">Şifreli İşleme</span>
+              <span class="pill">Şifreli işlem</span>
               <span class="pill">Otomatik Silme</span>
-              <span class="pill">Avukat Destekli</span>
+              <span class="pill">Verileriniz 24 saat içinde otomatik silinir.</span>
             </div>
           </section>
 
@@ -1681,23 +1745,32 @@
             <div class="founders-grid">
               <article class="founder-card">
                 <div class="founder-header">
-                  <div class="founder-avatar" aria-hidden="true">SK</div>
-                  <div>
+                  <img
+                    class="founder-photo"
+                    src="https://media.licdn.com/dms/image/v2/D4D03AQHglv8dSDhzNA/profile-displayphoto-shrink_200_200/B4DZWCznHZGcAY-/0/1741656322902?e=2147483647&v=beta&t=Vc6xk5EdkJPz3nZaS9Hv3Q7oI0VHjIs74swwThCv-h0"
+                    alt="Saltuk Kıraç"
+                  />
+                  <div class="founder-details">
                     <div class="founder-name">Saltuk Kıraç</div>
-                    <div class="founder-role">GAIA Kurucusu</div>
+                    <div class="founder-role">Founder of GAIA Sphere</div>
+                    <div class="founder-links">
+                      <span>Email: <a href="mailto:saltukkirac@gmail.com">saltukkirac@gmail.com</a></span>
+                      <span>Twitter: <a href="https://x.com/Saltuk_Kirac" target="_blank" rel="noopener">x.com/Saltuk_Kirac</a></span>
+                      <span>Reddit: u/saltukkirac ve u/saltukirac</span>
+                      <span>Instagram: <a href="https://www.instagram.com/saltukirac/" target="_blank" rel="noopener">instagram.com/saltukirac</a></span>
+                      <span>LinkedIn: <a href="https://www.linkedin.com/in/saltuk-kirac/" target="_blank" rel="noopener">linkedin.com/in/saltuk-kirac</a></span>
+                    </div>
                   </div>
                 </div>
-                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
               </article>
               <article class="founder-card">
-                <div class="founder-header">
-                  <div class="founder-avatar" aria-hidden="true">MK</div>
-                  <div>
-                    <div class="founder-name">Mevlüt Kıraç</div>
-                    <div class="founder-role">Sigorta Hukuku Otomasyonu Kurucusu</div>
-                  </div>
+                <div class="founder-photo-only">
+                  <img
+                    class="founder-photo"
+                    src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1769547936836x581124338683655000/WhatsApp%20Image%202026-01-28%20at%2000.05.10.jpeg?_gl=1*ll8fas*_gcl_au*NjcyMjkyMTM4LjE3NjU3MjIyMTI.*_ga*MTUxNDExNjAyNS4xNzQyMzI4OTA1*_ga_BFPVR2DEE2*czE3Njk1MTA5MzIkbzIxMiRnMSR0MTc2OTU0Nzc3NiRqNjAkbDAkaDA."
+                    alt="Mevlüt Kıraç"
+                  />
                 </div>
-                <p>Süreç tasarımı ve operasyonel otomasyon odaklı.</p>
               </article>
             </div>
           </section>
@@ -1754,6 +1827,7 @@
           </div>
           <p class="summary-security-note" id="summarySecurityNote">
             Belgeleriniz yalnızca bu başvuru için kullanılır ve 256-bit şifreleme ile korunur.
+            <strong>İşleminiz bittikten sonra belgeleriniz otomatik olarak silinir.</strong>
           </p>
           <div class="summary-meta" id="summaryDate">Hesaplama tarihi: --</div>
         </section>
