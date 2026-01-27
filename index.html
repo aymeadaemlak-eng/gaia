@@ -111,6 +111,47 @@
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
     }
 
+    .summary-card {
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #d9e2f4;
+      background: linear-gradient(135deg, #ffffff 0%, #f5f8ff 100%);
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .summary-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .summary-amount {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .summary-meta {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .summary-actions .outline-button,
+    .summary-actions .primary {
+      min-width: 180px;
+    }
+
     .hero-top {
       display: flex;
       flex-wrap: wrap;
@@ -1629,6 +1670,26 @@
           </span>
         </div>
 
+        <section class="summary-card" id="summaryCard" aria-live="polite">
+          <div class="summary-header">
+            <div>
+              <span class="badge">Sonuç Özeti</span>
+              <h2 class="hero-title">Hesaplama ve İhtar Bilgisi</h2>
+              <p class="summary-meta" id="summaryStatus">
+                Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.
+              </p>
+            </div>
+            <div class="summary-amount" id="summaryAmount">₺ --</div>
+          </div>
+          <div class="summary-actions">
+            <button type="button" class="primary" id="summaryCalculateButton">Hesapla</button>
+            <a class="outline-button is-hidden" id="summaryDownload" href="#" target="_blank" rel="noopener">
+              İhtar Dilekçesini İndir
+            </a>
+          </div>
+          <div class="summary-meta" id="summaryDate">Hesaplama tarihi: --</div>
+        </section>
+
         <header class="hero-card">
           <div class="hero-top">
             <div>
@@ -1874,6 +1935,12 @@
       const processCta = document.getElementById("processCta");
       const processNote = document.getElementById("processNote");
       const petitionDownload = document.getElementById("petitionDownload");
+      const summaryCard = document.getElementById("summaryCard");
+      const summaryStatus = document.getElementById("summaryStatus");
+      const summaryAmount = document.getElementById("summaryAmount");
+      const summaryDate = document.getElementById("summaryDate");
+      const summaryDownload = document.getElementById("summaryDownload");
+      const summaryCalculateButton = document.getElementById("summaryCalculateButton");
       const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
 
       function setUiState(state) {
@@ -1998,6 +2065,9 @@
       }
       if (actionButton) {
         actionButton.addEventListener("click", handleCalculateClick);
+      }
+      if (summaryCalculateButton) {
+        summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
 
       function scrollToPrimaryCta() {
@@ -2447,9 +2517,42 @@
         }
       }
 
+      function updateSummary(resultData) {
+        if (!summaryCard || !summaryStatus || !summaryAmount || !summaryDate || !summaryDownload) {
+          return;
+        }
+        const ihtarUrl = getIhtarUrl(resultData);
+        const amountValue = getResultAmount(resultData);
+        const dateValue = getResultDate(resultData);
+
+        if (amountValue) {
+          summaryAmount.textContent = amountValue;
+          summaryStatus.textContent =
+            "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
+        } else {
+          summaryAmount.textContent = "₺ --";
+          summaryStatus.textContent =
+            "Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.";
+        }
+
+        summaryDate.textContent = `Hesaplama tarihi: ${dateValue || "--"}`;
+
+        if (ihtarUrl) {
+          summaryDownload.href = ihtarUrl;
+          summaryDownload.classList.remove("is-hidden");
+        } else {
+          summaryDownload.removeAttribute("href");
+          summaryDownload.classList.add("is-hidden");
+        }
+      }
+
       function applyEvrakState(isReady, resultPresent) {
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+
+        if (summaryCalculateButton) {
+          summaryCalculateButton.disabled = !isReady;
+        }
 
         if (processActive && !hasAnyPayloadLocal) {
           setStageOneHidden(true);
@@ -2529,6 +2632,7 @@
       }
 
       updateProcessUI(parsedResult);
+      updateSummary(parsedResult);
       const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
       if (hasAnyPayload) {
         setProcessVisibility(true);
@@ -2695,6 +2799,7 @@
             setPrimaryCtaHidden(true);
           }
           updateProcessUI(nextParsed);
+          updateSummary(nextParsed);
           applyResultState(nextParsed);
         }
 
