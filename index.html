@@ -1949,6 +1949,21 @@
           return content.trim() !== "";
         });
         const jsonScriptValue = jsonScriptCandidate ? jsonScriptCandidate.textContent || "" : "";
+        let commentValue = "";
+        try {
+          const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_COMMENT);
+          let node = walker.nextNode();
+          while (node) {
+            const content = node.nodeValue || "";
+            if (content.includes("{") && content.includes("}")) {
+              commentValue = content;
+              break;
+            }
+            node = walker.nextNode();
+          }
+        } catch (error) {
+          console.warn("[result-debug] comment scan failed", error);
+        }
         console.log("[result-debug] inline sources", {
           scriptLength: inlineScriptValue.length,
           textareaLength: inlineTextareaValue.length,
@@ -1957,12 +1972,14 @@
           jsonScriptCount: jsonScripts.length,
           jsonScriptLength: jsonScriptValue.length,
           jsonScriptId: jsonScriptCandidate ? jsonScriptCandidate.id || null : null,
+          commentLength: commentValue.length,
         });
         return (
           inlineScriptValue ||
           inlineTextareaValue ||
           dataAttributeValue ||
           jsonScriptValue ||
+          commentValue ||
           ""
         );
       }
