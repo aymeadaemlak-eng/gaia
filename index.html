@@ -1883,6 +1883,7 @@
       const PROCESS_ACTIVE_KEY = "processActive";
       let hasStartedCalculation = false;
       let PIN_PROCESS_CARD = false;
+      let currentResultJson = resultDataJson;
 
       function readPersistedProcessActive() {
         try {
@@ -2023,6 +2024,10 @@
         if (missingDocsNote) {
           missingDocsNote.classList.toggle("is-hidden", isReady);
         }
+      }
+
+      function hasResultPayload(jsonString) {
+        return typeof jsonString === "string" && jsonString.trim() !== "";
       }
 
       function safeParseResultData(jsonString) {
@@ -2245,7 +2250,7 @@
           petitionDownload.removeAttribute("download");
         }
 
-        const shouldShowProcess = stage !== 0 || hasStartedCalculation;
+        const shouldShowProcess = stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
         setProcessCardVisibility(shouldShowProcess);
         if (shouldShowProcess) {
           moveProcessCardToTop();
@@ -2451,8 +2456,12 @@
       }
 
       const hasResultData = hasResultDataValue(parsedResult);
+      const hasInitialPayload = hasResultPayload(currentResultJson);
 
-      hasStartedCalculation = readPersistedProcessActive();
+      hasStartedCalculation = readPersistedProcessActive() && hasInitialPayload;
+      if (!hasInitialPayload) {
+        persistProcessActive(false);
+      }
       if (hasStartedCalculation) {
         setProcessCardVisibility(true);
         moveProcessCardToTop();
@@ -2583,6 +2592,7 @@
         const changed = currentJson !== lastResultJson || nextSig !== lastSig;
 
         if (changed) {
+          currentResultJson = currentJson;
           lastResultJson = currentJson;
           lastParsed = nextParsed;
           lastSig = nextSig;
