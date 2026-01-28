@@ -385,7 +385,7 @@
 
     .process-card {
       display: grid;
-      gap: 16px;
+      gap: 12px;
     }
 
     .process-header {
@@ -409,14 +409,14 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0;
-      padding: 0 6px;
+      padding: 0 2px;
     }
 
     .process-stepper.is-extended {
       display: flex;
       overflow-x: auto;
-      gap: 18px;
-      padding: 0 6px 10px;
+      gap: 12px;
+      padding: 0 2px 8px;
       scroll-snap-type: x proximity;
     }
 
@@ -437,12 +437,12 @@
 
     .process-step {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       justify-items: center;
       text-align: center;
       position: relative;
       z-index: 1;
-      padding: 0 6px;
+      padding: 0 4px;
     }
 
     .process-stepper.is-extended .process-step {
@@ -532,7 +532,7 @@
 
     .process-body {
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }
 
     .process-title {
@@ -1432,8 +1432,12 @@
       display: none;
     }
 
-    #app[data-result-mode="true"] #catchCtaButton {
+    .result-cta-secondary {
       display: none;
+    }
+
+    #app[data-result-mode="true"] .result-cta-secondary {
+      display: grid;
     }
 
     #app[data-result-mode="false"] .reference-result,
@@ -2033,7 +2037,7 @@
           </section>
 
           <div id="lawyersBlockHome"></div>
-          <section class="lawyers-block">
+          <section class="lawyers-block" id="referencesSection">
             <div>
               <h2>
                 <span class="reference-pre">Otomasyonumuzu Kullanan Ekipler</span>
@@ -2135,12 +2139,12 @@
             </div>
           </section>
 
-          <section class="catch-cta card">
+          <section class="catch-cta card result-cta-secondary">
             <div>
-              <h2>Hızlıca hesaplayın</h2>
-              <p>1–2 dakikada tahmini tutarı görün, başvuru için hazırlanın.</p>
+              <h2>Şeffaf dosya takibini başlatın</h2>
+              <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
             </div>
-            <button type="button" class="outline-button" id="catchCtaButton">Yukarı çık ve Hesapla</button>
+            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
           </section>
         </div>
       </div>
@@ -2443,7 +2447,7 @@
       const stageTwo = document.getElementById("stageTwo");
       const primaryCta = document.getElementById("primaryCta");
       const calculateButton = document.getElementById("calculateButton");
-      const catchCtaButton = document.getElementById("catchCtaButton");
+      const referencesSection = document.getElementById("referencesSection");
       const actionButton = document.getElementById("actionButton");
       const statusStateLabel = document.getElementById("statusStateLabel");
       const resultAmount = document.getElementById("resultAmount");
@@ -2480,6 +2484,7 @@
       const summaryCalculateButton = document.getElementById("summaryCalculateButton");
       let processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
       let isExtendedStepper = false;
+      let processStepSignature = "";
       const lawyersBlock = document.querySelector(".lawyers-block");
       const lawyersBlockHome = document.getElementById("lawyersBlockHome");
       const referencesSlot = document.getElementById("referencesSlot");
@@ -2500,16 +2505,24 @@
         "Bilirkişi ücreti 💰",
         "Ara karar",
         "Uzman raporu 💰",
-        "Bildirim (tebligat)",
+        "Bildirim",
         "İtiraz",
         "Ek rapor 💰",
-        "Ek bildirim (ek tebligat)",
+        "Ek bildirim",
         "Nihai karar ⚖️",
         "Karar bildirimi",
         "Kesinleşme",
         "Ödeme takibi 💰",
         "Dosya kapanışı",
-        "Yasal tahsil (icra) ⚠️💰",
+        "Yasal tahsil ⚠️💰",
+      ];
+
+      const RESULT_PROCESS_STEPS = [
+        "İhtar dilekçesi",
+        "Belgeler alındı",
+        "Bilgiler çıkarılıyor",
+        "Değer kaybı tahmini",
+        ...EXTENDED_PROCESS_STEPS.slice(BASE_PROCESS_STEPS.length),
       ];
 
       function renderProcessSteps(stepLabels, options = {}) {
@@ -2535,16 +2548,17 @@
         processSteps = processStepper.querySelectorAll(".process-step");
       }
 
-      function ensureProcessSteps(isExtended) {
-        const stepLabels = isExtended ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS;
+      function ensureProcessSteps(stepLabels, isExtended) {
         if (!processStepper) {
           return;
         }
-        if (isExtendedStepper === isExtended && processSteps.length === stepLabels.length) {
+        const signature = stepLabels.join("|");
+        if (isExtendedStepper === isExtended && processSteps.length === stepLabels.length && signature === processStepSignature) {
           return;
         }
         renderProcessSteps(stepLabels, { isExtended });
         isExtendedStepper = isExtended;
+        processStepSignature = signature;
       }
 
       function setUiState(state) {
@@ -2736,10 +2750,6 @@
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
 
-      function scrollToPrimaryCta() {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-
       function scrollToSummaryCard() {
         if (!summaryCard) {
           return;
@@ -2748,10 +2758,6 @@
         const top = rect.top + window.pageYOffset - 12;
         window.scrollTo({ top, behavior: "smooth" });
         summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      if (catchCtaButton) {
-        catchCtaButton.addEventListener("click", scrollToPrimaryCta);
       }
 
       function setCalculateButtonState(isReady) {
@@ -3133,7 +3139,10 @@
           return;
         }
         const { stage, ihtarUrl } = buildProcessState(resultData);
-        ensureProcessSteps(resultModeActive);
+        const stepLabels = resultModeActive && ihtarUrl
+          ? RESULT_PROCESS_STEPS
+          : (resultModeActive ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS);
+        ensureProcessSteps(stepLabels, resultModeActive);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
         const tahminiTutar = formatAmount(getResultAmount(resultData));
@@ -3228,7 +3237,7 @@
             statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
           if (resultModeActive) {
-            setProcessStepState(0, false, { completedCount: BASE_PROCESS_STEPS.length, lockActive: true });
+            setProcessStepState(1, false);
           } else {
             setProcessStepState(4, false);
           }
@@ -3746,7 +3755,7 @@
       }
 
       function scrollToReferencesSection() {
-        const target = lawyersBlock || referencesSlot;
+        const target = referencesSection || lawyersBlock || referencesSlot;
         if (!target) {
           return false;
         }
@@ -3760,12 +3769,7 @@
       if (resultCtaButtons && resultCtaButtons.length) {
         resultCtaButtons.forEach((button) => {
           button.addEventListener("click", () => {
-            const opened = toggleReferencesModal(true);
-            const isModalVisible =
-              opened && referencesModal ? window.getComputedStyle(referencesModal).display !== "none" : false;
-            if (!opened || !isModalVisible) {
-              scrollToReferencesSection();
-            }
+            scrollToReferencesSection();
           });
         });
       }
