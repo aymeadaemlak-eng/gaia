@@ -412,6 +412,14 @@
       padding: 0 6px;
     }
 
+    .process-stepper.is-extended {
+      display: flex;
+      overflow-x: auto;
+      gap: 18px;
+      padding: 0 6px 10px;
+      scroll-snap-type: x proximity;
+    }
+
     .process-stepper::before {
       content: "";
       position: absolute;
@@ -423,6 +431,10 @@
       z-index: 0;
     }
 
+    .process-stepper.is-extended::before {
+      content: none;
+    }
+
     .process-step {
       display: grid;
       gap: 6px;
@@ -431,6 +443,23 @@
       position: relative;
       z-index: 1;
       padding: 0 6px;
+    }
+
+    .process-stepper.is-extended .process-step {
+      flex: 0 0 auto;
+      min-width: 128px;
+      scroll-snap-align: start;
+    }
+
+    .process-stepper.is-extended .process-step:not(:first-child)::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: -18px;
+      width: 18px;
+      height: 2px;
+      background: #e6ecf5;
+      z-index: -1;
     }
 
     .process-circle {
@@ -1398,12 +1427,12 @@
       display: grid;
     }
 
-    #app[data-result-mode="true"] .process-details {
-      display: grid;
-    }
-
     #app[data-result-mode="true"] .reference-pre,
     #app[data-result-mode="true"] .reference-pre-note {
+      display: none;
+    }
+
+    #app[data-result-mode="true"] #catchCtaButton {
       display: none;
     }
 
@@ -2165,7 +2194,7 @@
 
         <section class="card-grid">
           <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" id="resultCtaButton">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
             <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
           </div>
           <article class="card process-card is-hidden" id="processCard" aria-hidden="true" tabindex="-1">
@@ -2200,37 +2229,7 @@
               <a class="process-cta is-hidden" id="processCta" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
-            <div class="process-details" id="processDetails">
-              <div class="process-details-header">
-                <h4>Hukuki ve Mali Süreç Aşamaları</h4>
-                <span class="process-details-badge">Toplam 25+ adım</span>
-              </div>
-              <p>Bu aşamalar resmi harçlar, raporlar ve yazışmalar içerebilir.</p>
-              <ul class="process-details-list">
-                <li data-process-step="1">İhtar dilekçesi hazır</li>
-                <li class="is-costly" data-process-step="2">İhtar gönderimi <span>📦💰</span></li>
-                <li class="is-costly" data-process-step="3">Tahkim harcı <span>⚖️💰</span></li>
-                <li data-process-step="4">Hakem atama</li>
-                <li class="is-costly" data-process-step="5">Bilirkişi ücreti <span>💰</span></li>
-                <li data-process-step="6">Ara karar</li>
-                <li class="is-costly" data-process-step="7">Uzman raporu <span>💰</span></li>
-                <li data-process-step="8">Bildirim (tebligat)</li>
-                <li data-process-step="9">İtiraz</li>
-                <li class="is-costly" data-process-step="10">Ek rapor <span>💰</span></li>
-                <li data-process-step="11">Ek bildirim (ek tebligat)</li>
-                <li data-process-step="12">Nihai karar <span>⚖️</span></li>
-                <li data-process-step="13">Karar bildirimi</li>
-                <li data-process-step="14">Kesinleşme</li>
-                <li class="is-costly" data-process-step="15">Ödeme takibi <span>💰</span></li>
-                <li data-process-step="16">Dosya kapanışı</li>
-                <li class="is-costly" data-process-step="17">Yasal tahsil (icra) <span>⚠️💰</span></li>
-              </ul>
-            </div>
           </article>
-          <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" id="resultCtaButton">Dosya Şeffaf Takibini Başlat</button>
-            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
-          </div>
           <div id="referencesSlot"></div>
 
         </section>
@@ -2462,7 +2461,7 @@
       const referencesModal = document.getElementById("referencesModal");
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
-      const resultCtaButton = document.getElementById("resultCtaButton");
+      const resultCtaButtons = document.querySelectorAll('[data-open-references="true"]');
       const requiredDocs = document.getElementById("requiredDocs");
       const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
@@ -2473,18 +2472,81 @@
       const processMini = document.getElementById("processMini");
       const processCta = document.getElementById("processCta");
       const processNote = document.getElementById("processNote");
+      const processStepper = document.getElementById("processStepper");
       const summaryCard = document.getElementById("summaryCard");
       const summaryStatus = document.getElementById("summaryStatus");
       const summaryAmount = document.getElementById("summaryAmount");
       const summaryDate = document.getElementById("summaryDate");
       const summaryDownload = document.getElementById("summaryDownload");
       const summaryCalculateButton = document.getElementById("summaryCalculateButton");
-      const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
-      const processDetailItems = document.querySelectorAll(".process-details-list li");
+      let processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
+      let isExtendedStepper = false;
       const lawyersBlock = document.querySelector(".lawyers-block");
       const lawyersBlockHome = document.getElementById("lawyersBlockHome");
       const referencesSlot = document.getElementById("referencesSlot");
       let hasScrolledToSummary = false;
+
+      const BASE_PROCESS_STEPS = [
+        "Belgeler alındı",
+        "Bilgiler çıkarılıyor",
+        "Değer kaybı tahmini",
+        "İhtar dilekçesi",
+      ];
+
+      const EXTENDED_PROCESS_STEPS = [
+        "İhtar dilekçesi",
+        "İhtar gönderimi 📦💰",
+        "Tahkim harcı ⚖️💰",
+        "Hakem atama",
+        "Bilirkişi ücreti 💰",
+        "Ara karar",
+        "Uzman raporu 💰",
+        "Bildirim (tebligat)",
+        "İtiraz",
+        "Ek rapor 💰",
+        "Ek bildirim (ek tebligat)",
+        "Nihai karar ⚖️",
+        "Karar bildirimi",
+        "Kesinleşme",
+        "Ödeme takibi 💰",
+        "Dosya kapanışı",
+        "Yasal tahsil (icra) ⚠️💰",
+      ];
+
+      function renderProcessSteps(stepLabels, options = {}) {
+        if (!processStepper) {
+          return;
+        }
+        const { isExtended = false } = options;
+        processStepper.innerHTML = stepLabels
+          .map(
+            (label, index) => `
+              <div class="process-step pending" data-step="${index + 1}">
+                <span class="process-circle">${index + 1}</span>
+                <span class="process-label">${label}</span>
+              </div>
+            `
+          )
+          .join("");
+        processStepper.classList.toggle("is-extended", isExtended);
+        processStepper.setAttribute(
+          "aria-label",
+          isExtended ? "Süreç adımları (kaydırılabilir)" : "Süreç adımları"
+        );
+        processSteps = processStepper.querySelectorAll(".process-step");
+      }
+
+      function ensureProcessSteps(isExtended) {
+        const stepLabels = isExtended ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS;
+        if (!processStepper) {
+          return;
+        }
+        if (isExtendedStepper === isExtended && processSteps.length === stepLabels.length) {
+          return;
+        }
+        renderProcessSteps(stepLabels, { isExtended });
+        isExtendedStepper = isExtended;
+      }
 
       function setUiState(state) {
         stageTwo.dataset.uiState = state;
@@ -3035,10 +3097,11 @@
         return { stage: 0 };
       }
 
-      function setProcessStepState(activeStep, isError) {
+      function setProcessStepState(activeStep, isError, options = {}) {
         if (!processSteps || !processSteps.length) {
           return;
         }
+        const { completedCount, lockActive = false } = options;
         processSteps.forEach((step) => {
           const stepNumber = Number(step.dataset.step);
           step.classList.remove("done", "active", "pending", "error");
@@ -3050,16 +3113,18 @@
             }
             return;
           }
-          if (stepNumber < activeStep) {
+          const doneThreshold = completedCount !== undefined ? completedCount : activeStep - 1;
+          const isDone = stepNumber <= doneThreshold;
+          if (isDone) {
             step.classList.add("done");
-          } else if (stepNumber === activeStep) {
+          } else if (!lockActive && activeStep && stepNumber === activeStep) {
             step.classList.add("active");
           } else {
             step.classList.add("pending");
           }
           const circle = step.querySelector(".process-circle");
           if (circle) {
-            circle.textContent = stepNumber < activeStep ? "✓" : String(stepNumber);
+            circle.textContent = isDone ? "✓" : String(stepNumber);
           }
         });
       }
@@ -3069,6 +3134,7 @@
           return;
         }
         const { stage, ihtarUrl } = buildProcessState(resultData);
+        ensureProcessSteps(resultModeActive);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
         const tahminiTutar = formatAmount(getResultAmount(resultData));
@@ -3105,18 +3171,6 @@
         processCta.removeAttribute("download");
         if (actionButton) {
           actionButton.removeAttribute("data-download-url");
-        }
-
-        if (processDetailItems && processDetailItems.length) {
-          const activeCount = stage >= 4 ? 4 : stage;
-          processDetailItems.forEach((item) => {
-            const stepValue = Number(item.dataset.processStep || "0");
-            item.classList.toggle("is-active", stepValue > 0 && stepValue <= activeCount);
-          });
-          const listContainer = processDetailItems[0].parentElement;
-          if (stage >= 4 && listContainer) {
-            listContainer.scrollTop = 0;
-          }
         }
 
         const shouldShowProcess =
@@ -3174,7 +3228,11 @@
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
-          setProcessStepState(4, false);
+          if (resultModeActive) {
+            setProcessStepState(0, false, { completedCount: 1, lockActive: true });
+          } else {
+            setProcessStepState(4, false);
+          }
           return;
         }
 
@@ -3687,8 +3745,10 @@
         });
       }
 
-      if (resultCtaButton) {
-        resultCtaButton.addEventListener("click", () => toggleReferencesModal(true));
+      if (resultCtaButtons && resultCtaButtons.length) {
+        resultCtaButtons.forEach((button) => {
+          button.addEventListener("click", () => toggleReferencesModal(true));
+        });
       }
 
       const WATCHER_KEY = "__DK_WATCHER__";
