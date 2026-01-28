@@ -2461,6 +2461,7 @@
       const referencesSlot = document.getElementById("referencesSlot");
       let hasScrolledToCalculate = false;
       let hasScrolledToIhtarStep = false;
+      let hasScrolledToResultSummary = false;
       let lastProcessStage = null;
 
       const BASE_PROCESS_STEPS = [
@@ -2535,6 +2536,9 @@
           return;
         }
         appRoot.dataset.resultMode = isActive ? "true" : "false";
+        if (!isActive) {
+          hasScrolledToResultSummary = false;
+        }
       }
 
       const PROCESS_ACTIVE_KEY = "processActive";
@@ -3361,6 +3365,10 @@
         if (!isActive) {
           return;
         }
+        if (!hasScrolledToResultSummary) {
+          hasScrolledToResultSummary = true;
+          scrollToSummaryCard();
+        }
         setStageOneHidden(false);
         const amountValue = getResultAmount(resultData);
         const ihtarUrl = getIhtarUrl(resultData);
@@ -3715,7 +3723,8 @@
 
       if (resultCtaButtons && resultCtaButtons.length) {
         resultCtaButtons.forEach((button) => {
-          button.addEventListener("click", () => {
+          button.addEventListener("click", (event) => {
+            event.preventDefault();
             scrollToReferencesSection();
           });
         });
