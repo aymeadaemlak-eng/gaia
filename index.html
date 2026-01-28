@@ -2227,6 +2227,10 @@
               </ul>
             </div>
           </article>
+          <div class="result-cta" id="resultCta">
+            <button type="button" class="primary" id="resultCtaButton">Dosya Şeffaf Takibini Başlat</button>
+            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
+          </div>
           <div id="referencesSlot"></div>
 
         </section>
@@ -2605,6 +2609,7 @@
       }
 
       const BUBBLE_FN_SUFFIX = "hesapla";
+      const TRACKING_FN_SUFFIX = "takip_baslat";
 
       function resolveBubbleFunction(fnName) {
         if (typeof window[fnName] === "function") {
