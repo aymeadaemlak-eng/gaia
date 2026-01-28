@@ -2435,7 +2435,6 @@
       const referencesModal = document.getElementById("referencesModal");
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
-      const resultCtaButtons = document.querySelectorAll('[data-open-references="true"]');
       const requiredDocs = document.getElementById("requiredDocs");
       const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
@@ -3721,14 +3720,18 @@
         return true;
       }
 
-      if (resultCtaButtons && resultCtaButtons.length) {
-        resultCtaButtons.forEach((button) => {
-          button.addEventListener("click", (event) => {
-            event.preventDefault();
-            scrollToReferencesSection();
-          });
-        });
-      }
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+        const button = target.closest('[data-open-references="true"]');
+        if (!button) {
+          return;
+        }
+        event.preventDefault();
+        scrollToReferencesSection();
+      });
 
       const WATCHER_KEY = "__DK_WATCHER__";
       if (window[WATCHER_KEY] && typeof window[WATCHER_KEY].stop === "function") {
