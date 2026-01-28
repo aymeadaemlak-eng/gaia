@@ -1240,6 +1240,62 @@
       color: var(--muted);
     }
 
+    .lawyer-feedback {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .lawyer-phone {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f3f7a;
+    }
+
+    .reference-cta {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #dbe7ff;
+      background: linear-gradient(135deg, #ffffff 0%, #f3f7ff 100%);
+    }
+
+    .reference-cta h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .reference-cta p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .reference-cta-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .reference-cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 12px 20px rgba(31, 111, 235, 0.18);
+      transition: background 0.2s ease;
+    }
+
+    .reference-cta-button:hover {
+      background: var(--primary-dark);
+    }
+
     .secondary-button {
       border-radius: 999px;
       padding: 8px 14px;
@@ -1506,6 +1562,10 @@
         margin: 0 auto;
       }
 
+      .reference-cta-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .card:hover {
         transform: none;
         box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
@@ -1761,69 +1821,44 @@
           <div id="lawyersBlockHome"></div>
           <section class="lawyers-block">
             <div>
-              <h2>Otomasyonumuzu Kullanan Avukatlar</h2>
+              <h2>Referanslarımız (Hasar Danışmanlık)</h2>
               <p class="hero-subtitle">
-                Süreç tasarımımız, trafik ve sigorta hukuku alanında çalışan avukatların sahadaki uygulamalarıyla
-                uyumludur.
+                Hasar danışmanlık ekipleriyle yürüttüğümüz çalışmalarımızdan paylaştığımız müşteri geri bildirimleri.
               </p>
             </div>
             <div class="lawyers-grid">
               <article class="lawyer-card">
                 <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
-                  <div class="lawyer-avatar" aria-hidden="true">AK</div>
+                  <div class="lawyer-avatar" aria-hidden="true">HD</div>
                   <div class="lawyer-meta">
-                    <div class="lawyer-name">Aylin Kaya</div>
-                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
-                    <div class="lawyer-city">İstanbul</div>
+                    <div class="lawyer-name">Hasar Danışmanlık</div>
+                    <div class="lawyer-title">Müşteri Referansı</div>
+                    <div class="lawyer-phone">Telefon: 0531 616 45 85</div>
                   </div>
                 </div>
-                <div class="lawyer-actions">
-                  <button type="button" class="lawyer-link">Profili gör</button>
-                </div>
+                <p class="lawyer-feedback">GAIA ile işlerimiz çok hızlı ve şeffaf ilerliyor.</p>
               </article>
               <article class="lawyer-card">
                 <span class="lawyer-tag">Referans</span>
                 <div class="lawyer-profile">
-                  <div class="lawyer-avatar" aria-hidden="true">MS</div>
+                  <div class="lawyer-avatar" aria-hidden="true">HD</div>
                   <div class="lawyer-meta">
-                    <div class="lawyer-name">Mehmet Şahin</div>
-                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
-                    <div class="lawyer-city">Ankara</div>
+                    <div class="lawyer-name">Hasar Danışmanlık</div>
+                    <div class="lawyer-title">Müşteri Referansı</div>
+                    <div class="lawyer-phone">Telefon: 0544 165 07 81</div>
                   </div>
                 </div>
-                <div class="lawyer-actions">
-                  <button type="button" class="lawyer-link">Profili gör</button>
-                </div>
+                <p class="lawyer-feedback">SMS bilgilendirmeler ile müvekkillerimiz daha rahat ediyor.</p>
               </article>
-              <article class="lawyer-card">
-                <span class="lawyer-tag">Referans</span>
-                <div class="lawyer-profile">
-                  <div class="lawyer-avatar" aria-hidden="true">ED</div>
-                  <div class="lawyer-meta">
-                    <div class="lawyer-name">Elif Demir</div>
-                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
-                    <div class="lawyer-city">İzmir</div>
-                  </div>
-                </div>
-                <div class="lawyer-actions">
-                  <button type="button" class="lawyer-link">Profili gör</button>
-                </div>
-              </article>
-              <article class="lawyer-card">
-                <span class="lawyer-tag">Referans</span>
-                <div class="lawyer-profile">
-                  <div class="lawyer-avatar" aria-hidden="true">OK</div>
-                  <div class="lawyer-meta">
-                    <div class="lawyer-name">Onur Karaca</div>
-                    <div class="lawyer-title">Trafik Hukuku / Sigorta Hukuku</div>
-                    <div class="lawyer-city">Bursa</div>
-                  </div>
-                </div>
-                <div class="lawyer-actions">
-                  <button type="button" class="lawyer-link">Profili gör</button>
-                </div>
-              </article>
+            </div>
+            <div class="reference-cta">
+              <h3>Hızlı bilgi alın</h3>
+              <p>Referanslarımızdan bilgi almak için arayın</p>
+              <div class="reference-cta-actions">
+                <a class="reference-cta-button" href="tel:+905316164585">Hemen Ara: 0531 616 45 85</a>
+                <a class="reference-cta-button" href="tel:+905441650781">Hemen Ara: 0544 165 07 81</a>
+              </div>
             </div>
           </section>
 
