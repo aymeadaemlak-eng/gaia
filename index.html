@@ -551,6 +551,86 @@
       color: var(--muted);
     }
 
+    .process-details {
+      display: none;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #f4d4b6;
+      background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 244, 230, 0.7));
+      color: #8a4b14;
+    }
+
+    .process-details-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .process-details h4 {
+      margin: 0;
+      font-size: 15px;
+      color: #7a3e12;
+    }
+
+    .process-details p {
+      margin: 0;
+      font-size: 13px;
+      color: #8a4b14;
+    }
+
+    .process-details-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(194, 65, 12, 0.12);
+      color: #9a3412;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .process-details-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .process-details-list li {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(194, 65, 12, 0.2);
+      background: rgba(255, 247, 237, 0.8);
+      font-size: 13px;
+      color: #7c3a11;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      opacity: 0.45;
+    }
+
+    .process-details-list li.is-active {
+      opacity: 1;
+      background: rgba(255, 237, 213, 0.95);
+      border-color: rgba(194, 65, 12, 0.35);
+    }
+
+    .process-details-list li.is-costly {
+      color: #9f1239;
+      border-color: rgba(190, 24, 93, 0.45);
+      background: rgba(255, 228, 230, 0.7);
+    }
+
+    .process-details-list li.is-costly.is-active {
+      background: rgba(255, 205, 210, 0.9);
+      color: #9f1239;
+    }
+
     .status-title {
       font-size: 18px;
       margin-bottom: 0;
@@ -1172,15 +1252,20 @@
     }
 
     .lawyer-tag {
-      position: absolute;
-      top: 12px;
-      right: 12px;
+      align-self: flex-start;
       padding: 4px 8px;
       border-radius: 999px;
       background: rgba(31, 111, 235, 0.12);
       color: var(--primary);
       font-size: 11px;
       font-weight: 700;
+    }
+
+    .lawyer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .lawyer-profile {
@@ -1207,6 +1292,10 @@
 
     .lawyer-name {
       font-weight: 700;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .lawyer-title {
@@ -1221,6 +1310,17 @@
       justify-content: space-between;
       gap: 10px;
       margin-top: 4px;
+    }
+
+    .lawyer-cta-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .lawyer-cta-link:hover {
+      text-decoration: underline;
     }
 
     .lawyer-city {
@@ -1276,6 +1376,60 @@
       margin: 0;
       font-size: 12px;
       color: var(--muted);
+    }
+
+    .result-cta {
+      display: none;
+      gap: 8px;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #dbe7ff;
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .result-cta-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    #app[data-result-mode="true"] .result-cta {
+      display: grid;
+    }
+
+    #app[data-result-mode="true"] .process-details {
+      display: grid;
+    }
+
+    #app[data-result-mode="true"] .reference-pre,
+    #app[data-result-mode="true"] .reference-pre-note {
+      display: none;
+    }
+
+    #app[data-result-mode="false"] .reference-result,
+    #app[data-result-mode="false"] .reference-result-note,
+    #app[data-result-mode="false"] .lawyer-phone,
+    #app[data-result-mode="false"] .lawyer-cta-link,
+    #app[data-result-mode="false"] .lawyer-cta {
+      display: none;
+    }
+
+    #app[data-result-mode="false"] .result-cta {
+      display: none;
+    }
+
+    .references-modal[data-result-mode="true"] .reference-pre,
+    .references-modal[data-result-mode="true"] .reference-pre-note {
+      display: none;
+    }
+
+    .references-modal[data-result-mode="false"] .reference-result,
+    .references-modal[data-result-mode="false"] .reference-result-note,
+    .references-modal[data-result-mode="false"] .lawyer-phone,
+    .references-modal[data-result-mode="false"] .lawyer-cta-link,
+    .references-modal[data-result-mode="false"] .lawyer-cta {
+      display: none;
     }
 
     .reference-cta {
@@ -1649,6 +1803,12 @@
         min-width: 220px;
       }
     }
+
+    @media (max-width: 720px) {
+      .process-details-list {
+        max-height: 200px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1846,47 +2006,58 @@
           <div id="lawyersBlockHome"></div>
           <section class="lawyers-block">
             <div>
-              <h2>Otomasyonumuzu Kullanan Ekiplerden Geri Bildirimler</h2>
-              <p class="hero-subtitle">
-                Sigorta ve hasar süreçlerinde otomasyonumuzu aktif kullanan danışmanlık ekiplerinin paylaştığı kısa
-                deneyimler.
+              <h2>
+                <span class="reference-pre">Otomasyonumuzu Kullanan Ekipler</span>
+                <span class="reference-result">Dosyanıza Şeffaf Takip başlatın</span>
+              </h2>
+              <p class="hero-subtitle reference-pre">
+                Trafik/sigorta dosyalarında GAIA ile süreçleri daha şeffaf ve hızlı yöneten danışmanlık ekiplerinden kısa
+                geri bildirimler.
+              </p>
+              <p class="hero-subtitle reference-result">
+                Bu noktadan sonrası resmi yazışmalar, harçlar ve raporlarla ilerler. GAIA otomasyonunu kullanan danışmanlık
+                ekipleri dosyanızı şeffaf şekilde takip edebilir.
               </p>
             </div>
             <div class="lawyers-grid">
               <article class="lawyer-card">
-                <span class="lawyer-tag">Hasar Danışmanlık</span>
-                <div class="lawyer-meta">
-                  <div class="lawyer-name">Atlas Hasar</div>
-                  <div class="lawyer-title">Danışmanlık Ekibi</div>
+                <div class="lawyer-header">
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Atlas Hasar</div>
+                    <div class="lawyer-title">Hasar Danışmanlık Ekibi</div>
+                  </div>
+                  <span class="lawyer-tag">Referans</span>
                 </div>
                 <p class="lawyer-feedback">
-                  “GAIA ile süreçlerimiz ciddi şekilde hızlandı. Dosya takibi ve otomatik bildirimler sayesinde ekip içi
-                  koordinasyon neredeyse tamamen otomasyona geçti.”
+                  “GAIA ile dosyalarımız daha şeffaf ve hızlı ilerliyor.”
                 </p>
                 <div class="lawyer-cta">
                   <div class="lawyer-phone">Telefon: <a href="tel:05316164585">0531 616 45 85</a></div>
-                  <a class="lawyer-link" href="tel:05316164585">Deneyim hakkında ara</a>
+                  <a class="lawyer-cta-link" href="tel:05316164585">Bilgi al</a>
                 </div>
               </article>
               <article class="lawyer-card">
-                <span class="lawyer-tag">Hasar Danışmanlık</span>
-                <div class="lawyer-meta">
-                  <div class="lawyer-name">Pusula Danışmanlık</div>
-                  <div class="lawyer-title">Danışmanlık Ekibi</div>
+                <div class="lawyer-header">
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Pusula Hasar</div>
+                    <div class="lawyer-title">Hasar Danışmanlık Ekibi</div>
+                  </div>
+                  <span class="lawyer-tag">Referans</span>
                 </div>
                 <p class="lawyer-feedback">
-                  “SMS ve sistem bildirimleri sayesinde müvekkiller süreçte sürekli bilgilendiriliyor. Bu hem güveni
-                  artırdı hem manuel iş yükünü azalttı.”
+                  “SMS bilgilendirmeler sayesinde müvekkiller daha rahat ediyor.”
                 </p>
                 <div class="lawyer-cta">
                   <div class="lawyer-phone">Telefon: <a href="tel:05441650781">0544 165 07 81</a></div>
-                  <a class="lawyer-link" href="tel:05441650781">Deneyim hakkında ara</a>
+                  <a class="lawyer-cta-link" href="tel:05441650781">Bilgi al</a>
                 </div>
               </article>
             </div>
-            <p class="lawyer-reference-note">
-              Bu ekipler otomasyonumuzu aktif kullanan danışmanlık firmalarıdır. Süreç deneyimleri hakkında bilgi
-              alabilirsiniz.
+            <p class="lawyer-reference-note reference-pre-note">
+              Referanslar, danışmanlık ekiplerinin paylaştığı müşteri deneyimlerinden derlenmiştir.
+            </p>
+            <p class="lawyer-reference-note reference-result-note">
+              Bilgi almak için arayın; ekipler sürecinizi şeffaflık içinde yönetsin.
             </p>
           </section>
 
@@ -1993,6 +2164,10 @@
         </section>
 
         <section class="card-grid">
+          <div class="result-cta" id="resultCta">
+            <button type="button" class="primary" id="resultCtaButton">Dosya Şeffaf Takibini Başlat</button>
+            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
+          </div>
           <article class="card process-card is-hidden" id="processCard" aria-hidden="true" tabindex="-1">
             <div class="process-header">
               <h2 class="status-title">Süreç Takibi</h2>
@@ -2024,6 +2199,32 @@
               <div class="process-mini is-hidden" id="processMini"></div>
               <a class="process-cta is-hidden" id="processCta" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
               <div class="process-note is-hidden" id="processNote"></div>
+            </div>
+            <div class="process-details" id="processDetails">
+              <div class="process-details-header">
+                <h4>Hukuki ve Mali Süreç Aşamaları</h4>
+                <span class="process-details-badge">Toplam 25+ adım</span>
+              </div>
+              <p>Bu aşamalar resmi harçlar, raporlar ve yazışmalar içerebilir.</p>
+              <ul class="process-details-list">
+                <li data-process-step="1">İhtar dilekçesi hazır</li>
+                <li class="is-costly" data-process-step="2">İhtar gönderimi <span>📦💰</span></li>
+                <li class="is-costly" data-process-step="3">Tahkim harcı <span>⚖️💰</span></li>
+                <li data-process-step="4">Hakem atama</li>
+                <li class="is-costly" data-process-step="5">Bilirkişi ücreti <span>💰</span></li>
+                <li data-process-step="6">Ara karar</li>
+                <li class="is-costly" data-process-step="7">Uzman raporu <span>💰</span></li>
+                <li data-process-step="8">Bildirim (tebligat)</li>
+                <li data-process-step="9">İtiraz</li>
+                <li class="is-costly" data-process-step="10">Ek rapor <span>💰</span></li>
+                <li data-process-step="11">Ek bildirim (ek tebligat)</li>
+                <li data-process-step="12">Nihai karar <span>⚖️</span></li>
+                <li data-process-step="13">Karar bildirimi</li>
+                <li data-process-step="14">Kesinleşme</li>
+                <li class="is-costly" data-process-step="15">Ödeme takibi <span>💰</span></li>
+                <li data-process-step="16">Dosya kapanışı</li>
+                <li class="is-costly" data-process-step="17">Yasal tahsil (icra) <span>⚠️💰</span></li>
+              </ul>
             </div>
           </article>
           <div id="referencesSlot"></div>
@@ -2109,6 +2310,16 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="referencesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="referencesTitle">
+      <div class="modal-header">
+        <h3 id="referencesTitle">Referanslarımız</h3>
+        <button class="modal-close" type="button" id="closeReferencesModalButton">Kapat</button>
+      </div>
+      <div id="referencesModalBody" class="references-modal" data-result-mode="false"></div>
     </div>
   </div>
 
@@ -2244,6 +2455,10 @@
       const trustDetailsLink = document.getElementById("trustDetailsLink");
       const trustDetailsModal = document.getElementById("trustDetailsModal");
       const closeTrustModalButton = document.getElementById("closeTrustModalButton");
+      const referencesModal = document.getElementById("referencesModal");
+      const referencesModalBody = document.getElementById("referencesModalBody");
+      const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
+      const resultCtaButton = document.getElementById("resultCtaButton");
       const requiredDocs = document.getElementById("requiredDocs");
       const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
@@ -2261,6 +2476,7 @@
       const summaryDownload = document.getElementById("summaryDownload");
       const summaryCalculateButton = document.getElementById("summaryCalculateButton");
       const processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
+      const processDetailItems = document.querySelectorAll(".process-details-list li");
       const lawyersBlock = document.querySelector(".lawyers-block");
       const lawyersBlockHome = document.getElementById("lawyersBlockHome");
       const referencesSlot = document.getElementById("referencesSlot");
@@ -2886,6 +3102,18 @@
           actionButton.removeAttribute("data-download-url");
         }
 
+        if (processDetailItems && processDetailItems.length) {
+          const activeCount = stage >= 4 ? 4 : stage;
+          processDetailItems.forEach((item) => {
+            const stepValue = Number(item.dataset.processStep || "0");
+            item.classList.toggle("is-active", stepValue > 0 && stepValue <= activeCount);
+          });
+          const listContainer = processDetailItems[0].parentElement;
+          if (stage >= 4 && listContainer) {
+            listContainer.scrollTop = 0;
+          }
+        }
+
         const shouldShowProcess =
           resultModeActive || stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
         setProcessCardVisibility(shouldShowProcess);
@@ -3266,7 +3494,7 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
       const hasMeaningfulPayload = hasInitialPayload || hasResultData;
-      resultModeActive = isMeaningfulResultData(currentResultJson, parsedResult);
+      resultModeActive = Boolean(getIhtarUrl(parsedResult));
 
       let hasPersistedCreated = readPersistedObjectCreated();
       if (!hasMeaningfulPayload) {
@@ -3330,6 +3558,20 @@
         }
         trustDetailsModal.classList.toggle("active", isOpen);
         trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
+      }
+
+      function toggleReferencesModal(isOpen) {
+        if (!referencesModal) {
+          return;
+        }
+        if (isOpen && referencesModalBody && lawyersBlock) {
+          const clone = lawyersBlock.cloneNode(true);
+          referencesModalBody.innerHTML = "";
+          referencesModalBody.dataset.resultMode = appRoot && appRoot.dataset.resultMode === "true" ? "true" : "false";
+          referencesModalBody.appendChild(clone);
+        }
+        referencesModal.classList.toggle("active", isOpen);
+        referencesModal.setAttribute("aria-hidden", String(!isOpen));
       }
 
       function setStageOneHidden(isHidden) {
@@ -3412,6 +3654,10 @@
         closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
       }
 
+      if (closeReferencesModalButton) {
+        closeReferencesModalButton.addEventListener("click", () => toggleReferencesModal(false));
+      }
+
       if (howItWorksModal) {
         howItWorksModal.addEventListener("click", (event) => {
           if (event.target === howItWorksModal) {
@@ -3426,6 +3672,18 @@
             toggleTrustModal(false);
           }
         });
+      }
+
+      if (referencesModal) {
+        referencesModal.addEventListener("click", (event) => {
+          if (event.target === referencesModal) {
+            toggleReferencesModal(false);
+          }
+        });
+      }
+
+      if (resultCtaButton) {
+        resultCtaButton.addEventListener("click", () => toggleReferencesModal(true));
       }
 
       const WATCHER_KEY = "__DK_WATCHER__";
@@ -3447,7 +3705,7 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
-        const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
+        const nextResultMode = Boolean(getIhtarUrl(nextParsed));
         const nextHasResultData = hasResultDataValue(nextParsed);
         const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
