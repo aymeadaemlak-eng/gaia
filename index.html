@@ -794,30 +794,6 @@
       grid-column: 1 / -1;
     }
 
-    .action-bar {
-      position: sticky;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: 16px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.08);
-    }
-
-    .action-info {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .action-button {
-      min-width: 220px;
-    }
-
     .state-section {
       display: none;
     }
@@ -2264,9 +2240,6 @@
           </div>
         </header>
 
-        <div class="action-bar" id="actionBar">
-          <button class="action-button" id="actionButton" type="button" disabled>Belgeler Bekleniyor</button>
-        </div>
       </main>
     </section>
   </div>
@@ -2448,13 +2421,11 @@
       const primaryCta = document.getElementById("primaryCta");
       const calculateButton = document.getElementById("calculateButton");
       const referencesSection = document.getElementById("referencesSection");
-      const actionButton = document.getElementById("actionButton");
       const statusStateLabel = document.getElementById("statusStateLabel");
       const resultAmount = document.getElementById("resultAmount");
       const resultDate = document.getElementById("resultDate");
       const resultCard = document.getElementById("resultCard");
       const statusCard = document.getElementById("statusCard");
-      const actionBar = document.getElementById("actionBar");
       const howItWorksLink = document.getElementById("howItWorksLink");
       const howItWorksModal = document.getElementById("howItWorksModal");
       const closeModalButton = document.getElementById("closeModalButton");
@@ -2488,7 +2459,9 @@
       const lawyersBlock = document.querySelector(".lawyers-block");
       const lawyersBlockHome = document.getElementById("lawyersBlockHome");
       const referencesSlot = document.getElementById("referencesSlot");
-      let hasScrolledToSummary = false;
+      let hasScrolledToCalculate = false;
+      let hasScrolledToIhtarStep = false;
+      let lastProcessStage = null;
 
       const BASE_PROCESS_STEPS = [
         "Belgeler alındı",
@@ -2515,14 +2488,6 @@
         "Ödeme takibi 💰",
         "Dosya kapanışı",
         "Yasal tahsil ⚠️💰",
-      ];
-
-      const RESULT_PROCESS_STEPS = [
-        "İhtar dilekçesi",
-        "Belgeler alındı",
-        "Bilgiler çıkarılıyor",
-        "Değer kaybı tahmini",
-        ...EXTENDED_PROCESS_STEPS.slice(BASE_PROCESS_STEPS.length),
       ];
 
       function renderProcessSteps(stepLabels, options = {}) {
@@ -2743,9 +2708,6 @@
       if (calculateButton) {
         calculateButton.addEventListener("click", handleCalculateClick);
       }
-      if (actionButton) {
-        actionButton.addEventListener("click", handleCalculateClick);
-      }
       if (summaryCalculateButton) {
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
@@ -2758,6 +2720,28 @@
         const top = rect.top + window.pageYOffset - 12;
         window.scrollTo({ top, behavior: "smooth" });
         summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function scrollToCalculateButton() {
+        const target = calculateButton || primaryCta;
+        if (!target) {
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function scrollToProcessStep(stepNumber) {
+        if (!processStepper) {
+          return;
+        }
+        const step = processStepper.querySelector(`[data-step="${stepNumber}"]`);
+        if (!step) {
+          return;
+        }
+        step.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
 
       function setCalculateButtonState(isReady) {
@@ -2776,9 +2760,6 @@
         }
         if (summaryCalculateButton) {
           summaryCalculateButton.classList.toggle("is-hidden", !isVisible);
-        }
-        if (actionBar) {
-          actionBar.classList.toggle("is-hidden", !isVisible);
         }
       }
 
@@ -3139,9 +3120,13 @@
           return;
         }
         const { stage, ihtarUrl } = buildProcessState(resultData);
-        const stepLabels = resultModeActive && ihtarUrl
-          ? RESULT_PROCESS_STEPS
-          : (resultModeActive ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS);
+        if (stage !== lastProcessStage) {
+          lastProcessStage = stage;
+          if (stage !== 4) {
+            hasScrolledToIhtarStep = false;
+          }
+        }
+        const stepLabels = resultModeActive ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS;
         ensureProcessSteps(stepLabels, resultModeActive);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
@@ -3177,9 +3162,6 @@
         processNote.classList.add("is-hidden");
         processCta.removeAttribute("href");
         processCta.removeAttribute("download");
-        if (actionButton) {
-          actionButton.removeAttribute("data-download-url");
-        }
 
         const shouldShowProcess =
           resultModeActive || stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
@@ -3210,11 +3192,6 @@
             processCta.target = "_blank";
             processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
-            if (actionButton) {
-              actionButton.disabled = false;
-              actionButton.textContent = "İhtar Dilekçesini İndir";
-              actionButton.dataset.downloadUrl = ihtarUrl;
-            }
             try {
               scrollToSummaryCard();
             } catch (e) {}
@@ -3236,10 +3213,10 @@
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
-          if (resultModeActive) {
-            setProcessStepState(1, false);
-          } else {
-            setProcessStepState(4, false);
+          setProcessStepState(4, false);
+          if (resultModeActive && !hasScrolledToIhtarStep) {
+            hasScrolledToIhtarStep = true;
+            scrollToProcessStep(4);
           }
           return;
         }
@@ -3402,17 +3379,6 @@
         if (summaryCalculateButton) {
           summaryCalculateButton.disabled = true;
         }
-        if (actionButton) {
-          if (ihtarUrl) {
-            actionButton.disabled = false;
-            actionButton.textContent = "İhtar Dilekçesini İndir";
-            actionButton.dataset.downloadUrl = ihtarUrl;
-          } else {
-            actionButton.disabled = true;
-            actionButton.textContent = "Sonuç Hazır";
-            actionButton.removeAttribute("data-download-url");
-          }
-        }
         if (statusStateLabel) {
           statusStateLabel.textContent = "Sonuç Hazır";
         }
@@ -3490,10 +3456,6 @@
           setProcessCardVisibility(true);
           moveProcessCardToTop();
 
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "İşleniyor";
-          }
           if (statusStateLabel) {
             statusStateLabel.textContent = "İşlem sürüyor";
           }
@@ -3508,10 +3470,6 @@
             missingDocsNote.classList.add("is-hidden");
           }
           setCalculationControlsVisibility(false);
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "Sonuç Hazır";
-          }
           setStageOneHidden(true);
           setPrimaryCtaHidden(true);
           setProcessVisibility(true);
@@ -3531,28 +3489,20 @@
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplamaya Hazır";
           }
-          if (actionButton) {
-            actionButton.disabled = false;
-            actionButton.textContent = "Hesaplamayı Başlat";
-          }
           if (!resultPresent) {
             setUiState("empty");
           }
           setStageOneHidden(false);
           setOutputVisibility(resultPresent);
-          if (!hasScrolledToSummary) {
-            hasScrolledToSummary = true;
-            scrollToSummaryCard();
+          if (!hasScrolledToCalculate) {
+            hasScrolledToCalculate = true;
+            scrollToCalculateButton();
           }
         } else {
           setCalculateButtonState(false);
           setPrimaryCtaHidden(false);
           if (statusStateLabel) {
             statusStateLabel.textContent = "Belgeler kontrol ediliyor";
-          }
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "Belgeler Bekleniyor";
           }
           if (!resultPresent) {
             setUiState("empty");
@@ -3687,9 +3637,6 @@
       function setProcessVisibility(isVisible) {
         if (statusCard) {
           statusCard.classList.toggle("is-hidden", !isVisible);
-        }
-        if (actionBar) {
-          actionBar.classList.toggle("is-hidden", !isVisible);
         }
         if (howItWorksLink) {
           howItWorksLink.classList.toggle("is-hidden", !isVisible);
