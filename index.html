@@ -2377,9 +2377,7 @@
         if (statusStateLabel) {
           statusStateLabel.textContent = "Hesaplama sürüyor";
         }
-        if (processCard) {
-          processCard.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        scrollToSummaryCard();
         triggerBubbleFunction(BUBBLE_FN_SUFFIX);
       }
 
@@ -2394,13 +2392,7 @@
       }
 
       function scrollToPrimaryCta() {
-        if (!primaryCta) {
-          return;
-        }
-        const rect = primaryCta.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        primaryCta.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function scrollToSummaryCard() {
@@ -2866,7 +2858,7 @@
               actionButton.dataset.downloadUrl = ihtarUrl;
             }
             try {
-              processCard && processCard.scrollIntoView({ behavior: "smooth", block: "start" });
+              scrollToSummaryCard();
             } catch (e) {}
           }
           try {
