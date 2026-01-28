@@ -551,6 +551,61 @@
       color: var(--muted);
     }
 
+    .process-details {
+      display: none;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #f4d4b6;
+      background: linear-gradient(135deg, rgba(255, 247, 237, 0.95), rgba(255, 244, 230, 0.7));
+      color: #8a4b14;
+    }
+
+    .process-details-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .process-details h4 {
+      margin: 0;
+      font-size: 15px;
+      color: #7a3e12;
+    }
+
+    .process-details p {
+      margin: 0;
+      font-size: 13px;
+      color: #8a4b14;
+    }
+
+    .process-details-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(194, 65, 12, 0.12);
+      color: #9a3412;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .process-details-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .process-details-list li {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(194, 65, 12, 0.2);
+      background: rgba(255, 247, 237, 0.8);
+      font-size: 13px;
+      color: #7c3a11;
+    }
+
     .status-title {
       font-size: 18px;
       margin-bottom: 0;
@@ -1172,15 +1227,20 @@
     }
 
     .lawyer-tag {
-      position: absolute;
-      top: 12px;
-      right: 12px;
+      align-self: flex-start;
       padding: 4px 8px;
       border-radius: 999px;
       background: rgba(31, 111, 235, 0.12);
       color: var(--primary);
       font-size: 11px;
       font-weight: 700;
+    }
+
+    .lawyer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .lawyer-profile {
@@ -1207,6 +1267,10 @@
 
     .lawyer-name {
       font-weight: 700;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .lawyer-title {
@@ -1221,6 +1285,17 @@
       justify-content: space-between;
       gap: 10px;
       margin-top: 4px;
+    }
+
+    .lawyer-cta-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .lawyer-cta-link:hover {
+      text-decoration: underline;
     }
 
     .lawyer-city {
@@ -1276,6 +1351,47 @@
       margin: 0;
       font-size: 12px;
       color: var(--muted);
+    }
+
+    .result-cta {
+      display: none;
+      gap: 8px;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #dbe7ff;
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .result-cta-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    #app[data-result-mode="true"] .result-cta {
+      display: grid;
+    }
+
+    #app[data-result-mode="true"] .process-details {
+      display: grid;
+    }
+
+    #app[data-result-mode="true"] .reference-pre,
+    #app[data-result-mode="true"] .reference-pre-note {
+      display: none;
+    }
+
+    #app[data-result-mode="false"] .reference-result,
+    #app[data-result-mode="false"] .reference-result-note,
+    #app[data-result-mode="false"] .lawyer-phone,
+    #app[data-result-mode="false"] .lawyer-cta-link,
+    #app[data-result-mode="false"] .lawyer-cta {
+      display: none;
+    }
+
+    #app[data-result-mode="false"] .result-cta {
+      display: none;
     }
 
     .reference-cta {
@@ -1649,6 +1765,14 @@
         min-width: 220px;
       }
     }
+
+    @media (max-width: 720px) {
+      .process-details-list {
+        max-height: 180px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1846,47 +1970,58 @@
           <div id="lawyersBlockHome"></div>
           <section class="lawyers-block">
             <div>
-              <h2>Otomasyonumuzu Kullanan Ekiplerden Geri Bildirimler</h2>
-              <p class="hero-subtitle">
-                Sigorta ve hasar süreçlerinde otomasyonumuzu aktif kullanan danışmanlık ekiplerinin paylaştığı kısa
-                deneyimler.
+              <h2>
+                <span class="reference-pre">Otomasyonumuzu Kullanan Ekipler</span>
+                <span class="reference-result">Dosyanıza Şeffaf Takip başlatın</span>
+              </h2>
+              <p class="hero-subtitle reference-pre">
+                Trafik/sigorta dosyalarında GAIA ile süreçleri daha şeffaf ve hızlı yöneten danışmanlık ekiplerinden kısa
+                geri bildirimler.
+              </p>
+              <p class="hero-subtitle reference-result">
+                Bu noktadan sonrası resmi yazışmalar, harçlar ve raporlarla ilerler. GAIA otomasyonunu kullanan danışmanlık
+                ekipleri dosyanızı şeffaf şekilde takip edebilir.
               </p>
             </div>
             <div class="lawyers-grid">
               <article class="lawyer-card">
-                <span class="lawyer-tag">Hasar Danışmanlık</span>
-                <div class="lawyer-meta">
-                  <div class="lawyer-name">Atlas Hasar</div>
-                  <div class="lawyer-title">Danışmanlık Ekibi</div>
+                <div class="lawyer-header">
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Atlas Hasar</div>
+                    <div class="lawyer-title">Hasar Danışmanlık Ekibi</div>
+                  </div>
+                  <span class="lawyer-tag">Referans</span>
                 </div>
                 <p class="lawyer-feedback">
-                  “GAIA ile süreçlerimiz ciddi şekilde hızlandı. Dosya takibi ve otomatik bildirimler sayesinde ekip içi
-                  koordinasyon neredeyse tamamen otomasyona geçti.”
+                  “GAIA ile dosyalarımız daha şeffaf ve hızlı ilerliyor.”
                 </p>
                 <div class="lawyer-cta">
                   <div class="lawyer-phone">Telefon: <a href="tel:05316164585">0531 616 45 85</a></div>
-                  <a class="lawyer-link" href="tel:05316164585">Deneyim hakkında ara</a>
+                  <a class="lawyer-cta-link" href="#" data-open-tracking="true">Bilgi al</a>
                 </div>
               </article>
               <article class="lawyer-card">
-                <span class="lawyer-tag">Hasar Danışmanlık</span>
-                <div class="lawyer-meta">
-                  <div class="lawyer-name">Pusula Danışmanlık</div>
-                  <div class="lawyer-title">Danışmanlık Ekibi</div>
+                <div class="lawyer-header">
+                  <div class="lawyer-meta">
+                    <div class="lawyer-name">Pusula Hasar</div>
+                    <div class="lawyer-title">Hasar Danışmanlık Ekibi</div>
+                  </div>
+                  <span class="lawyer-tag">Referans</span>
                 </div>
                 <p class="lawyer-feedback">
-                  “SMS ve sistem bildirimleri sayesinde müvekkiller süreçte sürekli bilgilendiriliyor. Bu hem güveni
-                  artırdı hem manuel iş yükünü azalttı.”
+                  “SMS bilgilendirmeler sayesinde müvekkiller daha rahat ediyor.”
                 </p>
                 <div class="lawyer-cta">
                   <div class="lawyer-phone">Telefon: <a href="tel:05441650781">0544 165 07 81</a></div>
-                  <a class="lawyer-link" href="tel:05441650781">Deneyim hakkında ara</a>
+                  <a class="lawyer-cta-link" href="#" data-open-tracking="true">Bilgi al</a>
                 </div>
               </article>
             </div>
-            <p class="lawyer-reference-note">
-              Bu ekipler otomasyonumuzu aktif kullanan danışmanlık firmalarıdır. Süreç deneyimleri hakkında bilgi
-              alabilirsiniz.
+            <p class="lawyer-reference-note reference-pre-note">
+              Referanslar, danışmanlık ekiplerinin paylaştığı müşteri deneyimlerinden derlenmiştir.
+            </p>
+            <p class="lawyer-reference-note reference-result-note">
+              Bilgi almak için arayın; ekipler sürecinizi şeffaflık içinde yönetsin.
             </p>
           </section>
 
@@ -2025,7 +2160,29 @@
               <a class="process-cta is-hidden" id="processCta" href="#" target="_blank" rel="noopener">İhtar Dilekçesini İndir</a>
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
+            <div class="process-details" id="processDetails">
+              <div class="process-details-header">
+                <h4>Hukuki ve Mali Süreç Aşamaları</h4>
+                <span class="process-details-badge">Toplam 25+ adım</span>
+              </div>
+              <p>Bu aşamalar resmi harçlar, raporlar ve yazışmalar içerebilir.</p>
+              <ul class="process-details-list">
+                <li>İhtar gönderimi (kargo/tebligat)</li>
+                <li>Tahkim başvurusu (harç)</li>
+                <li>Hakem ataması</li>
+                <li>Bilirkişi raporu (ücretli bilirkişi)</li>
+                <li>Ek rapor</li>
+                <li>İtiraz / ıslah</li>
+                <li>Karar</li>
+                <li>Ödeme &amp; kapanış</li>
+                <li>İlamlı icra (gerekirse)</li>
+              </ul>
+            </div>
           </article>
+          <div class="result-cta" id="resultCta">
+            <button type="button" class="primary" id="resultCtaButton">Dosya Şeffaf Takibini Başlat</button>
+            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
+          </div>
           <div id="referencesSlot"></div>
 
         </section>
@@ -2109,6 +2266,23 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="trackingModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="trackingTitle">
+      <div class="modal-header">
+        <h3 id="trackingTitle">Dosya Şeffaf Takibini Başlat</h3>
+        <button class="modal-close" type="button" id="closeTrackingModalButton">Kapat</button>
+      </div>
+      <form class="modal-form" id="trackingForm">
+        <input type="text" name="fullName" placeholder="Ad Soyad" autocomplete="name" required />
+        <input type="tel" name="phone" placeholder="Telefon" autocomplete="tel" required />
+        <input type="text" name="note" placeholder="Dosya notu (isteğe bağlı)" />
+        <div class="modal-actions">
+          <button type="submit" class="primary">Formu Gönder</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2244,6 +2418,11 @@
       const trustDetailsLink = document.getElementById("trustDetailsLink");
       const trustDetailsModal = document.getElementById("trustDetailsModal");
       const closeTrustModalButton = document.getElementById("closeTrustModalButton");
+      const trackingModal = document.getElementById("trackingModal");
+      const trackingForm = document.getElementById("trackingForm");
+      const closeTrackingModalButton = document.getElementById("closeTrackingModalButton");
+      const resultCtaButton = document.getElementById("resultCtaButton");
+      const trackingLinks = document.querySelectorAll("[data-open-tracking='true']");
       const requiredDocs = document.getElementById("requiredDocs");
       const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
@@ -2389,6 +2568,7 @@
       }
 
       const BUBBLE_FN_SUFFIX = "hesapla";
+      const TRACKING_FN_SUFFIX = "takip_baslat";
 
       function resolveBubbleFunction(fnName) {
         if (typeof window[fnName] === "function") {
@@ -3266,7 +3446,7 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
       const hasMeaningfulPayload = hasInitialPayload || hasResultData;
-      resultModeActive = isMeaningfulResultData(currentResultJson, parsedResult);
+      resultModeActive = Boolean(getIhtarUrl(parsedResult));
 
       let hasPersistedCreated = readPersistedObjectCreated();
       if (!hasMeaningfulPayload) {
@@ -3330,6 +3510,14 @@
         }
         trustDetailsModal.classList.toggle("active", isOpen);
         trustDetailsModal.setAttribute("aria-hidden", String(!isOpen));
+      }
+
+      function toggleTrackingModal(isOpen) {
+        if (!trackingModal) {
+          return;
+        }
+        trackingModal.classList.toggle("active", isOpen);
+        trackingModal.setAttribute("aria-hidden", String(!isOpen));
       }
 
       function setStageOneHidden(isHidden) {
@@ -3412,6 +3600,10 @@
         closeTrustModalButton.addEventListener("click", () => toggleTrustModal(false));
       }
 
+      if (closeTrackingModalButton) {
+        closeTrackingModalButton.addEventListener("click", () => toggleTrackingModal(false));
+      }
+
       if (howItWorksModal) {
         howItWorksModal.addEventListener("click", (event) => {
           if (event.target === howItWorksModal) {
@@ -3425,6 +3617,43 @@
           if (event.target === trustDetailsModal) {
             toggleTrustModal(false);
           }
+        });
+      }
+
+      if (trackingModal) {
+        trackingModal.addEventListener("click", (event) => {
+          if (event.target === trackingModal) {
+            toggleTrackingModal(false);
+          }
+        });
+      }
+
+      if (resultCtaButton) {
+        resultCtaButton.addEventListener("click", () => toggleTrackingModal(true));
+      }
+
+      if (trackingLinks && trackingLinks.length) {
+        trackingLinks.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            toggleTrackingModal(true);
+          });
+        });
+      }
+
+      if (trackingForm) {
+        trackingForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const formData = new FormData(trackingForm);
+          const payload = {
+            fullName: formData.get("fullName"),
+            phone: formData.get("phone"),
+            note: formData.get("note"),
+            source: "result_mode_tracking",
+          };
+          triggerBubbleFunction(TRACKING_FN_SUFFIX, payload);
+          trackingForm.reset();
+          toggleTrackingModal(false);
         });
       }
 
@@ -3447,7 +3676,7 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
-        const nextResultMode = isMeaningfulResultData(rawValue, nextParsed);
+        const nextResultMode = Boolean(getIhtarUrl(nextParsed));
         const nextHasResultData = hasResultDataValue(nextParsed);
         const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
