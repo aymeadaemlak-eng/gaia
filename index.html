@@ -2193,10 +2193,6 @@
         </section>
 
         <section class="card-grid">
-          <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
-            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
-          </div>
           <article class="card process-card is-hidden" id="processCard" aria-hidden="true" tabindex="-1">
             <div class="process-header">
               <h2 class="status-title">Süreç Takibi</h2>
@@ -2230,6 +2226,10 @@
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
           </article>
+          <div class="result-cta" id="resultCta">
+            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
+            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
+          </div>
           <div id="referencesSlot"></div>
 
         </section>
@@ -2261,7 +2261,6 @@
         </header>
 
         <div class="action-bar" id="actionBar">
-          <div class="action-info">Ortalama işlem süresi: 2–4 dakika</div>
           <button class="action-button" id="actionButton" type="button" disabled>Belgeler Bekleniyor</button>
         </div>
       </main>
@@ -2494,7 +2493,7 @@
       ];
 
       const EXTENDED_PROCESS_STEPS = [
-        "İhtar dilekçesi",
+        ...BASE_PROCESS_STEPS,
         "İhtar gönderimi 📦💰",
         "Tahkim harcı ⚖️💰",
         "Hakem atama",
@@ -3229,7 +3228,7 @@
             statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
           if (resultModeActive) {
-            setProcessStepState(0, false, { completedCount: 1, lockActive: true });
+            setProcessStepState(0, false, { completedCount: BASE_PROCESS_STEPS.length, lockActive: true });
           } else {
             setProcessStepState(4, false);
           }
@@ -3625,7 +3624,7 @@
 
       function toggleReferencesModal(isOpen) {
         if (!referencesModal) {
-          return;
+          return false;
         }
         if (isOpen && referencesModalBody && lawyersBlock) {
           const clone = lawyersBlock.cloneNode(true);
@@ -3635,6 +3634,7 @@
         }
         referencesModal.classList.toggle("active", isOpen);
         referencesModal.setAttribute("aria-hidden", String(!isOpen));
+        return true;
       }
 
       function setStageOneHidden(isHidden) {
@@ -3745,9 +3745,28 @@
         });
       }
 
+      function scrollToReferencesSection() {
+        const target = lawyersBlock || referencesSlot;
+        if (!target) {
+          return false;
+        }
+        const rect = target.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        return true;
+      }
+
       if (resultCtaButtons && resultCtaButtons.length) {
         resultCtaButtons.forEach((button) => {
-          button.addEventListener("click", () => toggleReferencesModal(true));
+          button.addEventListener("click", () => {
+            const opened = toggleReferencesModal(true);
+            const isModalVisible =
+              opened && referencesModal ? window.getComputedStyle(referencesModal).display !== "none" : false;
+            if (!opened || !isModalVisible) {
+              scrollToReferencesSection();
+            }
+          });
         });
       }
 
