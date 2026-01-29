@@ -385,7 +385,7 @@
 
     .process-card {
       display: grid;
-      gap: 16px;
+      gap: 12px;
     }
 
     .process-header {
@@ -409,14 +409,14 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0;
-      padding: 0 6px;
+      padding: 0 2px;
     }
 
     .process-stepper.is-extended {
       display: flex;
       overflow-x: auto;
-      gap: 18px;
-      padding: 0 6px 10px;
+      gap: 12px;
+      padding: 0 2px 8px;
       scroll-snap-type: x proximity;
     }
 
@@ -437,12 +437,12 @@
 
     .process-step {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       justify-items: center;
       text-align: center;
       position: relative;
       z-index: 1;
-      padding: 0 6px;
+      padding: 0 4px;
     }
 
     .process-stepper.is-extended .process-step {
@@ -532,7 +532,7 @@
 
     .process-body {
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }
 
     .process-title {
@@ -792,30 +792,6 @@
     #referencesSlot {
       display: grid;
       grid-column: 1 / -1;
-    }
-
-    .action-bar {
-      position: sticky;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: 16px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.08);
-    }
-
-    .action-info {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .action-button {
-      min-width: 220px;
     }
 
     .state-section {
@@ -1432,8 +1408,12 @@
       display: none;
     }
 
-    #app[data-result-mode="true"] #catchCtaButton {
+    .result-cta-secondary {
       display: none;
+    }
+
+    #app[data-result-mode="true"] .result-cta-secondary {
+      display: grid;
     }
 
     #app[data-result-mode="false"] .reference-result,
@@ -2033,7 +2013,7 @@
           </section>
 
           <div id="lawyersBlockHome"></div>
-          <section class="lawyers-block">
+          <section class="lawyers-block" id="referencesSection">
             <div>
               <h2>
                 <span class="reference-pre">Otomasyonumuzu Kullanan Ekipler</span>
@@ -2135,12 +2115,12 @@
             </div>
           </section>
 
-          <section class="catch-cta card">
+          <section class="catch-cta card result-cta-secondary">
             <div>
-              <h2>Hızlıca hesaplayın</h2>
-              <p>1–2 dakikada tahmini tutarı görün, başvuru için hazırlanın.</p>
+              <h2>Şeffaf dosya takibini başlatın</h2>
+              <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
             </div>
-            <button type="button" class="outline-button" id="catchCtaButton">Yukarı çık ve Hesapla</button>
+            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
           </section>
         </div>
       </div>
@@ -2260,9 +2240,6 @@
           </div>
         </header>
 
-        <div class="action-bar" id="actionBar">
-          <button class="action-button" id="actionButton" type="button" disabled>Belgeler Bekleniyor</button>
-        </div>
       </main>
     </section>
   </div>
@@ -2443,14 +2420,12 @@
       const stageTwo = document.getElementById("stageTwo");
       const primaryCta = document.getElementById("primaryCta");
       const calculateButton = document.getElementById("calculateButton");
-      const catchCtaButton = document.getElementById("catchCtaButton");
-      const actionButton = document.getElementById("actionButton");
+      const referencesSection = document.getElementById("referencesSection");
       const statusStateLabel = document.getElementById("statusStateLabel");
       const resultAmount = document.getElementById("resultAmount");
       const resultDate = document.getElementById("resultDate");
       const resultCard = document.getElementById("resultCard");
       const statusCard = document.getElementById("statusCard");
-      const actionBar = document.getElementById("actionBar");
       const howItWorksLink = document.getElementById("howItWorksLink");
       const howItWorksModal = document.getElementById("howItWorksModal");
       const closeModalButton = document.getElementById("closeModalButton");
@@ -2460,7 +2435,6 @@
       const referencesModal = document.getElementById("referencesModal");
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
-      const resultCtaButtons = document.querySelectorAll('[data-open-references="true"]');
       const requiredDocs = document.getElementById("requiredDocs");
       const requiredDocsToggle = document.getElementById("requiredDocsToggle");
       const missingDocsNote = document.getElementById("missingDocsNote");
@@ -2480,10 +2454,14 @@
       const summaryCalculateButton = document.getElementById("summaryCalculateButton");
       let processSteps = processCard ? processCard.querySelectorAll(".process-step") : [];
       let isExtendedStepper = false;
+      let processStepSignature = "";
       const lawyersBlock = document.querySelector(".lawyers-block");
       const lawyersBlockHome = document.getElementById("lawyersBlockHome");
       const referencesSlot = document.getElementById("referencesSlot");
-      let hasScrolledToSummary = false;
+      let hasScrolledToCalculate = false;
+      let hasScrolledToIhtarStep = false;
+      let hasScrolledToResultSummary = false;
+      let lastProcessStage = null;
 
       const BASE_PROCESS_STEPS = [
         "Belgeler alındı",
@@ -2500,16 +2478,16 @@
         "Bilirkişi ücreti 💰",
         "Ara karar",
         "Uzman raporu 💰",
-        "Bildirim (tebligat)",
+        "Bildirim",
         "İtiraz",
         "Ek rapor 💰",
-        "Ek bildirim (ek tebligat)",
+        "Ek bildirim",
         "Nihai karar ⚖️",
         "Karar bildirimi",
         "Kesinleşme",
         "Ödeme takibi 💰",
         "Dosya kapanışı",
-        "Yasal tahsil (icra) ⚠️💰",
+        "Yasal tahsil ⚠️💰",
       ];
 
       function renderProcessSteps(stepLabels, options = {}) {
@@ -2535,16 +2513,17 @@
         processSteps = processStepper.querySelectorAll(".process-step");
       }
 
-      function ensureProcessSteps(isExtended) {
-        const stepLabels = isExtended ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS;
+      function ensureProcessSteps(stepLabels, isExtended) {
         if (!processStepper) {
           return;
         }
-        if (isExtendedStepper === isExtended && processSteps.length === stepLabels.length) {
+        const signature = stepLabels.join("|");
+        if (isExtendedStepper === isExtended && processSteps.length === stepLabels.length && signature === processStepSignature) {
           return;
         }
         renderProcessSteps(stepLabels, { isExtended });
         isExtendedStepper = isExtended;
+        processStepSignature = signature;
       }
 
       function setUiState(state) {
@@ -2556,6 +2535,9 @@
           return;
         }
         appRoot.dataset.resultMode = isActive ? "true" : "false";
+        if (!isActive) {
+          hasScrolledToResultSummary = false;
+        }
       }
 
       const PROCESS_ACTIVE_KEY = "processActive";
@@ -2729,15 +2711,8 @@
       if (calculateButton) {
         calculateButton.addEventListener("click", handleCalculateClick);
       }
-      if (actionButton) {
-        actionButton.addEventListener("click", handleCalculateClick);
-      }
       if (summaryCalculateButton) {
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
-      }
-
-      function scrollToPrimaryCta() {
-        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function scrollToSummaryCard() {
@@ -2750,8 +2725,26 @@
         summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      if (catchCtaButton) {
-        catchCtaButton.addEventListener("click", scrollToPrimaryCta);
+      function scrollToCalculateButton() {
+        const target = calculateButton || primaryCta;
+        if (!target) {
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function scrollToProcessStep(stepNumber) {
+        if (!processStepper) {
+          return;
+        }
+        const step = processStepper.querySelector(`[data-step="${stepNumber}"]`);
+        if (!step) {
+          return;
+        }
+        step.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
 
       function setCalculateButtonState(isReady) {
@@ -2770,9 +2763,6 @@
         }
         if (summaryCalculateButton) {
           summaryCalculateButton.classList.toggle("is-hidden", !isVisible);
-        }
-        if (actionBar) {
-          actionBar.classList.toggle("is-hidden", !isVisible);
         }
       }
 
@@ -3133,7 +3123,14 @@
           return;
         }
         const { stage, ihtarUrl } = buildProcessState(resultData);
-        ensureProcessSteps(resultModeActive);
+        if (stage !== lastProcessStage) {
+          lastProcessStage = stage;
+          if (stage !== 4) {
+            hasScrolledToIhtarStep = false;
+          }
+        }
+        const stepLabels = resultModeActive ? EXTENDED_PROCESS_STEPS : BASE_PROCESS_STEPS;
+        ensureProcessSteps(stepLabels, resultModeActive);
         const karsiPlaka = getValueByKey(resultData, "Karşı Plaka");
         const kazaTarihi = getValueByKey(resultData, "Kaza Tarihi");
         const tahminiTutar = formatAmount(getResultAmount(resultData));
@@ -3168,9 +3165,6 @@
         processNote.classList.add("is-hidden");
         processCta.removeAttribute("href");
         processCta.removeAttribute("download");
-        if (actionButton) {
-          actionButton.removeAttribute("data-download-url");
-        }
 
         const shouldShowProcess =
           resultModeActive || stage !== 0 || hasStartedCalculation || hasResultPayload(currentResultJson);
@@ -3201,11 +3195,6 @@
             processCta.target = "_blank";
             processCta.removeAttribute("download");
             processCta.classList.remove("is-hidden");
-            if (actionButton) {
-              actionButton.disabled = false;
-              actionButton.textContent = "İhtar Dilekçesini İndir";
-              actionButton.dataset.downloadUrl = ihtarUrl;
-            }
             try {
               scrollToSummaryCard();
             } catch (e) {}
@@ -3227,10 +3216,10 @@
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplama tamamlandı";
           }
-          if (resultModeActive) {
-            setProcessStepState(0, false, { completedCount: BASE_PROCESS_STEPS.length, lockActive: true });
-          } else {
-            setProcessStepState(4, false);
+          setProcessStepState(4, false);
+          if (resultModeActive && !hasScrolledToIhtarStep) {
+            hasScrolledToIhtarStep = true;
+            scrollToProcessStep(4);
           }
           return;
         }
@@ -3375,6 +3364,10 @@
         if (!isActive) {
           return;
         }
+        if (!hasScrolledToResultSummary) {
+          hasScrolledToResultSummary = true;
+          scrollToSummaryCard();
+        }
         setStageOneHidden(false);
         const amountValue = getResultAmount(resultData);
         const ihtarUrl = getIhtarUrl(resultData);
@@ -3392,17 +3385,6 @@
         }
         if (summaryCalculateButton) {
           summaryCalculateButton.disabled = true;
-        }
-        if (actionButton) {
-          if (ihtarUrl) {
-            actionButton.disabled = false;
-            actionButton.textContent = "İhtar Dilekçesini İndir";
-            actionButton.dataset.downloadUrl = ihtarUrl;
-          } else {
-            actionButton.disabled = true;
-            actionButton.textContent = "Sonuç Hazır";
-            actionButton.removeAttribute("data-download-url");
-          }
         }
         if (statusStateLabel) {
           statusStateLabel.textContent = "Sonuç Hazır";
@@ -3481,10 +3463,6 @@
           setProcessCardVisibility(true);
           moveProcessCardToTop();
 
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "İşleniyor";
-          }
           if (statusStateLabel) {
             statusStateLabel.textContent = "İşlem sürüyor";
           }
@@ -3499,10 +3477,6 @@
             missingDocsNote.classList.add("is-hidden");
           }
           setCalculationControlsVisibility(false);
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "Sonuç Hazır";
-          }
           setStageOneHidden(true);
           setPrimaryCtaHidden(true);
           setProcessVisibility(true);
@@ -3522,28 +3496,20 @@
           if (statusStateLabel) {
             statusStateLabel.textContent = "Hesaplamaya Hazır";
           }
-          if (actionButton) {
-            actionButton.disabled = false;
-            actionButton.textContent = "Hesaplamayı Başlat";
-          }
           if (!resultPresent) {
             setUiState("empty");
           }
           setStageOneHidden(false);
           setOutputVisibility(resultPresent);
-          if (!hasScrolledToSummary) {
-            hasScrolledToSummary = true;
-            scrollToSummaryCard();
+          if (!hasScrolledToCalculate) {
+            hasScrolledToCalculate = true;
+            scrollToCalculateButton();
           }
         } else {
           setCalculateButtonState(false);
           setPrimaryCtaHidden(false);
           if (statusStateLabel) {
             statusStateLabel.textContent = "Belgeler kontrol ediliyor";
-          }
-          if (actionButton) {
-            actionButton.disabled = true;
-            actionButton.textContent = "Belgeler Bekleniyor";
           }
           if (!resultPresent) {
             setUiState("empty");
@@ -3679,9 +3645,6 @@
         if (statusCard) {
           statusCard.classList.toggle("is-hidden", !isVisible);
         }
-        if (actionBar) {
-          actionBar.classList.toggle("is-hidden", !isVisible);
-        }
         if (howItWorksLink) {
           howItWorksLink.classList.toggle("is-hidden", !isVisible);
         }
@@ -3746,7 +3709,7 @@
       }
 
       function scrollToReferencesSection() {
-        const target = lawyersBlock || referencesSlot;
+        const target = referencesSection || lawyersBlock || referencesSlot;
         if (!target) {
           return false;
         }
@@ -3757,18 +3720,18 @@
         return true;
       }
 
-      if (resultCtaButtons && resultCtaButtons.length) {
-        resultCtaButtons.forEach((button) => {
-          button.addEventListener("click", () => {
-            const opened = toggleReferencesModal(true);
-            const isModalVisible =
-              opened && referencesModal ? window.getComputedStyle(referencesModal).display !== "none" : false;
-            if (!opened || !isModalVisible) {
-              scrollToReferencesSection();
-            }
-          });
-        });
-      }
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+        const button = target.closest('[data-open-references="true"]');
+        if (!button) {
+          return;
+        }
+        event.preventDefault();
+        scrollToReferencesSection();
+      });
 
       const WATCHER_KEY = "__DK_WATCHER__";
       if (window[WATCHER_KEY] && typeof window[WATCHER_KEY].stop === "function") {
