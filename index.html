@@ -3755,10 +3755,21 @@
         if (explicitTargetId) {
           const explicitTarget = document.getElementById(explicitTargetId);
           if (explicitTarget) {
+            console.debug("[scroll-target] explicit target resolved", {
+              id: explicitTargetId,
+              element: explicitTarget,
+            });
             return explicitTarget;
           }
         }
-        return referencesSection || lawyersBlock || referencesSlot;
+        const fallbackTarget = referencesSection || lawyersBlock || referencesSlot;
+        console.debug("[scroll-target] fallback target resolved", {
+          target: fallbackTarget,
+          referencesSection,
+          lawyersBlock,
+          referencesSlot,
+        });
+        return fallbackTarget;
       }
 
       function getFirstReferenceCallTarget(target) {
@@ -3766,14 +3777,17 @@
         if (!container) {
           return null;
         }
-        return (
+        const callTarget = (
           container.querySelector(".lawyer-cta-link") ||
           container.querySelector(".lawyer-phone a") ||
           container.querySelector("a[href^='tel:']")
         );
+        console.debug("[scroll-target] first call target", { container, callTarget });
+        return callTarget;
       }
 
       function scrollToTarget(target) {
+        console.debug("[scroll-target] scrollToTarget", { target });
         return scrollWithOffset(target);
       }
 
@@ -3782,15 +3796,29 @@
         button.addEventListener("click", (event) => {
           event.preventDefault();
           const isResultMode = appRoot && appRoot.dataset.resultMode === "true";
+          console.debug("[scroll-target] CTA click", {
+            button,
+            isResultMode,
+            referencesSection,
+            lawyersBlock,
+            referencesSlot,
+          });
           placeReferences(isResultMode);
+          console.debug("[scroll-target] placeReferences done", {
+            lawyersBlockParent: lawyersBlock ? lawyersBlock.parentElement : null,
+          });
           const target = resolveScrollTarget(button);
           scrollToTarget(target);
           if (isResultMode) {
             window.setTimeout(() => {
               const firstCall = getFirstReferenceCallTarget(target);
               if (firstCall) {
+                console.debug("[scroll-target] triggering call click", { firstCall });
                 firstCall.click();
               }
+              console.debug("[scroll-target] triggering bubble tracking", {
+                fnSuffix: TRACKING_FN_SUFFIX,
+              });
               triggerBubbleFunction(TRACKING_FN_SUFFIX);
             }, 450);
           }
