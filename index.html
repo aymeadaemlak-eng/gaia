@@ -1802,7 +1802,7 @@
                 alabilirsiniz.
               </span>
             </div>
-            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
+            <button type="button" id="calculateButton" class="cta-button" disabled>Değer Kaybımı Hesapla</button>
           </section>
 
           <div class="trust-bar">
@@ -2942,8 +2942,17 @@
           if (parsed && typeof parsed === "object") {
             return getIhtarUrl(parsed);
           }
-          const match = resultData.match(/İhtar Dilekçesi[^\\n]*?(https?:\\/\\/[^\\s"'<>]+)/i);
-          return match ? normalizeIhtarUrl(match[1]) : "";
+          const lowered = resultData.toLowerCase();
+          const markerIndex = lowered.indexOf("ihtar dilekçesi");
+          const searchStart = markerIndex !== -1 ? markerIndex : 0;
+          const httpIndex = lowered.indexOf("http", searchStart);
+          if (httpIndex === -1) {
+            return "";
+          }
+          const slice = resultData.slice(httpIndex);
+          const endMatch = slice.match(/[\s"'<>]/);
+          const candidate = endMatch ? slice.slice(0, endMatch.index) : slice;
+          return normalizeIhtarUrl(candidate);
         }
         const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
         return findFirstValidUrl(ihtarValue);
