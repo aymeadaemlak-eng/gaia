@@ -1160,19 +1160,24 @@
       gap: 12px;
     }
 
-      .required-docs {
-        display: grid;
-        gap: 6px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid #e3e7ef;
-        background: #f5f7fa;
-        color: var(--text);
-        font-size: 13.5px;
-        line-height: 1.4;
-        justify-items: start;
-        text-align: left;
-      }
+    .required-docs {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e3e7ef;
+      background: #f5f7fa;
+      color: var(--text);
+      font-size: 13.5px;
+      line-height: 1.4;
+      justify-items: start;
+      text-align: left;
+      transition: opacity 0.2s ease;
+    }
+
+    .required-docs.is-secondary {
+      opacity: 0.6;
+    }
 
     .required-docs-summary {
       display: grid;
@@ -1828,7 +1833,7 @@
           <section class="cta-block" id="primaryCta">
             <div class="required-docs" id="requiredDocs">
               <div class="required-docs-summary">
-                <strong>Gereken evraklar:</strong> Eksper raporu, ruhsat, kaza tespit tutanağı.
+                <strong>Gereken evraklar:</strong> Eksper/Hasar raporu
                 <span class="required-docs-meta">
                   Süre: ~1–2 dk • Hesaplama sonrası belgeler otomatik silinir.
                 </span>
@@ -1857,18 +1862,7 @@
                 </svg>
               </a>
             </div>
-            <div class="cta-meta">Bu hesaplama bir tahmindir; nihai tutar tahkim bilirkişisiyle belirlenir.</div>
-            <div class="cta-warning is-hidden" id="missingDocsNote">
-              Devam etmek için zorunlu evrakları yükleyin.
-            </div>
-            <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
-            <div class="cta-legal">
-              Bu hizmeti kullanarak
-              <a href="https://gaiasphere.io/privacy_policy" target="_blank" rel="noopener">Gizlilik Politikası</a>,
-              <a href="https://gaiasphere.io/terms_of_service" target="_blank" rel="noopener">Hizmet Şartları</a>
-              ve <a href="https://gaiasphere.io/disclaimer" target="_blank" rel="noopener">Yasal Uyarı</a>
-              metinlerini kabul etmiş sayılırsınız.
-            </div>
+            <button type="button" id="calculateButton" class="cta-button" disabled>Değer Kaybımı Hesapla</button>
           </section>
 
           <div class="trust-bar">
@@ -2120,7 +2114,7 @@
               <h2>Şeffaf dosya takibini başlatın</h2>
               <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
             </div>
-            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
           </section>
         </div>
       </div>
@@ -2157,7 +2151,7 @@
                 Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.
               </p>
             </div>
-            <div class="summary-amount" id="summaryAmount">TL--</div>
+            <div class="summary-amount" id="summaryAmount">₺--</div>
           </div>
           <div class="summary-actions">
             <button type="button" class="primary" id="summaryCalculateButton">Hesapla</button>
@@ -2207,7 +2201,7 @@
             </div>
           </article>
           <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
             <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
           </div>
           <div id="referencesSlot"></div>
@@ -2345,18 +2339,8 @@
             node = walker.nextNode();
           }
         } catch (error) {
-          console.warn("[result-debug] comment scan failed", error);
+          console.warn("comment scan failed", error);
         }
-        console.log("[result-debug] inline sources", {
-          scriptLength: inlineScriptValue.length,
-          textareaLength: inlineTextareaValue.length,
-          dataAttrLength: dataAttributeValue.length,
-          dataAttrTag: dataElement ? dataElement.tagName : null,
-          jsonScriptCount: jsonScripts.length,
-          jsonScriptLength: jsonScriptValue.length,
-          jsonScriptId: jsonScriptCandidate ? jsonScriptCandidate.id || null : null,
-          commentLength: commentValue.length,
-        });
         return (
           inlineScriptValue ||
           inlineTextareaValue ||
@@ -2370,10 +2354,6 @@
       function resolveResultJsonSource() {
         const windowValue = window.RESULT_DATA_JSON;
         const fallbackValue = window.RESULT_DATA;
-        const windowValueType = typeof windowValue;
-        const windowValueLength = windowValueType === "string" ? windowValue.length : 0;
-        const windowValueKeys =
-          windowValue && windowValueType === "object" ? Object.keys(windowValue).length : 0;
         if (windowValue && typeof windowValue === "object") {
           return windowValue;
         }
@@ -2387,14 +2367,6 @@
           return fallbackValue;
         }
         const inlineValue = readInlineResultJson();
-        console.log("[result-debug] resolveResultJsonSource", {
-          windowValueType,
-          windowValueLength,
-          windowValueKeys,
-          fallbackType: typeof fallbackValue,
-          fallbackLength: typeof fallbackValue === "string" ? fallbackValue.length : 0,
-          inlineLength: inlineValue.length,
-        });
         return inlineValue;
       }
 
@@ -2436,8 +2408,6 @@
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
       const requiredDocs = document.getElementById("requiredDocs");
-      const requiredDocsToggle = document.getElementById("requiredDocsToggle");
-      const missingDocsNote = document.getElementById("missingDocsNote");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
       const processTitle = document.getElementById("processTitle");
@@ -2700,6 +2670,7 @@
         setProcessVisibility(true);
         setOutputVisibility(true);
         setProcessCardVisibility(true);
+        setRequiredDocsVisibility(false);
         showProcessCardAtTop();
         if (statusStateLabel) {
           statusStateLabel.textContent = "Hesaplama sürüyor";
@@ -2752,9 +2723,21 @@
           return;
         }
         calculateButton.disabled = !isReady;
-        if (missingDocsNote) {
-          missingDocsNote.classList.toggle("is-hidden", isReady);
+      }
+
+      function setRequiredDocsVisibility(isVisible) {
+        if (!requiredDocs) {
+          return;
         }
+        requiredDocs.classList.toggle("is-hidden", !isVisible);
+        requiredDocs.setAttribute("aria-hidden", String(!isVisible));
+      }
+
+      function setRequiredDocsSecondary(isSecondary) {
+        if (!requiredDocs) {
+          return;
+        }
+        requiredDocs.classList.toggle("is-secondary", isSecondary);
       }
 
       function setCalculationControlsVisibility(isVisible) {
@@ -2937,12 +2920,6 @@
         }
         if (typeof rawValue === "string") {
           const normalized = normalizeJsonString(rawValue);
-          console.log("[result-debug] resolveResultPayload", {
-            rawLength: rawValue.length,
-            normalizedLength: normalized.length,
-            rawPreview: rawValue.slice(0, 200),
-            normalizedPreview: normalized.slice(0, 200),
-          });
           return {
             raw: normalized,
             parsed: safeParseResultData(normalized),
@@ -3017,8 +2994,39 @@
       }
 
       function getIhtarUrl(resultData) {
+        if (!resultData) {
+          return "";
+        }
+        if (typeof resultData === "string") {
+          const parsed = safeParseResultData(normalizeJsonString(resultData));
+          if (parsed && typeof parsed === "object") {
+            return getIhtarUrl(parsed);
+          }
+          const lowered = resultData.toLowerCase();
+          const markerIndex = lowered.indexOf("ihtar dilekçesi");
+          const searchStart = markerIndex !== -1 ? markerIndex : 0;
+          const httpIndex = lowered.indexOf("http", searchStart);
+          if (httpIndex === -1) {
+            return "";
+          }
+          const slice = resultData.slice(httpIndex);
+          const endMatch = slice.match(/[\s"'<>]/);
+          const candidate = endMatch ? slice.slice(0, endMatch.index) : slice;
+          return normalizeIhtarUrl(candidate);
+        }
         const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
         return findFirstValidUrl(ihtarValue);
+      }
+
+      function resolveIhtarUrl(parsedValue, rawValue) {
+        const parsedUrl = getIhtarUrl(parsedValue);
+        if (parsedUrl) {
+          return parsedUrl;
+        }
+        if (typeof rawValue === "string") {
+          return getIhtarUrl(rawValue);
+        }
+        return "";
       }
 
       function collectUrlsFromValue(value, urlSet) {
@@ -3319,7 +3327,7 @@
           minimumFractionDigits: hasDecimal ? 2 : 0,
           maximumFractionDigits: hasDecimal ? 2 : 0,
         }).format(parsed);
-        return `TL${formatted}`;
+        return `₺${formatted}`;
       }
 
       function getResultDate(resultData) {
@@ -3340,24 +3348,6 @@
         return Boolean(resultData && (getResultAmount(resultData) || resultData.status === "error"));
       }
 
-      function isMeaningfulResultData(rawValue, parsedValue) {
-        const ihtarUrl = getIhtarUrl(parsedValue);
-        const amountValue = getResultAmount(parsedValue);
-        const parsedHasKeys =
-          parsedValue && typeof parsedValue === "object" && Object.keys(parsedValue).length > 0;
-        const normalizedRaw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
-        const rawHasContent = typeof rawValue === "string" ? normalizedRaw !== "" : Boolean(rawValue);
-        const isMeaningful = Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
-        console.log("[result-debug] isMeaningfulResultData", {
-          ihtarUrl: Boolean(ihtarUrl),
-          amountValue: Boolean(amountValue),
-          parsedHasKeys,
-          rawHasContent,
-          isMeaningful,
-        });
-        return isMeaningful;
-      }
-
       function applyResultModeVisibility(isActive, resultData) {
         setResultModeLayout(isActive);
         placeReferences(isActive);
@@ -3370,7 +3360,6 @@
         }
         setStageOneHidden(false);
         const amountValue = getResultAmount(resultData);
-        const ihtarUrl = getIhtarUrl(resultData);
         if (amountValue) {
           setUiState("success");
         }
@@ -3407,11 +3396,11 @@
         }
       }
 
-      function updateSummary(resultData) {
+      function updateSummary(resultData, rawValue) {
         if (!summaryCard || !summaryStatus || !summaryAmount || !summaryDate || !summaryDownload) {
           return;
         }
-        const ihtarUrl = getIhtarUrl(resultData);
+        const ihtarUrl = resolveIhtarUrl(resultData, rawValue);
         const amountValue = getResultAmount(resultData);
         const dateValue = getResultDate(resultData);
 
@@ -3420,11 +3409,11 @@
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
         } else if (hasCreatedItem) {
-          summaryAmount.textContent = "TL--";
+          summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Hesaplama başlatıldı. Sonuç oluştuğunda tutar ve dilekçe burada görünecek.";
         } else {
-          summaryAmount.textContent = "TL--";
+          summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.";
         }
@@ -3442,12 +3431,15 @@
 
       function applyEvrakState(isReady, resultPresent) {
         if (resultModeActive) {
+          setRequiredDocsVisibility(false);
           return;
         }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
-        const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+        const hasAnyPayloadLocal =
+          hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
         const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal || isReady;
         setSummaryVisibility(shouldShowSummary);
+        setRequiredDocsSecondary(isReady);
 
         if (summaryCalculateButton) {
           summaryCalculateButton.disabled = hasAnyPayloadLocal || hasCreatedItem ? true : !isReady;
@@ -3455,10 +3447,13 @@
 
         if ((processActive || hasCreatedItem) && !hasAnyPayloadLocal) {
           setCalculationControlsVisibility(false);
-          setStageOneHidden(true);
-          setPrimaryCtaHidden(true);
+          setStageOneHidden(resultModeActive);
+          setPrimaryCtaHidden(resultModeActive);
           setOutputVisibility(true);
           setProcessVisibility(true);
+          if (resultModeActive) {
+            setRequiredDocsVisibility(false);
+          }
 
           setProcessCardVisibility(true);
           moveProcessCardToTop();
@@ -3473,15 +3468,15 @@
           if (calculateButton) {
             calculateButton.disabled = true;
           }
-          if (missingDocsNote) {
-            missingDocsNote.classList.add("is-hidden");
-          }
           setCalculationControlsVisibility(false);
-          setStageOneHidden(true);
-          setPrimaryCtaHidden(true);
+          setStageOneHidden(resultModeActive);
+          setPrimaryCtaHidden(resultModeActive);
           setProcessVisibility(true);
           setOutputVisibility(true);
           setProcessCardVisibility(true);
+          if (resultModeActive) {
+            setRequiredDocsVisibility(false);
+          }
           return;
         }
 
@@ -3489,6 +3484,7 @@
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setSummaryVisibility(shouldShowSummary);
+        setRequiredDocsVisibility(true);
 
         if (isReady) {
           setCalculateButtonState(true);
@@ -3522,7 +3518,7 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
       const hasMeaningfulPayload = hasInitialPayload || hasResultData;
-      resultModeActive = Boolean(getIhtarUrl(parsedResult));
+      resultModeActive = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
 
       let hasPersistedCreated = readPersistedObjectCreated();
       if (!hasMeaningfulPayload) {
@@ -3549,16 +3545,9 @@
       }
 
       updateProcessUI(parsedResult);
-      updateSummary(parsedResult);
+      updateSummary(parsedResult, currentResultJson);
       applyResultModeVisibility(resultModeActive, parsedResult);
-      const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
-      console.log("[result-debug] initial state", {
-        hasResultData,
-        hasInitialPayload,
-        resultModeActive,
-        hasAnyPayload,
-        evraklarYuklendi,
-      });
+      const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
       if (hasAnyPayload) {
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -3646,7 +3635,7 @@
           statusCard.classList.toggle("is-hidden", !isVisible);
         }
         if (howItWorksLink) {
-          howItWorksLink.classList.toggle("is-hidden", !isVisible);
+          howItWorksLink.classList.remove("is-hidden");
         }
       }
 
@@ -3661,14 +3650,6 @@
         trustDetailsLink.addEventListener("click", (event) => {
           event.preventDefault();
           toggleTrustModal(true);
-        });
-      }
-
-      if (requiredDocs && requiredDocsToggle) {
-        requiredDocsToggle.addEventListener("click", () => {
-          const isExpanded = requiredDocs.classList.toggle("is-expanded");
-          requiredDocsToggle.setAttribute("aria-expanded", String(isExpanded));
-          requiredDocsToggle.textContent = isExpanded ? "Detayları Gizle" : "Detaylar";
         });
       }
 
@@ -3708,8 +3689,21 @@
         });
       }
 
-      function scrollToReferencesSection() {
-        const target = referencesSection || lawyersBlock || referencesSlot;
+      function resolveScrollTarget(element) {
+        if (!element) {
+          return null;
+        }
+        const explicitTargetId = element.getAttribute("data-scroll-target");
+        if (explicitTargetId) {
+          const explicitTarget = document.getElementById(explicitTargetId);
+          if (explicitTarget) {
+            return explicitTarget;
+          }
+        }
+        return referencesSection || lawyersBlock || referencesSlot;
+      }
+
+      function scrollToTarget(target) {
         if (!target) {
           return false;
         }
@@ -3720,17 +3714,13 @@
         return true;
       }
 
-      document.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) {
-          return;
-        }
-        const button = target.closest('[data-open-references="true"]');
-        if (!button) {
-          return;
-        }
-        event.preventDefault();
-        scrollToReferencesSection();
+      const scrollButtons = document.querySelectorAll("[data-scroll-target]");
+      scrollButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          const target = resolveScrollTarget(button);
+          scrollToTarget(target);
+        });
       });
 
       const WATCHER_KEY = "__DK_WATCHER__";
@@ -3752,15 +3742,11 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
-        const nextResultMode = Boolean(getIhtarUrl(nextParsed));
+        const nextResultMode = Boolean(resolveIhtarUrl(nextParsed, rawValue));
         const nextHasResultData = hasResultDataValue(nextParsed);
         const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
         if (changed) {
-          console.log("[result-debug] tick change", {
-            rawLength: typeof rawValue === "string" ? rawValue.length : 0,
-            nextSig,
-          });
           currentResultJson = rawValue;
           lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
@@ -3768,7 +3754,7 @@
 
           parsedResult = nextParsed;
           resultModeActive = nextResultMode;
-          if (nextHasPayload || Boolean(getIhtarUrl(nextParsed))) {
+          if (nextHasPayload || Boolean(resolveIhtarUrl(nextParsed, rawValue))) {
             hasCreatedItem = true;
             persistObjectCreated(true);
             setProcessVisibility(true);
@@ -3782,7 +3768,7 @@
             hasStartedCalculation = false;
           }
           updateProcessUI(nextParsed);
-          updateSummary(nextParsed);
+          updateSummary(nextParsed, rawValue);
           applyResultModeVisibility(resultModeActive, nextParsed);
           applyResultState(nextParsed);
         }
