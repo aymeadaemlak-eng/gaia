@@ -1450,11 +1450,11 @@
       display: none;
     }
 
-    .result-cta-secondary {
+    section.result-cta-secondary {
       display: none;
     }
 
-    #app[data-result-mode="true"] .result-cta-secondary {
+    #app[data-result-mode="true"] section.result-cta-secondary {
       display: grid;
     }
 
@@ -2731,14 +2731,25 @@
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
 
+      function scrollWithOffset(target, offset = 12) {
+        if (!target) {
+          return false;
+        }
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            const rect = target.getBoundingClientRect();
+            const top = rect.top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        });
+        return true;
+      }
+
       function scrollToSummaryCard() {
         if (!summaryCard) {
           return;
         }
-        const rect = summaryCard.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollWithOffset(summaryCard);
       }
 
       function scrollToCalculateButton() {
@@ -2746,10 +2757,7 @@
         if (!target) {
           return;
         }
-        const rect = target.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollWithOffset(target);
       }
 
       function scrollToProcessStep(stepNumber) {
@@ -3766,23 +3774,17 @@
       }
 
       function scrollToTarget(target) {
-        if (!target) {
-          return false;
-        }
-        const rect = target.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-        return true;
+        return scrollWithOffset(target);
       }
 
       const scrollButtons = document.querySelectorAll("[data-scroll-target]");
       scrollButtons.forEach((button) => {
         button.addEventListener("click", (event) => {
           event.preventDefault();
+          const isResultMode = appRoot && appRoot.dataset.resultMode === "true";
+          placeReferences(isResultMode);
           const target = resolveScrollTarget(button);
           scrollToTarget(target);
-          const isResultMode = appRoot && appRoot.dataset.resultMode === "true";
           if (isResultMode) {
             window.setTimeout(() => {
               const firstCall = getFirstReferenceCallTarget(target);
