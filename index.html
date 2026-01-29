@@ -84,8 +84,45 @@
       order: 1;
     }
 
+    #app[data-pre-result-mode="true"] #stageTwo {
+      order: 0;
+    }
+
+    #app[data-pre-result-mode="true"] #stageOne {
+      order: 1;
+    }
+
     #app[data-result-mode="true"] .required-docs {
       display: none;
+    }
+
+    #app[data-pre-result-mode="true"] .required-docs {
+      display: none;
+    }
+
+    #app[data-pre-result-mode="true"] .result-cta,
+    #app[data-pre-result-mode="true"] .result-cta-secondary {
+      display: none;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .summary-card,
+    #app[data-pre-result-mode="true"] #stageTwo .summary-card {
+      order: 0;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .card-grid,
+    #app[data-pre-result-mode="true"] #stageTwo .card-grid {
+      order: 1;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .app-bar,
+    #app[data-pre-result-mode="true"] #stageTwo .app-bar {
+      order: 2;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .hero-card,
+    #app[data-pre-result-mode="true"] #stageTwo .hero-card {
+      order: 3;
     }
 
     .card {
@@ -2431,6 +2468,7 @@
       let hasScrolledToCalculate = false;
       let hasScrolledToIhtarStep = false;
       let hasScrolledToResultSummary = false;
+      let hasScrolledToResultAmount = false;
       let lastProcessStage = null;
 
       const BASE_PROCESS_STEPS = [
@@ -2508,6 +2546,13 @@
         if (!isActive) {
           hasScrolledToResultSummary = false;
         }
+      }
+
+      function setPreResultModeLayout(isActive) {
+        if (!appRoot) {
+          return;
+        }
+        appRoot.dataset.preResultMode = isActive ? "true" : "false";
       }
 
       const PROCESS_ACTIVE_KEY = "processActive";
@@ -3408,14 +3453,20 @@
           summaryAmount.textContent = formatAmount(amountValue);
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
+          if (!hasScrolledToResultAmount) {
+            hasScrolledToResultAmount = true;
+            scrollToSummaryCard();
+          }
         } else if (hasCreatedItem) {
           summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Hesaplama başlatıldı. Sonuç oluştuğunda tutar ve dilekçe burada görünecek.";
+          hasScrolledToResultAmount = false;
         } else {
           summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.";
+          hasScrolledToResultAmount = false;
         }
 
         summaryDate.textContent = `Hesaplama tarihi: ${dateValue || "--"}`;
@@ -3432,11 +3483,14 @@
       function applyEvrakState(isReady, resultPresent) {
         if (resultModeActive) {
           setRequiredDocsVisibility(false);
+          setPreResultModeLayout(false);
           return;
         }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
-        const hasAnyPayloadLocal =
-          hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
+        const hasIhtarPayload = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
+        const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || hasResultDataValue(parsedResult);
+        const preResultModeActive = hasAnyPayloadLocal && !hasIhtarPayload;
+        setPreResultModeLayout(preResultModeActive);
         const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal || isReady;
         setSummaryVisibility(shouldShowSummary);
         setRequiredDocsSecondary(isReady);
@@ -3451,9 +3505,7 @@
           setPrimaryCtaHidden(resultModeActive);
           setOutputVisibility(true);
           setProcessVisibility(true);
-          if (resultModeActive) {
-            setRequiredDocsVisibility(false);
-          }
+          setRequiredDocsVisibility(!preResultModeActive);
 
           setProcessCardVisibility(true);
           moveProcessCardToTop();
@@ -3474,9 +3526,7 @@
           setProcessVisibility(true);
           setOutputVisibility(true);
           setProcessCardVisibility(true);
-          if (resultModeActive) {
-            setRequiredDocsVisibility(false);
-          }
+          setRequiredDocsVisibility(!preResultModeActive);
           return;
         }
 
@@ -3484,7 +3534,7 @@
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setSummaryVisibility(shouldShowSummary);
-        setRequiredDocsVisibility(true);
+        setRequiredDocsVisibility(!preResultModeActive);
 
         if (isReady) {
           setCalculateButtonState(true);
@@ -3703,6 +3753,18 @@
         return referencesSection || lawyersBlock || referencesSlot;
       }
 
+      function getFirstReferenceCallTarget(target) {
+        const container = target || referencesSection || lawyersBlock || referencesSlot;
+        if (!container) {
+          return null;
+        }
+        return (
+          container.querySelector(".lawyer-cta-link") ||
+          container.querySelector(".lawyer-phone a") ||
+          container.querySelector("a[href^='tel:']")
+        );
+      }
+
       function scrollToTarget(target) {
         if (!target) {
           return false;
@@ -3720,6 +3782,16 @@
           event.preventDefault();
           const target = resolveScrollTarget(button);
           scrollToTarget(target);
+          const isResultMode = appRoot && appRoot.dataset.resultMode === "true";
+          if (isResultMode) {
+            window.setTimeout(() => {
+              const firstCall = getFirstReferenceCallTarget(target);
+              if (firstCall) {
+                firstCall.click();
+              }
+              triggerBubbleFunction(TRACKING_FN_SUFFIX);
+            }, 450);
+          }
         });
       });
 
@@ -3751,6 +3823,9 @@
           lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
           lastSig = nextSig;
+          if (!hasResultDataValue(nextParsed)) {
+            hasScrolledToResultAmount = false;
+          }
 
           parsedResult = nextParsed;
           resultModeActive = nextResultMode;
