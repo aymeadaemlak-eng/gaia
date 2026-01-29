@@ -2120,7 +2120,7 @@
               <h2>Şeffaf dosya takibini başlatın</h2>
               <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
             </div>
-            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary js-scroll-references">Dosya Şeffaf Takibini Başlat</button>
           </section>
         </div>
       </div>
@@ -2157,7 +2157,7 @@
                 Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.
               </p>
             </div>
-            <div class="summary-amount" id="summaryAmount">TL--</div>
+            <div class="summary-amount" id="summaryAmount">₺--</div>
           </div>
           <div class="summary-actions">
             <button type="button" class="primary" id="summaryCalculateButton">Hesapla</button>
@@ -2207,7 +2207,7 @@
             </div>
           </article>
           <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" data-open-references="true">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary js-scroll-references">Dosya Şeffaf Takibini Başlat</button>
             <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
           </div>
           <div id="referencesSlot"></div>
@@ -3319,7 +3319,7 @@
           minimumFractionDigits: hasDecimal ? 2 : 0,
           maximumFractionDigits: hasDecimal ? 2 : 0,
         }).format(parsed);
-        return `TL${formatted}`;
+        return `₺${formatted}`;
       }
 
       function getResultDate(resultData) {
@@ -3420,11 +3420,11 @@
           summaryStatus.textContent =
             "Hesaplama tamamlandı. Tahmini değer kaybı tutarı ve indirilebilir ihtar aşağıda.";
         } else if (hasCreatedItem) {
-          summaryAmount.textContent = "TL--";
+          summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Hesaplama başlatıldı. Sonuç oluştuğunda tutar ve dilekçe burada görünecek.";
         } else {
-          summaryAmount.textContent = "TL--";
+          summaryAmount.textContent = "₺--";
           summaryStatus.textContent =
             "Henüz hesaplama yapılmadı. Evraklar yüklendiyse hesaplamayı başlatabilirsiniz.";
         }
@@ -3646,7 +3646,7 @@
           statusCard.classList.toggle("is-hidden", !isVisible);
         }
         if (howItWorksLink) {
-          howItWorksLink.classList.toggle("is-hidden", !isVisible);
+          howItWorksLink.classList.remove("is-hidden");
         }
       }
 
@@ -3725,7 +3725,7 @@
         if (!(target instanceof Element)) {
           return;
         }
-        const button = target.closest('[data-open-references="true"]');
+        const button = target.closest(".js-scroll-references");
         if (!button) {
           return;
         }
