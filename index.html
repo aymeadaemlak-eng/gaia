@@ -1160,58 +1160,28 @@
       gap: 12px;
     }
 
-      .required-docs {
-        display: grid;
-        gap: 6px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid #e3e7ef;
-        background: #f5f7fa;
-        color: var(--text);
-        font-size: 13.5px;
-        line-height: 1.4;
-        justify-items: start;
-        text-align: left;
-      }
-
-    .required-docs-summary {
+    .required-docs {
       display: grid;
-      gap: 4px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #1f2937;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 500;
+      transition: opacity 0.2s ease;
     }
 
-    .required-docs-summary strong {
-      font-weight: 600;
+    .required-docs.is-secondary {
+      opacity: 0.6;
     }
 
-    .required-docs-meta {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .required-docs-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: #6b7280;
-      font-size: 12px;
-      text-decoration: none;
-    }
-
-    .required-docs-link:hover {
-      text-decoration: underline;
-    }
-
-    .required-docs-logo {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      display: inline-block;
-      object-fit: cover;
-    }
-
-    .required-docs-external {
-      width: 14px;
-      height: 14px;
+    .required-docs-text {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .step-card {
@@ -1827,48 +1797,12 @@
         <div class="stage-one">
           <section class="cta-block" id="primaryCta">
             <div class="required-docs" id="requiredDocs">
-              <div class="required-docs-summary">
-                <strong>Gereken evraklar:</strong> Eksper raporu, ruhsat, kaza tespit tutanağı.
-                <span class="required-docs-meta">
-                  Süre: ~1–2 dk • Hesaplama sonrası belgeler otomatik silinir.
-                </span>
-              </div>
-              <a
-                class="required-docs-link"
-                href="https://www.turkiye.gov.tr/sbvgm-trafik-ve-kasko-eksper-raporlari-sorgulama"
-                target="_blank"
-                rel="noopener"
-              >
-                <img
-                  class="required-docs-logo"
-                  src="https://e7.pngegg.com/pngimages/453/86/png-clipart-drop-off-e-government-android-turkey-android-rectangle-logo.png"
-                  alt="e-Devlet"
-                  loading="lazy"
-                />
-                e-Devlet’ten Eksper Raporu indir
-                <svg class="required-docs-external" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M14 5h5v5m0-5-9 9m-5-4v9h9"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </a>
-            </div>
-            <div class="cta-meta">Bu hesaplama bir tahmindir; nihai tutar tahkim bilirkişisiyle belirlenir.</div>
-            <div class="cta-warning is-hidden" id="missingDocsNote">
-              Devam etmek için zorunlu evrakları yükleyin.
+              <span class="required-docs-text">
+                Hasar eksper raporu ile tahmini değer kaybı tutarınızı öğrenebilir ve başvuru dilekçenizi otomatik olarak
+                alabilirsiniz.
+              </span>
             </div>
             <button type="button" id="calculateButton" class="cta-button">Değer Kaybımı Hesapla</button>
-            <div class="cta-legal">
-              Bu hizmeti kullanarak
-              <a href="https://gaiasphere.io/privacy_policy" target="_blank" rel="noopener">Gizlilik Politikası</a>,
-              <a href="https://gaiasphere.io/terms_of_service" target="_blank" rel="noopener">Hizmet Şartları</a>
-              ve <a href="https://gaiasphere.io/disclaimer" target="_blank" rel="noopener">Yasal Uyarı</a>
-              metinlerini kabul etmiş sayılırsınız.
-            </div>
           </section>
 
           <div class="trust-bar">
@@ -2345,18 +2279,8 @@
             node = walker.nextNode();
           }
         } catch (error) {
-          console.warn("[result-debug] comment scan failed", error);
+          console.warn("comment scan failed", error);
         }
-        console.log("[result-debug] inline sources", {
-          scriptLength: inlineScriptValue.length,
-          textareaLength: inlineTextareaValue.length,
-          dataAttrLength: dataAttributeValue.length,
-          dataAttrTag: dataElement ? dataElement.tagName : null,
-          jsonScriptCount: jsonScripts.length,
-          jsonScriptLength: jsonScriptValue.length,
-          jsonScriptId: jsonScriptCandidate ? jsonScriptCandidate.id || null : null,
-          commentLength: commentValue.length,
-        });
         return (
           inlineScriptValue ||
           inlineTextareaValue ||
@@ -2370,10 +2294,6 @@
       function resolveResultJsonSource() {
         const windowValue = window.RESULT_DATA_JSON;
         const fallbackValue = window.RESULT_DATA;
-        const windowValueType = typeof windowValue;
-        const windowValueLength = windowValueType === "string" ? windowValue.length : 0;
-        const windowValueKeys =
-          windowValue && windowValueType === "object" ? Object.keys(windowValue).length : 0;
         if (windowValue && typeof windowValue === "object") {
           return windowValue;
         }
@@ -2387,14 +2307,6 @@
           return fallbackValue;
         }
         const inlineValue = readInlineResultJson();
-        console.log("[result-debug] resolveResultJsonSource", {
-          windowValueType,
-          windowValueLength,
-          windowValueKeys,
-          fallbackType: typeof fallbackValue,
-          fallbackLength: typeof fallbackValue === "string" ? fallbackValue.length : 0,
-          inlineLength: inlineValue.length,
-        });
         return inlineValue;
       }
 
@@ -2436,8 +2348,6 @@
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
       const requiredDocs = document.getElementById("requiredDocs");
-      const requiredDocsToggle = document.getElementById("requiredDocsToggle");
-      const missingDocsNote = document.getElementById("missingDocsNote");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
       const processTitle = document.getElementById("processTitle");
@@ -2700,6 +2610,7 @@
         setProcessVisibility(true);
         setOutputVisibility(true);
         setProcessCardVisibility(true);
+        setRequiredDocsVisibility(false);
         showProcessCardAtTop();
         if (statusStateLabel) {
           statusStateLabel.textContent = "Hesaplama sürüyor";
@@ -2752,9 +2663,21 @@
           return;
         }
         calculateButton.disabled = !isReady;
-        if (missingDocsNote) {
-          missingDocsNote.classList.toggle("is-hidden", isReady);
+      }
+
+      function setRequiredDocsVisibility(isVisible) {
+        if (!requiredDocs) {
+          return;
         }
+        requiredDocs.classList.toggle("is-hidden", !isVisible);
+        requiredDocs.setAttribute("aria-hidden", String(!isVisible));
+      }
+
+      function setRequiredDocsSecondary(isSecondary) {
+        if (!requiredDocs) {
+          return;
+        }
+        requiredDocs.classList.toggle("is-secondary", isSecondary);
       }
 
       function setCalculationControlsVisibility(isVisible) {
@@ -2937,12 +2860,6 @@
         }
         if (typeof rawValue === "string") {
           const normalized = normalizeJsonString(rawValue);
-          console.log("[result-debug] resolveResultPayload", {
-            rawLength: rawValue.length,
-            normalizedLength: normalized.length,
-            rawPreview: rawValue.slice(0, 200),
-            normalizedPreview: normalized.slice(0, 200),
-          });
           return {
             raw: normalized,
             parsed: safeParseResultData(normalized),
@@ -3017,8 +2934,30 @@
       }
 
       function getIhtarUrl(resultData) {
+        if (!resultData) {
+          return "";
+        }
+        if (typeof resultData === "string") {
+          const parsed = safeParseResultData(normalizeJsonString(resultData));
+          if (parsed && typeof parsed === "object") {
+            return getIhtarUrl(parsed);
+          }
+          const match = resultData.match(/İhtar Dilekçesi[^\\n]*?(https?:\\/\\/[^\\s"'<>]+)/i);
+          return match ? normalizeIhtarUrl(match[1]) : "";
+        }
         const ihtarValue = getValueByKey(resultData, "İhtar Dilekçesi");
         return findFirstValidUrl(ihtarValue);
+      }
+
+      function resolveIhtarUrl(parsedValue, rawValue) {
+        const parsedUrl = getIhtarUrl(parsedValue);
+        if (parsedUrl) {
+          return parsedUrl;
+        }
+        if (typeof rawValue === "string") {
+          return getIhtarUrl(rawValue);
+        }
+        return "";
       }
 
       function collectUrlsFromValue(value, urlSet) {
@@ -3340,24 +3279,6 @@
         return Boolean(resultData && (getResultAmount(resultData) || resultData.status === "error"));
       }
 
-      function isMeaningfulResultData(rawValue, parsedValue) {
-        const ihtarUrl = getIhtarUrl(parsedValue);
-        const amountValue = getResultAmount(parsedValue);
-        const parsedHasKeys =
-          parsedValue && typeof parsedValue === "object" && Object.keys(parsedValue).length > 0;
-        const normalizedRaw = typeof rawValue === "string" ? normalizeJsonString(rawValue) : "";
-        const rawHasContent = typeof rawValue === "string" ? normalizedRaw !== "" : Boolean(rawValue);
-        const isMeaningful = Boolean(ihtarUrl || amountValue || (parsedHasKeys && rawHasContent));
-        console.log("[result-debug] isMeaningfulResultData", {
-          ihtarUrl: Boolean(ihtarUrl),
-          amountValue: Boolean(amountValue),
-          parsedHasKeys,
-          rawHasContent,
-          isMeaningful,
-        });
-        return isMeaningful;
-      }
-
       function applyResultModeVisibility(isActive, resultData) {
         setResultModeLayout(isActive);
         placeReferences(isActive);
@@ -3370,7 +3291,6 @@
         }
         setStageOneHidden(false);
         const amountValue = getResultAmount(resultData);
-        const ihtarUrl = getIhtarUrl(resultData);
         if (amountValue) {
           setUiState("success");
         }
@@ -3407,11 +3327,11 @@
         }
       }
 
-      function updateSummary(resultData) {
+      function updateSummary(resultData, rawValue) {
         if (!summaryCard || !summaryStatus || !summaryAmount || !summaryDate || !summaryDownload) {
           return;
         }
-        const ihtarUrl = getIhtarUrl(resultData);
+        const ihtarUrl = resolveIhtarUrl(resultData, rawValue);
         const amountValue = getResultAmount(resultData);
         const dateValue = getResultDate(resultData);
 
@@ -3442,12 +3362,15 @@
 
       function applyEvrakState(isReady, resultPresent) {
         if (resultModeActive) {
+          setRequiredDocsVisibility(false);
           return;
         }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
-        const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
+        const hasAnyPayloadLocal =
+          hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
         const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal || isReady;
         setSummaryVisibility(shouldShowSummary);
+        setRequiredDocsSecondary(isReady);
 
         if (summaryCalculateButton) {
           summaryCalculateButton.disabled = hasAnyPayloadLocal || hasCreatedItem ? true : !isReady;
@@ -3459,6 +3382,7 @@
           setPrimaryCtaHidden(true);
           setOutputVisibility(true);
           setProcessVisibility(true);
+          setRequiredDocsVisibility(false);
 
           setProcessCardVisibility(true);
           moveProcessCardToTop();
@@ -3473,15 +3397,13 @@
           if (calculateButton) {
             calculateButton.disabled = true;
           }
-          if (missingDocsNote) {
-            missingDocsNote.classList.add("is-hidden");
-          }
           setCalculationControlsVisibility(false);
           setStageOneHidden(true);
           setPrimaryCtaHidden(true);
           setProcessVisibility(true);
           setOutputVisibility(true);
           setProcessCardVisibility(true);
+          setRequiredDocsVisibility(false);
           return;
         }
 
@@ -3489,6 +3411,7 @@
         setProcessVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setProcessCardVisibility(isReady || resultPresent || hasAnyPayloadLocal);
         setSummaryVisibility(shouldShowSummary);
+        setRequiredDocsVisibility(true);
 
         if (isReady) {
           setCalculateButtonState(true);
@@ -3522,7 +3445,7 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
       const hasMeaningfulPayload = hasInitialPayload || hasResultData;
-      resultModeActive = Boolean(getIhtarUrl(parsedResult));
+      resultModeActive = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
 
       let hasPersistedCreated = readPersistedObjectCreated();
       if (!hasMeaningfulPayload) {
@@ -3549,16 +3472,9 @@
       }
 
       updateProcessUI(parsedResult);
-      updateSummary(parsedResult);
+      updateSummary(parsedResult, currentResultJson);
       applyResultModeVisibility(resultModeActive, parsedResult);
-      const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(getIhtarUrl(parsedResult));
-      console.log("[result-debug] initial state", {
-        hasResultData,
-        hasInitialPayload,
-        resultModeActive,
-        hasAnyPayload,
-        evraklarYuklendi,
-      });
+      const hasAnyPayload = hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
       if (hasAnyPayload) {
         hasCreatedItem = true;
         persistObjectCreated(true);
@@ -3664,14 +3580,6 @@
         });
       }
 
-      if (requiredDocs && requiredDocsToggle) {
-        requiredDocsToggle.addEventListener("click", () => {
-          const isExpanded = requiredDocs.classList.toggle("is-expanded");
-          requiredDocsToggle.setAttribute("aria-expanded", String(isExpanded));
-          requiredDocsToggle.textContent = isExpanded ? "Detayları Gizle" : "Detaylar";
-        });
-      }
-
       if (closeModalButton) {
         closeModalButton.addEventListener("click", () => toggleModal(false));
       }
@@ -3752,15 +3660,11 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
-        const nextResultMode = Boolean(getIhtarUrl(nextParsed));
+        const nextResultMode = Boolean(resolveIhtarUrl(nextParsed, rawValue));
         const nextHasResultData = hasResultDataValue(nextParsed);
         const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
         if (changed) {
-          console.log("[result-debug] tick change", {
-            rawLength: typeof rawValue === "string" ? rawValue.length : 0,
-            nextSig,
-          });
           currentResultJson = rawValue;
           lastResultJson = nextPayload.raw;
           lastParsed = nextParsed;
@@ -3768,7 +3672,7 @@
 
           parsedResult = nextParsed;
           resultModeActive = nextResultMode;
-          if (nextHasPayload || Boolean(getIhtarUrl(nextParsed))) {
+          if (nextHasPayload || Boolean(resolveIhtarUrl(nextParsed, rawValue))) {
             hasCreatedItem = true;
             persistObjectCreated(true);
             setProcessVisibility(true);
@@ -3782,7 +3686,7 @@
             hasStartedCalculation = false;
           }
           updateProcessUI(nextParsed);
-          updateSummary(nextParsed);
+          updateSummary(nextParsed, rawValue);
           applyResultModeVisibility(resultModeActive, nextParsed);
           applyResultState(nextParsed);
         }
