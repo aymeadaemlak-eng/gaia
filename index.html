@@ -84,12 +84,45 @@
       order: 1;
     }
 
+    #app[data-pre-result-mode="true"] #stageTwo {
+      order: 0;
+    }
+
+    #app[data-pre-result-mode="true"] #stageOne {
+      order: 1;
+    }
+
     #app[data-result-mode="true"] .required-docs {
       display: none;
     }
 
     #app[data-pre-result-mode="true"] .required-docs {
       display: none;
+    }
+
+    #app[data-pre-result-mode="true"] .result-cta,
+    #app[data-pre-result-mode="true"] .result-cta-secondary {
+      display: none;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .summary-card,
+    #app[data-pre-result-mode="true"] #stageTwo .summary-card {
+      order: 0;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .card-grid,
+    #app[data-pre-result-mode="true"] #stageTwo .card-grid {
+      order: 1;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .app-bar,
+    #app[data-pre-result-mode="true"] #stageTwo .app-bar {
+      order: 2;
+    }
+
+    #app[data-result-mode="true"] #stageTwo .hero-card,
+    #app[data-pre-result-mode="true"] #stageTwo .hero-card {
+      order: 3;
     }
 
     .card {
@@ -3454,9 +3487,9 @@
           return;
         }
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
-        const hasAnyPayloadLocal =
-          hasResultPayload(currentResultJson) || Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
-        const preResultModeActive = processActive || hasCreatedItem || hasAnyPayloadLocal;
+        const hasIhtarPayload = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
+        const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || hasResultDataValue(parsedResult);
+        const preResultModeActive = hasAnyPayloadLocal && !hasIhtarPayload;
         setPreResultModeLayout(preResultModeActive);
         const shouldShowSummary = processActive || hasCreatedItem || hasAnyPayloadLocal || isReady;
         setSummaryVisibility(shouldShowSummary);
