@@ -2114,7 +2114,7 @@
               <h2>Şeffaf dosya takibini başlatın</h2>
               <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
             </div>
-            <button type="button" class="primary js-scroll-references">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
           </section>
         </div>
       </div>
@@ -2201,7 +2201,7 @@
             </div>
           </article>
           <div class="result-cta" id="resultCta">
-            <button type="button" class="primary js-scroll-references">Dosya Şeffaf Takibini Başlat</button>
+            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
             <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
           </div>
           <div id="referencesSlot"></div>
@@ -3689,8 +3689,21 @@
         });
       }
 
-      function scrollToReferencesSection() {
-        const target = referencesSection || lawyersBlock || referencesSlot;
+      function resolveScrollTarget(element) {
+        if (!element) {
+          return null;
+        }
+        const explicitTargetId = element.getAttribute("data-scroll-target");
+        if (explicitTargetId) {
+          const explicitTarget = document.getElementById(explicitTargetId);
+          if (explicitTarget) {
+            return explicitTarget;
+          }
+        }
+        return referencesSection || lawyersBlock || referencesSlot;
+      }
+
+      function scrollToTarget(target) {
         if (!target) {
           return false;
         }
@@ -3701,17 +3714,13 @@
         return true;
       }
 
-      document.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) {
-          return;
-        }
-        const button = target.closest(".js-scroll-references");
-        if (!button) {
-          return;
-        }
-        event.preventDefault();
-        scrollToReferencesSection();
+      const scrollButtons = document.querySelectorAll("[data-scroll-target]");
+      scrollButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          const target = resolveScrollTarget(button);
+          scrollToTarget(target);
+        });
       });
 
       const WATCHER_KEY = "__DK_WATCHER__";
