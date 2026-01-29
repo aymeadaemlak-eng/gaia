@@ -1162,14 +1162,16 @@
 
     .required-docs {
       display: grid;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
-      color: #1f2937;
-      font-size: 14px;
-      line-height: 1.45;
-      font-weight: 500;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e3e7ef;
+      background: #f5f7fa;
+      color: var(--text);
+      font-size: 13.5px;
+      line-height: 1.4;
+      justify-items: start;
+      text-align: left;
       transition: opacity 0.2s ease;
     }
 
@@ -1177,11 +1179,44 @@
       opacity: 0.6;
     }
 
-    .required-docs-text {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
+    .required-docs-summary {
+      display: grid;
+      gap: 4px;
+    }
+
+    .required-docs-summary strong {
+      font-weight: 600;
+    }
+
+    .required-docs-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .required-docs-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #6b7280;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .required-docs-link:hover {
+      text-decoration: underline;
+    }
+
+    .required-docs-logo {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-block;
+      object-fit: cover;
+    }
+
+    .required-docs-external {
+      width: 14px;
+      height: 14px;
     }
 
     .step-card {
@@ -1797,10 +1832,35 @@
         <div class="stage-one">
           <section class="cta-block" id="primaryCta">
             <div class="required-docs" id="requiredDocs">
-              <span class="required-docs-text">
-                Hasar eksper raporu ile tahmini değer kaybı tutarınızı öğrenebilir ve başvuru dilekçenizi otomatik olarak
-                alabilirsiniz.
-              </span>
+              <div class="required-docs-summary">
+                <strong>Gereken evraklar:</strong> Eksper/Hasar raporu
+                <span class="required-docs-meta">
+                  Süre: ~1–2 dk • Hesaplama sonrası belgeler otomatik silinir.
+                </span>
+              </div>
+              <a
+                class="required-docs-link"
+                href="https://www.turkiye.gov.tr/sbvgm-trafik-ve-kasko-eksper-raporlari-sorgulama"
+                target="_blank"
+                rel="noopener"
+              >
+                <img
+                  class="required-docs-logo"
+                  src="https://e7.pngegg.com/pngimages/453/86/png-clipart-drop-off-e-government-android-turkey-android-rectangle-logo.png"
+                  alt="e-Devlet"
+                  loading="lazy"
+                />
+                e-Devlet’ten Eksper Raporu indir
+                <svg class="required-docs-external" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M14 5h5v5m0-5-9 9m-5-4v9h9"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
             </div>
             <button type="button" id="calculateButton" class="cta-button" disabled>Değer Kaybımı Hesapla</button>
           </section>
@@ -3387,11 +3447,13 @@
 
         if ((processActive || hasCreatedItem) && !hasAnyPayloadLocal) {
           setCalculationControlsVisibility(false);
-          setStageOneHidden(true);
-          setPrimaryCtaHidden(true);
+          setStageOneHidden(resultModeActive);
+          setPrimaryCtaHidden(resultModeActive);
           setOutputVisibility(true);
           setProcessVisibility(true);
-          setRequiredDocsVisibility(false);
+          if (resultModeActive) {
+            setRequiredDocsVisibility(false);
+          }
 
           setProcessCardVisibility(true);
           moveProcessCardToTop();
@@ -3407,12 +3469,14 @@
             calculateButton.disabled = true;
           }
           setCalculationControlsVisibility(false);
-          setStageOneHidden(true);
-          setPrimaryCtaHidden(true);
+          setStageOneHidden(resultModeActive);
+          setPrimaryCtaHidden(resultModeActive);
           setProcessVisibility(true);
           setOutputVisibility(true);
           setProcessCardVisibility(true);
-          setRequiredDocsVisibility(false);
+          if (resultModeActive) {
+            setRequiredDocsVisibility(false);
+          }
           return;
         }
 
