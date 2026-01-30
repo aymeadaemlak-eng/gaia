@@ -859,6 +859,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      z-index: 2000;
     }
 
     .modal-backdrop.active {
@@ -872,6 +873,10 @@
       width: 100%;
       padding: 24px;
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+    }
+
+    body.modal-open {
+      overflow: hidden;
     }
 
     .modal-header {
@@ -2328,6 +2333,14 @@
             </div>
           </article>
           <article class="tracking-cta-card is-hidden" id="trackingCtaCard" aria-hidden="true">
+            <button
+              type="button"
+              class="outline-button soft-primary"
+              data-tracking-cta-button="true"
+            >
+              Şeffaf Dosya Takibi Başlat
+            </button>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
             <div>
               <h3>Şeffaf Dosya Takibi</h3>
               <p>
@@ -2341,8 +2354,6 @@
               <span class="pill">Mail &amp; SMS bilgilendirme</span>
             </div>
             <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
-            <button type="button" class="outline-button soft-primary" id="trackingCtaButton">Şeffaf Dosya Takibi Başlat</button>
-            <span class="status-tag is-hidden" id="trackingCtaStatus">Aranma talebi oluşturuldu ✓</span>
           </article>
           <div id="referencesSlot"></div>
 
@@ -2373,6 +2384,29 @@
             </div>
           </div>
         </header>
+        <article class="tracking-cta-card is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
+          <button
+            type="button"
+            class="outline-button soft-primary"
+            data-tracking-cta-button="true"
+          >
+            Şeffaf Dosya Takibi Başlat
+          </button>
+          <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
+          <div>
+            <h3>Şeffaf Dosya Takibi</h3>
+            <p>
+              Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
+              ne olduğunu net görürsünüz.
+            </p>
+          </div>
+          <div class="pill-row">
+            <span class="pill">20+ resmi adım</span>
+            <span class="pill">Harç / masraf zamanları</span>
+            <span class="pill">Mail &amp; SMS bilgilendirme</span>
+          </div>
+          <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+        </article>
 
       </main>
     </section>
@@ -2597,9 +2631,9 @@
       const trackingTimePrefButtons = document.querySelectorAll("[data-time-pref]");
       const trackingPhoneError = document.getElementById("trackingPhoneError");
       const trackingModalError = document.getElementById("trackingModalError");
-      const trackingCtaCard = document.getElementById("trackingCtaCard");
-      const trackingCtaButton = document.getElementById("trackingCtaButton");
-      const trackingCtaStatus = document.getElementById("trackingCtaStatus");
+      const trackingCtaCards = document.querySelectorAll("[id^=\"trackingCtaCard\"]");
+      const trackingCtaButtons = document.querySelectorAll("[data-tracking-cta-button=\"true\"]");
+      const trackingCtaStatusTags = document.querySelectorAll("[data-tracking-cta-status=\"true\"]");
       let trackingTimePref = "now";
       const requiredDocs = document.getElementById("requiredDocs");
       const processCard = document.getElementById("processCard");
@@ -2858,11 +2892,13 @@
       }
 
       function setTrackingCtaVisibility(isVisible) {
-        if (!trackingCtaCard) {
+        if (!trackingCtaCards || trackingCtaCards.length === 0) {
           return;
         }
-        trackingCtaCard.classList.toggle("is-hidden", !isVisible);
-        trackingCtaCard.setAttribute("aria-hidden", String(!isVisible));
+        trackingCtaCards.forEach((card) => {
+          card.classList.toggle("is-hidden", !isVisible);
+          card.setAttribute("aria-hidden", String(!isVisible));
+        });
       }
 
       function resetTrackingModal() {
@@ -2895,6 +2931,7 @@
         }
         trackingModal.classList.remove("active");
         trackingModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
       }
 
       function toggleTrackingModal(isOpen) {
@@ -2905,6 +2942,7 @@
           resetTrackingModal();
           trackingModal.classList.add("active");
           trackingModal.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-open");
           return;
         }
         closeTrackingModal();
@@ -2960,8 +2998,8 @@
         if (trackingModalSuccess) {
           trackingModalSuccess.classList.remove("is-hidden");
         }
-        if (trackingCtaStatus) {
-          trackingCtaStatus.classList.remove("is-hidden");
+        if (trackingCtaStatusTags && trackingCtaStatusTags.length > 0) {
+          trackingCtaStatusTags.forEach((tag) => tag.classList.remove("is-hidden"));
         }
       }
 
@@ -2995,8 +3033,10 @@
       if (summaryCalculateButton) {
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
-      if (trackingCtaButton) {
-        trackingCtaButton.addEventListener("click", () => toggleTrackingModal(true));
+      if (trackingCtaButtons && trackingCtaButtons.length > 0) {
+        trackingCtaButtons.forEach((button) => {
+          button.addEventListener("click", () => toggleTrackingModal(true));
+        });
       }
 
       if (trackingTimePrefButtons && trackingTimePrefButtons.length > 0) {
@@ -3730,9 +3770,13 @@
         const amountValue = getResultAmount(resultData);
         if (resultData && amountValue) {
           setUiState("success");
-          resultAmount.textContent = formatAmount(amountValue);
+          if (resultAmount) {
+            resultAmount.textContent = formatAmount(amountValue);
+          }
           const resultDateValue = getResultDate(resultData);
-          resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
+          if (resultDate) {
+            resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
+          }
           setOutputVisibility(true);
           const shouldEnableResultMode = isResultModeActive(resultData);
           if (shouldEnableResultMode && !resultModeActive) {
