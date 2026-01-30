@@ -1529,6 +1529,29 @@
       margin-top: 6px;
     }
 
+    .time-pref-group {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .time-pref-button {
+      width: 100%;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 600;
+      border: 1px solid #c7d2e7;
+      background: transparent;
+      color: #1f3f7a;
+    }
+
+    .time-pref-button.is-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(31, 111, 235, 0.2);
+    }
+
     .modal-bottom {
       width: min(520px, 92vw);
     }
@@ -2414,35 +2437,31 @@
   </div>
 
   <div class="modal-backdrop" id="trackingModal" aria-hidden="true">
-    <div class="modal modal-bottom" role="dialog" aria-modal="true" aria-labelledby="trackingModalTitle">
-      <div class="modal-header">
-        <h3 id="trackingModalTitle">Sizi arayalım</h3>
+      <div class="modal modal-bottom" role="dialog" aria-modal="true" aria-labelledby="trackingModalTitle">
+        <div class="modal-header">
+        <h3 id="trackingModalTitle">Sizi uzman bir danışman arasın</h3>
         <button class="modal-close" type="button" id="closeTrackingModalButton">Kapat</button>
       </div>
       <div class="stack" id="trackingModalBody">
-        <p>Numaranızı bırakın. Yetkili ekip dosyanızı inceleyip süreç takibini başlatmak için sizi arar.</p>
+        <p>Dosyanız, sistemimizi kullanan uzman danışmanlar tarafından incelenir.</p>
+        <p>Şeffaf süreç takibini başlatmak için sizi doğrudan ararlar.</p>
         <label class="stack">
-          <span>Telefon *</span>
+          <span>Telefon numaranız</span>
           <input type="tel" id="trackingPhone" placeholder="05xx xxx xx xx" />
-          <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası gerekli.</span>
+          <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası zorunlu.</span>
         </label>
-        <label class="stack">
-          <span>Ad Soyad (opsiyonel)</span>
-          <input type="text" id="trackingName" placeholder="Ad Soyad" />
-        </label>
-        <label class="stack">
-          <span>Uygun zaman (opsiyonel)</span>
-          <select id="trackingTimeSlot">
-            <option value="Farketmez (en kısa sürede)">Farketmez (en kısa sürede)</option>
-            <option value="09:00–12:00">09:00–12:00</option>
-            <option value="12:00–18:00">12:00–18:00</option>
-            <option value="18:00–21:00">18:00–21:00</option>
-          </select>
-        </label>
-        <small class="cta-legal">Kişisel verileriniz yalnızca iletişim ve süreç başlatma amacıyla kullanılır.</small>
+        <div class="stack">
+          <span>Uygun zaman tercihi</span>
+          <div class="time-pref-group" role="group" aria-label="Arama tercihi">
+            <button type="button" class="time-pref-button is-active" data-time-pref="now">Hemen arayın</button>
+            <button type="button" class="time-pref-button" data-time-pref="business_hours">Mesai saatlerinde arayın</button>
+            <button type="button" class="time-pref-button" data-time-pref="sms">SMS ile dönüş yapın</button>
+          </div>
+        </div>
+        <small class="cta-legal">İletişim bilgileriniz yalnızca bu başvuru ve süreç başlatma amacıyla kullanılır.</small>
         <div class="modal-actions">
           <button type="button" class="outline-button" id="trackingCancelButton">Vazgeç</button>
-          <button type="button" class="primary" id="trackingSubmitButton">Aranma Talebi Oluştur</button>
+          <button type="button" class="primary" id="trackingSubmitButton">Arama Talebi Oluştur</button>
         </div>
         <div class="toast toast-error state-error is-hidden" id="trackingModalError">
           Talep kaydedilemedi. Lütfen tekrar deneyin.
@@ -2450,7 +2469,7 @@
       </div>
       <div class="stack is-hidden" id="trackingModalSuccess">
         <h3>Talebiniz alındı</h3>
-        <p>Yetkili ekip en kısa sürede sizi arayacak.</p>
+        <p>Uzman danışman ekibi en kısa sürede sizi arayacak.</p>
         <button type="button" class="primary" id="trackingSuccessClose">Tamam</button>
       </div>
     </div>
@@ -2575,13 +2594,13 @@
       const trackingCancelButton = document.getElementById("trackingCancelButton");
       const trackingSuccessClose = document.getElementById("trackingSuccessClose");
       const trackingPhoneInput = document.getElementById("trackingPhone");
-      const trackingNameInput = document.getElementById("trackingName");
-      const trackingTimeSlotInput = document.getElementById("trackingTimeSlot");
+      const trackingTimePrefButtons = document.querySelectorAll("[data-time-pref]");
       const trackingPhoneError = document.getElementById("trackingPhoneError");
       const trackingModalError = document.getElementById("trackingModalError");
       const trackingCtaCard = document.getElementById("trackingCtaCard");
       const trackingCtaButton = document.getElementById("trackingCtaButton");
       const trackingCtaStatus = document.getElementById("trackingCtaStatus");
+      let trackingTimePref = "now";
       const requiredDocs = document.getElementById("requiredDocs");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
@@ -2850,11 +2869,11 @@
         if (trackingPhoneInput) {
           trackingPhoneInput.value = "";
         }
-        if (trackingNameInput) {
-          trackingNameInput.value = "";
-        }
-        if (trackingTimeSlotInput) {
-          trackingTimeSlotInput.value = "Farketmez (en kısa sürede)";
+        trackingTimePref = "now";
+        if (trackingTimePrefButtons && trackingTimePrefButtons.length > 0) {
+          trackingTimePrefButtons.forEach((button) => {
+            button.classList.toggle("is-active", button.dataset.timePref === trackingTimePref);
+          });
         }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
@@ -2870,40 +2889,34 @@
         }
       }
 
+      function closeTrackingModal() {
+        if (!trackingModal) {
+          return;
+        }
+        trackingModal.classList.remove("active");
+        trackingModal.setAttribute("aria-hidden", "true");
+      }
+
       function toggleTrackingModal(isOpen) {
         if (!trackingModal) {
           return;
         }
         if (isOpen) {
           resetTrackingModal();
+          trackingModal.classList.add("active");
+          trackingModal.setAttribute("aria-hidden", "false");
+          return;
         }
-        trackingModal.classList.toggle("active", isOpen);
-        trackingModal.setAttribute("aria-hidden", String(!isOpen));
+        closeTrackingModal();
       }
 
       function getTrackingPayload(resultData) {
-        const payload = {
+        return {
+          action: "call_request",
           phone: trackingPhoneInput ? trackingPhoneInput.value.trim() : "",
-          name: trackingNameInput ? trackingNameInput.value.trim() : "",
-          timeSlot: trackingTimeSlotInput ? trackingTimeSlotInput.value : "",
+          timePref: trackingTimePref,
+          caseJson: resultData && resultData.DOSYALAR ? resultData.DOSYALAR : resultData,
         };
-        const plate = getValueByKey(resultData, "Davacı Plaka") || getValueByKey(resultData, "Karşı Plaka");
-        const accidentDate = getValueByKey(resultData, "Kaza Tarihi");
-        const amount = getResultAmount(resultData);
-        const ihtarUrl = getIhtarUrl(resultData);
-        if (plate) {
-          payload.plate = plate;
-        }
-        if (accidentDate) {
-          payload.accidentDate = accidentDate;
-        }
-        if (amount) {
-          payload.amount = amount;
-        }
-        if (ihtarUrl) {
-          payload.ihtarUrl = ihtarUrl;
-        }
-        return payload;
       }
 
       function handleTrackingSubmit() {
@@ -2984,6 +2997,18 @@
       }
       if (trackingCtaButton) {
         trackingCtaButton.addEventListener("click", () => toggleTrackingModal(true));
+      }
+
+      if (trackingTimePrefButtons && trackingTimePrefButtons.length > 0) {
+        trackingTimePrefButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const nextPref = button.dataset.timePref || "now";
+            trackingTimePref = nextPref;
+            trackingTimePrefButtons.forEach((item) => {
+              item.classList.toggle("is-active", item.dataset.timePref === nextPref);
+            });
+          });
+        });
       }
 
       function scrollWithOffset(target, offset = 12) {
@@ -3993,15 +4018,15 @@
       }
 
       if (closeTrackingModalButton) {
-        closeTrackingModalButton.addEventListener("click", () => toggleTrackingModal(false));
+        closeTrackingModalButton.addEventListener("click", closeTrackingModal);
       }
 
       if (trackingCancelButton) {
-        trackingCancelButton.addEventListener("click", () => toggleTrackingModal(false));
+        trackingCancelButton.addEventListener("click", closeTrackingModal);
       }
 
       if (trackingSuccessClose) {
-        trackingSuccessClose.addEventListener("click", () => toggleTrackingModal(false));
+        trackingSuccessClose.addEventListener("click", closeTrackingModal);
       }
 
       if (trackingSubmitButton) {
@@ -4043,7 +4068,7 @@
       if (trackingModal) {
         trackingModal.addEventListener("click", (event) => {
           if (event.target === trackingModal) {
-            toggleTrackingModal(false);
+            closeTrackingModal();
           }
         });
       }
