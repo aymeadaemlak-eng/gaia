@@ -105,6 +105,10 @@
       display: none;
     }
 
+    #app[data-pre-result-mode="true"] #primaryCta {
+      display: none;
+    }
+
     #app[data-result-mode="true"] #stageTwo .summary-card,
     #app[data-pre-result-mode="true"] #stageTwo .summary-card {
       order: 0;
@@ -855,6 +859,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      z-index: 2000;
     }
 
     .modal-backdrop.active {
@@ -868,6 +873,10 @@
       width: 100%;
       padding: 24px;
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+    }
+
+    body.modal-open {
+      overflow: hidden;
     }
 
     .modal-header {
@@ -1450,11 +1459,11 @@
       display: none;
     }
 
-    .result-cta-secondary {
+    section.result-cta-secondary {
       display: none;
     }
 
-    #app[data-result-mode="true"] .result-cta-secondary {
+    #app[data-result-mode="true"] section.result-cta-secondary {
       display: grid;
     }
 
@@ -1468,6 +1477,99 @@
 
     #app[data-result-mode="false"] .result-cta {
       display: none;
+    }
+
+    #app .lawyers-block {
+      display: none;
+    }
+
+    .tracking-cta-card {
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #dbe7ff;
+      background: linear-gradient(135deg, #ffffff 0%, #f2f6ff 100%);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .tracking-cta-card .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tracking-cta-card .pill {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(31, 111, 235, 0.12);
+      color: #1f3f7a;
+      font-weight: 600;
+    }
+
+    .tracking-cta-card .status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .tracking-cta-card .soft-primary {
+      width: 100%;
+      background: rgba(31, 111, 235, 0.12);
+      color: #1f3f7a;
+      border: 1px solid rgba(31, 111, 235, 0.2);
+    }
+
+    .tracking-cta-card .soft-primary:hover {
+      background: rgba(31, 111, 235, 0.2);
+    }
+
+    .form-error {
+      color: #b91c1c;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .time-pref-group {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .time-pref-button {
+      width: 100%;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 600;
+      border: 1px solid #c7d2e7;
+      background: transparent;
+      color: #1f3f7a;
+    }
+
+    .time-pref-button.is-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(31, 111, 235, 0.2);
+    }
+
+    .modal-bottom {
+      width: min(520px, 92vw);
+    }
+
+    @media (max-width: 720px) {
+      .modal-bottom {
+        align-self: flex-end;
+        width: 100%;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
     }
 
     .references-modal[data-result-mode="true"] .reference-pre,
@@ -2145,14 +2247,30 @@
               </article>
             </div>
           </section>
-
-          <section class="catch-cta card result-cta-secondary">
+          <article class="tracking-cta-card is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
+            <button
+              type="button"
+              class="outline-button soft-primary"
+              data-tracking-cta-button="true"
+            >
+              Şeffaf Dosya Takibi Başlat
+            </button>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
             <div>
-              <h2>Şeffaf dosya takibini başlatın</h2>
-              <p>Dosyanızın tüm adımlarını referanslarımızın kullandığı panelden takip edin.</p>
+              <h3>Şeffaf Dosya Takibi</h3>
+              <p>
+                Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
+                ne olduğunu net görürsünüz.
+              </p>
             </div>
-            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
-          </section>
+            <div class="pill-row">
+              <span class="pill">20+ resmi adım</span>
+              <span class="pill">Harç / masraf zamanları</span>
+              <span class="pill">Mail &amp; SMS bilgilendirme</span>
+            </div>
+            <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+          </article>
+
         </div>
       </div>
       <main class="main-panel" id="stageTwo" data-ui-state="empty">
@@ -2237,10 +2355,29 @@
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
           </article>
-          <div class="result-cta" id="resultCta">
-            <button type="button" class="primary" data-scroll-target="referencesSection">Dosya Şeffaf Takibini Başlat</button>
-            <p class="result-cta-note">Tüm süreçleri ve dosyanızın bilgilerini buradan anlık takip edebilirsiniz.</p>
-          </div>
+          <article class="tracking-cta-card is-hidden" id="trackingCtaCard" aria-hidden="true">
+            <button
+              type="button"
+              class="outline-button soft-primary"
+              data-tracking-cta-button="true"
+            >
+              Şeffaf Dosya Takibi Başlat
+            </button>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
+            <div>
+              <h3>Şeffaf Dosya Takibi</h3>
+              <p>
+                Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
+                ne olduğunu net görürsünüz.
+              </p>
+            </div>
+            <div class="pill-row">
+              <span class="pill">20+ resmi adım</span>
+              <span class="pill">Harç / masraf zamanları</span>
+              <span class="pill">Mail &amp; SMS bilgilendirme</span>
+            </div>
+            <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+          </article>
           <div id="referencesSlot"></div>
 
         </section>
@@ -2330,6 +2467,37 @@
         <button class="modal-close" type="button" id="closeReferencesModalButton">Kapat</button>
       </div>
       <div id="referencesModalBody" class="references-modal" data-result-mode="false"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="trackingModal" aria-hidden="true">
+      <div class="modal modal-bottom" role="dialog" aria-modal="true" aria-labelledby="trackingModalTitle">
+        <div class="modal-header">
+        <h3 id="trackingModalTitle">Sizi uzman bir danışman arasın</h3>
+        <button class="modal-close" type="button" id="closeTrackingModalButton">Kapat</button>
+      </div>
+      <div class="stack" id="trackingModalBody">
+        <p>Dosyanız, sistemimizi kullanan uzman danışmanlar tarafından incelenir.</p>
+        <p>Şeffaf süreç takibini başlatmak için sizi doğrudan ararlar.</p>
+        <label class="stack">
+          <span>Telefon numaranız</span>
+          <input type="tel" id="trackingPhone" placeholder="05xx xxx xx xx" />
+          <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası zorunlu.</span>
+        </label>
+        <small class="cta-legal">İletişim bilgileriniz yalnızca bu başvuru ve süreç başlatma amacıyla kullanılır.</small>
+        <div class="modal-actions">
+          <button type="button" class="outline-button" id="trackingCancelButton">Vazgeç</button>
+          <button type="button" class="primary" id="trackingSubmitButton">Hemen Arayın</button>
+        </div>
+        <div class="toast toast-error state-error is-hidden" id="trackingModalError">
+          Talep kaydedilemedi. Lütfen tekrar deneyin.
+        </div>
+      </div>
+      <div class="stack is-hidden" id="trackingModalSuccess">
+        <h3>Talebiniz alındı</h3>
+        <p>Uzman danışman ekibi en kısa sürede sizi arayacak.</p>
+        <button type="button" class="primary" id="trackingSuccessClose">Tamam</button>
+      </div>
     </div>
   </div>
 
@@ -2444,6 +2612,20 @@
       const referencesModal = document.getElementById("referencesModal");
       const referencesModalBody = document.getElementById("referencesModalBody");
       const closeReferencesModalButton = document.getElementById("closeReferencesModalButton");
+      const trackingModal = document.getElementById("trackingModal");
+      const closeTrackingModalButton = document.getElementById("closeTrackingModalButton");
+      const trackingModalBody = document.getElementById("trackingModalBody");
+      const trackingModalSuccess = document.getElementById("trackingModalSuccess");
+      const trackingSubmitButton = document.getElementById("trackingSubmitButton");
+      const trackingCancelButton = document.getElementById("trackingCancelButton");
+      const trackingSuccessClose = document.getElementById("trackingSuccessClose");
+      const trackingPhoneInput = document.getElementById("trackingPhone");
+      const trackingPhoneError = document.getElementById("trackingPhoneError");
+      const trackingModalError = document.getElementById("trackingModalError");
+      const trackingCtaCards = document.querySelectorAll("[id^=\"trackingCtaCard\"]");
+      const trackingCtaButtons = document.querySelectorAll("[data-tracking-cta-button=\"true\"]");
+      const trackingCtaStatusTags = document.querySelectorAll("[data-tracking-cta-status=\"true\"]");
+      let trackingTimePref = "now";
       const requiredDocs = document.getElementById("requiredDocs");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
@@ -2667,7 +2849,7 @@
       }
 
       const BUBBLE_FN_SUFFIX = "hesapla";
-      const TRACKING_FN_SUFFIX = "takip_baslat";
+      const TRACKING_REQUEST_FN = "bubble_fn_takip_baslat";
 
       function resolveBubbleFunction(fnName) {
         if (typeof window[fnName] === "function") {
@@ -2700,6 +2882,113 @@
         return false;
       }
 
+      function setTrackingCtaVisibility(isVisible) {
+        if (!trackingCtaCards || trackingCtaCards.length === 0) {
+          return;
+        }
+        trackingCtaCards.forEach((card) => {
+          card.classList.toggle("is-hidden", !isVisible);
+          card.setAttribute("aria-hidden", String(!isVisible));
+        });
+      }
+
+      function resetTrackingModal() {
+        if (trackingPhoneInput) {
+          trackingPhoneInput.value = "";
+        }
+        trackingTimePref = "now";
+        if (trackingPhoneError) {
+          trackingPhoneError.classList.add("is-hidden");
+        }
+        if (trackingModalError) {
+          trackingModalError.classList.add("is-hidden");
+        }
+        if (trackingModalBody) {
+          trackingModalBody.classList.remove("is-hidden");
+        }
+        if (trackingModalSuccess) {
+          trackingModalSuccess.classList.add("is-hidden");
+        }
+      }
+
+      function closeTrackingModal() {
+        if (!trackingModal) {
+          return;
+        }
+        trackingModal.classList.remove("active");
+        trackingModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+      }
+
+      function toggleTrackingModal(isOpen) {
+        if (!trackingModal) {
+          return;
+        }
+        if (isOpen) {
+          resetTrackingModal();
+          trackingModal.classList.add("active");
+          trackingModal.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-open");
+          return;
+        }
+        closeTrackingModal();
+      }
+
+      function getTrackingPayload(resultData) {
+        return {
+          action: "call_request",
+          phone: trackingPhoneInput ? trackingPhoneInput.value.trim() : "",
+          timePref: trackingTimePref,
+          caseJson: resultData && resultData.DOSYALAR ? resultData.DOSYALAR : resultData,
+        };
+      }
+
+      function handleTrackingSubmit() {
+        if (!trackingPhoneInput) {
+          return;
+        }
+        const phoneValue = trackingPhoneInput.value.trim();
+        if (!phoneValue) {
+          if (trackingPhoneError) {
+            trackingPhoneError.classList.remove("is-hidden");
+          }
+          return;
+        }
+        if (trackingPhoneError) {
+          trackingPhoneError.classList.add("is-hidden");
+        }
+        if (trackingModalError) {
+          trackingModalError.classList.add("is-hidden");
+        }
+        const payload = getTrackingPayload(parsedResult || {});
+        const bubbleFn = resolveBubbleFunction(TRACKING_REQUEST_FN);
+        if (!bubbleFn) {
+          console.warn("Bubble fonksiyonu bulunamadı", TRACKING_REQUEST_FN);
+          if (trackingModalError) {
+            trackingModalError.classList.remove("is-hidden");
+          }
+          return;
+        }
+        try {
+          bubbleFn(JSON.stringify(payload));
+        } catch (error) {
+          console.warn("Bubble fonksiyonu çalıştırılamadı", error);
+          if (trackingModalError) {
+            trackingModalError.classList.remove("is-hidden");
+          }
+          return;
+        }
+        if (trackingModalBody) {
+          trackingModalBody.classList.add("is-hidden");
+        }
+        if (trackingModalSuccess) {
+          trackingModalSuccess.classList.remove("is-hidden");
+        }
+        if (trackingCtaStatusTags && trackingCtaStatusTags.length > 0) {
+          trackingCtaStatusTags.forEach((tag) => tag.classList.remove("is-hidden"));
+        }
+      }
+
       function handleCalculateClick(event) {
         const target = event && event.currentTarget ? event.currentTarget : null;
         const downloadUrl = target && target.dataset ? target.dataset.downloadUrl : "";
@@ -2730,15 +3019,31 @@
       if (summaryCalculateButton) {
         summaryCalculateButton.addEventListener("click", handleCalculateClick);
       }
+      if (trackingCtaButtons && trackingCtaButtons.length > 0) {
+        trackingCtaButtons.forEach((button) => {
+          button.addEventListener("click", () => toggleTrackingModal(true));
+        });
+      }
+
+      function scrollWithOffset(target, offset = 12) {
+        if (!target) {
+          return false;
+        }
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            const rect = target.getBoundingClientRect();
+            const top = rect.top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+          });
+        });
+        return true;
+      }
 
       function scrollToSummaryCard() {
         if (!summaryCard) {
           return;
         }
-        const rect = summaryCard.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        summaryCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollWithOffset(summaryCard);
       }
 
       function scrollToCalculateButton() {
@@ -2746,10 +3051,7 @@
         if (!target) {
           return;
         }
-        const rect = target.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollWithOffset(target);
       }
 
       function scrollToProcessStep(stepNumber) {
@@ -3393,9 +3695,17 @@
         return Boolean(resultData && (getResultAmount(resultData) || resultData.status === "error"));
       }
 
+      function isResultModeActive(resultData) {
+        const ihtarUrl = getIhtarUrl(resultData);
+        const amountValue = getResultAmount(resultData);
+        const uiSuccess = stageTwo && stageTwo.dataset.uiState === "success";
+        return Boolean(ihtarUrl || (amountValue && uiSuccess));
+      }
+
       function applyResultModeVisibility(isActive, resultData) {
         setResultModeLayout(isActive);
         placeReferences(isActive);
+        setTrackingCtaVisibility(isActive);
         if (!isActive) {
           return;
         }
@@ -3434,10 +3744,19 @@
         const amountValue = getResultAmount(resultData);
         if (resultData && amountValue) {
           setUiState("success");
-          resultAmount.textContent = formatAmount(amountValue);
+          if (resultAmount) {
+            resultAmount.textContent = formatAmount(amountValue);
+          }
           const resultDateValue = getResultDate(resultData);
-          resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
+          if (resultDate) {
+            resultDate.textContent = `Hesaplama tarihi: ${resultDateValue || "GG/AA/YYYY"}`;
+          }
           setOutputVisibility(true);
+          const shouldEnableResultMode = isResultModeActive(resultData);
+          if (shouldEnableResultMode && !resultModeActive) {
+            resultModeActive = true;
+            applyResultModeVisibility(true, resultData);
+          }
         }
       }
 
@@ -3486,6 +3805,7 @@
           setPreResultModeLayout(false);
           return;
         }
+        setTrackingCtaVisibility(false);
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasIhtarPayload = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || hasResultDataValue(parsedResult);
@@ -3568,7 +3888,7 @@
       const hasResultData = hasResultDataValue(parsedResult);
       const hasInitialPayload = hasResultPayload(currentResultJson);
       const hasMeaningfulPayload = hasInitialPayload || hasResultData;
-      resultModeActive = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
+      resultModeActive = isResultModeActive(parsedResult);
 
       let hasPersistedCreated = readPersistedObjectCreated();
       if (!hasMeaningfulPayload) {
@@ -3715,6 +4035,30 @@
         closeReferencesModalButton.addEventListener("click", () => toggleReferencesModal(false));
       }
 
+      if (closeTrackingModalButton) {
+        closeTrackingModalButton.addEventListener("click", closeTrackingModal);
+      }
+
+      if (trackingCancelButton) {
+        trackingCancelButton.addEventListener("click", closeTrackingModal);
+      }
+
+      if (trackingSuccessClose) {
+        trackingSuccessClose.addEventListener("click", closeTrackingModal);
+      }
+
+      if (trackingSubmitButton) {
+        trackingSubmitButton.addEventListener("click", handleTrackingSubmit);
+      }
+
+      if (trackingPhoneInput) {
+        trackingPhoneInput.addEventListener("input", () => {
+          if (trackingPhoneError) {
+            trackingPhoneError.classList.add("is-hidden");
+          }
+        });
+      }
+
       if (howItWorksModal) {
         howItWorksModal.addEventListener("click", (event) => {
           if (event.target === howItWorksModal) {
@@ -3739,61 +4083,13 @@
         });
       }
 
-      function resolveScrollTarget(element) {
-        if (!element) {
-          return null;
-        }
-        const explicitTargetId = element.getAttribute("data-scroll-target");
-        if (explicitTargetId) {
-          const explicitTarget = document.getElementById(explicitTargetId);
-          if (explicitTarget) {
-            return explicitTarget;
-          }
-        }
-        return referencesSection || lawyersBlock || referencesSlot;
-      }
-
-      function getFirstReferenceCallTarget(target) {
-        const container = target || referencesSection || lawyersBlock || referencesSlot;
-        if (!container) {
-          return null;
-        }
-        return (
-          container.querySelector(".lawyer-cta-link") ||
-          container.querySelector(".lawyer-phone a") ||
-          container.querySelector("a[href^='tel:']")
-        );
-      }
-
-      function scrollToTarget(target) {
-        if (!target) {
-          return false;
-        }
-        const rect = target.getBoundingClientRect();
-        const top = rect.top + window.pageYOffset - 12;
-        window.scrollTo({ top, behavior: "smooth" });
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-        return true;
-      }
-
-      const scrollButtons = document.querySelectorAll("[data-scroll-target]");
-      scrollButtons.forEach((button) => {
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
-          const target = resolveScrollTarget(button);
-          scrollToTarget(target);
-          const isResultMode = appRoot && appRoot.dataset.resultMode === "true";
-          if (isResultMode) {
-            window.setTimeout(() => {
-              const firstCall = getFirstReferenceCallTarget(target);
-              if (firstCall) {
-                firstCall.click();
-              }
-              triggerBubbleFunction(TRACKING_FN_SUFFIX);
-            }, 450);
+      if (trackingModal) {
+        trackingModal.addEventListener("click", (event) => {
+          if (event.target === trackingModal) {
+            closeTrackingModal();
           }
         });
-      });
+      }
 
       const WATCHER_KEY = "__DK_WATCHER__";
       if (window[WATCHER_KEY] && typeof window[WATCHER_KEY].stop === "function") {
@@ -3814,7 +4110,7 @@
         const nextParsed = nextPayload.parsed;
         const nextSig = buildResultSignature(nextPayload.raw, nextParsed);
         const changed = nextPayload.raw !== lastResultJson || nextSig !== lastSig;
-        const nextResultMode = Boolean(resolveIhtarUrl(nextParsed, rawValue));
+        const nextResultMode = isResultModeActive(nextParsed);
         const nextHasResultData = hasResultDataValue(nextParsed);
         const nextHasPayload = hasResultPayload(rawValue) || nextHasResultData;
 
