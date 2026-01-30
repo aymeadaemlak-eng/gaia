@@ -2247,6 +2247,29 @@
               </article>
             </div>
           </section>
+          <article class="tracking-cta-card is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
+            <button
+              type="button"
+              class="outline-button soft-primary"
+              data-tracking-cta-button="true"
+            >
+              Şeffaf Dosya Takibi Başlat
+            </button>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
+            <div>
+              <h3>Şeffaf Dosya Takibi</h3>
+              <p>
+                Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
+                ne olduğunu net görürsünüz.
+              </p>
+            </div>
+            <div class="pill-row">
+              <span class="pill">20+ resmi adım</span>
+              <span class="pill">Harç / masraf zamanları</span>
+              <span class="pill">Mail &amp; SMS bilgilendirme</span>
+            </div>
+            <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+          </article>
 
         </div>
       </div>
@@ -2384,29 +2407,6 @@
             </div>
           </div>
         </header>
-        <article class="tracking-cta-card is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
-          <button
-            type="button"
-            class="outline-button soft-primary"
-            data-tracking-cta-button="true"
-          >
-            Şeffaf Dosya Takibi Başlat
-          </button>
-          <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
-          <div>
-            <h3>Şeffaf Dosya Takibi</h3>
-            <p>
-              Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
-              ne olduğunu net görürsünüz.
-            </p>
-          </div>
-          <div class="pill-row">
-            <span class="pill">20+ resmi adım</span>
-            <span class="pill">Harç / masraf zamanları</span>
-            <span class="pill">Mail &amp; SMS bilgilendirme</span>
-          </div>
-          <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
-        </article>
 
       </main>
     </section>
@@ -2484,18 +2484,10 @@
           <input type="tel" id="trackingPhone" placeholder="05xx xxx xx xx" />
           <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası zorunlu.</span>
         </label>
-        <div class="stack">
-          <span>Uygun zaman tercihi</span>
-          <div class="time-pref-group" role="group" aria-label="Arama tercihi">
-            <button type="button" class="time-pref-button is-active" data-time-pref="now">Hemen arayın</button>
-            <button type="button" class="time-pref-button" data-time-pref="business_hours">Mesai saatlerinde arayın</button>
-            <button type="button" class="time-pref-button" data-time-pref="sms">SMS ile dönüş yapın</button>
-          </div>
-        </div>
         <small class="cta-legal">İletişim bilgileriniz yalnızca bu başvuru ve süreç başlatma amacıyla kullanılır.</small>
         <div class="modal-actions">
           <button type="button" class="outline-button" id="trackingCancelButton">Vazgeç</button>
-          <button type="button" class="primary" id="trackingSubmitButton">Arama Talebi Oluştur</button>
+          <button type="button" class="primary" id="trackingSubmitButton">Hemen Arayın</button>
         </div>
         <div class="toast toast-error state-error is-hidden" id="trackingModalError">
           Talep kaydedilemedi. Lütfen tekrar deneyin.
@@ -2628,7 +2620,6 @@
       const trackingCancelButton = document.getElementById("trackingCancelButton");
       const trackingSuccessClose = document.getElementById("trackingSuccessClose");
       const trackingPhoneInput = document.getElementById("trackingPhone");
-      const trackingTimePrefButtons = document.querySelectorAll("[data-time-pref]");
       const trackingPhoneError = document.getElementById("trackingPhoneError");
       const trackingModalError = document.getElementById("trackingModalError");
       const trackingCtaCards = document.querySelectorAll("[id^=\"trackingCtaCard\"]");
@@ -2906,11 +2897,6 @@
           trackingPhoneInput.value = "";
         }
         trackingTimePref = "now";
-        if (trackingTimePrefButtons && trackingTimePrefButtons.length > 0) {
-          trackingTimePrefButtons.forEach((button) => {
-            button.classList.toggle("is-active", button.dataset.timePref === trackingTimePref);
-          });
-        }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
         }
@@ -3036,18 +3022,6 @@
       if (trackingCtaButtons && trackingCtaButtons.length > 0) {
         trackingCtaButtons.forEach((button) => {
           button.addEventListener("click", () => toggleTrackingModal(true));
-        });
-      }
-
-      if (trackingTimePrefButtons && trackingTimePrefButtons.length > 0) {
-        trackingTimePrefButtons.forEach((button) => {
-          button.addEventListener("click", () => {
-            const nextPref = button.dataset.timePref || "now";
-            trackingTimePref = nextPref;
-            trackingTimePrefButtons.forEach((item) => {
-              item.classList.toggle("is-active", item.dataset.timePref === nextPref);
-            });
-          });
         });
       }
 
