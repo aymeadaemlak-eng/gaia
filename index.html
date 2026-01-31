@@ -1245,6 +1245,7 @@
       padding: 0;
       display: grid;
       gap: 12px;
+      min-width: 0;
     }
 
     .trust-infra-item {
@@ -1258,11 +1259,14 @@
       color: var(--text);
       font-size: 14px;
       line-height: 1.4;
+      min-width: 0;
     }
 
     .trust-infra-item span {
       color: var(--text);
       font-weight: 600;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .trust-subline {
@@ -1293,6 +1297,7 @@
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 12px;
       align-items: stretch;
+      max-width: 100%;
     }
 
     .trust-logo-card {
@@ -1304,6 +1309,7 @@
       padding: 14px;
       min-height: 72px;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
+      min-width: 0;
     }
 
     .trust-logo-card img {
@@ -2224,7 +2230,7 @@
       .trust-logos {
         grid-template-columns: none;
         grid-auto-flow: column;
-        grid-auto-columns: minmax(140px, 1fr);
+        grid-auto-columns: minmax(120px, 1fr);
         overflow-x: auto;
         padding-bottom: 6px;
       }
