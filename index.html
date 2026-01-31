@@ -2816,24 +2816,16 @@
           ücretsiz danışmanlık talep edebilirsiniz.
         </p>
         <label class="stack">
-          <span>Ad Soyad</span>
-          <input type="text" id="trackingName" placeholder="Adınız ve soyadınız" />
-          <span class="form-error is-hidden" id="trackingNameError">Ad soyad zorunlu.</span>
-        </label>
-        <label class="stack">
           <span>Telefon numaranız</span>
           <input type="tel" id="trackingPhone" placeholder="05xx xxx xx xx" />
           <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası zorunlu.</span>
-        </label>
-        <label class="stack">
-          <span>E-posta (opsiyonel)</span>
-          <input type="email" id="trackingEmail" placeholder="mail@ornek.com" />
         </label>
         <small class="cta-legal">İletişim bilgileriniz yalnızca bu başvuru ve süreç başlatma amacıyla kullanılır.</small>
         <div class="modal-actions">
           <button type="button" class="outline-button" id="trackingCancelButton">Vazgeç</button>
           <button type="button" class="primary" id="trackingSubmitButton">Ücretsiz Danışmanlık Talep Et</button>
         </div>
+        <small class="cta-meta">İster vekalet ve ücret talep etmeyen kullanıcılarımız ile ister direkt bir vekil atama seçeneğiniz vardır.</small>
         <div class="toast toast-error state-error is-hidden" id="trackingModalError">
           Talep kaydedilemedi. Lütfen tekrar deneyin.
         </div>
@@ -2964,11 +2956,8 @@
       const trackingSubmitButton = document.getElementById("trackingSubmitButton");
       const trackingCancelButton = document.getElementById("trackingCancelButton");
       const trackingSuccessClose = document.getElementById("trackingSuccessClose");
-      const trackingNameInput = document.getElementById("trackingName");
-      const trackingNameError = document.getElementById("trackingNameError");
       const trackingPhoneInput = document.getElementById("trackingPhone");
       const trackingPhoneError = document.getElementById("trackingPhoneError");
-      const trackingEmailInput = document.getElementById("trackingEmail");
       const trackingModalError = document.getElementById("trackingModalError");
       const trackingCtaCards = document.querySelectorAll("[id^=\"trackingCtaCard\"]");
       const trackingCtaButtons = document.querySelectorAll("[data-tracking-cta-button=\"true\"]");
@@ -3242,19 +3231,10 @@
       }
 
       function resetTrackingModal() {
-        if (trackingNameInput) {
-          trackingNameInput.value = "";
-        }
         if (trackingPhoneInput) {
           trackingPhoneInput.value = "";
         }
-        if (trackingEmailInput) {
-          trackingEmailInput.value = "";
-        }
         trackingTimePref = "now";
-        if (trackingNameError) {
-          trackingNameError.classList.add("is-hidden");
-        }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
         }
@@ -3295,38 +3275,22 @@
       function getTrackingPayload(resultData) {
         return {
           action: "call_request",
-          name: trackingNameInput ? trackingNameInput.value.trim() : "",
           phone: trackingPhoneInput ? trackingPhoneInput.value.trim() : "",
-          email: trackingEmailInput ? trackingEmailInput.value.trim() : "",
           timePref: trackingTimePref,
           caseJson: resultData && resultData.DOSYALAR ? resultData.DOSYALAR : resultData,
         };
       }
 
       function handleTrackingSubmit() {
-        if (!trackingPhoneInput || !trackingNameInput) {
+        if (!trackingPhoneInput) {
           return;
         }
-        const nameValue = trackingNameInput.value.trim();
         const phoneValue = trackingPhoneInput.value.trim();
-        let hasError = false;
-        if (!nameValue) {
-          hasError = true;
-          if (trackingNameError) {
-            trackingNameError.classList.remove("is-hidden");
-          }
-        }
         if (!phoneValue) {
-          hasError = true;
           if (trackingPhoneError) {
             trackingPhoneError.classList.remove("is-hidden");
           }
-        }
-        if (hasError) {
           return;
-        }
-        if (trackingNameError) {
-          trackingNameError.classList.add("is-hidden");
         }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
@@ -4428,14 +4392,6 @@
 
       if (trackingSubmitButton) {
         trackingSubmitButton.addEventListener("click", handleTrackingSubmit);
-      }
-
-      if (trackingNameInput) {
-        trackingNameInput.addEventListener("input", () => {
-          if (trackingNameError) {
-            trackingNameError.classList.add("is-hidden");
-          }
-        });
       }
 
       if (trackingPhoneInput) {
