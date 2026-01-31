@@ -2234,19 +2234,21 @@
           </div>
 
           <section class="hero-block">
-            <h1 class="hero-title-lg">Hukuki sürecinizi şeffaf bir şekilde takip edin.</h1>
+            <h1 class="hero-title-lg">Ücretsiz Danışmanlık Talebi</h1>
             <p class="hero-subtitle">
-              Evrakını yükle, değer kaybını öğren, başvuru dilekçeni hazırla. Hepsi ücretsiz.
+              İhtarınızı sistemimizle ücretsiz oluşturduktan sonra, isterseniz Dosyam360 güvenli altyapısını tercih eden bir
+              firmadan ücretsiz danışmanlık talep edebilirsiniz.
             </p>
             <div class="hero-cta-group">
-              <button type="button" class="primary hero-cta" id="heroStartButton">Hemen Başla</button>
-              <span class="hero-cta-note">Ücretsiz hesapla • Ücretsiz dilekçe</span>
+              <button type="button" class="primary hero-cta" data-tracking-cta-button="true">Ücretsiz Danışmanlık Talep Et</button>
+              <span class="hero-cta-note">
+                İster vekalet ve ücret talep etmeyen kullanıcılarımız ile ister direkt bir vekil atama seçeneğiniz vardır.
+              </span>
             </div>
             <div class="pill-row" aria-label="Hizmet vurguları">
-              <span class="pill">Ücretsiz</span>
-              <span class="pill">Hızlı</span>
-              <span class="pill">Otomatik</span>
-              <span class="pill">Şeffaf</span>
+              <span class="pill">Opsiyonel hizmet</span>
+              <span class="pill">Ücretsiz görüşme</span>
+              <span class="pill">Şeffaf iletişim</span>
             </div>
           </section>
 
@@ -2549,6 +2551,9 @@
             >
               Ücretsiz Danışmanlık Talep Et
             </button>
+            <small class="cta-meta">
+              İster vekalet ve ücret talep etmeyen kullanıcılarımız ile ister direkt bir vekil atama seçeneğiniz vardır.
+            </small>
             <span class="status-tag is-hidden" data-tracking-cta-status="true">Danışmanlık talebi alındı ✓</span>
             <div>
               <h3>Ücretsiz Danışmanlık Talebi</h3>
@@ -2678,6 +2683,9 @@
             >
               Ücretsiz Danışmanlık Talep Et
             </button>
+            <small class="cta-meta">
+              İster vekalet ve ücret talep etmeyen kullanıcılarımız ile ister direkt bir vekil atama seçeneğiniz vardır.
+            </small>
             <span class="status-tag is-hidden" data-tracking-cta-status="true">Danışmanlık talebi alındı ✓</span>
             <div>
               <h3>Ücretsiz Danışmanlık Talebi</h3>
@@ -2963,7 +2971,6 @@
       const trackingCtaButtons = document.querySelectorAll("[data-tracking-cta-button=\"true\"]");
       const trackingCtaStatusTags = document.querySelectorAll("[data-tracking-cta-status=\"true\"]");
       let trackingTimePref = "now";
-      const heroStartButton = document.getElementById("heroStartButton");
       const requiredDocs = document.getElementById("requiredDocs");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
@@ -3362,12 +3369,6 @@
           button.addEventListener("click", () => toggleTrackingModal(true));
         });
       }
-      if (heroStartButton) {
-        heroStartButton.addEventListener("click", () => {
-          scrollToCalculateButton();
-        });
-      }
-
       function scrollWithOffset(target, offset = 12) {
         if (!target) {
           return false;
