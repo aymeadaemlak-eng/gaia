@@ -3306,18 +3306,8 @@
           trackingModalError.classList.add("is-hidden");
         }
         const payload = getTrackingPayload(parsedResult || {});
-        const bubbleFn = resolveBubbleFunction(TRACKING_REQUEST_FN);
-        if (!bubbleFn) {
-          console.warn("Bubble fonksiyonu bulunamadı", TRACKING_REQUEST_FN);
-          if (trackingModalError) {
-            trackingModalError.classList.remove("is-hidden");
-          }
-          return;
-        }
-        try {
-          bubbleFn(JSON.stringify(payload));
-        } catch (error) {
-          console.warn("Bubble fonksiyonu çalıştırılamadı", error);
+        const triggered = triggerBubbleFunction("takip_baslat", payload);
+        if (!triggered) {
           if (trackingModalError) {
             trackingModalError.classList.remove("is-hidden");
           }
