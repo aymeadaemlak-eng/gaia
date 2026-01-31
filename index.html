@@ -4149,7 +4149,7 @@
           setPreResultModeLayout(false);
           return;
         }
-        setTrackingCtaVisibility(false);
+        setTrackingCtaVisibility(true);
         const processActive = hasStartedCalculation || PIN_PROCESS_CARD;
         const hasIhtarPayload = Boolean(resolveIhtarUrl(parsedResult, currentResultJson));
         const hasAnyPayloadLocal = hasResultPayload(currentResultJson) || hasResultDataValue(parsedResult);
