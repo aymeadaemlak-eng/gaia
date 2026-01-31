@@ -64,6 +64,7 @@
       margin: 0;
       background: radial-gradient(circle at top, #ffffff 0%, #f4f6f8 45%, #e9eef5 100%);
       color: var(--text);
+      overflow-x: hidden;
     }
 
     #app {
@@ -1314,6 +1315,7 @@
 
     .trust-doc-line {
       line-height: 1.5;
+      word-break: break-word;
     }
 
     .trust-doc-card strong {
@@ -2172,6 +2174,20 @@
         grid-auto-columns: minmax(140px, 1fr);
         overflow-x: auto;
         padding-bottom: 6px;
+      }
+
+      .hero-cta-group,
+      .tracking-cta-card .cta-meta,
+      .trust-infra-block,
+      .info-block {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+
+      .hero-cta,
+      .tracking-cta-card .outline-button {
+        width: 100%;
       }
     }
   </style>
