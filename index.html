@@ -1249,9 +1249,21 @@
       border-radius: 999px;
       border: 1px solid #d7dee9;
       background: #f4f6f8;
-      font-weight: 700;
-      color: #2b3b55;
-      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+    }
+
+    .tech-tag {
+      display: inline-flex;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #6b7280;
+      font-size: 11px;
+      font-weight: 600;
       letter-spacing: 0.2px;
     }
 
@@ -1273,7 +1285,31 @@
       background: #ffffff;
       box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
       display: grid;
-      gap: 10px;
+      gap: 12px;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-item {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      background: #f4f6f8;
+      display: grid;
+      gap: 6px;
+    }
+
+    .info-item h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .info-item p {
+      margin: 0;
+      font-size: 13px;
     }
 
     .hero-title-lg {
@@ -2165,13 +2201,16 @@
                     <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
                   </svg>
                 </span>
-                <span>Belgeler şifreli işlenir ve işlem sonrası otomatik silinir (ISO / SSL güvenlik vurgusu yapılmalı)</span>
+                <span>
+                  Belgeler uçtan uca şifrelenir ve işlem sonrası otomatik silinir.
+                  <span class="tech-tag">ISO 27001 • SSL güvenlik standardı</span>
+                </span>
               </li>
               <li class="trust-infra-item">
                 <span class="trust-infra-icon" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 4h10v16H7z" stroke="currentColor" stroke-width="2"/>
-                    <path d="M9 8h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </span>
                 <span>Yapay zekâ destekli otomasyon altyapısı</span>
@@ -2179,9 +2218,9 @@
               <li class="trust-infra-item">
                 <span class="trust-infra-icon" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M4 6h16v10H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M7 20h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     <path d="M8 10h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </span>
                 <span>Şeffaf ekran üzerinden süreç takibi</span>
@@ -2189,8 +2228,10 @@
               <li class="trust-infra-item">
                 <span class="trust-infra-icon" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 8h16v10H4z" stroke="currentColor" stroke-width="2"/>
-                    <path d="M4 8l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 4h12v16H6z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 8h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M9 12h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </span>
                 <span>Her önemli aşamada otomatik SMS bilgilendirme sistemi</span>
@@ -2203,14 +2244,6 @@
                 <span class="trust-logo">AWS</span>
                 <span class="trust-logo">Google</span>
               </div>
-            </div>
-            <div class="trust-footer">
-              <div><strong>Vergi Dairesi:</strong> Göztepe</div>
-              <div>
-                <strong>Şirket Adresi:</strong>
-                EĞİTİM MAH. MURATPAŞA CAD. KENT PLUS SİTESİ C BLOK NO: 17 İÇ KAPI NO: 67 KADIKÖY / İSTANBUL
-              </div>
-              <div><strong>Sabit Hat Telefon:</strong></div>
             </div>
           </section>
 
@@ -2402,9 +2435,7 @@
                     <div class="founder-role">GAIA Kurucusu</div>
                     <div class="founder-links">
                       <span>Email: <a href="mailto:saltukkirac@gmail.com">saltukkirac@gmail.com</a></span>
-                      <span>Twitter: <a href="https://x.com/Saltuk_Kirac" target="_blank" rel="noopener">x.com/Saltuk_Kirac</a></span>
                       <span>Reddit: u/saltukkirac ve u/saltukirac</span>
-                      <span>Instagram: <a href="https://www.instagram.com/saltukirac/" target="_blank" rel="noopener">instagram.com/saltukirac</a></span>
                       <span>LinkedIn: <a href="https://www.linkedin.com/in/saltuk-kirac/" target="_blank" rel="noopener">linkedin.com/in/saltuk-kirac</a></span>
                     </div>
                   </div>
@@ -2419,13 +2450,30 @@
                   />
                   <div class="founder-details">
                     <div class="founder-name">Mevlüt Kıraç</div>
-                    <div class="founder-role">Sigorta hukuku otomasyonu Kurucusu</div>
+                    <div class="founder-role">Dosyam360 Kurucusu</div>
                     <div class="founder-links">
                       <span>Email: <a href="mailto:mevlutkirac@gmail.com">mevlutkirac@gmail.com</a></span>
                     </div>
                   </div>
                 </div>
               </article>
+            </div>
+          </section>
+          <section class="info-block">
+            <h2>Şirket Bilgileri</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <h3>Vergi Dairesi</h3>
+                <p>Göztepe</p>
+              </div>
+              <div class="info-item">
+                <h3>Şirket Adresi</h3>
+                <p>EĞİTİM MAH. MURATPAŞA CAD. KENT PLUS SİTESİ C BLOK NO: 17 İÇ KAPI NO: 67 KADIKÖY / İSTANBUL</p>
+              </div>
+              <div class="info-item">
+                <h3>Sabit Hat Telefon</h3>
+                <p></p>
+              </div>
             </div>
           </section>
           <article class="tracking-cta-card is-secondary is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
@@ -2454,12 +2502,23 @@
 
           <section class="info-block">
             <h2>Şeffaf Takip Sistemleri Neden Gerekli?</h2>
-            <p>
-              Hukuki süreçlerde güven ve kontrol en kritik unsurlardır. Dosyam360 altyapısını kullanan firmalar, dosyanıza ait
-              tüm süreci — evraklar, mailleşmeler, onaylanan değer kaybı tutarları ve yapılan ödemeler dahil — şeffaf ekranlar
-              üzerinden yürütmeyi tercih eder. Sistem, müvekkil ve uzman arasındaki bilgi akışını otomatikleştirerek, her adımın
-              anlaşılır ve izlenebilir olmasını sağlar.
+            <p class="hero-subtitle">
+              Süreç içindeki her adımı tek ekranda görmek, hukuki işlerde belirsizliği azaltır ve kontrol hissini güçlendirir.
             </p>
+            <div class="info-grid">
+              <div class="info-item">
+                <h3>Merkezi süreç ekranı</h3>
+                <p>Evraklar, mailleşmeler, onaylanan tutarlar ve ödemeler tek panelde görünür.</p>
+              </div>
+              <div class="info-item">
+                <h3>Otomatik bildirim akışı</h3>
+                <p>Önemli aşamalarda SMS ve panel bildirimleriyle bilgilendirme sağlanır.</p>
+              </div>
+              <div class="info-item">
+                <h3>Kontrollü ve izlenebilir yapı</h3>
+                <p>Sistem, müvekkil ve uzman arasındaki iletişimi düzenler ve her adımı izlenebilir kılar.</p>
+              </div>
+            </div>
           </section>
 
         </div>
@@ -2644,6 +2703,26 @@
           <div>
             <strong>Dilekçe hazırlanır.</strong>
             <p>Hesaplama sonucuna göre başvuru metni otomatik olarak hazırlanır.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span>4</span>
+          <div>
+            <strong>Opsiyonel danışmanlık desteği.</strong>
+            <p>
+              İhtarı oluşturduktan sonra dilerseniz dosyanızı şeffaf altyapımızı kullanan bir danışmana, vekaletsiz ve
+              komisyonsuz olarak ücretsiz danışmanlık için bırakabilirsiniz.
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <span>5</span>
+          <div>
+            <strong>Dava süreci takibi.</strong>
+            <p>
+              Dava süreci başlatılma kararı alınırsa, sistemden anlık takip edebilir ve SMS bilgilendirmelerden
+              faydalanabilirsiniz.
+            </p>
           </div>
         </div>
       </div>
