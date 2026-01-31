@@ -73,6 +73,12 @@
       overflow-x: hidden;
     }
 
+    img,
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+
     .layout {
       display: grid;
       gap: 24px;
@@ -172,6 +178,7 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      min-width: 0;
     }
 
     .hero {
@@ -1145,6 +1152,7 @@
       font-size: 13px;
       color: #2b3b55;
       max-width: 100%;
+      width: 100%;
     }
 
     .trust-bar-items {
@@ -1153,6 +1161,7 @@
       gap: 12px;
       align-items: center;
       min-width: 0;
+      max-width: 100%;
     }
 
     .trust-item {
@@ -1163,6 +1172,8 @@
       min-width: 0;
       flex-wrap: wrap;
       word-break: break-word;
+      max-width: 100%;
+      overflow-wrap: anywhere;
     }
 
     .trust-dot {
@@ -1193,6 +1204,7 @@
       display: grid;
       gap: 12px;
       max-width: 100%;
+      min-width: 0;
     }
 
     .hero-cta-group {
@@ -1223,6 +1235,8 @@
       box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
       display: grid;
       gap: 16px;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .trust-infra-list {
@@ -1366,6 +1380,8 @@
       box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
       display: grid;
       gap: 12px;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .info-grid {
@@ -2029,6 +2045,8 @@
       border-radius: 18px;
       border: 1px solid #dbeafe;
       background: #f7faff;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .cta-button {
