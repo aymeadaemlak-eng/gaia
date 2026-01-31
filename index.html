@@ -45,12 +45,12 @@
     :root {
       color-scheme: light;
       font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-      --bg: #f7f8fb;
+      --bg: #f4f6f8;
       --card: #ffffff;
-      --text: #1d2433;
+      --text: #333333;
       --muted: #5f6b7a;
-      --primary: #1f6feb;
-      --primary-dark: #164fc5;
+      --primary: #195aa7;
+      --primary-dark: #2a74d2;
       --border: #e4e8f0;
       --success: #0a7b42;
       --warning: #f59e0b;
@@ -62,7 +62,7 @@
 
     body {
       margin: 0;
-      background: radial-gradient(circle at top, #ffffff 0%, #f7f8fb 45%, #eef2f7 100%);
+      background: radial-gradient(circle at top, #ffffff 0%, #f4f6f8 45%, #e9eef5 100%);
       color: var(--text);
     }
 
@@ -259,13 +259,13 @@
       text-decoration: none;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       transition: background 0.2s ease, transform 0.2s ease;
     }
 
     .hero-actions-link:hover {
       text-decoration: underline;
-      background: rgba(31, 111, 235, 0.2);
+      background: rgba(25, 90, 167, 0.2);
       transform: translateY(-1px);
     }
 
@@ -293,7 +293,7 @@
       display: inline-flex;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.1);
+      background: rgba(25, 90, 167, 0.1);
       color: var(--primary);
       font-weight: 600;
       font-size: 12px;
@@ -343,7 +343,7 @@
     .progress-step span {
       font-weight: 700;
       color: var(--primary);
-      background: rgba(31, 111, 235, 0.1);
+      background: rgba(25, 90, 167, 0.1);
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -441,7 +441,7 @@
       font-weight: 600;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
     }
 
@@ -529,8 +529,8 @@
     }
 
     .process-step.active .process-circle {
-      background: rgba(31, 111, 235, 0.12);
-      border-color: rgba(31, 111, 235, 0.45);
+      background: rgba(25, 90, 167, 0.12);
+      border-color: rgba(25, 90, 167, 0.45);
       color: var(--primary);
     }
 
@@ -545,7 +545,7 @@
       left: 50%;
       width: 100%;
       height: 2px;
-      background: linear-gradient(90deg, rgba(31, 111, 235, 0.25), rgba(31, 111, 235, 0.85));
+      background: linear-gradient(90deg, rgba(25, 90, 167, 0.25), rgba(25, 90, 167, 0.85));
       animation: process-flow 1.6s ease-in-out infinite;
       z-index: -1;
     }
@@ -730,7 +730,7 @@
       position: absolute;
       inset: 0;
       width: 45%;
-      background: linear-gradient(90deg, rgba(31, 111, 235, 0.2), rgba(31, 111, 235, 0.8));
+      background: linear-gradient(90deg, rgba(25, 90, 167, 0.2), rgba(25, 90, 167, 0.8));
       animation: progressMove 2s infinite ease-in-out;
     }
 
@@ -915,7 +915,7 @@
       border-radius: 12px;
       display: grid;
       place-items: center;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
       font-weight: 700;
     }
@@ -952,7 +952,7 @@
       border-radius: 12px;
       display: grid;
       place-items: center;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
       font-weight: 700;
     }
@@ -1148,7 +1148,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #1f6feb;
+      background: #195aa7;
     }
 
     .trust-link {
@@ -1171,6 +1171,111 @@
       gap: 12px;
     }
 
+    .hero-cta-group {
+      display: grid;
+      gap: 8px;
+      justify-items: start;
+    }
+
+    .hero-cta {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      box-shadow: 0 12px 22px rgba(25, 90, 167, 0.18);
+    }
+
+    .hero-cta-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .trust-infra-block {
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid #d9e2ef;
+      background: #ffffff;
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+      display: grid;
+      gap: 16px;
+    }
+
+    .trust-infra-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .trust-infra-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      background: #f4f6f8;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .trust-infra-item span {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .trust-infra-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(25, 90, 167, 0.12);
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .trust-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .trust-logo {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #d7dee9;
+      background: #f4f6f8;
+      font-weight: 700;
+      color: #2b3b55;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    .trust-footer {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .trust-footer strong {
+      color: var(--text);
+    }
+
+    .info-block {
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid #d9e2ef;
+      background: #ffffff;
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+      display: grid;
+      gap: 10px;
+    }
+
     .hero-title-lg {
       font-size: 26px;
       line-height: 1.25;
@@ -1190,8 +1295,8 @@
     .pill {
       padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.12);
-      color: #1747b8;
+      background: rgba(25, 90, 167, 0.12);
+      color: #195aa7;
       font-weight: 600;
       font-size: 12px;
     }
@@ -1281,7 +1386,7 @@
       border-radius: 12px;
       display: grid;
       place-items: center;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
     }
 
@@ -1311,7 +1416,7 @@
       align-self: flex-start;
       padding: 4px 8px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
       font-size: 11px;
       font-weight: 700;
@@ -1493,6 +1598,13 @@
       box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
     }
 
+    .tracking-cta-card.is-secondary {
+      border-style: dashed;
+      border-color: #c7d2e7;
+      background: #f4f6f8;
+      box-shadow: none;
+    }
+
     .tracking-cta-card .pill-row {
       display: flex;
       flex-wrap: wrap;
@@ -1503,7 +1615,7 @@
       font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: #1f3f7a;
       font-weight: 600;
     }
@@ -1519,13 +1631,13 @@
 
     .tracking-cta-card .soft-primary {
       width: 100%;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: #1f3f7a;
-      border: 1px solid rgba(31, 111, 235, 0.2);
+      border: 1px solid rgba(25, 90, 167, 0.2);
     }
 
     .tracking-cta-card .soft-primary:hover {
-      background: rgba(31, 111, 235, 0.2);
+      background: rgba(25, 90, 167, 0.2);
     }
 
     .form-error {
@@ -1554,7 +1666,7 @@
       background: var(--primary);
       border-color: var(--primary);
       color: #fff;
-      box-shadow: 0 10px 20px rgba(31, 111, 235, 0.2);
+      box-shadow: 0 10px 20px rgba(25, 90, 167, 0.2);
     }
 
     .modal-bottom {
@@ -1620,7 +1732,7 @@
       color: #fff;
       font-weight: 600;
       text-decoration: none;
-      box-shadow: 0 12px 20px rgba(31, 111, 235, 0.18);
+      box-shadow: 0 12px 20px rgba(25, 90, 167, 0.18);
       transition: background 0.2s ease;
     }
 
@@ -1677,7 +1789,7 @@
       border-radius: 12px;
       display: grid;
       place-items: center;
-      background: rgba(31, 111, 235, 0.12);
+      background: rgba(25, 90, 167, 0.12);
       color: var(--primary);
     }
 
@@ -1924,9 +2036,11 @@
       }
 
       .steps-block,
+      .trust-infra-block,
       .automation-block,
       .lawyers-block,
-      .founders-block {
+      .founders-block,
+      .info-block {
         grid-column: 1 / -1;
       }
 
@@ -2022,14 +2136,81 @@
           </div>
 
           <section class="hero-block">
-            <h1 class="hero-title-lg">Değer Kaybı Hesaplama ve Başvuru Otomasyonu</h1>
+            <h1 class="hero-title-lg">Hukuki sürecinizi şeffaf bir şekilde takip edin.</h1>
             <p class="hero-subtitle">
-              Evraklarınızdan tutarı hesaplar, başvuru dilekçesini sizin adınıza güvenle hazırlar.
+              Evrakını yükle, değer kaybını öğren, başvuru dilekçeni hazırla. Hepsi ücretsiz.
             </p>
-            <div class="pill-row" aria-label="Güven rozetleri">
-              <span class="pill">Şifreli işlem</span>
-              <span class="pill">Otomatik Silme</span>
-              <span class="pill">Verileriniz 24 saat içinde otomatik silinir.</span>
+            <div class="hero-cta-group">
+              <button type="button" class="primary hero-cta" id="heroStartButton">Hemen Başla</button>
+              <span class="hero-cta-note">Ücretsiz hesapla • Ücretsiz dilekçe</span>
+            </div>
+            <div class="pill-row" aria-label="Hizmet vurguları">
+              <span class="pill">Ücretsiz</span>
+              <span class="pill">Hızlı</span>
+              <span class="pill">Otomatik</span>
+              <span class="pill">Şeffaf</span>
+            </div>
+          </section>
+
+          <section class="trust-infra-block">
+            <div>
+              <h2>Güven ve Altyapı</h2>
+              <p class="hero-subtitle">Kurumsal, şeffaf ve otomatik bir altyapı ile süreci uçtan uca görünür kılar.</p>
+            </div>
+            <ul class="trust-infra-list">
+              <li class="trust-infra-item">
+                <span class="trust-infra-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </span>
+                <span>Belgeler şifreli işlenir ve işlem sonrası otomatik silinir (ISO / SSL güvenlik vurgusu yapılmalı)</span>
+              </li>
+              <li class="trust-infra-item">
+                <span class="trust-infra-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 4h10v16H7z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 8h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>Yapay zekâ destekli otomasyon altyapısı</span>
+              </li>
+              <li class="trust-infra-item">
+                <span class="trust-infra-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 10h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>Şeffaf ekran üzerinden süreç takibi</span>
+              </li>
+              <li class="trust-infra-item">
+                <span class="trust-infra-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 8h16v10H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M4 8l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>Her önemli aşamada otomatik SMS bilgilendirme sistemi</span>
+              </li>
+            </ul>
+            <div>
+              <p class="hero-subtitle">Kurumsal altyapı partnerleri:</p>
+              <div class="trust-logos" aria-label="Kurumsal altyapı partnerleri logoları">
+                <span class="trust-logo">OpenAI</span>
+                <span class="trust-logo">AWS</span>
+                <span class="trust-logo">Google</span>
+              </div>
+            </div>
+            <div class="trust-footer">
+              <div><strong>Vergi Dairesi:</strong> Göztepe</div>
+              <div>
+                <strong>Şirket Adresi:</strong>
+                EĞİTİM MAH. MURATPAŞA CAD. KENT PLUS SİTESİ C BLOK NO: 17 İÇ KAPI NO: 67 KADIKÖY / İSTANBUL
+              </div>
+              <div><strong>Sabit Hat Telefon:</strong></div>
             </div>
           </section>
 
@@ -2247,29 +2428,39 @@
               </article>
             </div>
           </section>
-          <article class="tracking-cta-card is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
+          <article class="tracking-cta-card is-secondary is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
             <button
               type="button"
               class="outline-button soft-primary"
               data-tracking-cta-button="true"
             >
-              Şeffaf Dosya Takibi Başlat
+              Ücretsiz Danışmanlık Talep Et
             </button>
-            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Danışmanlık talebi alındı ✓</span>
             <div>
-              <h3>Şeffaf Dosya Takibi</h3>
+              <h3>Ücretsiz Danışmanlık Talebi</h3>
               <p>
-                Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
-                ne olduğunu net görürsünüz.
+                İhtarınızı sistemimizle ücretsiz oluşturduktan sonra, isterseniz Dosyam360 güvenli altyapısını tercih eden bir
+                firmadan ücretsiz danışmanlık talep edebilirsiniz.
               </p>
             </div>
             <div class="pill-row">
-              <span class="pill">20+ resmi adım</span>
-              <span class="pill">Harç / masraf zamanları</span>
-              <span class="pill">Mail &amp; SMS bilgilendirme</span>
+              <span class="pill">Opsiyonel hizmet</span>
+              <span class="pill">Ücretsiz görüşme</span>
+              <span class="pill">Şeffaf iletişim</span>
             </div>
-            <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+            <small class="cta-meta">Talep bırakmanız zorunlu değildir; yalnızca isterseniz paylaşabilirsiniz.</small>
           </article>
+
+          <section class="info-block">
+            <h2>Şeffaf Takip Sistemleri Neden Gerekli?</h2>
+            <p>
+              Hukuki süreçlerde güven ve kontrol en kritik unsurlardır. Dosyam360 altyapısını kullanan firmalar, dosyanıza ait
+              tüm süreci — evraklar, mailleşmeler, onaylanan değer kaybı tutarları ve yapılan ödemeler dahil — şeffaf ekranlar
+              üzerinden yürütmeyi tercih eder. Sistem, müvekkil ve uzman arasındaki bilgi akışını otomatikleştirerek, her adımın
+              anlaşılır ve izlenebilir olmasını sağlar.
+            </p>
+          </section>
 
         </div>
       </div>
@@ -2355,28 +2546,28 @@
               <div class="process-note is-hidden" id="processNote"></div>
             </div>
           </article>
-          <article class="tracking-cta-card is-hidden" id="trackingCtaCard" aria-hidden="true">
+          <article class="tracking-cta-card is-secondary is-hidden" id="trackingCtaCard" aria-hidden="true">
             <button
               type="button"
               class="outline-button soft-primary"
               data-tracking-cta-button="true"
             >
-              Şeffaf Dosya Takibi Başlat
+              Ücretsiz Danışmanlık Talep Et
             </button>
-            <span class="status-tag is-hidden" data-tracking-cta-status="true">Aranma talebi oluşturuldu ✓</span>
+            <span class="status-tag is-hidden" data-tracking-cta-status="true">Danışmanlık talebi alındı ✓</span>
             <div>
-              <h3>Şeffaf Dosya Takibi</h3>
+              <h3>Ücretsiz Danışmanlık Talebi</h3>
               <p>
-                Dosyanız bu aşamadan sonra 20+ adımlı resmi süreçte ilerler. GAIA otomasyonu ile her adım kayıt altına alınır,
-                ne olduğunu net görürsünüz.
+                İhtarınızı sistemimizle ücretsiz oluşturduktan sonra, isterseniz Dosyam360 güvenli altyapısını tercih eden bir
+                firmadan ücretsiz danışmanlık talep edebilirsiniz.
               </p>
             </div>
             <div class="pill-row">
-              <span class="pill">20+ resmi adım</span>
-              <span class="pill">Harç / masraf zamanları</span>
-              <span class="pill">Mail &amp; SMS bilgilendirme</span>
+              <span class="pill">Opsiyonel hizmet</span>
+              <span class="pill">Ücretsiz görüşme</span>
+              <span class="pill">Şeffaf iletişim</span>
             </div>
-            <small class="cta-meta">Talebinizi bırakın, yetkili ekip sizi arayıp süreci başlatır.</small>
+            <small class="cta-meta">Talep bırakmanız zorunlu değildir; yalnızca isterseniz paylaşabilirsiniz.</small>
           </article>
           <div id="referencesSlot"></div>
 
@@ -2386,10 +2577,9 @@
           <div class="hero-top">
             <div>
               <span class="badge">Güvenli Başvuru</span>
-              <h1 class="hero-title">Değer Kaybı Hesaplama ve Dilekçe Oluşturma</h1>
+              <h1 class="hero-title">Hukuki sürecinizi şeffaf bir şekilde takip edin.</h1>
               <p>
-                Belgeleriniz yüklendikten sonra sistemimiz tahmini değer kaybı tutarını hesaplar ve başvuru dilekçenizi
-                otomatik hazırlar.
+                Evrakını yükle, değer kaybını öğren, başvuru dilekçeni hazırla. Hepsi ücretsiz, hızlı ve otomatik.
               </p>
             </div>
             <div class="hero-actions">
@@ -2473,21 +2663,32 @@
   <div class="modal-backdrop" id="trackingModal" aria-hidden="true">
       <div class="modal modal-bottom" role="dialog" aria-modal="true" aria-labelledby="trackingModalTitle">
         <div class="modal-header">
-        <h3 id="trackingModalTitle">Sizi uzman bir danışman arasın</h3>
+        <h3 id="trackingModalTitle">Ücretsiz danışmanlık talebi</h3>
         <button class="modal-close" type="button" id="closeTrackingModalButton">Kapat</button>
       </div>
       <div class="stack" id="trackingModalBody">
-        <p>Dosyanız, sistemimizi kullanan uzman danışmanlar tarafından incelenir.</p>
-        <p>Şeffaf süreç takibini başlatmak için sizi doğrudan ararlar.</p>
+        <p>
+          İhtarınızı sistemimizle ücretsiz oluşturduktan sonra, isterseniz Dosyam360 güvenli altyapısını tercih eden bir firmadan
+          ücretsiz danışmanlık talep edebilirsiniz.
+        </p>
+        <label class="stack">
+          <span>Ad Soyad</span>
+          <input type="text" id="trackingName" placeholder="Adınız ve soyadınız" />
+          <span class="form-error is-hidden" id="trackingNameError">Ad soyad zorunlu.</span>
+        </label>
         <label class="stack">
           <span>Telefon numaranız</span>
           <input type="tel" id="trackingPhone" placeholder="05xx xxx xx xx" />
           <span class="form-error is-hidden" id="trackingPhoneError">Telefon numarası zorunlu.</span>
         </label>
+        <label class="stack">
+          <span>E-posta (opsiyonel)</span>
+          <input type="email" id="trackingEmail" placeholder="mail@ornek.com" />
+        </label>
         <small class="cta-legal">İletişim bilgileriniz yalnızca bu başvuru ve süreç başlatma amacıyla kullanılır.</small>
         <div class="modal-actions">
           <button type="button" class="outline-button" id="trackingCancelButton">Vazgeç</button>
-          <button type="button" class="primary" id="trackingSubmitButton">Hemen Arayın</button>
+          <button type="button" class="primary" id="trackingSubmitButton">Ücretsiz Danışmanlık Talep Et</button>
         </div>
         <div class="toast toast-error state-error is-hidden" id="trackingModalError">
           Talep kaydedilemedi. Lütfen tekrar deneyin.
@@ -2495,7 +2696,7 @@
       </div>
       <div class="stack is-hidden" id="trackingModalSuccess">
         <h3>Talebiniz alındı</h3>
-        <p>Uzman danışman ekibi en kısa sürede sizi arayacak.</p>
+        <p>Talebiniz ilgili ekibe iletildi. Dilerseniz süreç hakkında bilgi verilecektir.</p>
         <button type="button" class="primary" id="trackingSuccessClose">Tamam</button>
       </div>
     </div>
@@ -2619,13 +2820,17 @@
       const trackingSubmitButton = document.getElementById("trackingSubmitButton");
       const trackingCancelButton = document.getElementById("trackingCancelButton");
       const trackingSuccessClose = document.getElementById("trackingSuccessClose");
+      const trackingNameInput = document.getElementById("trackingName");
+      const trackingNameError = document.getElementById("trackingNameError");
       const trackingPhoneInput = document.getElementById("trackingPhone");
       const trackingPhoneError = document.getElementById("trackingPhoneError");
+      const trackingEmailInput = document.getElementById("trackingEmail");
       const trackingModalError = document.getElementById("trackingModalError");
       const trackingCtaCards = document.querySelectorAll("[id^=\"trackingCtaCard\"]");
       const trackingCtaButtons = document.querySelectorAll("[data-tracking-cta-button=\"true\"]");
       const trackingCtaStatusTags = document.querySelectorAll("[data-tracking-cta-status=\"true\"]");
       let trackingTimePref = "now";
+      const heroStartButton = document.getElementById("heroStartButton");
       const requiredDocs = document.getElementById("requiredDocs");
       const processCard = document.getElementById("processCard");
       const processTag = document.getElementById("processTag");
@@ -2893,10 +3098,19 @@
       }
 
       function resetTrackingModal() {
+        if (trackingNameInput) {
+          trackingNameInput.value = "";
+        }
         if (trackingPhoneInput) {
           trackingPhoneInput.value = "";
         }
+        if (trackingEmailInput) {
+          trackingEmailInput.value = "";
+        }
         trackingTimePref = "now";
+        if (trackingNameError) {
+          trackingNameError.classList.add("is-hidden");
+        }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
         }
@@ -2937,22 +3151,38 @@
       function getTrackingPayload(resultData) {
         return {
           action: "call_request",
+          name: trackingNameInput ? trackingNameInput.value.trim() : "",
           phone: trackingPhoneInput ? trackingPhoneInput.value.trim() : "",
+          email: trackingEmailInput ? trackingEmailInput.value.trim() : "",
           timePref: trackingTimePref,
           caseJson: resultData && resultData.DOSYALAR ? resultData.DOSYALAR : resultData,
         };
       }
 
       function handleTrackingSubmit() {
-        if (!trackingPhoneInput) {
+        if (!trackingPhoneInput || !trackingNameInput) {
           return;
         }
+        const nameValue = trackingNameInput.value.trim();
         const phoneValue = trackingPhoneInput.value.trim();
+        let hasError = false;
+        if (!nameValue) {
+          hasError = true;
+          if (trackingNameError) {
+            trackingNameError.classList.remove("is-hidden");
+          }
+        }
         if (!phoneValue) {
+          hasError = true;
           if (trackingPhoneError) {
             trackingPhoneError.classList.remove("is-hidden");
           }
+        }
+        if (hasError) {
           return;
+        }
+        if (trackingNameError) {
+          trackingNameError.classList.add("is-hidden");
         }
         if (trackingPhoneError) {
           trackingPhoneError.classList.add("is-hidden");
@@ -3022,6 +3252,11 @@
       if (trackingCtaButtons && trackingCtaButtons.length > 0) {
         trackingCtaButtons.forEach((button) => {
           button.addEventListener("click", () => toggleTrackingModal(true));
+        });
+      }
+      if (heroStartButton) {
+        heroStartButton.addEventListener("click", () => {
+          scrollToCalculateButton();
         });
       }
 
@@ -4049,6 +4284,14 @@
 
       if (trackingSubmitButton) {
         trackingSubmitButton.addEventListener("click", handleTrackingSubmit);
+      }
+
+      if (trackingNameInput) {
+        trackingNameInput.addEventListener("input", () => {
+          if (trackingNameError) {
+            trackingNameError.classList.add("is-hidden");
+          }
+        });
       }
 
       if (trackingPhoneInput) {
