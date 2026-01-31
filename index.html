@@ -1226,6 +1226,18 @@
       font-weight: 600;
     }
 
+    .trust-subline {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .trust-subline strong {
+      font-weight: 600;
+    }
+
     .trust-infra-icon {
       width: 32px;
       height: 32px;
@@ -1238,33 +1250,75 @@
     }
 
     .trust-logos {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      align-items: stretch;
     }
 
-    .trust-logo {
-      padding: 8px 14px;
-      border-radius: 999px;
+    .trust-logo-card {
+      border-radius: 14px;
       border: 1px solid #d7dee9;
       background: #f4f6f8;
-      font-weight: 600;
-      color: #6b7280;
-      font-size: 12px;
-      letter-spacing: 0.2px;
+      display: grid;
+      place-items: center;
+      padding: 14px;
+      min-height: 72px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
-    .tech-tag {
-      display: inline-flex;
-      margin-top: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #eef2f7;
-      color: #6b7280;
-      font-size: 11px;
+    .trust-logo-card img {
+      max-width: 120px;
+      max-height: 28px;
+      width: 100%;
+      height: auto;
+      filter: grayscale(100%);
+      opacity: 0.7;
+    }
+
+    .trust-logo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .trust-docs {
+      border-radius: 16px;
+      border: 1px solid #d7dee9;
+      background: #f4f6f8;
+      padding: 14px 16px;
+    }
+
+    .trust-docs summary {
+      cursor: pointer;
       font-weight: 600;
-      letter-spacing: 0.2px;
+      color: #475569;
+      list-style: none;
+    }
+
+    .trust-docs summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .trust-doc-card {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border-left: 3px solid #c7d2e7;
+      background: #eef2f7;
+      font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+      font-size: 12.5px;
+      color: #475569;
+      display: grid;
+      gap: 8px;
+    }
+
+    .trust-doc-line {
+      line-height: 1.5;
+    }
+
+    .trust-doc-card strong {
+      font-weight: 600;
+      color: #334155;
     }
 
     .trust-footer {
@@ -2111,6 +2165,14 @@
       .process-details-list {
         max-height: 200px;
       }
+
+      .trust-logos {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(140px, 1fr);
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
     }
   </style>
 </head>
@@ -2203,7 +2265,7 @@
                 </span>
                 <span>
                   Belgeler uçtan uca şifrelenir ve işlem sonrası otomatik silinir.
-                  <span class="tech-tag">ISO 27001 • SSL güvenlik standardı</span>
+                  <span class="trust-subline"><strong>ISO 27001</strong> uyumlu veri işleme ve <strong>SSL</strong> güvenlik standardı</span>
                 </span>
               </li>
               <li class="trust-infra-item">
@@ -2238,13 +2300,33 @@
               </li>
             </ul>
             <div>
-              <p class="hero-subtitle">Kurumsal altyapı partnerleri:</p>
+              <p class="hero-subtitle">Kurumsal altyapı partnerleri</p>
               <div class="trust-logos" aria-label="Kurumsal altyapı partnerleri logoları">
-                <span class="trust-logo">OpenAI</span>
-                <span class="trust-logo">AWS</span>
-                <span class="trust-logo">Google</span>
+                <div class="trust-logo-card">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" loading="lazy" />
+                </div>
+                <div class="trust-logo-card">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS" loading="lazy" />
+                </div>
+                <div class="trust-logo-card">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" loading="lazy" />
+                </div>
               </div>
             </div>
+            <details class="trust-docs" open>
+              <summary>Kurumsal kimlik bilgileri</summary>
+              <div class="trust-doc-card">
+                <div class="trust-doc-line"><strong>Vergi Dairesi:</strong> Göztepe</div>
+                <div class="trust-doc-line">
+                  <strong>Şirket Adresi:</strong><br />
+                  EĞİTİM MAH. MURATPAŞA CAD.<br />
+                  KENT PLUS SİTESİ C BLOK NO: 17<br />
+                  İÇ KAPI NO: 67<br />
+                  KADIKÖY / İSTANBUL
+                </div>
+                <div class="trust-doc-line"><strong>Sabit Hat Telefon:</strong> —</div>
+              </div>
+            </details>
           </section>
 
           <section class="steps-block">
@@ -2457,23 +2539,6 @@
                   </div>
                 </div>
               </article>
-            </div>
-          </section>
-          <section class="info-block">
-            <h2>Şirket Bilgileri</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <h3>Vergi Dairesi</h3>
-                <p>Göztepe</p>
-              </div>
-              <div class="info-item">
-                <h3>Şirket Adresi</h3>
-                <p>EĞİTİM MAH. MURATPAŞA CAD. KENT PLUS SİTESİ C BLOK NO: 17 İÇ KAPI NO: 67 KADIKÖY / İSTANBUL</p>
-              </div>
-              <div class="info-item">
-                <h3>Sabit Hat Telefon</h3>
-                <p></p>
-              </div>
             </div>
           </section>
           <article class="tracking-cta-card is-secondary is-hidden" id="trackingCtaCardBottom" aria-hidden="true">
