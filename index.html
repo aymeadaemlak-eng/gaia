@@ -1237,6 +1237,7 @@
       gap: 16px;
       max-width: 100%;
       min-width: 0;
+      overflow-x: hidden;
     }
 
     .trust-infra-list {
@@ -1298,6 +1299,7 @@
       gap: 12px;
       align-items: stretch;
       max-width: 100%;
+      min-width: 0;
     }
 
     .trust-logo-card {
@@ -1310,10 +1312,11 @@
       min-height: 72px;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
       min-width: 0;
+      max-width: 100%;
     }
 
     .trust-logo-card img {
-      max-width: 120px;
+      max-width: 100%;
       max-height: 28px;
       width: 100%;
       height: auto;
@@ -1331,6 +1334,8 @@
       border: 1px solid #d7dee9;
       background: #f4f6f8;
       padding: 14px 16px;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .trust-docs summary {
@@ -1355,6 +1360,7 @@
       color: #475569;
       display: grid;
       gap: 8px;
+      max-width: 100%;
     }
 
     .trust-doc-line {
@@ -2228,11 +2234,9 @@
       }
 
       .trust-logos {
-        grid-template-columns: none;
-        grid-auto-flow: column;
-        grid-auto-columns: minmax(120px, 1fr);
-        overflow-x: auto;
-        padding-bottom: 6px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow-x: hidden;
+        padding-bottom: 0;
       }
 
       .hero-cta-group,
