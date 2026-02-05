@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>GAIA — 7 Günde AI Uygulaması (Sabit Fiyat)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #070b14;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --muted2: rgba(255,255,255,.58);
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --glow: 0 0 0 1px rgba(255,255,255,.08), 0 18px 60px rgba(0,0,0,.45);
+
+      --brand: #35f2a4;
+      --brand2:#6aa8ff;
+      --warn:#ffd56a;
+
+      --r-xl: 24px;
+      --r-lg: 18px;
+      --r-md: 14px;
+
+      --container: (min(1120px, 100% - 48px));
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1000px 600px at 18% 10%, rgba(106,168,255,.25), transparent 60%),
+                  radial-gradient(900px 560px at 75% 20%, rgba(53,242,164,.22), transparent 55%),
+                  radial-gradient(800px 520px at 50% 95%, rgba(255,213,106,.18), transparent 55%),
+                  linear-gradient(180deg, #070b14 0%, #050915 55%, #040815 100%);
+      overflow-x:hidden;
+    }
+
+    a{ color: inherit; text-decoration:none; }
+    .sr-only{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+
+    /* subtle grain */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity:.18;
+      pointer-events:none;
+    }
+
+    .container{
+      width: min(1120px, calc(100% - 48px));
+      margin-inline:auto;
+    }
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(7,11,20,.78), rgba(7,11,20,.38));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 0;
+      gap: 18px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; min-width: 220px;
+    }
+    .brand img{
+      height:34px; width:auto;
+      filter: drop-shadow(0 10px 22px rgba(0,0,0,.25));
+    }
+    .brand .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .nav{
+      display:flex; gap: 14px; align-items:center; flex-wrap:wrap;
+      justify-content:center;
+    }
+    .nav a{
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: .2s ease;
+    }
+    .nav a:hover{ color: var(--text); border-color: rgba(255,255,255,.10); background: rgba(255,255,255,.05); }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      will-change: transform;
+      cursor:pointer;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(0); }
+    .btn-primary{
+      border-color: rgba(53,242,164,.35);
+      background: linear-gradient(135deg, rgba(53,242,164,.18), rgba(106,168,255,.12));
+      box-shadow: 0 16px 44px rgba(53,242,164,.12), 0 20px 60px rgba(0,0,0,.35);
+    }
+    .btn-primary:hover{ border-color: rgba(53,242,164,.55); }
+    .btn svg{ width:18px; height:18px; opacity:.9; }
+
+    /* Hero */
+    .hero{
+      padding: 68px 0 30px;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 28px;
+      align-items: start;
+    }
+    .kicker{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, var(--brand), rgba(53,242,164,.2));
+      box-shadow: 0 0 0 6px rgba(53,242,164,.10);
+    }
+    h1{
+      margin: 14px 0 10px;
+      font-size: clamp(34px, 4.2vw, 56px);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+    .sub{
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: clamp(15px, 1.55vw, 18px);
+      line-height: 1.6;
+      max-width: 62ch;
+    }
+    .cta-row{
+      display:flex; align-items:center; gap: 12px; flex-wrap:wrap;
+      margin-top: 18px;
+    }
+    .trust{
+      margin-top: 16px;
+      display:flex; flex-wrap:wrap; gap: 10px;
+      color: var(--muted2);
+      font-size: 13px;
+      align-items:center;
+    }
+    .trust .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+    }
+
+    /* Right hero card */
+    .hero-card{
+      position:relative;
+      border-radius: var(--r-xl);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero-card:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 240px at 20% 0%, rgba(106,168,255,.26), transparent 50%),
+                  radial-gradient(700px 240px at 90% 10%, rgba(53,242,164,.22), transparent 50%);
+      pointer-events:none;
+    }
+    .hero-card-inner{
+      position:relative;
+      padding: 18px;
+    }
+    .mini{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 12px;
+    }
+    .mini strong{ font-size: 13px; color: rgba(255,255,255,.86); }
+    .mini span{ font-size: 12px; color: var(--muted); }
+    .steps{
+      display:grid; gap: 10px;
+      margin: 12px 0 0;
+    }
+    .step{
+      display:flex; gap: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .step .num{
+      width:34px; height:34px; border-radius: 12px;
+      display:grid; place-items:center;
+      background: rgba(53,242,164,.14);
+      border: 1px solid rgba(53,242,164,.22);
+      color: rgba(255,255,255,.92);
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+    .step .txt{ min-width:0; }
+    .step .txt b{ display:block; font-size: 13px; margin-bottom: 2px; }
+    .step .txt p{ margin:0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    /* Sections */
+    .section{
+      padding: 34px 0;
+    }
+    .section-head{
+      display:flex; align-items:flex-end; justify-content:space-between; gap: 18px;
+      margin-bottom: 18px;
+    }
+    .section h2{
+      margin:0;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+    .section .hint{
+      color: var(--muted2);
+      font-size: 13px;
+      max-width: 60ch;
+    }
+
+    /* Feature grid */
+    .grid-3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .card{
+      border-radius: var(--r-lg);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 50px rgba(0,0,0,.25);
+      overflow:hidden;
+      position:relative;
+    }
+    .card .inner{ padding: 16px; }
+    .card .title{
+      display:flex; align-items:center; gap: 10px;
+      margin:0 0 8px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+    .icon{
+      width:34px; height:34px; border-radius: 14px;
+      display:grid; place-items:center;
+      background: rgba(106,168,255,.14);
+      border: 1px solid rgba(106,168,255,.22);
+    }
+    .icon svg{ width:18px; height:18px; opacity:.92; }
+    .card p{ margin:0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .list{
+      margin: 12px 0 0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .list li{
+      display:flex; gap: 10px; align-items:flex-start;
+    }
+    .check{
+      width:18px; height:18px; flex:0 0 auto;
+      margin-top: 2px;
+      border-radius: 6px;
+      background: rgba(53,242,164,.12);
+      border: 1px solid rgba(53,242,164,.22);
+      display:grid; place-items:center;
+    }
+    .check svg{ width:12px; height:12px; }
+
+    /* Demo banner */
+    .demo{
+      border-radius: var(--r-xl);
+      background: linear-gradient(135deg, rgba(53,242,164,.12), rgba(106,168,255,.10));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--glow);
+      overflow:hidden;
+      position:relative;
+    }
+    .demo:before{
+      content:"";
+      position:absolute; inset:-1px;
+      background: radial-gradient(900px 240px at 20% 10%, rgba(53,242,164,.22), transparent 60%),
+                  radial-gradient(900px 240px at 90% 30%, rgba(106,168,255,.22), transparent 60%);
+      pointer-events:none;
+    }
+    .demo-inner{
+      position:relative;
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      align-items:center;
+    }
+    .demo h3{ margin:0 0 6px; font-size: 18px; letter-spacing:-.02em; }
+    .demo p{ margin:0; color: var(--muted); font-size: 14px; line-height:1.6; }
+    .demo .links{
+      display:flex; flex-direction:column; gap: 10px;
+      align-items: stretch;
+    }
+    .linkbtn{
+      display:flex; justify-content:space-between; align-items:center; gap: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.88);
+      transition: .18s ease;
+    }
+    .linkbtn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.20); }
+    .linkbtn small{ color: var(--muted2); }
+    .linkbtn svg{ width:18px; height:18px; opacity:.9; }
+
+    /* Pricing */
+    .pricing{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+    .price{
+      position:relative;
+      border-radius: var(--r-xl);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 60px rgba(0,0,0,.28);
+      overflow:hidden;
+    }
+    .price .inner{ padding: 18px; }
+    .price h3{ margin:0; font-size: 18px; letter-spacing:-.02em; }
+    .price .desc{ margin: 6px 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .amount{
+      font-size: 34px;
+      letter-spacing: -0.04em;
+      font-weight: 900;
+      margin: 0 0 8px;
+    }
+    .meta{
+      color: var(--muted2);
+      font-size: 12px;
+      margin: 0 0 14px;
+    }
+    .price .mini-list{
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .price .mini-list li{
+      display:flex; gap: 10px;
+      align-items:flex-start;
+    }
+    .price .cta{
+      margin-top: 14px;
+      width:100%;
+    }
+    .popular{
+      border-color: rgba(53,242,164,.35);
+      background: linear-gradient(180deg, rgba(53,242,164,.12), rgba(255,255,255,.04));
+    }
+    .ribbon{
+      position:absolute; top: 14px; right: 14px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(53,242,164,.14);
+      border: 1px solid rgba(53,242,164,.26);
+      color: rgba(255,255,255,.92);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* FAQ + final CTA */
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .faq details{
+      border-radius: var(--r-lg);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 12px 14px;
+    }
+    .faq summary{
+      cursor:pointer;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-weight: 700;
+      letter-spacing:-.01em;
+    }
+    .faq summary::-webkit-details-marker{ display:none; }
+    .faq .ans{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height:1.6;
+    }
+    .final{
+      text-align:center;
+      border-radius: var(--r-xl);
+      background: linear-gradient(135deg, rgba(106,168,255,.12), rgba(53,242,164,.10));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--glow);
+      padding: 22px 16px;
+    }
+    .final h2{ margin:0 0 8px; font-size: 24px; letter-spacing:-.02em; }
+    .final p{ margin:0 0 14px; color: var(--muted); }
+
+    footer{
+      padding: 26px 0 50px;
+      color: var(--muted2);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    /* Sticky mobile CTA */
+    .sticky{
+      position:fixed; left:0; right:0; bottom: 12px;
+      display:none;
+      z-index:60;
+    }
+    .sticky .wrap{
+      width: min(1120px, calc(100% - 24px));
+      margin: 0 auto;
+      display:flex; gap: 10px; align-items:center; justify-content:space-between;
+      padding: 10px;
+      border-radius: 999px;
+      background: rgba(7,11,20,.72);
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0,0,0,.55);
+    }
+    .sticky b{ font-size: 13px; }
+    .sticky span{ font-size: 12px; color: var(--muted); }
+
+    /* Motion */
+    .reveal{ opacity:0; transform: translateY(10px); }
+    .reveal.show{ opacity:1; transform: translateY(0); transition: .55s ease; }
+
+    /* Focus */
+    :focus-visible{
+      outline: 2px solid rgba(106,168,255,.85);
+      outline-offset: 3px;
+      border-radius: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .hero-grid{ grid-template-columns: 1fr; }
+      .grid-3{ grid-template-columns: 1fr; }
+      .pricing{ grid-template-columns: 1fr; }
+      .two{ grid-template-columns: 1fr; }
+      .demo-inner{ grid-template-columns: 1fr; }
+      .brand{ min-width: unset; }
+    }
+    @media (max-width: 720px){
+      .nav{ display:none; }
+      .sticky{ display:block; }
+      .hero{ padding-top: 44px; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .btn, .linkbtn, .reveal{ transition:none !important; }
+      .reveal{ opacity:1; transform:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="container">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="GAIA ana sayfa">
+          <img
+            src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1745847814778x710684901839326200/gaia%20logo%20g%C3%BCncel%20dark.svg"
+            alt="GAIA"
+          />
+          <span class="badge"><span class="dot"></span> 7 Günde Teslim • Sabit Fiyat</span>
+        </a>
+
+        <nav class="nav" aria-label="Sayfa bölümleri">
+          <a href="#offer">Neler Sunuyoruz</a>
+          <a href="#how">Nasıl Çalışır</a>
+          <a href="#demo">Demo</a>
+          <a href="#pricing">Fiyatlar</a>
+          <a href="#faq">SSS</a>
+        </nav>
+
+        <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.2-3.7A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.7 9.6c.2-.5.5-.6.9-.6h.6c.2 0 .4 0 .6.4l.8 1.8c.1.2.1.5 0 .7l-.5.6c-.1.1-.1.3 0 .5.6 1 1.5 1.8 2.5 2.4.2.1.4.1.5 0l.6-.5c.2-.1.5-.1.7 0l1.8.8c.4.2.4.4.4.6v.6c0 .4-.1.7-.6.9-.7.3-2.3.6-4.7-.7-2.3-1.3-4-3.6-4.6-4.9-.6-1.3-.2-2.6.1-3.3Z" fill="currentColor" opacity=".85"/>
+          </svg>
+          WhatsApp’tan Başla
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <div class="kicker reveal">
+              <span class="dot"></span>
+              <span><b>GAIA</b> — “AI App in 7 Days” programı</span>
+            </div>
+
+            <h1 class="reveal">7 Günde AI Uygulaması.<br>Ürün Senin, Teknoloji Bizden.</h1>
+
+            <p class="sub reveal">
+              Geliştirici ekip kurmadan, fikrini 1 hafta içinde çalışan bir ürüne çevir.
+              Marka sende, IP sende. Akışlar, otomasyon, dashboard ve rol yönetimi dahil.
+            </p>
+
+            <div class="cta-row reveal">
+              <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
+                Projeyi Başlat
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="btn" href="#demo">
+                Demo’yu Gör
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M10 8l6 4-6 4V8Z" fill="currentColor" opacity=".9"/>
+                  <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" opacity=".8"/>
+                </svg>
+              </a>
+            </div>
+
+            <div class="trust reveal" aria-label="Öne çıkan özellikler">
+              <span class="pill">✅ 1. gün demo</span>
+              <span class="pill">✅ 7. gün launch</span>
+              <span class="pill">✅ 6 ay içinde 2 küçük revizyon</span>
+              <span class="pill">✅ HiTL + Log + Rol + DB</span>
+            </div>
+          </div>
+
+          <aside class="hero-card reveal" aria-label="7 günlük plan kartı">
+            <div class="hero-card-inner">
+              <div class="mini">
+                <div>
+                  <strong>Hızlı Teslim Planı</strong><br>
+                  <span>Net süreç • hızlı feedback</span>
+                </div>
+                <span class="badge" style="font-size:12px;">⚡ Fixed Price</span>
+              </div>
+
+              <div class="steps">
+                <div class="step">
+                  <div class="num">1</div>
+                  <div class="txt">
+                    <b>Fikir / Scope</b>
+                    <p>WhatsApp üzerinden hedef, kullanıcı akışı ve çıktıları netleştiriyoruz.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="num">2</div>
+                  <div class="txt">
+                    <b>Gün 1 Demo</b>
+                    <p>Çalışan demo teslim — yön ve UX kilitlenir.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="num">3</div>
+                  <div class="txt">
+                    <b>Gün 3–6 Geliştirme</b>
+                    <p>Özellikler + entegrasyonlar + test. Günlük küçük iterasyonlar.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="num">4</div>
+                  <div class="txt">
+                    <b>Gün 7 Launch</b>
+                    <p>Prod teslim + erişimler + kısa onboarding.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- Offer -->
+    <section class="section" id="offer">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="reveal">🚀 Neler Sunuyoruz</h2>
+          <p class="hint reveal">“Sadece landing değil”: ürünleşebilir bir AI app altyapısı + dashboard + operasyon.</p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card reveal">
+            <div class="inner">
+              <div class="title">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M12 7v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z" stroke="currentColor" stroke-width="1.8" opacity=".85"/>
+                  </svg>
+                </span>
+                Ekip Kurmadan Ürün
+              </div>
+              <p>Geliştirici ekip, PM, QA derdi yok. Biz uçtan uca kuruyoruz.</p>
+              <ul class="list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Web app + admin panel</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Entegrasyonlar & otomasyon</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Günlük feedback döngüsü</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card reveal">
+            <div class="inner">
+              <div class="title">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3l9 5-9 5-9-5 9-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M3 13l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" opacity=".9"/>
+                    <path d="M3 17l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" opacity=".55"/>
+                  </svg>
+                </span>
+                Ürün Sahipliği Sende
+              </div>
+              <p>Marka senin, IP senin. Ürünü “senin ürünün” gibi teslim ederiz.</p>
+              <ul class="list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Branding + domain yönlendirme</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Veri & çıktı kontrolü</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Yetki & rol yönetimi</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card reveal">
+            <div class="inner">
+              <div class="title">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+                    <path d="M6 18c1.8-2 4-3 6-3s4.2 1 6 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+                  </svg>
+                </span>
+                AI Otomasyon + HiTL
+              </div>
+              <p>Akışlar, loglar, prompt versiyonlama ve insan-onaylı süreçler.</p>
+              <ul class="list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Flow / iş kuralı mantığı</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Analitik + audit logs</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Rol bazlı erişim</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section" id="how">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="reveal">📅 Nasıl Çalışır</h2>
+          <p class="hint reveal">Hızlı ilerlemek için scope’u net tutar, gün gün teslim ederiz.</p>
+        </div>
+
+        <div class="two">
+          <article class="card reveal">
+            <div class="inner">
+              <div class="title">
+                <span class="icon" aria-hidden="true" style="background: rgba(255,213,106,.12); border-color: rgba(255,213,106,.22);">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 3v3M17 3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M4 8h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+                    <path d="M6 6h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
+                  </svg>
+                </span>
+                7 Günlük Takvim
+              </div>
+              <ol class="list" style="counter-reset: none;">
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Fikrini WhatsApp’tan gönder</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 1: Çalışan demo teslim</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Onay → proje başlar</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 3–6: Geliştirme + feedback</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 7: Launch & teslim</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>6 ay içinde 2 küçük revizyon</li>
+              </ol>
+            </div>
+          </article>
+
+          <article class="card reveal">
+            <div class="inner">
+              <div class="title">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l2.2 5.2L20 8l-4 3.6.9 5.9L12 15.9 7.1 17.5 8 11.6 4 8l5.8-.8L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                Neden Bu Kadar Hızlı?
+              </div>
+              <p>Net scope + hazır altyapı + doğru tekrar kullanımlar ile “7 gün” gerçekçi oluyor.</p>
+              <ul class="list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Hazır auth, rol, log, DB katmanı</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Tek sprint / net teslim kriteri</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>HiTL akışlarıyla güvenli otomasyon</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo -->
+    <section class="section" id="demo">
+      <div class="container">
+        <div class="demo reveal">
+          <div class="demo-inner">
+            <div>
+              <h3>🧪 Gerçek Demo: Dosyam360</h3>
+              <p>
+                Hasar raporu yükle → AI veriyi çıkarır → hesaplar → hukuki dosyayı üretir.
+                Aşağıdan canlı demo’ya girip örnek dosya ile test edebilirsin.
+              </p>
+            </div>
+            <div class="links">
+              <a class="linkbtn" href="https://gaiasphere.io/partners/dosyam360" target="_blank" rel="noreferrer">
+                <div>
+                  <b>Canlı Demo</b><br>
+                  <small>gaiasphere.io/partners/dosyam360</small>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 17L17 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10 7h7v7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="linkbtn" href="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1770257812551x685321133387175600/hasar_ekspertiz_raporu.pdf" target="_blank" rel="noreferrer">
+                <div>
+                  <b>Örnek Dosya</b><br>
+                  <small>PDF indir / yükle</small>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="reveal">💰 Fiyat Seçenekleri</h2>
+          <p class="hint reveal">Net, şeffaf, sabit fiyat. Scope’a göre küçük oynamalar olabilir.</p>
+        </div>
+
+        <div class="pricing">
+          <article class="price reveal">
+            <div class="inner">
+              <h3>Internal Use</h3>
+              <p class="desc">Kendi ekibin / operasyonun için.</p>
+              <p class="amount">$3000</p>
+              <p class="meta">Hızlı teslim • admin panel dahil</p>
+              <ul class="mini-list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Temel otomasyon & akışlar</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Log + rol yönetimi</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Deploy & kısa onboarding</li>
+              </ul>
+              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">Teklif Al</a>
+            </div>
+          </article>
+
+          <article class="price popular reveal" aria-label="En popüler plan">
+            <div class="ribbon">Most Popular</div>
+            <div class="inner">
+              <h3>SaaS Product</h3>
+              <p class="desc">Müşterilere sat / startup olarak ölçekle.</p>
+              <p class="amount">$6500</p>
+              <p class="meta">SaaS-ready • growth odaklı</p>
+              <ul class="mini-list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Multi-tenant / planlama kurgusu</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Dashboard + event/log takibi</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Onboarding akışları + roller</li>
+              </ul>
+              <a class="btn btn-primary cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">SaaS’i Başlat</a>
+            </div>
+          </article>
+
+          <article class="price reveal">
+            <div class="inner">
+              <h3>Optional Demo</h3>
+              <p class="desc">Tam ödeme öncesi “görerek karar ver”.</p>
+              <p class="amount">$500</p>
+              <p class="meta">Deposit • demo üretimi</p>
+              <ul class="mini-list">
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Scope doğrulama</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>UX yönü netleşir</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Hızlı karar</li>
+              </ul>
+              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">Demo İste</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why -->
+    <section class="section" id="why">
+      <div class="container">
+        <div class="section-head">
+          <h2 class="reveal">🧠 Neden GAIA?</h2>
+          <p class="hint reveal">Üretimde çalışan uygulamalarla “proof” edilmiş yaklaşım.</p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card reveal"><div class="inner">
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l3 6 7 .8-5.2 4.4 1.7 6.8L12 16.9 5.5 20 7.2 13.2 2 8.8 9 8l3-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Deneyim</p>
+            <p>4+ yıl AI ürün geliştirme, gerçek iş problemlerinde pratik.</p>
+          </div></article>
+          <article class="card reveal"><div class="inner">
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Üretimde Uygulamalar</p>
+            <p>20+ internal & commercial app tecrübesi.</p>
+          </div></article>
+          <article class="card reveal"><div class="inner">
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 10h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Operasyonel Güç</p>
+            <p>Dashboard, log, rol, DB, HiTL akışları: ürün sadece “demo” kalmaz.</p>
+          </div></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ + Final CTA -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="two">
+          <div class="faq reveal">
+            <div class="section-head" style="margin-bottom:12px;">
+              <h2>❓ SSS</h2>
+              <p class="hint">En sık gelen sorular.</p>
+            </div>
+
+            <details>
+              <summary>“7 günde” neleri kapsıyor?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <div class="ans">Net scope’u olan bir MVP/ürün: core akış, temel admin panel, rol/log, deploy ve kısa onboarding.</div>
+            </details>
+
+            <details>
+              <summary>IP gerçekten bende mi?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <div class="ans">Evet. Ürün senin markanla, senin kullanımına göre teslim edilir. (Sözleşme detayları görüşmede netleşir.)</div>
+            </details>
+
+            <details>
+              <summary>Revizyonlar nasıl?
+                <span aria-hidden="true">+</span>
+              </summary>
+              <div class="ans">Teslim sonrası 6 ay içinde 2 küçük revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.</div>
+            </details>
+          </div>
+
+          <div class="final reveal">
+            <h2>✅ Hazır mısın?</h2>
+            <p>Bir haftada çalışan AI ürününü birlikte çıkaralım.</p>
+            <div class="cta-row" style="justify-content:center;">
+              <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
+                WhatsApp’tan Yaz
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="btn" href="#pricing">Fiyatları İncele</a>
+            </div>
+          </div>
+        </div>
+
+        <footer>
+          © 2026 GAIA Platform — Built on our own infrastructure.
+        </footer>
+      </div>
+    </section>
+
+    <!-- sticky CTA (mobile) -->
+    <div class="sticky" role="region" aria-label="Hızlı iletişim">
+      <div class="wrap">
+        <div>
+          <b>GAIA • 7 günde teslim</b><br>
+          <span>WhatsApp’tan başla</span>
+        </div>
+        <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" style="padding:10px 14px;">
+          Yaz
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Simple reveal on scroll (respects reduced motion in CSS)
+    const els = Array.from(document.querySelectorAll(".reveal"));
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) e.target.classList.add("show");
+    }, { threshold: 0.12 });
+    els.forEach(el => io.observe(el));
+
+    // FAQ summary "+" toggle
+    document.querySelectorAll(".faq details").forEach(d => {
+      const s = d.querySelector("summary span");
+      d.addEventListener("toggle", () => { if (s) s.textContent = d.open ? "–" : "+"; });
+    });
+  </script>
+</body>
+</html>
