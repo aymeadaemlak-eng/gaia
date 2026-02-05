@@ -40,10 +40,7 @@
       margin:0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       color: var(--text);
-      background: radial-gradient(1000px 600px at 18% 10%, rgba(106,168,255,.25), transparent 60%),
-                  radial-gradient(900px 560px at 75% 20%, rgba(53,242,164,.22), transparent 55%),
-                  radial-gradient(800px 520px at 50% 95%, rgba(255,213,106,.18), transparent 55%),
-                  linear-gradient(180deg, #070b14 0%, #050915 55%, #040815 100%);
+      background: #050915;
       overflow-x: clip;
     }
 
@@ -620,7 +617,7 @@
       .nav{ display:none; }
       .sticky{ display:block; }
       .sticky .wrap{
-        justify-content: center;
+        justify-content: space-between;
       }
       .hero{ padding-top: 44px; }
       .section{
@@ -1076,6 +1073,10 @@
     <!-- sticky CTA (mobile) -->
     <div class="sticky" role="region" data-i18n-aria-label="sticky_aria">
       <div class="wrap">
+        <div>
+          <b data-i18n="sticky_title"></b><br>
+          <span data-i18n="sticky_sub"></span>
+        </div>
         <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" style="padding:10px 16px;">
           <span data-i18n="cta_whatsapp_top"></span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
