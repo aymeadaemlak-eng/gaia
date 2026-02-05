@@ -1508,6 +1508,17 @@
       const s = d.querySelector("summary span[aria-hidden='true']");
       d.addEventListener("toggle", () => { if (s) s.textContent = d.open ? "–" : "+"; });
     });
+
+    document.querySelectorAll("a[href^='#']").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const id = link.getAttribute("href");
+        const target = id ? document.querySelector(id) : null;
+        if (target) {
+          event.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
   </script>
 </body>
 </html>
