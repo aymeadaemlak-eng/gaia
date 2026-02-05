@@ -44,7 +44,7 @@
                   radial-gradient(900px 560px at 75% 20%, rgba(53,242,164,.22), transparent 55%),
                   radial-gradient(800px 520px at 50% 95%, rgba(255,213,106,.18), transparent 55%),
                   linear-gradient(180deg, #070b14 0%, #050915 55%, #040815 100%);
-      overflow-x:hidden;
+      overflow-x: clip;
     }
 
     body.rtl{
@@ -71,6 +71,11 @@
     .container{
       width: min(1120px, calc(100% - 48px));
       margin-inline:auto;
+    }
+
+    main{
+      position: relative;
+      overflow-x: clip;
     }
 
     /* Top bar */
@@ -127,6 +132,7 @@
       border-radius: 999px;
       font-size: 12px;
       cursor:pointer;
+      font-variant-emoji: emoji;
     }
     .lang-switch option{ color: #0b1220; }
 
@@ -526,6 +532,27 @@
       .brand{ min-width: unset; }
     }
     @media (max-width: 720px){
+      .topbar-inner{
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .topbar-inner > *{
+        flex: 1 1 100%;
+        justify-content: center;
+      }
+      .brand{
+        justify-content: center;
+      }
+      .lang-switch{
+        justify-content: center;
+      }
+      .lang-switch select{
+        width: min(220px, 100%);
+      }
+      .topbar .btn{
+        width: 100%;
+        justify-content: center;
+      }
       .nav{ display:none; }
       .sticky{ display:block; }
       .hero{ padding-top: 44px; }
@@ -561,9 +588,9 @@
         <div class="lang-switch">
           <label class="sr-only" for="lang-select" data-i18n="lang_label"></label>
           <select id="lang-select" aria-label="Language">
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
-            <option value="tr">Türkçe</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="tr">🇹🇷 Türkçe</option>
           </select>
         </div>
 
@@ -1004,7 +1031,7 @@
         trust_aria: "الميزات البارزة",
         trust_1: "✅ عرض في اليوم الأول",
         trust_2: "✅ إطلاق في اليوم السابع",
-        trust_3: "✅ تعديلان بسيطان خلال 6 أشهر",
+        trust_3: "✅ تعديلان قياسيان",
         trust_4: "✅ HiTL + سجلات + أدوار + قاعدة بيانات",
         hero_plan_aria: "بطاقة خطة 7 أيام",
         hero_plan_title: "خطة تسليم سريعة",
@@ -1043,7 +1070,7 @@
         how_card1_list3: "الموافقة → يبدأ المشروع",
         how_card1_list4: "اليوم 3–6: تطوير + ملاحظات",
         how_card1_list5: "اليوم 7: إطلاق وتسليم",
-        how_card1_list6: "تعديلان بسيطان خلال 6 أشهر",
+        how_card1_list6: "تعديلان قياسيان",
         how_card2_title: "لماذا بهذه السرعة؟",
         how_card2_desc: "نطاق واضح + بنية جاهزة + إعادة استخدام صحيحة تجعل 7 أيام واقعية.",
         how_card2_list1: "مصادقة جاهزة وأدوار وسجلات وقاعدة بيانات",
@@ -1094,7 +1121,7 @@
         faq_q2: "هل الملكية الفكرية لي حقًا؟",
         faq_a2: "نعم. يُسلّم المنتج بعلامتك وبحسب استخدامك. (تُوضح تفاصيل العقد في الاجتماع.)",
         faq_q3: "كيف تكون المراجعات؟",
-        faq_a3: "تعديلان بسيطان خلال 6 أشهر بعد التسليم. التوسعات الكبيرة تُخطط منفصلة.",
+        faq_a3: "تعديلان قياسيان بعد التسليم. التوسعات الكبيرة تُخطط منفصلة.",
         final_title: "✅ هل أنت مستعد؟",
         final_desc: "لنطلق منتج ذكاء اصطناعي يعمل خلال أسبوع.",
         final_cta_primary: "راسلنا على واتساب",
@@ -1124,7 +1151,7 @@
         trust_aria: "Highlighted features",
         trust_1: "✅ Day 1 demo",
         trust_2: "✅ Day 7 launch",
-        trust_3: "✅ 2 small revisions within 6 months",
+        trust_3: "✅ 2 standard revisions",
         trust_4: "✅ HiTL + Logs + Roles + DB",
         hero_plan_aria: "7-day plan card",
         hero_plan_title: "Fast Delivery Plan",
@@ -1163,7 +1190,7 @@
         how_card1_list3: "Approval → project starts",
         how_card1_list4: "Days 3–6: Development + feedback",
         how_card1_list5: "Day 7: Launch & handoff",
-        how_card1_list6: "2 small revisions within 6 months",
+        how_card1_list6: "2 standard revisions",
         how_card2_title: "Why So Fast?",
         how_card2_desc: "Clear scope + ready infrastructure + smart reuse make 7 days realistic.",
         how_card2_list1: "Ready auth, roles, logs, DB layer",
@@ -1214,7 +1241,7 @@
         faq_q2: "Do I really own the IP?",
         faq_a2: "Yes. The product is delivered under your brand and for your use. (Contract details are clarified in the meeting.)",
         faq_q3: "How do revisions work?",
-        faq_a3: "Two small revisions within 6 months after delivery. Larger scope expansions are planned separately.",
+        faq_a3: "Two standard revisions after delivery. Larger scope expansions are planned separately.",
         final_title: "✅ Ready to go?",
         final_desc: "Let’s ship a working AI product in a week.",
         final_cta_primary: "Message us on WhatsApp",
@@ -1244,7 +1271,7 @@
         trust_aria: "Öne çıkan özellikler",
         trust_1: "✅ 1. gün demo",
         trust_2: "✅ 7. gün launch",
-        trust_3: "✅ 6 ay içinde 2 küçük revizyon",
+        trust_3: "✅ 2 standart revizyon",
         trust_4: "✅ HiTL + Log + Rol + DB",
         hero_plan_aria: "7 günlük plan kartı",
         hero_plan_title: "Hızlı Teslim Planı",
@@ -1283,7 +1310,7 @@
         how_card1_list3: "Onay → proje başlar",
         how_card1_list4: "Gün 3–6: Geliştirme + feedback",
         how_card1_list5: "Gün 7: Launch & teslim",
-        how_card1_list6: "6 ay içinde 2 küçük revizyon",
+        how_card1_list6: "2 standart revizyon",
         how_card2_title: "Neden Bu Kadar Hızlı?",
         how_card2_desc: "Net scope + hazır altyapı + doğru tekrar kullanımlar ile “7 gün” gerçekçi oluyor.",
         how_card2_list1: "Hazır auth, rol, log, DB katmanı",
@@ -1334,7 +1361,7 @@
         faq_q2: "IP gerçekten bende mi?",
         faq_a2: "Evet. Ürün senin markanla, senin kullanımına göre teslim edilir. (Sözleşme detayları görüşmede netleşir.)",
         faq_q3: "Revizyonlar nasıl?",
-        faq_a3: "Teslim sonrası 6 ay içinde 2 küçük revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.",
+        faq_a3: "Teslim sonrası 2 standart revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.",
         final_title: "✅ Hazır mısın?",
         final_desc: "Bir haftada çalışan AI ürününü birlikte çıkaralım.",
         final_cta_primary: "WhatsApp’tan Yaz",
