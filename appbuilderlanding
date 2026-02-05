@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -45,6 +45,11 @@
                   radial-gradient(800px 520px at 50% 95%, rgba(255,213,106,.18), transparent 55%),
                   linear-gradient(180deg, #070b14 0%, #050915 55%, #040815 100%);
       overflow-x:hidden;
+    }
+
+    body.rtl{
+      direction: rtl;
+      text-align: right;
     }
 
     a{ color: inherit; text-decoration:none; }
@@ -110,6 +115,20 @@
       transition: .2s ease;
     }
     .nav a:hover{ color: var(--text); border-color: rgba(255,255,255,.10); background: rgba(255,255,255,.05); }
+
+    .lang-switch{
+      display:flex; align-items:center; gap:8px;
+    }
+    .lang-switch select{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor:pointer;
+    }
+    .lang-switch option{ color: #0b1220; }
 
     /* Buttons */
     .btn{
@@ -518,33 +537,42 @@
   </style>
 </head>
 
-<body>
+<body class="rtl">
   <!-- Topbar -->
   <div class="topbar">
     <div class="container">
       <div class="topbar-inner">
-        <a class="brand" href="#top" aria-label="GAIA ana sayfa">
+        <a class="brand" href="#top" data-i18n-aria-label="home_aria">
           <img
             src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1745847814778x710684901839326200/gaia%20logo%20g%C3%BCncel%20dark.svg"
             alt="GAIA"
           />
-          <span class="badge"><span class="dot"></span> 7 Günde Teslim • Sabit Fiyat</span>
+          <span class="badge"><span class="dot"></span> <span data-i18n="badge_delivery"></span></span>
         </a>
 
-        <nav class="nav" aria-label="Sayfa bölümleri">
-          <a href="#offer">Neler Sunuyoruz</a>
-          <a href="#how">Nasıl Çalışır</a>
-          <a href="#demo">Demo</a>
-          <a href="#pricing">Fiyatlar</a>
-          <a href="#faq">SSS</a>
+        <nav class="nav" data-i18n-aria-label="nav_aria">
+          <a href="#offer" data-i18n="nav_offer"></a>
+          <a href="#how" data-i18n="nav_how"></a>
+          <a href="#demo" data-i18n="nav_demo"></a>
+          <a href="#pricing" data-i18n="nav_pricing"></a>
+          <a href="#faq" data-i18n="nav_faq"></a>
         </nav>
 
+        <div class="lang-switch">
+          <label class="sr-only" for="lang-select" data-i18n="lang_label"></label>
+          <select id="lang-select" aria-label="Language">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+            <option value="tr">Türkçe</option>
+          </select>
+        </div>
+
         <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
+          <span data-i18n="cta_whatsapp_top"></span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.2-3.7A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M8.7 9.6c.2-.5.5-.6.9-.6h.6c.2 0 .4 0 .6.4l.8 1.8c.1.2.1.5 0 .7l-.5.6c-.1.1-.1.3 0 .5.6 1 1.5 1.8 2.5 2.4.2.1.4.1.5 0l.6-.5c.2-.1.5-.1.7 0l1.8.8c.4.2.4.4.4.6v.6c0 .4-.1.7-.6.9-.7.3-2.3.6-4.7-.7-2.3-1.3-4-3.6-4.6-4.9-.6-1.3-.2-2.6.1-3.3Z" fill="currentColor" opacity=".85"/>
           </svg>
-          WhatsApp’tan Başla
         </a>
       </div>
     </div>
@@ -558,26 +586,23 @@
           <div>
             <div class="kicker reveal">
               <span class="dot"></span>
-              <span><b>GAIA</b> — “AI App in 7 Days” programı</span>
+              <span data-i18n="kicker"></span>
             </div>
 
-            <h1 class="reveal">7 Günde AI Uygulaması.<br>Ürün Senin, Teknoloji Bizden.</h1>
+            <h1 class="reveal" data-i18n-html="hero_title"></h1>
 
-            <p class="sub reveal">
-              Geliştirici ekip kurmadan, fikrini 1 hafta içinde çalışan bir ürüne çevir.
-              Marka sende, IP sende. Akışlar, otomasyon, dashboard ve rol yönetimi dahil.
-            </p>
+            <p class="sub reveal" data-i18n="hero_sub"></p>
 
             <div class="cta-row reveal">
               <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
-                Projeyi Başlat
+                <span data-i18n="cta_start_project"></span>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </a>
               <a class="btn" href="#demo">
-                Demo’yu Gör
+                <span data-i18n="cta_view_demo"></span>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M10 8l6 4-6 4V8Z" fill="currentColor" opacity=".9"/>
                   <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" opacity=".8"/>
@@ -585,51 +610,51 @@
               </a>
             </div>
 
-            <div class="trust reveal" aria-label="Öne çıkan özellikler">
-              <span class="pill">✅ 1. gün demo</span>
-              <span class="pill">✅ 7. gün launch</span>
-              <span class="pill">✅ 6 ay içinde 2 küçük revizyon</span>
-              <span class="pill">✅ HiTL + Log + Rol + DB</span>
+            <div class="trust reveal" data-i18n-aria-label="trust_aria">
+              <span class="pill" data-i18n="trust_1"></span>
+              <span class="pill" data-i18n="trust_2"></span>
+              <span class="pill" data-i18n="trust_3"></span>
+              <span class="pill" data-i18n="trust_4"></span>
             </div>
           </div>
 
-          <aside class="hero-card reveal" aria-label="7 günlük plan kartı">
+          <aside class="hero-card reveal" data-i18n-aria-label="hero_plan_aria">
             <div class="hero-card-inner">
               <div class="mini">
                 <div>
-                  <strong>Hızlı Teslim Planı</strong><br>
-                  <span>Net süreç • hızlı feedback</span>
+                  <strong data-i18n="hero_plan_title"></strong><br>
+                  <span data-i18n="hero_plan_sub"></span>
                 </div>
-                <span class="badge" style="font-size:12px;">⚡ Fixed Price</span>
+                <span class="badge" style="font-size:12px;" data-i18n="hero_plan_badge"></span>
               </div>
 
               <div class="steps">
                 <div class="step">
                   <div class="num">1</div>
                   <div class="txt">
-                    <b>Fikir / Scope</b>
-                    <p>WhatsApp üzerinden hedef, kullanıcı akışı ve çıktıları netleştiriyoruz.</p>
+                    <b data-i18n="step1_title"></b>
+                    <p data-i18n="step1_desc"></p>
                   </div>
                 </div>
                 <div class="step">
                   <div class="num">2</div>
                   <div class="txt">
-                    <b>Gün 1 Demo</b>
-                    <p>Çalışan demo teslim — yön ve UX kilitlenir.</p>
+                    <b data-i18n="step2_title"></b>
+                    <p data-i18n="step2_desc"></p>
                   </div>
                 </div>
                 <div class="step">
                   <div class="num">3</div>
                   <div class="txt">
-                    <b>Gün 3–6 Geliştirme</b>
-                    <p>Özellikler + entegrasyonlar + test. Günlük küçük iterasyonlar.</p>
+                    <b data-i18n="step3_title"></b>
+                    <p data-i18n="step3_desc"></p>
                   </div>
                 </div>
                 <div class="step">
                   <div class="num">4</div>
                   <div class="txt">
-                    <b>Gün 7 Launch</b>
-                    <p>Prod teslim + erişimler + kısa onboarding.</p>
+                    <b data-i18n="step4_title"></b>
+                    <p data-i18n="step4_desc"></p>
                   </div>
                 </div>
               </div>
@@ -643,8 +668,8 @@
     <section class="section" id="offer">
       <div class="container">
         <div class="section-head">
-          <h2 class="reveal">🚀 Neler Sunuyoruz</h2>
-          <p class="hint reveal">“Sadece landing değil”: ürünleşebilir bir AI app altyapısı + dashboard + operasyon.</p>
+          <h2 class="reveal" data-i18n="offer_title"></h2>
+          <p class="hint reveal" data-i18n="offer_hint"></p>
         </div>
 
         <div class="grid-3">
@@ -658,13 +683,13 @@
                     <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z" stroke="currentColor" stroke-width="1.8" opacity=".85"/>
                   </svg>
                 </span>
-                Ekip Kurmadan Ürün
+                <span data-i18n="offer_card1_title"></span>
               </div>
-              <p>Geliştirici ekip, PM, QA derdi yok. Biz uçtan uca kuruyoruz.</p>
+              <p data-i18n="offer_card1_desc"></p>
               <ul class="list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Web app + admin panel</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Entegrasyonlar & otomasyon</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Günlük feedback döngüsü</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card1_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card1_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card1_list3"></span></li>
               </ul>
             </div>
           </article>
@@ -679,13 +704,13 @@
                     <path d="M3 17l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" opacity=".55"/>
                   </svg>
                 </span>
-                Ürün Sahipliği Sende
+                <span data-i18n="offer_card2_title"></span>
               </div>
-              <p>Marka senin, IP senin. Ürünü “senin ürünün” gibi teslim ederiz.</p>
+              <p data-i18n="offer_card2_desc"></p>
               <ul class="list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Branding + domain yönlendirme</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Veri & çıktı kontrolü</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Yetki & rol yönetimi</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card2_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card2_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card2_list3"></span></li>
               </ul>
             </div>
           </article>
@@ -700,13 +725,13 @@
                     <path d="M6 18c1.8-2 4-3 6-3s4.2 1 6 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
                   </svg>
                 </span>
-                AI Otomasyon + HiTL
+                <span data-i18n="offer_card3_title"></span>
               </div>
-              <p>Akışlar, loglar, prompt versiyonlama ve insan-onaylı süreçler.</p>
+              <p data-i18n="offer_card3_desc"></p>
               <ul class="list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Flow / iş kuralı mantığı</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Analitik + audit logs</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Rol bazlı erişim</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card3_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card3_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="offer_card3_list3"></span></li>
               </ul>
             </div>
           </article>
@@ -718,8 +743,8 @@
     <section class="section" id="how">
       <div class="container">
         <div class="section-head">
-          <h2 class="reveal">📅 Nasıl Çalışır</h2>
-          <p class="hint reveal">Hızlı ilerlemek için scope’u net tutar, gün gün teslim ederiz.</p>
+          <h2 class="reveal" data-i18n="how_title"></h2>
+          <p class="hint reveal" data-i18n="how_hint"></p>
         </div>
 
         <div class="two">
@@ -733,15 +758,15 @@
                     <path d="M6 6h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
                   </svg>
                 </span>
-                7 Günlük Takvim
+                <span data-i18n="how_card1_title"></span>
               </div>
               <ol class="list" style="counter-reset: none;">
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Fikrini WhatsApp’tan gönder</li>
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 1: Çalışan demo teslim</li>
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Onay → proje başlar</li>
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 3–6: Geliştirme + feedback</li>
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Gün 7: Launch & teslim</li>
-                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>6 ay içinde 2 küçük revizyon</li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list1"></span></li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list2"></span></li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list3"></span></li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list4"></span></li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list5"></span></li>
+                <li><span class="check" aria-hidden="true" style="background: rgba(255,213,106,.10); border-color: rgba(255,213,106,.20);"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card1_list6"></span></li>
               </ol>
             </div>
           </article>
@@ -754,13 +779,13 @@
                     <path d="M12 2l2.2 5.2L20 8l-4 3.6.9 5.9L12 15.9 7.1 17.5 8 11.6 4 8l5.8-.8L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                   </svg>
                 </span>
-                Neden Bu Kadar Hızlı?
+                <span data-i18n="how_card2_title"></span>
               </div>
-              <p>Net scope + hazır altyapı + doğru tekrar kullanımlar ile “7 gün” gerçekçi oluyor.</p>
+              <p data-i18n="how_card2_desc"></p>
               <ul class="list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Hazır auth, rol, log, DB katmanı</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Tek sprint / net teslim kriteri</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>HiTL akışlarıyla güvenli otomasyon</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card2_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card2_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="how_card2_list3"></span></li>
               </ul>
             </div>
           </article>
@@ -774,16 +799,13 @@
         <div class="demo reveal">
           <div class="demo-inner">
             <div>
-              <h3>🧪 Gerçek Demo: Dosyam360</h3>
-              <p>
-                Hasar raporu yükle → AI veriyi çıkarır → hesaplar → hukuki dosyayı üretir.
-                Aşağıdan canlı demo’ya girip örnek dosya ile test edebilirsin.
-              </p>
+              <h3 data-i18n="demo_title"></h3>
+              <p data-i18n="demo_desc"></p>
             </div>
             <div class="links">
               <a class="linkbtn" href="https://gaiasphere.io/partners/dosyam360" target="_blank" rel="noreferrer">
                 <div>
-                  <b>Canlı Demo</b><br>
+                  <b data-i18n="demo_link1_title"></b><br>
                   <small>gaiasphere.io/partners/dosyam360</small>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -793,8 +815,8 @@
               </a>
               <a class="linkbtn" href="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1770257812551x685321133387175600/hasar_ekspertiz_raporu.pdf" target="_blank" rel="noreferrer">
                 <div>
-                  <b>Örnek Dosya</b><br>
-                  <small>PDF indir / yükle</small>
+                  <b data-i18n="demo_link2_title"></b><br>
+                  <small data-i18n="demo_link2_desc"></small>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M12 3v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -812,54 +834,54 @@
     <section class="section" id="pricing">
       <div class="container">
         <div class="section-head">
-          <h2 class="reveal">💰 Fiyat Seçenekleri</h2>
-          <p class="hint reveal">Net, şeffaf, sabit fiyat. Scope’a göre küçük oynamalar olabilir.</p>
+          <h2 class="reveal" data-i18n="pricing_title"></h2>
+          <p class="hint reveal" data-i18n="pricing_hint"></p>
         </div>
 
         <div class="pricing">
           <article class="price reveal">
             <div class="inner">
-              <h3>Internal Use</h3>
-              <p class="desc">Kendi ekibin / operasyonun için.</p>
+              <h3 data-i18n="pricing_plan1_title"></h3>
+              <p class="desc" data-i18n="pricing_plan1_desc"></p>
               <p class="amount">$3000</p>
-              <p class="meta">Hızlı teslim • admin panel dahil</p>
+              <p class="meta" data-i18n="pricing_plan1_meta"></p>
               <ul class="mini-list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Temel otomasyon & akışlar</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Log + rol yönetimi</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Deploy & kısa onboarding</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan1_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan1_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan1_list3"></span></li>
               </ul>
-              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">Teklif Al</a>
+              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" data-i18n="pricing_plan1_cta"></a>
             </div>
           </article>
 
-          <article class="price popular reveal" aria-label="En popüler plan">
-            <div class="ribbon">Most Popular</div>
+          <article class="price popular reveal" data-i18n-aria-label="pricing_plan2_aria">
+            <div class="ribbon" data-i18n="pricing_plan2_ribbon"></div>
             <div class="inner">
-              <h3>SaaS Product</h3>
-              <p class="desc">Müşterilere sat / startup olarak ölçekle.</p>
+              <h3 data-i18n="pricing_plan2_title"></h3>
+              <p class="desc" data-i18n="pricing_plan2_desc"></p>
               <p class="amount">$6500</p>
-              <p class="meta">SaaS-ready • growth odaklı</p>
+              <p class="meta" data-i18n="pricing_plan2_meta"></p>
               <ul class="mini-list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Multi-tenant / planlama kurgusu</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Dashboard + event/log takibi</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Onboarding akışları + roller</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan2_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan2_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan2_list3"></span></li>
               </ul>
-              <a class="btn btn-primary cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">SaaS’i Başlat</a>
+              <a class="btn btn-primary cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" data-i18n="pricing_plan2_cta"></a>
             </div>
           </article>
 
           <article class="price reveal">
             <div class="inner">
-              <h3>Optional Demo</h3>
-              <p class="desc">Tam ödeme öncesi “görerek karar ver”.</p>
+              <h3 data-i18n="pricing_plan3_title"></h3>
+              <p class="desc" data-i18n="pricing_plan3_desc"></p>
               <p class="amount">$500</p>
-              <p class="meta">Deposit • demo üretimi</p>
+              <p class="meta" data-i18n="pricing_plan3_meta"></p>
               <ul class="mini-list">
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Scope doğrulama</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>UX yönü netleşir</li>
-                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Hızlı karar</li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan3_list1"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan3_list2"></span></li>
+                <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="pricing_plan3_list3"></span></li>
               </ul>
-              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">Demo İste</a>
+              <a class="btn cta" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" data-i18n="pricing_plan3_cta"></a>
             </div>
           </article>
         </div>
@@ -870,22 +892,22 @@
     <section class="section" id="why">
       <div class="container">
         <div class="section-head">
-          <h2 class="reveal">🧠 Neden GAIA?</h2>
-          <p class="hint reveal">Üretimde çalışan uygulamalarla “proof” edilmiş yaklaşım.</p>
+          <h2 class="reveal" data-i18n="why_title"></h2>
+          <p class="hint reveal" data-i18n="why_hint"></p>
         </div>
 
         <div class="grid-3">
           <article class="card reveal"><div class="inner">
-            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l3 6 7 .8-5.2 4.4 1.7 6.8L12 16.9 5.5 20 7.2 13.2 2 8.8 9 8l3-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Deneyim</p>
-            <p>4+ yıl AI ürün geliştirme, gerçek iş problemlerinde pratik.</p>
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l3 6 7 .8-5.2 4.4 1.7 6.8L12 16.9 5.5 20 7.2 13.2 2 8.8 9 8l3-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span data-i18n="why_card1_title"></span></p>
+            <p data-i18n="why_card1_desc"></p>
           </div></article>
           <article class="card reveal"><div class="inner">
-            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Üretimde Uygulamalar</p>
-            <p>20+ internal & commercial app tecrübesi.</p>
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span data-i18n="why_card2_title"></span></p>
+            <p data-i18n="why_card2_desc"></p>
           </div></article>
           <article class="card reveal"><div class="inner">
-            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 10h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Operasyonel Güç</p>
-            <p>Dashboard, log, rol, DB, HiTL akışları: ürün sadece “demo” kalmaz.</p>
+            <p class="title"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 10h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span data-i18n="why_card3_title"></span></p>
+            <p data-i18n="why_card3_desc"></p>
           </div></article>
         </div>
       </div>
@@ -897,63 +919,61 @@
         <div class="two">
           <div class="faq reveal">
             <div class="section-head" style="margin-bottom:12px;">
-              <h2>❓ SSS</h2>
-              <p class="hint">En sık gelen sorular.</p>
+              <h2 data-i18n="faq_title"></h2>
+              <p class="hint" data-i18n="faq_hint"></p>
             </div>
 
             <details>
-              <summary>“7 günde” neleri kapsıyor?
+              <summary><span data-i18n="faq_q1"></span>
                 <span aria-hidden="true">+</span>
               </summary>
-              <div class="ans">Net scope’u olan bir MVP/ürün: core akış, temel admin panel, rol/log, deploy ve kısa onboarding.</div>
+              <div class="ans" data-i18n="faq_a1"></div>
             </details>
 
             <details>
-              <summary>IP gerçekten bende mi?
+              <summary><span data-i18n="faq_q2"></span>
                 <span aria-hidden="true">+</span>
               </summary>
-              <div class="ans">Evet. Ürün senin markanla, senin kullanımına göre teslim edilir. (Sözleşme detayları görüşmede netleşir.)</div>
+              <div class="ans" data-i18n="faq_a2"></div>
             </details>
 
             <details>
-              <summary>Revizyonlar nasıl?
+              <summary><span data-i18n="faq_q3"></span>
                 <span aria-hidden="true">+</span>
               </summary>
-              <div class="ans">Teslim sonrası 6 ay içinde 2 küçük revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.</div>
+              <div class="ans" data-i18n="faq_a3"></div>
             </details>
           </div>
 
           <div class="final reveal">
-            <h2>✅ Hazır mısın?</h2>
-            <p>Bir haftada çalışan AI ürününü birlikte çıkaralım.</p>
+            <h2 data-i18n="final_title"></h2>
+            <p data-i18n="final_desc"></p>
             <div class="cta-row" style="justify-content:center;">
               <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer">
-                WhatsApp’tan Yaz
+                <span data-i18n="final_cta_primary"></span>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </a>
-              <a class="btn" href="#pricing">Fiyatları İncele</a>
+              <a class="btn" href="#pricing" data-i18n="final_cta_secondary"></a>
             </div>
           </div>
         </div>
 
-        <footer>
-          © 2026 GAIA Platform — Built on our own infrastructure.
-        </footer>
+        <footer data-i18n="footer_text"></footer>
       </div>
     </section>
 
     <!-- sticky CTA (mobile) -->
-    <div class="sticky" role="region" aria-label="Hızlı iletişim">
+    <div class="sticky" role="region" data-i18n-aria-label="sticky_aria">
       <div class="wrap">
         <div>
-          <b>GAIA • 7 günde teslim</b><br>
-          <span>WhatsApp’tan başla</span>
+          <b data-i18n="sticky_title"></b><br>
+          <span data-i18n="sticky_sub"></span>
         </div>
         <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" style="padding:10px 14px;">
-          Yaz
+          <span data-i18n="sticky_cta"></span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -964,6 +984,397 @@
   </main>
 
   <script>
+    const translations = {
+      ar: {
+        home_aria: "الصفحة الرئيسية لـ GAIA",
+        nav_aria: "أقسام الصفحة",
+        lang_label: "اللغة",
+        badge_delivery: "التسليم خلال 7 أيام • سعر ثابت",
+        nav_offer: "ماذا نقدّم",
+        nav_how: "كيف يعمل",
+        nav_demo: "عرض",
+        nav_pricing: "الأسعار",
+        nav_faq: "الأسئلة الشائعة",
+        cta_whatsapp_top: "ابدأ عبر واتساب",
+        kicker: "GAIA — برنامج «تطبيق ذكاء اصطناعي خلال 7 أيام»",
+        hero_title: "تطبيق ذكاء اصطناعي خلال 7 أيام.<br>المنتج لك، والتقنية علينا.",
+        hero_sub: "بدون بناء فريق تطوير، حوّل فكرتك إلى منتج يعمل خلال أسبوع. العلامة لك، والملكية لك. تشمل التدفقات، والأتمتة، ولوحة التحكم، وإدارة الأدوار.",
+        cta_start_project: "ابدأ المشروع",
+        cta_view_demo: "شاهد العرض",
+        trust_aria: "الميزات البارزة",
+        trust_1: "✅ عرض في اليوم الأول",
+        trust_2: "✅ إطلاق في اليوم السابع",
+        trust_3: "✅ تعديلان بسيطان خلال 6 أشهر",
+        trust_4: "✅ HiTL + سجلات + أدوار + قاعدة بيانات",
+        hero_plan_aria: "بطاقة خطة 7 أيام",
+        hero_plan_title: "خطة تسليم سريعة",
+        hero_plan_sub: "عملية واضحة • ملاحظات سريعة",
+        hero_plan_badge: "⚡ سعر ثابت",
+        step1_title: "الفكرة / النطاق",
+        step1_desc: "نحدد الهدف ومسار المستخدم والمخرجات عبر واتساب.",
+        step2_title: "عرض اليوم الأول",
+        step2_desc: "تسليم عرض يعمل — يتم تثبيت الاتجاه وتجربة المستخدم.",
+        step3_title: "تطوير الأيام 3–6",
+        step3_desc: "الميزات + التكاملات + الاختبارات. تكرارات صغيرة يوميًا.",
+        step4_title: "إطلاق اليوم السابع",
+        step4_desc: "تسليم إنتاجي + صلاحيات + تعريف سريع.",
+        offer_title: "🚀 ماذا نقدّم",
+        offer_hint: "ليس مجرد صفحة هبوط: بنية تطبيق ذكاء اصطناعي قابلة للمنتجة + لوحة تحكم + تشغيل.",
+        offer_card1_title: "منتج بدون بناء فريق",
+        offer_card1_desc: "لا حاجة لفريق تطوير أو مدير منتج أو ضمان جودة. نحن نبني من البداية للنهاية.",
+        offer_card1_list1: "تطبيق ويب + لوحة إدارة",
+        offer_card1_list2: "تكاملات وأتمتة",
+        offer_card1_list3: "دورة ملاحظات يومية",
+        offer_card2_title: "الملكية لك",
+        offer_card2_desc: "العلامة لك والملكية الفكرية لك. نسلم المنتج كأنه منتجك.",
+        offer_card2_list1: "هوية العلامة + توجيه النطاق",
+        offer_card2_list2: "التحكم بالبيانات والمخرجات",
+        offer_card2_list3: "إدارة الصلاحيات والأدوار",
+        offer_card3_title: "أتمتة ذكاء اصطناعي + HiTL",
+        offer_card3_desc: "تدفقات، سجلات، إصدارات للمحفزات، وعمليات بموافقة بشرية.",
+        offer_card3_list1: "منطق التدفق / قواعد العمل",
+        offer_card3_list2: "تحليلات + سجلات تدقيق",
+        offer_card3_list3: "وصول حسب الدور",
+        how_title: "📅 كيف يعمل",
+        how_hint: "للتقدم سريعًا نثبت النطاق ونُسلّم يومًا بيوم.",
+        how_card1_title: "جدول 7 أيام",
+        how_card1_list1: "أرسل فكرتك عبر واتساب",
+        how_card1_list2: "اليوم 1: تسليم عرض يعمل",
+        how_card1_list3: "الموافقة → يبدأ المشروع",
+        how_card1_list4: "اليوم 3–6: تطوير + ملاحظات",
+        how_card1_list5: "اليوم 7: إطلاق وتسليم",
+        how_card1_list6: "تعديلان بسيطان خلال 6 أشهر",
+        how_card2_title: "لماذا بهذه السرعة؟",
+        how_card2_desc: "نطاق واضح + بنية جاهزة + إعادة استخدام صحيحة تجعل 7 أيام واقعية.",
+        how_card2_list1: "مصادقة جاهزة وأدوار وسجلات وقاعدة بيانات",
+        how_card2_list2: "سبرنت واحد ومعايير تسليم واضحة",
+        how_card2_list3: "أتمتة آمنة مع تدفقات HiTL",
+        demo_title: "🧪 عرض حقيقي: Dosyam360",
+        demo_desc: "حمّل تقرير الأضرار → يستخرج الذكاء الاصطناعي البيانات → يحسب → يُنتج الملف القانوني. يمكنك الدخول إلى العرض المباشر أدناه وتجربته بملف نموذجي.",
+        demo_link1_title: "عرض مباشر",
+        demo_link2_title: "ملف نموذجي",
+        demo_link2_desc: "تنزيل / رفع PDF",
+        pricing_title: "💰 خيارات التسعير",
+        pricing_hint: "شفاف وثابت. قد تختلف فروق بسيطة حسب النطاق.",
+        pricing_plan1_title: "استخدام داخلي",
+        pricing_plan1_desc: "لفريقك أو عملياتك الداخلية.",
+        pricing_plan1_meta: "تسليم سريع • لوحة إدارة مشمولة",
+        pricing_plan1_list1: "أتمتة أساسية وتدفقات",
+        pricing_plan1_list2: "سجلات + إدارة أدوار",
+        pricing_plan1_list3: "نشر وتعريف سريع",
+        pricing_plan1_cta: "احصل على عرض",
+        pricing_plan2_aria: "الخطة الأكثر شيوعًا",
+        pricing_plan2_ribbon: "الأكثر شيوعًا",
+        pricing_plan2_title: "منتج SaaS",
+        pricing_plan2_desc: "بِع للعملاء أو وسّع كشركة ناشئة.",
+        pricing_plan2_meta: "جاهز للساس • تركيز نمو",
+        pricing_plan2_list1: "تعدد المستأجرين / منطق الخطط",
+        pricing_plan2_list2: "لوحة تحكم + تتبع الأحداث/السجلات",
+        pricing_plan2_list3: "تدفقات تعريف + أدوار",
+        pricing_plan2_cta: "ابدأ SaaS",
+        pricing_plan3_title: "عرض تجريبي اختياري",
+        pricing_plan3_desc: "قرّر بعد أن ترى قبل الدفع الكامل.",
+        pricing_plan3_meta: "عربون • إنتاج عرض",
+        pricing_plan3_list1: "تحقق من النطاق",
+        pricing_plan3_list2: "يتضح اتجاه تجربة المستخدم",
+        pricing_plan3_list3: "قرار سريع",
+        pricing_plan3_cta: "اطلب عرضًا",
+        why_title: "🧠 لماذا GAIA؟",
+        why_hint: "نهج مُثبت بتطبيقات تعمل في الإنتاج.",
+        why_card1_title: "خبرة",
+        why_card1_desc: "أكثر من 4 سنوات في تطوير منتجات الذكاء الاصطناعي وحل مشاكل حقيقية.",
+        why_card2_title: "تطبيقات في الإنتاج",
+        why_card2_desc: "خبرة في أكثر من 20 تطبيقًا داخليًا وتجاريًا.",
+        why_card3_title: "قوة تشغيلية",
+        why_card3_desc: "لوحة تحكم، سجلات، أدوار، قاعدة بيانات، تدفقات HiTL: المنتج لا يبقى مجرد عرض.",
+        faq_title: "❓ الأسئلة الشائعة",
+        faq_hint: "أكثر الأسئلة شيوعًا.",
+        faq_q1: "ماذا يشمل «7 أيام»؟",
+        faq_a1: "MVP بنطاق واضح: التدفق الأساسي، لوحة إدارة أساسية، أدوار/سجلات، النشر وتعريف سريع.",
+        faq_q2: "هل الملكية الفكرية لي حقًا؟",
+        faq_a2: "نعم. يُسلّم المنتج بعلامتك وبحسب استخدامك. (تُوضح تفاصيل العقد في الاجتماع.)",
+        faq_q3: "كيف تكون المراجعات؟",
+        faq_a3: "تعديلان بسيطان خلال 6 أشهر بعد التسليم. التوسعات الكبيرة تُخطط منفصلة.",
+        final_title: "✅ هل أنت مستعد؟",
+        final_desc: "لنطلق منتج ذكاء اصطناعي يعمل خلال أسبوع.",
+        final_cta_primary: "راسلنا على واتساب",
+        final_cta_secondary: "اطّلع على الأسعار",
+        footer_text: "© 2026 منصة GAIA — مبنية على بنيتنا التحتية الخاصة.",
+        sticky_aria: "تواصل سريع",
+        sticky_title: "GAIA • التسليم خلال 7 أيام",
+        sticky_sub: "ابدأ عبر واتساب",
+        sticky_cta: "اكتب"
+      },
+      en: {
+        home_aria: "GAIA home",
+        nav_aria: "Page sections",
+        lang_label: "Language",
+        badge_delivery: "Delivered in 7 Days • Fixed Price",
+        nav_offer: "What We Offer",
+        nav_how: "How It Works",
+        nav_demo: "Demo",
+        nav_pricing: "Pricing",
+        nav_faq: "FAQ",
+        cta_whatsapp_top: "Start on WhatsApp",
+        kicker: "GAIA — “AI App in 7 Days” program",
+        hero_title: "AI App in 7 Days.<br>The product is yours, the tech is ours.",
+        hero_sub: "Turn your idea into a working product in a week without hiring a dev team. Brand and IP stay with you. Includes flows, automation, dashboard, and role management.",
+        cta_start_project: "Start the Project",
+        cta_view_demo: "View the Demo",
+        trust_aria: "Highlighted features",
+        trust_1: "✅ Day 1 demo",
+        trust_2: "✅ Day 7 launch",
+        trust_3: "✅ 2 small revisions within 6 months",
+        trust_4: "✅ HiTL + Logs + Roles + DB",
+        hero_plan_aria: "7-day plan card",
+        hero_plan_title: "Fast Delivery Plan",
+        hero_plan_sub: "Clear process • fast feedback",
+        hero_plan_badge: "⚡ Fixed Price",
+        step1_title: "Idea / Scope",
+        step1_desc: "We clarify goals, user flow, and outputs via WhatsApp.",
+        step2_title: "Day 1 Demo",
+        step2_desc: "Working demo delivered — direction and UX lock in.",
+        step3_title: "Days 3–6 Development",
+        step3_desc: "Features + integrations + testing. Small daily iterations.",
+        step4_title: "Day 7 Launch",
+        step4_desc: "Production delivery + access + quick onboarding.",
+        offer_title: "🚀 What We Offer",
+        offer_hint: "Not just a landing page: a productizable AI app stack + dashboard + ops.",
+        offer_card1_title: "Product Without Building a Team",
+        offer_card1_desc: "No dev team, PM, or QA headaches. We build end-to-end.",
+        offer_card1_list1: "Web app + admin panel",
+        offer_card1_list2: "Integrations & automation",
+        offer_card1_list3: "Daily feedback loop",
+        offer_card2_title: "You Own the Product",
+        offer_card2_desc: "Your brand, your IP. We deliver it as your product.",
+        offer_card2_list1: "Branding + domain routing",
+        offer_card2_list2: "Data & output control",
+        offer_card2_list3: "Permissions & role management",
+        offer_card3_title: "AI Automation + HiTL",
+        offer_card3_desc: "Flows, logs, prompt versioning, and human-in-the-loop processes.",
+        offer_card3_list1: "Flow / business rule logic",
+        offer_card3_list2: "Analytics + audit logs",
+        offer_card3_list3: "Role-based access",
+        how_title: "📅 How It Works",
+        how_hint: "We keep scope tight to move fast and deliver day by day.",
+        how_card1_title: "7-Day Timeline",
+        how_card1_list1: "Send your idea via WhatsApp",
+        how_card1_list2: "Day 1: Working demo delivered",
+        how_card1_list3: "Approval → project starts",
+        how_card1_list4: "Days 3–6: Development + feedback",
+        how_card1_list5: "Day 7: Launch & handoff",
+        how_card1_list6: "2 small revisions within 6 months",
+        how_card2_title: "Why So Fast?",
+        how_card2_desc: "Clear scope + ready infrastructure + smart reuse make 7 days realistic.",
+        how_card2_list1: "Ready auth, roles, logs, DB layer",
+        how_card2_list2: "Single sprint / clear delivery criteria",
+        how_card2_list3: "Safe automation with HiTL flows",
+        demo_title: "🧪 Real Demo: Dosyam360",
+        demo_desc: "Upload a damage report → AI extracts data → calculates → generates the legal file. Try the live demo below with a sample file.",
+        demo_link1_title: "Live Demo",
+        demo_link2_title: "Sample File",
+        demo_link2_desc: "Download / upload PDF",
+        pricing_title: "💰 Pricing Options",
+        pricing_hint: "Clear, transparent, fixed price. Minor adjustments based on scope.",
+        pricing_plan1_title: "Internal Use",
+        pricing_plan1_desc: "For your own team / operations.",
+        pricing_plan1_meta: "Fast delivery • admin panel included",
+        pricing_plan1_list1: "Core automation & flows",
+        pricing_plan1_list2: "Logs + role management",
+        pricing_plan1_list3: "Deploy & quick onboarding",
+        pricing_plan1_cta: "Get a Quote",
+        pricing_plan2_aria: "Most popular plan",
+        pricing_plan2_ribbon: "Most Popular",
+        pricing_plan2_title: "SaaS Product",
+        pricing_plan2_desc: "Sell to customers / scale as a startup.",
+        pricing_plan2_meta: "SaaS-ready • growth focused",
+        pricing_plan2_list1: "Multi-tenant / plan structure",
+        pricing_plan2_list2: "Dashboard + event/log tracking",
+        pricing_plan2_list3: "Onboarding flows + roles",
+        pricing_plan2_cta: "Launch the SaaS",
+        pricing_plan3_title: "Optional Demo",
+        pricing_plan3_desc: "Decide after you see it before full payment.",
+        pricing_plan3_meta: "Deposit • demo production",
+        pricing_plan3_list1: "Scope validation",
+        pricing_plan3_list2: "UX direction clarified",
+        pricing_plan3_list3: "Fast decision",
+        pricing_plan3_cta: "Request Demo",
+        why_title: "🧠 Why GAIA?",
+        why_hint: "A proofed approach with production apps.",
+        why_card1_title: "Experience",
+        why_card1_desc: "4+ years building AI products with real business problems.",
+        why_card2_title: "Production Apps",
+        why_card2_desc: "Experience across 20+ internal & commercial apps.",
+        why_card3_title: "Operational Strength",
+        why_card3_desc: "Dashboard, logs, roles, DB, HiTL flows: the product goes beyond a demo.",
+        faq_title: "❓ FAQ",
+        faq_hint: "Most common questions.",
+        faq_q1: "What does “7 days” include?",
+        faq_a1: "An MVP with clear scope: core flow, basic admin panel, roles/logs, deploy, and quick onboarding.",
+        faq_q2: "Do I really own the IP?",
+        faq_a2: "Yes. The product is delivered under your brand and for your use. (Contract details are clarified in the meeting.)",
+        faq_q3: "How do revisions work?",
+        faq_a3: "Two small revisions within 6 months after delivery. Larger scope expansions are planned separately.",
+        final_title: "✅ Ready to go?",
+        final_desc: "Let’s ship a working AI product in a week.",
+        final_cta_primary: "Message us on WhatsApp",
+        final_cta_secondary: "See Pricing",
+        footer_text: "© 2026 GAIA Platform — Built on our own infrastructure.",
+        sticky_aria: "Quick contact",
+        sticky_title: "GAIA • delivered in 7 days",
+        sticky_sub: "Start on WhatsApp",
+        sticky_cta: "Write"
+      },
+      tr: {
+        home_aria: "GAIA ana sayfa",
+        nav_aria: "Sayfa bölümleri",
+        lang_label: "Dil",
+        badge_delivery: "7 Günde Teslim • Sabit Fiyat",
+        nav_offer: "Neler Sunuyoruz",
+        nav_how: "Nasıl Çalışır",
+        nav_demo: "Demo",
+        nav_pricing: "Fiyatlar",
+        nav_faq: "SSS",
+        cta_whatsapp_top: "WhatsApp’tan Başla",
+        kicker: "GAIA — “AI App in 7 Days” programı",
+        hero_title: "7 Günde AI Uygulaması.<br>Ürün Senin, Teknoloji Bizden.",
+        hero_sub: "Geliştirici ekip kurmadan, fikrini 1 hafta içinde çalışan bir ürüne çevir. Marka sende, IP sende. Akışlar, otomasyon, dashboard ve rol yönetimi dahil.",
+        cta_start_project: "Projeyi Başlat",
+        cta_view_demo: "Demo’yu Gör",
+        trust_aria: "Öne çıkan özellikler",
+        trust_1: "✅ 1. gün demo",
+        trust_2: "✅ 7. gün launch",
+        trust_3: "✅ 6 ay içinde 2 küçük revizyon",
+        trust_4: "✅ HiTL + Log + Rol + DB",
+        hero_plan_aria: "7 günlük plan kartı",
+        hero_plan_title: "Hızlı Teslim Planı",
+        hero_plan_sub: "Net süreç • hızlı feedback",
+        hero_plan_badge: "⚡ Fixed Price",
+        step1_title: "Fikir / Scope",
+        step1_desc: "WhatsApp üzerinden hedef, kullanıcı akışı ve çıktıları netleştiriyoruz.",
+        step2_title: "Gün 1 Demo",
+        step2_desc: "Çalışan demo teslim — yön ve UX kilitlenir.",
+        step3_title: "Gün 3–6 Geliştirme",
+        step3_desc: "Özellikler + entegrasyonlar + test. Günlük küçük iterasyonlar.",
+        step4_title: "Gün 7 Launch",
+        step4_desc: "Prod teslim + erişimler + kısa onboarding.",
+        offer_title: "🚀 Neler Sunuyoruz",
+        offer_hint: "“Sadece landing değil”: ürünleşebilir bir AI app altyapısı + dashboard + operasyon.",
+        offer_card1_title: "Ekip Kurmadan Ürün",
+        offer_card1_desc: "Geliştirici ekip, PM, QA derdi yok. Biz uçtan uca kuruyoruz.",
+        offer_card1_list1: "Web app + admin panel",
+        offer_card1_list2: "Entegrasyonlar & otomasyon",
+        offer_card1_list3: "Günlük feedback döngüsü",
+        offer_card2_title: "Ürün Sahipliği Sende",
+        offer_card2_desc: "Marka senin, IP senin. Ürünü “senin ürünün” gibi teslim ederiz.",
+        offer_card2_list1: "Branding + domain yönlendirme",
+        offer_card2_list2: "Veri & çıktı kontrolü",
+        offer_card2_list3: "Yetki & rol yönetimi",
+        offer_card3_title: "AI Otomasyon + HiTL",
+        offer_card3_desc: "Akışlar, loglar, prompt versiyonlama ve insan-onaylı süreçler.",
+        offer_card3_list1: "Flow / iş kuralı mantığı",
+        offer_card3_list2: "Analitik + audit logs",
+        offer_card3_list3: "Rol bazlı erişim",
+        how_title: "📅 Nasıl Çalışır",
+        how_hint: "Hızlı ilerlemek için scope’u net tutar, gün gün teslim ederiz.",
+        how_card1_title: "7 Günlük Takvim",
+        how_card1_list1: "Fikrini WhatsApp’tan gönder",
+        how_card1_list2: "Gün 1: Çalışan demo teslim",
+        how_card1_list3: "Onay → proje başlar",
+        how_card1_list4: "Gün 3–6: Geliştirme + feedback",
+        how_card1_list5: "Gün 7: Launch & teslim",
+        how_card1_list6: "6 ay içinde 2 küçük revizyon",
+        how_card2_title: "Neden Bu Kadar Hızlı?",
+        how_card2_desc: "Net scope + hazır altyapı + doğru tekrar kullanımlar ile “7 gün” gerçekçi oluyor.",
+        how_card2_list1: "Hazır auth, rol, log, DB katmanı",
+        how_card2_list2: "Tek sprint / net teslim kriteri",
+        how_card2_list3: "HiTL akışlarıyla güvenli otomasyon",
+        demo_title: "🧪 Gerçek Demo: Dosyam360",
+        demo_desc: "Hasar raporu yükle → AI veriyi çıkarır → hesaplar → hukuki dosyayı üretir. Aşağıdan canlı demo’ya girip örnek dosya ile test edebilirsin.",
+        demo_link1_title: "Canlı Demo",
+        demo_link2_title: "Örnek Dosya",
+        demo_link2_desc: "PDF indir / yükle",
+        pricing_title: "💰 Fiyat Seçenekleri",
+        pricing_hint: "Net, şeffaf, sabit fiyat. Scope’a göre küçük oynamalar olabilir.",
+        pricing_plan1_title: "Internal Use",
+        pricing_plan1_desc: "Kendi ekibin / operasyonun için.",
+        pricing_plan1_meta: "Hızlı teslim • admin panel dahil",
+        pricing_plan1_list1: "Temel otomasyon & akışlar",
+        pricing_plan1_list2: "Log + rol yönetimi",
+        pricing_plan1_list3: "Deploy & kısa onboarding",
+        pricing_plan1_cta: "Teklif Al",
+        pricing_plan2_aria: "En popüler plan",
+        pricing_plan2_ribbon: "Most Popular",
+        pricing_plan2_title: "SaaS Product",
+        pricing_plan2_desc: "Müşterilere sat / startup olarak ölçekle.",
+        pricing_plan2_meta: "SaaS-ready • growth odaklı",
+        pricing_plan2_list1: "Multi-tenant / planlama kurgusu",
+        pricing_plan2_list2: "Dashboard + event/log takibi",
+        pricing_plan2_list3: "Onboarding akışları + roller",
+        pricing_plan2_cta: "SaaS’i Başlat",
+        pricing_plan3_title: "Optional Demo",
+        pricing_plan3_desc: "Tam ödeme öncesi “görerek karar ver”.",
+        pricing_plan3_meta: "Deposit • demo üretimi",
+        pricing_plan3_list1: "Scope doğrulama",
+        pricing_plan3_list2: "UX yönü netleşir",
+        pricing_plan3_list3: "Hızlı karar",
+        pricing_plan3_cta: "Demo İste",
+        why_title: "🧠 Neden GAIA?",
+        why_hint: "Üretimde çalışan uygulamalarla “proof” edilmiş yaklaşım.",
+        why_card1_title: "Deneyim",
+        why_card1_desc: "4+ yıl AI ürün geliştirme, gerçek iş problemlerinde pratik.",
+        why_card2_title: "Üretimde Uygulamalar",
+        why_card2_desc: "20+ internal & commercial app tecrübesi.",
+        why_card3_title: "Operasyonel Güç",
+        why_card3_desc: "Dashboard, log, rol, DB, HiTL akışları: ürün sadece “demo” kalmaz.",
+        faq_title: "❓ SSS",
+        faq_hint: "En sık gelen sorular.",
+        faq_q1: "“7 günde” neleri kapsıyor?",
+        faq_a1: "Net scope’u olan bir MVP/ürün: core akış, temel admin panel, rol/log, deploy ve kısa onboarding.",
+        faq_q2: "IP gerçekten bende mi?",
+        faq_a2: "Evet. Ürün senin markanla, senin kullanımına göre teslim edilir. (Sözleşme detayları görüşmede netleşir.)",
+        faq_q3: "Revizyonlar nasıl?",
+        faq_a3: "Teslim sonrası 6 ay içinde 2 küçük revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.",
+        final_title: "✅ Hazır mısın?",
+        final_desc: "Bir haftada çalışan AI ürününü birlikte çıkaralım.",
+        final_cta_primary: "WhatsApp’tan Yaz",
+        final_cta_secondary: "Fiyatları İncele",
+        footer_text: "© 2026 GAIA Platform — Built on our own infrastructure.",
+        sticky_aria: "Hızlı iletişim",
+        sticky_title: "GAIA • 7 günde teslim",
+        sticky_sub: "WhatsApp’tan başla",
+        sticky_cta: "Yaz"
+      }
+    };
+
+    const applyTranslations = (lang) => {
+      const strings = translations[lang] || translations.ar;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.dataset.i18n;
+        if (strings[key]) el.textContent = strings[key];
+      });
+      document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+        const key = el.dataset.i18nHtml;
+        if (strings[key]) el.innerHTML = strings[key];
+      });
+      document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+        const key = el.dataset.i18nAriaLabel;
+        if (strings[key]) el.setAttribute("aria-label", strings[key]);
+      });
+      const isRtl = lang === "ar";
+      document.documentElement.lang = lang;
+      document.documentElement.dir = isRtl ? "rtl" : "ltr";
+      document.body.classList.toggle("rtl", isRtl);
+    };
+
+    const langSelect = document.getElementById("lang-select");
+    const defaultLang = "ar";
+    langSelect.value = defaultLang;
+    applyTranslations(defaultLang);
+    langSelect.addEventListener("change", (e) => {
+      applyTranslations(e.target.value);
+    });
+
     // Simple reveal on scroll (respects reduced motion in CSS)
     const els = Array.from(document.querySelectorAll(".reveal"));
     const io = new IntersectionObserver((entries) => {
@@ -973,7 +1384,7 @@
 
     // FAQ summary "+" toggle
     document.querySelectorAll(".faq details").forEach(d => {
-      const s = d.querySelector("summary span");
+      const s = d.querySelector("summary span[aria-hidden='true']");
       d.addEventListener("toggle", () => { if (s) s.textContent = d.open ? "–" : "+"; });
     });
   </script>
