@@ -40,11 +40,8 @@
       margin:0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       color: var(--text);
-      background: radial-gradient(1000px 600px at 18% 10%, rgba(106,168,255,.25), transparent 60%),
-                  radial-gradient(900px 560px at 75% 20%, rgba(53,242,164,.22), transparent 55%),
-                  radial-gradient(800px 520px at 50% 95%, rgba(255,213,106,.18), transparent 55%),
-                  linear-gradient(180deg, #070b14 0%, #050915 55%, #040815 100%);
-      overflow-x:hidden;
+      background: #050915;
+      overflow-x: clip;
     }
 
     body.rtl{
@@ -71,6 +68,11 @@
     .container{
       width: min(1120px, calc(100% - 48px));
       margin-inline:auto;
+    }
+
+    main{
+      position: relative;
+      overflow-x: clip;
     }
 
     /* Top bar */
@@ -118,6 +120,21 @@
 
     .lang-switch{
       display:flex; align-items:center; gap:8px;
+    }
+    .lang-switch .lang-flag{
+      width: 22px;
+      height: 16px;
+      border-radius: 4px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      flex: 0 0 auto;
+    }
+    .lang-switch .lang-flag img{
+      width: 100%;
+      height: 100%;
+      display:block;
+      object-fit: cover;
     }
     .lang-switch select{
       background: rgba(255,255,255,.06);
@@ -266,6 +283,8 @@
     /* Sections */
     .section{
       padding: 34px 0;
+      position: relative;
+      isolation: isolate;
     }
     .section-head{
       display:flex; align-items:flex-end; justify-content:space-between; gap: 18px;
@@ -287,6 +306,8 @@
       display:grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
+      position: relative;
+      z-index: 1;
     }
     .card{
       border-radius: var(--r-lg);
@@ -295,6 +316,8 @@
       box-shadow: 0 16px 50px rgba(0,0,0,.25);
       overflow:hidden;
       position:relative;
+      isolation: isolate;
+      background-clip: padding-box;
     }
     .card .inner{ padding: 16px; }
     .card .title{
@@ -382,6 +405,8 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       align-items: stretch;
+      position: relative;
+      z-index: 1;
     }
     .price{
       position:relative;
@@ -390,8 +415,10 @@
       border: 1px solid rgba(255,255,255,.10);
       box-shadow: 0 18px 60px rgba(0,0,0,.28);
       overflow:hidden;
+      isolation: isolate;
+      background-clip: padding-box;
     }
-    .price .inner{ padding: 18px; }
+    .price .inner{ padding: 18px; position: relative; z-index: 1; }
     .price h3{ margin:0; font-size: 18px; letter-spacing:-.02em; }
     .price .desc{ margin: 6px 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
     .amount{
@@ -426,6 +453,9 @@
       border-color: rgba(53,242,164,.35);
       background: linear-gradient(180deg, rgba(53,242,164,.12), rgba(255,255,255,.04));
     }
+    .popular .inner{
+      padding-top: 42px;
+    }
     .ribbon{
       position:absolute; top: 14px; right: 14px;
       padding: 8px 10px;
@@ -435,6 +465,11 @@
       color: rgba(255,255,255,.92);
       font-size: 12px;
       font-weight: 800;
+      z-index: 2;
+    }
+    body.rtl .ribbon{
+      right: auto;
+      left: 14px;
     }
 
     /* FAQ + final CTA */
@@ -442,7 +477,14 @@
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      align-items:start;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+    .faq,
+    .final{
+      position: relative;
+      z-index: 1;
     }
     .faq details{
       border-radius: var(--r-lg);
@@ -474,6 +516,10 @@
       border: 1px solid rgba(255,255,255,.14);
       box-shadow: var(--glow);
       padding: 22px 16px;
+      height: 100%;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
     }
     .final h2{ margin:0 0 8px; font-size: 24px; letter-spacing:-.02em; }
     .final p{ margin:0 0 14px; color: var(--muted); }
@@ -526,9 +572,65 @@
       .brand{ min-width: unset; }
     }
     @media (max-width: 720px){
+      body{
+        background: #050915;
+      }
+      .topbar-inner{
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+      }
+      .brand{
+        justify-content: flex-start;
+        gap: 8px;
+      }
+      .brand img{
+        height: 26px;
+      }
+      .brand .badge{
+        display: none;
+      }
+      .lang-switch{
+        position: relative;
+        justify-content: flex-end;
+        width: 28px;
+        height: 20px;
+      }
+      .lang-switch .lang-flag{
+        width: 28px;
+        height: 20px;
+      }
+      .lang-switch select{
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        cursor: pointer;
+      }
+      .topbar .btn{
+        display: none;
+      }
       .nav{ display:none; }
       .sticky{ display:block; }
+      .sticky .wrap{
+        justify-content: space-between;
+      }
       .hero{ padding-top: 44px; }
+      .section{
+        padding: 22px 0;
+        margin: 12px;
+        border-radius: 20px;
+        background: rgba(6,10,18,.92);
+        border: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      }
+      .section .container{
+        width: min(1120px, calc(100% - 32px));
+      }
     }
     @media (prefers-reduced-motion: reduce){
       .btn, .linkbtn, .reveal{ transition:none !important; }
@@ -542,9 +644,9 @@
   <div class="topbar">
     <div class="container">
       <div class="topbar-inner">
-        <a class="brand" href="#top" data-i18n-aria-label="home_aria">
+        <a class="brand" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" data-i18n-aria-label="home_aria">
           <img
-            src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1745847814778x710684901839326200/gaia%20logo%20g%C3%BCncel%20dark.svg"
+            src="https://3eb5781fa49387b730714ea4e6de8465.cdn.bubble.io/f1742318156805x991050965988186500/gaia%20light.svg"
             alt="GAIA"
           />
           <span class="badge"><span class="dot"></span> <span data-i18n="badge_delivery"></span></span>
@@ -560,6 +662,9 @@
 
         <div class="lang-switch">
           <label class="sr-only" for="lang-select" data-i18n="lang_label"></label>
+          <span class="lang-flag" aria-hidden="true">
+            <img data-lang-flag src="https://flagcdn.com/w20/sa.png" srcset="https://flagcdn.com/w40/sa.png 2x" alt="">
+          </span>
           <select id="lang-select" aria-label="Language">
             <option value="ar">العربية</option>
             <option value="en">English</option>
@@ -972,11 +1077,11 @@
           <b data-i18n="sticky_title"></b><br>
           <span data-i18n="sticky_sub"></span>
         </div>
-        <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" style="padding:10px 14px;">
-          <span data-i18n="sticky_cta"></span>
+        <a class="btn btn-primary" href="http://wa.me/+905441650781" target="_blank" rel="noreferrer" style="padding:10px 16px;">
+          <span data-i18n="cta_whatsapp_top"></span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.2-3.7A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.7 9.6c.2-.5.5-.6.9-.6h.6c.2 0 .4 0 .6.4l.8 1.8c.1.2.1.5 0 .7l-.5.6c-.1.1-.1.3 0 .5.6 1 1.5 1.8 2.5 2.4.2.1.4.1.5 0l.6-.5c.2-.1.5-.1.7 0l1.8.8c.4.2.4.4.4.6v.6c0 .4-.1.7-.6.9-.7.3-2.3.6-4.7-.7-2.3-1.3-4-3.6-4.6-4.9-.6-1.3-.2-2.6.1-3.3Z" fill="currentColor" opacity=".85"/>
           </svg>
         </a>
       </div>
@@ -1004,7 +1109,7 @@
         trust_aria: "الميزات البارزة",
         trust_1: "✅ عرض في اليوم الأول",
         trust_2: "✅ إطلاق في اليوم السابع",
-        trust_3: "✅ تعديلان بسيطان خلال 6 أشهر",
+        trust_3: "✅ تعديلان قياسيان",
         trust_4: "✅ HiTL + سجلات + أدوار + قاعدة بيانات",
         hero_plan_aria: "بطاقة خطة 7 أيام",
         hero_plan_title: "خطة تسليم سريعة",
@@ -1043,7 +1148,7 @@
         how_card1_list3: "الموافقة → يبدأ المشروع",
         how_card1_list4: "اليوم 3–6: تطوير + ملاحظات",
         how_card1_list5: "اليوم 7: إطلاق وتسليم",
-        how_card1_list6: "تعديلان بسيطان خلال 6 أشهر",
+        how_card1_list6: "تعديلان قياسيان",
         how_card2_title: "لماذا بهذه السرعة؟",
         how_card2_desc: "نطاق واضح + بنية جاهزة + إعادة استخدام صحيحة تجعل 7 أيام واقعية.",
         how_card2_list1: "مصادقة جاهزة وأدوار وسجلات وقاعدة بيانات",
@@ -1094,7 +1199,7 @@
         faq_q2: "هل الملكية الفكرية لي حقًا؟",
         faq_a2: "نعم. يُسلّم المنتج بعلامتك وبحسب استخدامك. (تُوضح تفاصيل العقد في الاجتماع.)",
         faq_q3: "كيف تكون المراجعات؟",
-        faq_a3: "تعديلان بسيطان خلال 6 أشهر بعد التسليم. التوسعات الكبيرة تُخطط منفصلة.",
+        faq_a3: "تعديلان قياسيان بعد التسليم. التوسعات الكبيرة تُخطط منفصلة.",
         final_title: "✅ هل أنت مستعد؟",
         final_desc: "لنطلق منتج ذكاء اصطناعي يعمل خلال أسبوع.",
         final_cta_primary: "راسلنا على واتساب",
@@ -1124,7 +1229,7 @@
         trust_aria: "Highlighted features",
         trust_1: "✅ Day 1 demo",
         trust_2: "✅ Day 7 launch",
-        trust_3: "✅ 2 small revisions within 6 months",
+        trust_3: "✅ 2 standard revisions",
         trust_4: "✅ HiTL + Logs + Roles + DB",
         hero_plan_aria: "7-day plan card",
         hero_plan_title: "Fast Delivery Plan",
@@ -1163,7 +1268,7 @@
         how_card1_list3: "Approval → project starts",
         how_card1_list4: "Days 3–6: Development + feedback",
         how_card1_list5: "Day 7: Launch & handoff",
-        how_card1_list6: "2 small revisions within 6 months",
+        how_card1_list6: "2 standard revisions",
         how_card2_title: "Why So Fast?",
         how_card2_desc: "Clear scope + ready infrastructure + smart reuse make 7 days realistic.",
         how_card2_list1: "Ready auth, roles, logs, DB layer",
@@ -1214,7 +1319,7 @@
         faq_q2: "Do I really own the IP?",
         faq_a2: "Yes. The product is delivered under your brand and for your use. (Contract details are clarified in the meeting.)",
         faq_q3: "How do revisions work?",
-        faq_a3: "Two small revisions within 6 months after delivery. Larger scope expansions are planned separately.",
+        faq_a3: "Two standard revisions after delivery. Larger scope expansions are planned separately.",
         final_title: "✅ Ready to go?",
         final_desc: "Let’s ship a working AI product in a week.",
         final_cta_primary: "Message us on WhatsApp",
@@ -1244,7 +1349,7 @@
         trust_aria: "Öne çıkan özellikler",
         trust_1: "✅ 1. gün demo",
         trust_2: "✅ 7. gün launch",
-        trust_3: "✅ 6 ay içinde 2 küçük revizyon",
+        trust_3: "✅ 2 standart revizyon",
         trust_4: "✅ HiTL + Log + Rol + DB",
         hero_plan_aria: "7 günlük plan kartı",
         hero_plan_title: "Hızlı Teslim Planı",
@@ -1283,7 +1388,7 @@
         how_card1_list3: "Onay → proje başlar",
         how_card1_list4: "Gün 3–6: Geliştirme + feedback",
         how_card1_list5: "Gün 7: Launch & teslim",
-        how_card1_list6: "6 ay içinde 2 küçük revizyon",
+        how_card1_list6: "2 standart revizyon",
         how_card2_title: "Neden Bu Kadar Hızlı?",
         how_card2_desc: "Net scope + hazır altyapı + doğru tekrar kullanımlar ile “7 gün” gerçekçi oluyor.",
         how_card2_list1: "Hazır auth, rol, log, DB katmanı",
@@ -1334,7 +1439,7 @@
         faq_q2: "IP gerçekten bende mi?",
         faq_a2: "Evet. Ürün senin markanla, senin kullanımına göre teslim edilir. (Sözleşme detayları görüşmede netleşir.)",
         faq_q3: "Revizyonlar nasıl?",
-        faq_a3: "Teslim sonrası 6 ay içinde 2 küçük revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.",
+        faq_a3: "Teslim sonrası 2 standart revizyon. Büyük kapsam genişlemeleri ayrıca planlanır.",
         final_title: "✅ Hazır mısın?",
         final_desc: "Bir haftada çalışan AI ürününü birlikte çıkaralım.",
         final_cta_primary: "WhatsApp’tan Yaz",
@@ -1345,6 +1450,21 @@
         sticky_sub: "WhatsApp’tan başla",
         sticky_cta: "Yaz"
       }
+    };
+
+    const langFlags = {
+      ar: "sa",
+      en: "gb",
+      tr: "tr"
+    };
+
+    const updateLangFlag = (lang) => {
+      const flag = langFlags[lang] || "sa";
+      const flagImg = document.querySelector("[data-lang-flag]");
+      if (!flagImg) return;
+      flagImg.src = `https://flagcdn.com/w20/${flag}.png`;
+      flagImg.srcset = `https://flagcdn.com/w40/${flag}.png 2x`;
+      flagImg.alt = "";
     };
 
     const applyTranslations = (lang) => {
@@ -1365,6 +1485,7 @@
       document.documentElement.lang = lang;
       document.documentElement.dir = isRtl ? "rtl" : "ltr";
       document.body.classList.toggle("rtl", isRtl);
+      updateLangFlag(lang);
     };
 
     const langSelect = document.getElementById("lang-select");
@@ -1386,6 +1507,17 @@
     document.querySelectorAll(".faq details").forEach(d => {
       const s = d.querySelector("summary span[aria-hidden='true']");
       d.addEventListener("toggle", () => { if (s) s.textContent = d.open ? "–" : "+"; });
+    });
+
+    document.querySelectorAll("a[href^='#']").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const id = link.getAttribute("href");
+        const target = id ? document.querySelector(id) : null;
+        if (target) {
+          event.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
     });
   </script>
 </body>
