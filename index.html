@@ -1245,11 +1245,6 @@
       margin: 0;
     }
 
-    .whatsapp-cta-phone {
-      font-weight: 700;
-      color: #0f6b4e;
-    }
-
     .whatsapp-cta-actions {
       display: flex;
       flex-wrap: wrap;
@@ -1287,7 +1282,7 @@
       border: 1px solid #cfe7d4;
       box-shadow: 0 16px 30px rgba(15, 23, 42, 0.15);
       display: grid;
-      gap: 6px;
+      gap: 10px;
       opacity: 0;
       transform: translateY(12px);
       transition: opacity 0.4s ease, transform 0.4s ease;
@@ -1297,6 +1292,32 @@
     .whatsapp-greeting.is-active {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    .whatsapp-greeting-link {
+      text-decoration: none;
+      color: inherit;
+      display: grid;
+      gap: 8px;
+    }
+
+    .whatsapp-greeting-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .whatsapp-greeting-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: #16a34a;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: 0 10px 18px rgba(22, 163, 74, 0.35);
+      flex-shrink: 0;
     }
 
     .whatsapp-greeting-title {
@@ -2420,14 +2441,13 @@
               <span class="whatsapp-cta-tag">WhatsApp</span>
               <h2 class="whatsapp-cta-title">Hemen iletişime geçin</h2>
               <p class="whatsapp-cta-text">
-                Sorularınızı hızlıca yanıtlıyoruz. WhatsApp üzerinden bize yazın:
-                <span class="whatsapp-cta-phone">+90 544 165 07 81</span>
+                Dosyam360 hakkında daha fazla bilgi almak için WhatsApp üzerinden bize yazın.
               </p>
             </div>
             <div class="whatsapp-cta-actions">
               <a
                 class="whatsapp-cta-button"
-                href="https://wa.me/905441650781?text=Merhaba%2C%20hemen%20ileti%C5%9Fime%20ge%C3%A7mek%20istiyorum."
+                href="https://wa.me/905441650781?text=Merhaba%2C%20Dosyam360%20hakk%C4%B1nda%20daha%20fazla%20bilgi%20almak%20istiyorum."
                 target="_blank"
                 rel="noopener"
               >
@@ -2954,10 +2974,20 @@
   </div>
 
   <div class="whatsapp-greeting" id="whatsappGreeting" role="status" aria-live="polite">
-    <div class="whatsapp-greeting-title">👋 Merhaba!</div>
-    <p class="whatsapp-greeting-text">
-      Hemen iletişime geçmek için WhatsApp butonuna tıklayın.
-    </p>
+    <a
+      class="whatsapp-greeting-link"
+      href="https://wa.me/905441650781?text=Merhaba%2C%20Dosyam360%20hakk%C4%B1nda%20daha%20fazla%20bilgi%20almak%20istiyorum."
+      target="_blank"
+      rel="noopener"
+    >
+      <div class="whatsapp-greeting-header">
+        <span class="whatsapp-greeting-icon" aria-hidden="true">💬</span>
+        <div class="whatsapp-greeting-title">WhatsApp</div>
+      </div>
+      <p class="whatsapp-greeting-text">
+        Hemen iletişime geçerek dosyanızı nasıl şeffaf olarak takip edebileceğinizi öğrenin.
+      </p>
+    </a>
   </div>
 
   <div class="modal-backdrop" id="howItWorksModal" aria-hidden="true">
