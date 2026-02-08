@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bubble Dynamic Form Element</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --border: #e5e7eb;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    input[disabled],
+    textarea[disabled],
+    select[disabled] {
+      background: #f3f4f6;
+      color: var(--muted);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .tag.ai {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+    }
+
+    .tag.human {
+      background: rgba(22, 163, 74, 0.1);
+      color: var(--success);
+    }
+
+    .tag.hidden {
+      background: rgba(107, 114, 128, 0.1);
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: var(--text);
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .console {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 0.85rem;
+      max-height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .file-preview {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .file-pill {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-pill a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .file-pill span {
+      color: var(--muted);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 240px) 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-meta {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .field-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #4b5563;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .field-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .badge.control {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .badge.mandatory {
+      background: rgba(239, 68, 68, 0.08);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .badge.optional {
+      background: rgba(22, 163, 74, 0.08);
+      color: var(--success);
+      border-color: rgba(22, 163, 74, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h2>JSON Girişi</h2>
+      <p class="muted">
+        Bubble HTML elementinde en üste yerleştirilecek bölüm: veri JSON, column JSON ve prediction JSON.
+        Bu alanlar Bubble içinde gizlenebilir veya kaldırılabilir.
+      </p>
+      <div class="grid two">
+        <div>
+          <label for="dataJson">Data JSON</label>
+          <textarea id="dataJson" placeholder="{"id": "value"}"></textarea>
+        </div>
+        <div>
+          <label for="columnsJson">Columns JSON</label>
+          <textarea id="columnsJson" placeholder="[{"id": "Field", "type": "text"}]"></textarea>
+        </div>
+        <div>
+          <label for="predictionJson">Prediction JSON</label>
+          <textarea id="predictionJson" placeholder="{"id": "ChatGPT value"}"></textarea>
+        </div>
+      </div>
+      <div class="actions" style="margin-top: 16px;">
+        <button id="loadSample">Örnek Senaryo 1 (Karışık)</button>
+        <button class="secondary" id="loadSampleAlt">Örnek Senaryo 2 (Form + Dropdown)</button>
+        <button class="secondary" id="loadSampleFiles">Örnek Senaryo 3 (Dosya)</button>
+        <button class="ghost" id="loadDataOnly">Sadece Data JSON Yükle</button>
+        <button class="ghost" id="loadColumnsOnly">Sadece Columns JSON Yükle</button>
+        <button class="ghost" id="loadPrediction">Prediction JSON Yükle</button>
+        <button class="secondary" id="renderForm">Formu Yenile</button>
+        <button class="ghost" id="clearConsole">Console Temizle</button>
+        <button class="ghost" id="logOutput">Outputlist1 Logla</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Developer Console</h2>
+      <div class="console" id="devConsole"></div>
+    </section>
+
+    <section class="card">
+      <h2>Dynamic Form</h2>
+      <div id="formContainer" class="grid"></div>
+    </section>
+  </main>
+
+  <script>
+    const devConsole = document.getElementById("devConsole");
+    const dataJsonEl = document.getElementById("dataJson");
+    const columnsJsonEl = document.getElementById("columnsJson");
+    const predictionJsonEl = document.getElementById("predictionJson");
+    const formContainer = document.getElementById("formContainer");
+
+    const sampleData = {
+      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
+      "Davacı Kimlik Tipi": "TC Kimlik",
+      "Davacı Ad Soyad": "İSMAİL DİNCER",
+      "Davacı TCKN/VKN": "12928963404",
+      "Davacı Plaka": "19BA618",
+      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
+      "Davacı Şase No": "NMTBZ28E90R141719",
+      "Karşı Ad Soyad": "YILMAZ HIŞIR",
+      "Karşı TCKN/VKN": "31066362344",
+      "Karşı Plaka": "19ABA563",
+      "Kaza Tarihi": "2024-11-15",
+      "Aracın Markası": "TOYOTA",
+      "Aracın Tipi": "Hususi",
+      "Aracın Model Yılı": "2006",
+      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
+      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
+      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
+      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
+      "Karşı Poliçe No": "104781355",
+      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
+      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
+      "Eksper Rp Tarihi": "2025-02-28",
+      "Hasar Onarım Tutarı": "140000",
+      "Kusur Oranı": "75",
+      "Davali Adi": "Corpus Sigorta A.Ş.",
+      "Aracın Kilometresi": "231328",
+      "action": "DK Hesaba Taşı",
+      "İhtar Tarihi": "Bugünün tarihi",
+      "predictedAction": "İhtar Dilekçesi Hazırla",
+      "uniqueid": "1770577890579x349136294770973500",
+      "Stage": "DK Hesabı",
+      "Esas No": ""
+    };
+
+    const sampleColumns = [
+      {
+        id: "Davacı Ad Soyad",
+        header: "Davacı Ad Soyad",
+        type: "text",
+        order: 1,
+        default: "",
+        columnWidth: 120,
+        control: true,
+        mandatory: true,
+        source: [],
+        multiple: false
+      },
+      {
+        id: "Davacı Plaka",
+        header: "Davacı Plaka",
+        type: "text",
+        order: 2,
+        default: "",
+        columnWidth: 120,
+        control: true,
+        mandatory: true,
+        source: [],
+        multiple: false
+      },
+      {
+        id: "Kaza Tarihi",
+        header: "Kaza Tarihi",
+        type: "date",
+        order: 3,
+        default: "",
+        columnWidth: 120,
+        control: true,
+        optional: true,
+        source: [],
+        multiple: false
+      },
+      {
+        id: "Hasar Onarım Tutarı",
+        header: "Hasar Onarım Tutarı",
+        type: "number",
+        order: 4,
+        default: "",
+        columnWidth: 120,
+        control: true,
+        optional: true,
+        source: [],
+        multiple: false
+      },
+      {
+        id: "İhtar Tarihi",
+        header: "İhtar Tarihi",
+        type: "text",
+        order: 5,
+        default: "",
+        columnWidth: 120,
+        control: true,
+        optional: true,
+        source: [],
+        multiple: false
+      },
+      {
+        id: "Belgeleri Yükle",
+        header: "Belgeleri Yükle",
+        type: "imagepdf",
+        control: true,
+        optional: true,
+        readOnly: false
+      }
+    ];
+
+    const sampleDataAlt = {
+      "Ad Soyad": "Ayşe Yılmaz",
+      "Telefon": "+90 532 000 00 00",
+      "E-mail": "ayse@example.com",
+      "Onay": true,
+      "Araç Tipi": "Hususi",
+      "Hasar Açıklaması": "Arka tampon hasarlı.",
+      "Randevu Tarihi": "2025-02-10"
+    };
+
+    const sampleColumnsAlt = [
+      {
+        id: "Ad Soyad",
+        header: "Ad Soyad",
+        type: "text",
+        order: 1,
+        default: "",
+        control: true,
+        mandatory: true
+      },
+      {
+        id: "Telefon",
+        header: "Telefon",
+        type: "phone",
+        order: 2,
+        default: "",
+        control: true,
+        mandatory: true
+      },
+      {
+        id: "E-mail",
+        header: "E-mail",
+        type: "email",
+        order: 3,
+        default: "",
+        control: true,
+        mandatory: true
+      },
+      {
+        id: "Araç Tipi",
+        header: "Araç Tipi",
+        type: "dropdown",
+        order: 4,
+        default: "Hususi",
+        source: ["Hususi", "Ticari", "Kiralık"],
+        control: true,
+        multiple: false
+      },
+      {
+        id: "Hasar Açıklaması",
+        header: "Hasar Açıklaması",
+        type: "text long",
+        order: 5,
+        default: "",
+        control: true,
+        optional: true
+      },
+      {
+        id: "Randevu Tarihi",
+        header: "Randevu Tarihi",
+        type: "date",
+        order: 6,
+        default: "",
+        control: true,
+        optional: true
+      },
+      {
+        id: "Onay",
+        header: "Onay",
+        type: "checkbox",
+        order: 7,
+        default: false,
+        control: true,
+        optional: true
+      }
+    ];
+
+    const sampleDataFiles = {
+      "Dosyalar": [
+        "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf"
+      ],
+      "Fotoğraf Notu": "Ön tampon fotoğrafı eklendi.",
+      "Kaza Tarihi": "2024-11-15"
+    };
+
+    const sampleColumnsFiles = [
+      {
+        id: "Dosyalar",
+        header: "Dosyalar",
+        type: "imagepdf",
+        order: 1,
+        control: true,
+        optional: true
+      },
+      {
+        id: "Fotoğraf Notu",
+        header: "Fotoğraf Notu",
+        type: "text long",
+        order: 2,
+        control: true,
+        optional: true
+      },
+      {
+        id: "Kaza Tarihi",
+        header: "Kaza Tarihi",
+        type: "date",
+        order: 3,
+        control: true,
+        optional: true
+      }
+    ];
+
+    const samplePrediction = {
+      "İhtar Tarihi": "2025-03-01",
+      "Hasar Onarım Tutarı": "145000"
+    };
+
+    const state = {
+      columns: [],
+      data: {},
+      prediction: {},
+      fieldSources: {},
+      outputlist1: []
+    };
+
+    function log(message, payload) {
+      const time = new Date().toLocaleTimeString("tr-TR");
+      const line = `[${time}] ${message}`;
+      devConsole.textContent += `${line}${payload ? `\n${payload}` : ""}\n`;
+      devConsole.scrollTop = devConsole.scrollHeight;
+      console.info(message, payload || "");
+    }
+
+    function safeParseJson(text) {
+      if (!text) {
+        return null;
+      }
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        log("JSON parse hatası:", error.message);
+        return null;
+      }
+    }
+
+    function getNormalizedType(type) {
+      if (!type) return "text";
+      return String(type).trim().toLowerCase();
+    }
+
+    function shouldIgnoreColumn(column) {
+      const id = String(column.id || "");
+      const type = getNormalizedType(column.type);
+      if (id.endsWith(".cf")) return true;
+      if (type.endsWith(".cf")) return true;
+      if (type === "reference" || type === "refered") return true;
+      return false;
+    }
+
+    function getInitialValue(column) {
+      const id = column.id;
+      const dataValue = state.data && state.data[id] !== undefined ? state.data[id] : null;
+      if (dataValue !== null && dataValue !== "") {
+        state.fieldSources[id] = "human";
+        return dataValue;
+      }
+      const predictedValue = state.prediction && state.prediction[id] !== undefined ? state.prediction[id] : "";
+      if (predictedValue !== "") {
+        state.fieldSources[id] = "ai";
+        return predictedValue;
+      }
+      state.fieldSources[id] = "human";
+      return column.default || "";
+    }
+
+    function createTag(source, isHidden) {
+      const tag = document.createElement("span");
+      tag.classList.add("tag");
+      if (isHidden) {
+        tag.classList.add("hidden");
+        tag.textContent = "Gizli";
+        return tag;
+      }
+      if (source === "ai") {
+        tag.classList.add("ai");
+        tag.textContent = "🤖 ChatGPT";
+      } else {
+        tag.classList.add("human");
+        tag.textContent = "👤 İnsan";
+      }
+      return tag;
+    }
+
+    function getTypeIcon(type) {
+      const normalized = getNormalizedType(type);
+      if (normalized === "text" || normalized === "embed" || normalized === "user") return "T";
+      if (normalized === "text long" || normalized === "multiline text") return "≡";
+      if (normalized === "number") return "№";
+      if (normalized === "phone") return "☎";
+      if (normalized === "email" || normalized === "e-mail") return "@";
+      if (normalized === "date") return "📅";
+      if (normalized === "checkbox") return "☑";
+      if (normalized === "dropdown") return "▾";
+      if (normalized === "imagepdf" || normalized === "image&pdf" || normalized === "image/pdf") return "📎";
+      return "•";
+    }
+
+    function createBadges(column) {
+      const badges = document.createElement("div");
+      badges.className = "field-badges";
+      if (column.control) {
+        const badge = document.createElement("span");
+        badge.className = "badge control";
+        badge.textContent = "Control";
+        badges.appendChild(badge);
+      }
+      if (column.mandatory) {
+        const badge = document.createElement("span");
+        badge.className = "badge mandatory";
+        badge.textContent = "Mandatory";
+        badges.appendChild(badge);
+      }
+      if (column.optional) {
+        const badge = document.createElement("span");
+        badge.className = "badge optional";
+        badge.textContent = "Optional";
+        badges.appendChild(badge);
+      }
+      return badges;
+    }
+
+    function updateOutputList() {
+      state.outputlist1 = state.columns.map((column) => {
+        const id = column.id;
+        const value = state.data[id];
+        return {
+          id,
+          header: column.header || id,
+          type: column.type || "text",
+          value,
+          source: state.fieldSources[id] || "human",
+          readOnly: Boolean(column.readOnly),
+          control: Boolean(column.control),
+          mandatory: Boolean(column.mandatory),
+          optional: Boolean(column.optional)
+        };
+      });
+
+      const payload = JSON.stringify(state.outputlist1);
+      window.outputlist1 = payload;
+      if (typeof window.bubble_fn_outputlist1 === "function") {
+        window.bubble_fn_outputlist1(payload);
+      }
+      log("outputlist1 güncellendi.", payload);
+    }
+
+    async function compressImage(file, maxWidth = 1600, quality = 0.8) {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Dosya okunamadı"));
+        reader.readAsDataURL(file);
+      });
+
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Görsel yüklenemedi"));
+        img.src = dataUrl;
+      });
+
+      const scale = Math.min(1, maxWidth / image.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", quality);
+    }
+
+    async function handleFileUpload(column, input) {
+      const files = Array.from(input.files || []);
+      const existing = state.data[column.id] || [];
+      const normalizedExisting = Array.isArray(existing) ? existing : existing ? [existing] : [];
+      const uploads = [];
+
+      for (const file of files) {
+        if (file.type.startsWith("image/")) {
+          const compressed = await compressImage(file);
+          uploads.push({
+            name: file.name,
+            type: file.type,
+            base64: compressed
+          });
+        } else {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Dosya okunamadı"));
+            reader.readAsDataURL(file);
+          });
+          uploads.push({
+            name: file.name,
+            type: file.type,
+            base64
+          });
+        }
+      }
+
+      state.data[column.id] = {
+        existingUrls: normalizedExisting,
+        uploads
+      };
+      state.fieldSources[column.id] = "human";
+      updateOutputList();
+    }
+
+    function renderForm() {
+      formContainer.innerHTML = "";
+      state.columns = (safeParseJson(columnsJsonEl.value) || []).filter((col) => !shouldIgnoreColumn(col));
+      state.data = safeParseJson(dataJsonEl.value) || {};
+      state.prediction = safeParseJson(predictionJsonEl.value) || {};
+      state.fieldSources = {};
+
+      const sorted = [...state.columns].sort((a, b) => (a.order || 0) - (b.order || 0));
+      state.columns = sorted;
+
+      if (sorted.length === 0) {
+        formContainer.innerHTML = "<p class=\"muted\">Column JSON boş veya geçersiz.</p>";
+        return;
+      }
+
+      sorted.forEach((column) => {
+        const row = document.createElement("div");
+        row.className = "form-row";
+        const wrapper = document.createElement("div");
+        wrapper.className = "field-meta";
+        const label = document.createElement("div");
+        label.className = "field-title";
+        const initialValue = getInitialValue(column);
+        const icon = document.createElement("span");
+        icon.className = "field-icon";
+        icon.textContent = getTypeIcon(column.type);
+        label.appendChild(icon);
+        const labelText = document.createElement("span");
+        labelText.textContent = column.header || column.id || "Alan";
+        label.appendChild(labelText);
+
+        const isHidden = getNormalizedType(column.type) === "hidden";
+        label.appendChild(createTag(state.fieldSources[column.id], isHidden));
+        wrapper.appendChild(label);
+        wrapper.appendChild(createBadges(column));
+
+        if (isHidden) {
+          state.data[column.id] = initialValue;
+          const hiddenHint = document.createElement("div");
+          hiddenHint.className = "muted";
+          hiddenHint.textContent = initialValue ? `Gizli değer mevcut (${initialValue}).` : "Gizli değer boş.";
+          wrapper.appendChild(hiddenHint);
+          row.appendChild(wrapper);
+          formContainer.appendChild(row);
+          return;
+        }
+
+        const type = getNormalizedType(column.type);
+        let field;
+        if (type === "text" || type === "embed" || type === "user") {
+          field = document.createElement("input");
+          field.type = "text";
+        } else if (type === "text long" || type === "multiline text") {
+          field = document.createElement("textarea");
+        } else if (type === "number") {
+          field = document.createElement("input");
+          field.type = "number";
+        } else if (type === "phone") {
+          field = document.createElement("input");
+          field.type = "tel";
+        } else if (type === "e-mail" || type === "email") {
+          field = document.createElement("input");
+          field.type = "email";
+        } else if (type === "date") {
+          field = document.createElement("input");
+          field.type = "date";
+        } else if (type === "checkbox") {
+          field = document.createElement("input");
+          field.type = "checkbox";
+        } else if (type === "dropdown") {
+          field = document.createElement("select");
+          if (column.multiple) {
+            field.multiple = true;
+          }
+          const options = Array.isArray(column.source) ? column.source : [];
+          if (options.length === 0 && state.data[column.id]) {
+            options.push(state.data[column.id]);
+          }
+          options.forEach((opt) => {
+            const option = document.createElement("option");
+            option.value = opt;
+            option.textContent = opt;
+            field.appendChild(option);
+          });
+        } else if (type === "imagepdf" || type === "image&pdf" || type === "image/pdf") {
+          field = document.createElement("input");
+          field.type = "file";
+          field.accept = "image/*,application/pdf";
+          field.multiple = true;
+        } else {
+          field = document.createElement("input");
+          field.type = "text";
+        }
+
+        if (field.type === "checkbox") {
+          field.checked = Boolean(initialValue);
+        } else if (field.type === "file") {
+          // no initial
+        } else if (field.multiple && Array.isArray(initialValue)) {
+          Array.from(field.options || []).forEach((option) => {
+            option.selected = initialValue.includes(option.value);
+          });
+        } else {
+          field.value = initialValue;
+        }
+
+        if (column.readOnly) {
+          field.disabled = true;
+        }
+
+        field.addEventListener("input", (event) => {
+          if (field.type === "file") return;
+          state.fieldSources[column.id] = "human";
+          if (event.target.type === "checkbox") {
+            state.data[column.id] = event.target.checked;
+          } else if (event.target.multiple) {
+            const values = Array.from(event.target.selectedOptions || []).map((opt) => opt.value);
+            state.data[column.id] = values;
+          } else {
+            state.data[column.id] = event.target.value;
+          }
+          label.querySelector(".tag")?.replaceWith(createTag("human"));
+          updateOutputList();
+        });
+
+        if (field.type === "file") {
+          field.addEventListener("change", () => handleFileUpload(column, field));
+          const preview = document.createElement("div");
+          preview.className = "file-preview";
+
+          const currentValue = state.data[column.id];
+          const urls = Array.isArray(currentValue)
+            ? currentValue
+            : currentValue?.existingUrls
+            ? currentValue.existingUrls
+            : currentValue
+            ? [currentValue]
+            : [];
+
+          urls.forEach((url) => {
+            const pill = document.createElement("div");
+            pill.className = "file-pill";
+            const link = document.createElement("a");
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener";
+            link.textContent = "Dosya görüntüle";
+            const span = document.createElement("span");
+            span.textContent = url;
+            pill.appendChild(link);
+            pill.appendChild(span);
+            preview.appendChild(pill);
+          });
+
+          const fileStack = document.createElement("div");
+          fileStack.className = "grid";
+          fileStack.appendChild(field);
+          fileStack.appendChild(preview);
+          row.appendChild(wrapper);
+          row.appendChild(fileStack);
+          formContainer.appendChild(row);
+          return;
+        }
+
+        row.appendChild(wrapper);
+        row.appendChild(field);
+        formContainer.appendChild(row);
+        state.data[column.id] = initialValue;
+      });
+
+      updateOutputList();
+    }
+
+    document.getElementById("loadSample").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleData, null, 2);
+      columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
+      predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
+      log("Örnek senaryo 1 yüklendi (karışık).");
+      renderForm();
+    });
+
+    document.getElementById("loadSampleAlt").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleDataAlt, null, 2);
+      columnsJsonEl.value = JSON.stringify(sampleColumnsAlt, null, 2);
+      predictionJsonEl.value = "";
+      log("Örnek senaryo 2 yüklendi (form + dropdown).");
+      renderForm();
+    });
+
+    document.getElementById("loadSampleFiles").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleDataFiles, null, 2);
+      columnsJsonEl.value = JSON.stringify(sampleColumnsFiles, null, 2);
+      predictionJsonEl.value = "";
+      log("Örnek senaryo 3 yüklendi (dosya).");
+      renderForm();
+    });
+
+    document.getElementById("loadDataOnly").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleData, null, 2);
+      log("Data JSON yüklendi.");
+    });
+
+    document.getElementById("loadColumnsOnly").addEventListener("click", () => {
+      columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
+      log("Columns JSON yüklendi.");
+    });
+
+    document.getElementById("loadPrediction").addEventListener("click", () => {
+      predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
+      log("Prediction JSON yüklendi.");
+    });
+
+    document.getElementById("renderForm").addEventListener("click", renderForm);
+    document.getElementById("clearConsole").addEventListener("click", () => {
+      devConsole.textContent = "";
+    });
+    document.getElementById("logOutput").addEventListener("click", () => {
+      log("outputlist1:", window.outputlist1 || "");
+    });
+
+    log("Dynamic form elementi hazır.");
+  </script>
+</body>
+</html>
