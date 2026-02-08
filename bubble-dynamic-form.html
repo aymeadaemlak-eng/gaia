@@ -168,6 +168,12 @@
       margin-top: 8px;
     }
 
+    .file-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
     .file-pill {
       padding: 6px 10px;
       border: 1px solid var(--border);
@@ -188,6 +194,42 @@
       color: var(--muted);
       overflow-wrap: anywhere;
       word-break: break-word;
+    }
+
+    .file-thumb {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      background: #fff;
+    }
+
+    .file-thumb img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #f3f4f6;
+    }
+
+    .file-thumb .file-name {
+      font-size: 0.8rem;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
     }
 
     .form-row {
@@ -738,7 +780,86 @@
         uploads
       };
       state.fieldSources[column.id] = "human";
+      if (input.dataset.previewId) {
+        const preview = document.getElementById(input.dataset.previewId);
+        if (preview) {
+          renderFilePreview(preview, state.data[column.id]);
+        }
+      }
       updateOutputList();
+    }
+
+    function isPdfUrl(url) {
+      return /\.pdf$/i.test(url);
+    }
+
+    function renderFilePreview(previewEl, value) {
+      previewEl.innerHTML = "";
+      if (!value) {
+        return;
+      }
+
+      const urls = Array.isArray(value)
+        ? value
+        : value?.existingUrls
+        ? value.existingUrls
+        : value
+        ? [value]
+        : [];
+      const uploads = Array.isArray(value?.uploads) ? value.uploads : [];
+
+      if (urls.length > 0) {
+        urls.forEach((url) => {
+          const pill = document.createElement("div");
+          pill.className = "file-pill";
+          const link = document.createElement("a");
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = "Dosya görüntüle";
+          const span = document.createElement("span");
+          span.textContent = url;
+          pill.appendChild(link);
+          pill.appendChild(span);
+          previewEl.appendChild(pill);
+        });
+      }
+
+      if (uploads.length > 0) {
+        const grid = document.createElement("div");
+        grid.className = "file-preview-grid";
+        uploads.forEach((upload) => {
+          const card = document.createElement("div");
+          card.className = "file-thumb";
+          const chip = document.createElement("span");
+          chip.className = "file-chip";
+          chip.textContent = upload.type?.startsWith("image/") ? "Görsel" : isPdfUrl(upload.name) ? "PDF" : "Dosya";
+          card.appendChild(chip);
+
+          if (upload.type?.startsWith("image/") && upload.base64) {
+            const img = document.createElement("img");
+            img.src = upload.base64;
+            img.alt = upload.name || "Yüklenen görsel";
+            card.appendChild(img);
+          }
+
+          if (upload.base64 && !upload.type?.startsWith("image/")) {
+            const link = document.createElement("a");
+            link.href = upload.base64;
+            link.target = "_blank";
+            link.rel = "noopener";
+            link.textContent = "Dosyayı aç";
+            card.appendChild(link);
+          }
+
+          const name = document.createElement("div");
+          name.className = "file-name";
+          name.textContent = upload.name || "Dosya";
+          card.appendChild(name);
+          grid.appendChild(card);
+        });
+        previewEl.appendChild(grid);
+      }
     }
 
     function renderForm() {
@@ -867,33 +988,14 @@
         });
 
         if (field.type === "file") {
+          const safeColumnId = String(column.id || "file").replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
+          const previewId = `file-preview-${safeColumnId}`;
+          field.dataset.previewId = previewId;
           field.addEventListener("change", () => handleFileUpload(column, field));
           const preview = document.createElement("div");
           preview.className = "file-preview";
-
-          const currentValue = state.data[column.id];
-          const urls = Array.isArray(currentValue)
-            ? currentValue
-            : currentValue?.existingUrls
-            ? currentValue.existingUrls
-            : currentValue
-            ? [currentValue]
-            : [];
-
-          urls.forEach((url) => {
-            const pill = document.createElement("div");
-            pill.className = "file-pill";
-            const link = document.createElement("a");
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener";
-            link.textContent = "Dosya görüntüle";
-            const span = document.createElement("span");
-            span.textContent = url;
-            pill.appendChild(link);
-            pill.appendChild(span);
-            preview.appendChild(pill);
-          });
+          preview.id = previewId;
+          renderFilePreview(preview, state.data[column.id]);
 
           const fileStack = document.createElement("div");
           fileStack.className = "grid";
