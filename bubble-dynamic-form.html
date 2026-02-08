@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bubble Dynamic Form Element</title>
+  <title>Bubble Dynamic Form Element Demo</title>
   <style>
     :root {
       color-scheme: light;
       font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-      --bg: #f6f7fb;
+      --bg: #f5f7fb;
       --card: #ffffff;
-      --text: #1f2937;
+      --text: #111827;
       --muted: #6b7280;
       --primary: #2563eb;
       --border: #e5e7eb;
+      --danger: #ef4444;
       --success: #16a34a;
       --warning: #f59e0b;
-      --danger: #ef4444;
+      --focus: rgba(37, 99, 235, 0.18);
     }
 
     * {
@@ -34,7 +35,7 @@
       margin: 0 auto;
       padding: 24px;
       display: grid;
-      gap: 24px;
+      gap: 20px;
     }
 
     .card {
@@ -42,10 +43,10 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
-    .card h2 {
+    h1, h2, h3 {
       margin: 0 0 12px;
     }
 
@@ -58,75 +59,100 @@
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 
+    .grid.three {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
     label {
       font-size: 0.9rem;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 6px;
     }
 
-    input,
-    select,
-    textarea {
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 0.95rem;
-      color: var(--text);
+    .required-star {
+      color: var(--danger);
+      font-weight: 700;
     }
 
-    textarea {
-      min-height: 96px;
-      resize: vertical;
-    }
-
-    input[disabled],
-    textarea[disabled],
-    select[disabled] {
-      background: #f3f4f6;
-      color: var(--muted);
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
+    .required-hint {
       font-size: 0.75rem;
+      color: var(--danger);
       font-weight: 600;
     }
 
-    .tag.ai {
-      background: rgba(37, 99, 235, 0.1);
-      color: var(--primary);
+    .field-wrapper {
+      display: grid;
+      gap: 8px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
     }
 
-    .tag.human {
-      background: rgba(22, 163, 74, 0.1);
-      color: var(--success);
+    .field-wrapper:last-child {
+      border-bottom: none;
     }
 
-    .tag.hidden {
-      background: rgba(107, 114, 128, 0.1);
+    .field-control {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px;
+      background: #fff;
+      position: relative;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-control:focus-within {
+      border-color: rgba(37, 99, 235, 0.75);
+      box-shadow: 0 0 0 3px var(--focus);
+    }
+
+    .field-control.invalid {
+      border-color: rgba(239, 68, 68, 0.75);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+    }
+
+    .field-input,
+    select,
+    textarea {
+      width: 100%;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: transparent;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea.field-input {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .field-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .helper-text {
+      font-size: 0.82rem;
       color: var(--muted);
     }
 
-    .actions {
+    .error-text {
+      font-size: 0.82rem;
+      color: var(--danger);
+    }
+
+    .inline-row {
       display: flex;
+      gap: 8px;
       flex-wrap: wrap;
-      gap: 12px;
+      align-items: center;
     }
 
     button {
@@ -146,8 +172,13 @@
 
     button.ghost {
       background: transparent;
-      border: 1px solid var(--border);
       color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .console {
@@ -156,1159 +187,1335 @@
       padding: 12px;
       border-radius: 12px;
       font-family: "JetBrains Mono", "SFMono-Regular", monospace;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       max-height: 260px;
       overflow: auto;
       white-space: pre-wrap;
     }
 
-    .file-preview {
-      display: grid;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .file-preview-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-    }
-
-    .file-pill {
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .file-pill a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    .file-pill span {
-      color: var(--muted);
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-
-    .file-thumb {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      display: grid;
-      gap: 8px;
-      background: #fff;
-    }
-
-    .file-thumb img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 8px;
-      background: #f3f4f6;
-    }
-
-    .file-thumb .file-name {
-      font-size: 0.8rem;
-      color: var(--muted);
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-
-    .file-chip {
+    .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       padding: 4px 8px;
       border-radius: 999px;
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 600;
       background: rgba(37, 99, 235, 0.08);
       color: var(--primary);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-      gap: 16px;
-      align-items: start;
-      padding: 8px 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .form-row > * {
-      min-width: 0;
-    }
-
-    .form-row:last-child {
-      border-bottom: none;
-    }
-
-    .field-meta {
-      display: grid;
-      gap: 6px;
-    }
-
-    .field-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-    }
-
-    .field-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: #f3f4f6;
-      color: #4b5563;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
-
-    .field-badges {
+    .chip-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
 
-    .badge {
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      border: 1px solid transparent;
-    }
-
-    .badge.control {
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
-      border-color: rgba(37, 99, 235, 0.2);
-    }
-
-    .badge.mandatory {
-      background: rgba(239, 68, 68, 0.08);
-      color: var(--danger);
-      border-color: rgba(239, 68, 68, 0.2);
-    }
-
-    .badge.optional {
-      background: rgba(22, 163, 74, 0.08);
-      color: var(--success);
-      border-color: rgba(22, 163, 74, 0.2);
-    }
-
-    .field-control {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2px;
-      position: relative;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .field-control:focus-within {
-      border-color: rgba(37, 99, 235, 0.7);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
-    }
-
-    .field-control.ai-suggested {
-      border-color: rgba(37, 99, 235, 0.6);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22), 0 0 14px rgba(59, 130, 246, 0.25);
-    }
-
-    .field-control.ai-suggested .field-input {
-      padding-right: 38px;
-    }
-
-    .ai-indicator {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: rgba(37, 99, 235, 0.1);
-      color: var(--primary);
+    .chip {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      font-weight: 700;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .field-control.ai-suggested .ai-indicator {
-      opacity: 1;
-    }
-
-    .field-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .ai-reset {
-      border: 1px solid rgba(37, 99, 235, 0.35);
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
+      gap: 6px;
       padding: 4px 8px;
       border-radius: 999px;
-      font-size: 0.72rem;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      font-size: 0.75rem;
       font-weight: 600;
-      cursor: pointer;
     }
 
-    .field-input {
-      width: 100%;
-      border: none;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: transparent;
-      font-size: 0.98rem;
-      line-height: 1.5;
-      color: var(--text);
-      caret-color: var(--primary);
-      outline: none;
-      font-variant-ligatures: none;
-      text-rendering: optimizeLegibility;
+    .chip button {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: rgba(37, 99, 235, 0.2);
     }
 
-    .field-input::placeholder {
-      color: #9ca3af;
-    }
-
-    .field-input:disabled {
+    .file-drop {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
       color: var(--muted);
-      cursor: not-allowed;
+      background: #fafafa;
     }
 
-    .field-control:has(.field-input:disabled) {
+    .file-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .file-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    .file-meta {
+      display: grid;
+      gap: 4px;
+      font-size: 0.82rem;
+    }
+
+    .file-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
       background: #f3f4f6;
     }
 
-    .field-control.checkbox {
-      display: flex;
+    .toggle {
+      display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px;
+      cursor: pointer;
     }
 
-    .field-control.checkbox .field-input {
-      width: 20px;
-      height: 20px;
-      padding: 0;
+    .toggle input {
+      width: 40px;
+      height: 22px;
     }
 
-    textarea.field-input {
-      min-height: 96px;
-      resize: vertical;
-    }
-
-    select.field-input {
-      appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
-        linear-gradient(135deg, #6b7280 50%, transparent 50%);
-      background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-      padding-right: 32px;
+    .summary-box {
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.06);
+      color: var(--danger);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
     }
   </style>
 </head>
 <body>
   <main class="page">
     <section class="card">
-      <h2>JSON Girişi</h2>
-      <p class="muted">
-        Bubble HTML elementinde en üste yerleştirilecek bölüm: veri JSON, column JSON ve prediction JSON.
-        Bu alanlar Bubble içinde gizlenebilir veya kaldırılabilir.
+      <h1>Bubble Dynamic Form Element</h1>
+      <p class="helper-text">
+        Bu demo tek HTML dosyasında çalışır. Bubble elementine alan şemasını JSON olarak girip “Render Et” diyebilirsiniz.
       </p>
       <div class="grid two">
         <div>
-          <label for="dataJson">Data JSON</label>
-          <textarea id="dataJson" placeholder="{"id": "value"}"></textarea>
+          <label for="schemaInput">Schema (fields + config)</label>
+          <textarea id="schemaInput" class="field-input" rows="12"></textarea>
         </div>
-        <div>
-          <label for="columnsJson">Columns JSON</label>
-          <textarea id="columnsJson" placeholder="[{"id": "Field", "type": "text"}]"></textarea>
-        </div>
-        <div>
-          <label for="predictionJson">Prediction JSON</label>
-          <textarea id="predictionJson" placeholder="{"id": "ChatGPT value"}"></textarea>
+        <div class="grid">
+          <div>
+            <label for="currentDateTime">currentDateTimeISO</label>
+            <input id="currentDateTime" class="field-input" type="text" />
+          </div>
+          <div class="grid two">
+            <div>
+              <label for="localeInput">locale</label>
+              <input id="localeInput" class="field-input" type="text" value="tr-TR" />
+            </div>
+            <div>
+              <label for="timezoneInput">timezone</label>
+              <input id="timezoneInput" class="field-input" type="text" value="Europe/Istanbul" />
+            </div>
+          </div>
+          <div class="grid two">
+            <div>
+              <label for="modeInput">mode</label>
+              <select id="modeInput" class="field-input">
+                <option value="create">create</option>
+                <option value="edit">edit</option>
+              </select>
+            </div>
+            <div>
+              <label for="requiredPolicyInput">requiredPolicy</label>
+              <select id="requiredPolicyInput" class="field-input">
+                <option value="strict">strict</option>
+                <option value="soft">soft</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid two">
+            <div class="inline-row">
+              <input id="showInlineHelp" type="checkbox" checked />
+              <label for="showInlineHelp">showInlineHelp</label>
+            </div>
+            <div class="inline-row">
+              <input id="autoFocusInvalid" type="checkbox" checked />
+              <label for="autoFocusInvalid">autoFocusFirstInvalid</label>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="actions" style="margin-top: 16px;">
-        <button id="loadSample">Örnek Senaryo 1 (Karışık)</button>
-        <button class="secondary" id="loadSampleAlt">Örnek Senaryo 2 (Form + Dropdown)</button>
-        <button class="secondary" id="loadSampleFiles">Örnek Senaryo 3 (Dosya)</button>
-        <button class="ghost" id="loadDataOnly">Sadece Data JSON Yükle</button>
-        <button class="ghost" id="loadColumnsOnly">Sadece Columns JSON Yükle</button>
-        <button class="ghost" id="loadPrediction">Prediction JSON Yükle</button>
-        <button class="secondary" id="renderForm">Formu Yenile</button>
+      <div class="inline-row" style="margin-top: 12px;">
+        <button id="loadSample">Örnek Schema Yükle</button>
+        <button class="secondary" id="renderForm">Render Et</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
-        <button class="ghost" id="logOutput">Outputlist1 Logla</button>
       </div>
     </section>
 
     <section class="card">
-      <h2>Developer Console</h2>
-      <div class="console" id="devConsole"></div>
+      <h2>Event Console</h2>
+      <div id="eventConsole" class="console"></div>
     </section>
 
     <section class="card">
       <h2>Dynamic Form</h2>
-      <div id="formContainer" class="grid"></div>
+      <div id="summaryBox" class="summary-box" style="display:none;"></div>
+      <form id="dynamicForm" class="grid"></form>
+      <div class="inline-row" style="margin-top: 12px;">
+        <button id="submitBtn" type="submit">Submit</button>
+        <button id="clearBtn" type="button" class="ghost">Temizle</button>
+      </div>
     </section>
   </main>
 
   <script>
-    const devConsole = document.getElementById("devConsole");
-    const dataJsonEl = document.getElementById("dataJson");
-    const columnsJsonEl = document.getElementById("columnsJson");
-    const predictionJsonEl = document.getElementById("predictionJson");
-    const formContainer = document.getElementById("formContainer");
-
-    const sampleData = {
-      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
-      "Davacı Kimlik Tipi": "TC Kimlik",
-      "Davacı Ad Soyad": "İSMAİL DİNCER",
-      "Davacı TCKN/VKN": "12928963404",
-      "Davacı Plaka": "19BA618",
-      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
-      "Davacı Şase No": "NMTBZ28E90R141719",
-      "Karşı Ad Soyad": "YILMAZ HIŞIR",
-      "Karşı TCKN/VKN": "31066362344",
-      "Karşı Plaka": "19ABA563",
-      "Kaza Tarihi": "2024-11-15",
-      "Aracın Markası": "TOYOTA",
-      "Aracın Tipi": "Hususi",
-      "Aracın Model Yılı": "2006",
-      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
-      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
-      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
-      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
-      "Karşı Poliçe No": "104781355",
-      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
-      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
-      "Eksper Rp Tarihi": "2025-02-28",
-      "Hasar Onarım Tutarı": "140000",
-      "Kusur Oranı": "75",
-      "Davali Adi": "Corpus Sigorta A.Ş.",
-      "Aracın Kilometresi": "231328",
-      "action": "DK Hesaba Taşı",
-      "İhtar Tarihi": "Bugünün tarihi",
-      "predictedAction": "İhtar Dilekçesi Hazırla",
-      "uniqueid": "1770577890579x349136294770973500",
-      "Stage": "DK Hesabı",
-      "Esas No": ""
-    };
-
-    const sampleColumns = [
-      {
-        id: "Davacı Ad Soyad",
-        header: "Davacı Ad Soyad",
-        type: "text",
-        order: 1,
-        default: "",
-        columnWidth: 120,
-        control: true,
-        mandatory: true,
-        source: [],
-        multiple: false
-      },
-      {
-        id: "Davacı Plaka",
-        header: "Davacı Plaka",
-        type: "text",
-        order: 2,
-        default: "",
-        columnWidth: 120,
-        control: true,
-        mandatory: true,
-        source: [],
-        multiple: false
-      },
-      {
-        id: "Kaza Tarihi",
-        header: "Kaza Tarihi",
-        type: "date",
-        order: 3,
-        default: "",
-        columnWidth: 120,
-        control: true,
-        optional: true,
-        source: [],
-        multiple: false
-      },
-      {
-        id: "Hasar Onarım Tutarı",
-        header: "Hasar Onarım Tutarı",
-        type: "number",
-        order: 4,
-        default: "",
-        columnWidth: 120,
-        control: true,
-        optional: true,
-        source: [],
-        multiple: false
-      },
-      {
-        id: "İhtar Tarihi",
-        header: "İhtar Tarihi",
-        type: "text",
-        order: 5,
-        default: "",
-        columnWidth: 120,
-        control: true,
-        optional: true,
-        source: [],
-        multiple: false
-      },
-      {
-        id: "Belgeleri Yükle",
-        header: "Belgeleri Yükle",
-        type: "imagepdf",
-        control: true,
-        optional: true,
-        readOnly: false
-      }
-    ];
-
-    const sampleDataAlt = {
-      "Ad Soyad": "Ayşe Yılmaz",
-      "Telefon": "+90 532 000 00 00",
-      "E-mail": "ayse@example.com",
-      "Onay": true,
-      "Araç Tipi": "Hususi",
-      "Hasar Açıklaması": "Arka tampon hasarlı.",
-      "Randevu Tarihi": "2025-02-10"
-    };
-
-    const sampleColumnsAlt = [
-      {
-        id: "Ad Soyad",
-        header: "Ad Soyad",
-        type: "text",
-        order: 1,
-        default: "",
-        control: true,
-        mandatory: true
-      },
-      {
-        id: "Telefon",
-        header: "Telefon",
-        type: "phone",
-        order: 2,
-        default: "",
-        control: true,
-        mandatory: true
-      },
-      {
-        id: "E-mail",
-        header: "E-mail",
-        type: "email",
-        order: 3,
-        default: "",
-        control: true,
-        mandatory: true
-      },
-      {
-        id: "Araç Tipi",
-        header: "Araç Tipi",
-        type: "dropdown",
-        order: 4,
-        default: "Hususi",
-        source: ["Hususi", "Ticari", "Kiralık"],
-        control: true,
-        multiple: false
-      },
-      {
-        id: "Hasar Açıklaması",
-        header: "Hasar Açıklaması",
-        type: "text long",
-        order: 5,
-        default: "",
-        control: true,
-        optional: true
-      },
-      {
-        id: "Randevu Tarihi",
-        header: "Randevu Tarihi",
-        type: "date",
-        order: 6,
-        default: "",
-        control: true,
-        optional: true
-      },
-      {
-        id: "Onay",
-        header: "Onay",
-        type: "checkbox",
-        order: 7,
-        default: false,
-        control: true,
-        optional: true
-      }
-    ];
-
-    const sampleDataFiles = {
-      "Dosyalar": [
-        "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf"
-      ],
-      "Fotoğraf Notu": "Ön tampon fotoğrafı eklendi.",
-      "Kaza Tarihi": "2024-11-15"
-    };
-
-    const sampleColumnsFiles = [
-      {
-        id: "Dosyalar",
-        header: "Dosyalar",
-        type: "imagepdf",
-        order: 1,
-        control: true,
-        optional: true
-      },
-      {
-        id: "Fotoğraf Notu",
-        header: "Fotoğraf Notu",
-        type: "text long",
-        order: 2,
-        control: true,
-        optional: true
-      },
-      {
-        id: "Kaza Tarihi",
-        header: "Kaza Tarihi",
-        type: "date",
-        order: 3,
-        control: true,
-        optional: true
-      }
-    ];
-
-    const samplePrediction = {
-      "İhtar Tarihi": "2025-03-01",
-      "Hasar Onarım Tutarı": "145000"
-    };
+    const schemaInput = document.getElementById("schemaInput");
+    const currentDateTimeInput = document.getElementById("currentDateTime");
+    const localeInput = document.getElementById("localeInput");
+    const timezoneInput = document.getElementById("timezoneInput");
+    const modeInput = document.getElementById("modeInput");
+    const requiredPolicyInput = document.getElementById("requiredPolicyInput");
+    const showInlineHelpInput = document.getElementById("showInlineHelp");
+    const autoFocusInvalidInput = document.getElementById("autoFocusInvalid");
+    const formEl = document.getElementById("dynamicForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const summaryBox = document.getElementById("summaryBox");
+    const consoleEl = document.getElementById("eventConsole");
 
     const state = {
-      columns: [],
-      data: {},
-      prediction: {},
-      fieldSources: {},
-      outputlist1: []
+      config: null,
+      values: {},
+      validMap: {},
+      touched: {},
+      errors: {},
+      autoSaveTimer: null,
+      fileBuffers: {}
     };
 
-    function log(message, payload) {
-      const time = new Date().toLocaleTimeString("tr-TR");
-      const line = `[${time}] ${message}`;
-      devConsole.textContent += `${line}${payload ? `\n${payload}` : ""}\n`;
-      devConsole.scrollTop = devConsole.scrollHeight;
-      console.info(message, payload || "");
+    const defaultSchema = {
+      fields: [
+        {
+          key: "fullName",
+          label: "Ad Soyad",
+          type: "text",
+          required: true,
+          placeholder: "Örn. Ayşe Yılmaz",
+          helpText: "Kimlikteki ad-soyad",
+          minLen: 3
+        },
+        {
+          key: "email",
+          label: "E-posta",
+          type: "email",
+          required: true,
+          placeholder: "ornek@mail.com"
+        },
+        {
+          key: "phone",
+          label: "Telefon",
+          type: "phone",
+          required: true,
+          placeholder: "05xx xxx xx xx",
+          ui: { autoTrPrefix: true }
+        },
+        {
+          key: "website",
+          label: "Website",
+          type: "url",
+          placeholder: "https://",
+          ui: { suggestHttps: true }
+        },
+        {
+          key: "password",
+          label: "Şifre",
+          type: "password",
+          required: true,
+          minLen: 8
+        },
+        {
+          key: "bio",
+          label: "Açıklama",
+          type: "textarea",
+          placeholder: "Kısa notlar...",
+          maxLen: 240
+        },
+        {
+          key: "age",
+          label: "Yaş",
+          type: "integer",
+          min: 18,
+          max: 99
+        },
+        {
+          key: "salary",
+          label: "Maaş (₺)",
+          type: "currency",
+          ui: { currency: "₺", step: 0.01, thousandSeparator: true }
+        },
+        {
+          key: "discount",
+          label: "İndirim (%)",
+          type: "percent",
+          ui: { step: 0.1 }
+        },
+        {
+          key: "subscribe",
+          label: "KVKK Onayı",
+          type: "boolean",
+          required: true,
+          helpText: "Zorunlu onay"
+        },
+        {
+          key: "vehicleType",
+          label: "Araç Tipi",
+          type: "single_select",
+          options: [
+            { value: "hususi", label: "Hususi", group: "Binek" },
+            { value: "ticari", label: "Ticari", group: "Ticari" },
+            { value: "kiralik", label: "Kiralık", group: "Ticari" }
+          ],
+          required: true
+        },
+        {
+          key: "extras",
+          label: "Ek Özellikler",
+          type: "multi_select",
+          options: [
+            { value: "camTavan", label: "Cam tavan" },
+            { value: "navigasyon", label: "Navigasyon" },
+            { value: "kamera", label: "Geri görüş kamera" },
+            { value: "isik", label: "LED far" }
+          ]
+        },
+        {
+          key: "appointmentDate",
+          label: "Randevu Tarihi",
+          type: "date",
+          required: true,
+          default: "$TODAY",
+          ui: { showCalendar: true, allowTyping: true, quickActions: true }
+        },
+        {
+          key: "appointmentDateTime",
+          label: "Randevu Datetime",
+          type: "datetime",
+          default: "$NOW",
+          ui: { quickActions: true }
+        },
+        {
+          key: "appointmentTime",
+          label: "Uygun Saat",
+          type: "time",
+          default: "$CURRENT_TIME",
+          ui: { quickActions: true }
+        },
+        {
+          key: "duration",
+          label: "Süre",
+          type: "duration",
+          ui: { durationFormat: "minutes" }
+        },
+        {
+          key: "address",
+          label: "Adres",
+          type: "address",
+          helpText: "Minimum sokak, ilçe, il ve posta kodu"
+        },
+        {
+          key: "attachments",
+          label: "Dosyalar",
+          type: "multifile",
+          ui: { accept: "image/*,application/pdf", maxFiles: 5, maxSizeMB: 10, showPreview: true }
+        },
+        {
+          key: "profileImage",
+          label: "Profil Fotoğrafı",
+          type: "image",
+          ui: { accept: "image/*", maxFiles: 1, maxSizeMB: 5, showPreview: true }
+        },
+        {
+          key: "metadata",
+          label: "JSON (advanced)",
+          type: "json",
+          placeholder: "{\"foo\":\"bar\"}"
+        }
+      ],
+      currentDateTimeISO: "2026-02-09T12:34:56+03:00",
+      locale: "tr-TR",
+      timezone: "Europe/Istanbul",
+      mode: "create",
+      initialValues: {},
+      requiredPolicy: "strict",
+      showInlineHelp: true,
+      autoFocusFirstInvalid: true
+    };
+
+    function setConsole(message, payload) {
+      const timestamp = new Date().toLocaleTimeString("tr-TR");
+      consoleEl.textContent += `[${timestamp}] ${message}` + (payload ? `\n${payload}` : "") + "\n";
+      consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
-    function safeParseJson(text) {
-      if (!text) {
-        return null;
-      }
+    function emit(eventName, detail) {
+      setConsole(eventName, JSON.stringify(detail, null, 2));
+    }
+
+    function safeJsonParse(value) {
       try {
-        return JSON.parse(text);
+        return JSON.parse(value);
       } catch (error) {
-        log("JSON parse hatası:", error.message);
         return null;
       }
     }
 
-    function getNormalizedType(type) {
-      if (!type) return "text";
-      return String(type).trim().toLowerCase();
+    function getCurrentDateTime(config) {
+      return config.currentDateTimeISO || new Date().toISOString();
     }
 
-    function shouldIgnoreColumn(column) {
-      const id = String(column.id || "");
-      const type = getNormalizedType(column.type);
-      if (id.endsWith(".cf")) return true;
-      if (type.endsWith(".cf")) return true;
-      if (type === "reference" || type === "refered") return true;
+    function getOffsetFromIso(iso) {
+      const match = String(iso).match(/([+-]\d{2}:?\d{2}|Z)$/);
+      if (!match) return "Z";
+      if (match[1] === "Z") return "Z";
+      const offset = match[1].includes(":") ? match[1] : `${match[1].slice(0, 3)}:${match[1].slice(3)}`;
+      return offset;
+    }
+
+    function getDateFromIso(iso) {
+      return String(iso).slice(0, 10);
+    }
+
+    function getTimeFromIso(iso) {
+      return String(iso).slice(11, 16);
+    }
+
+    function normalizeDateInput(raw) {
+      if (!raw) return "";
+      const trimmed = raw.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmed)) {
+        const [d, m, y] = trimmed.split(".");
+        return `${y}-${m}-${d}`;
+      }
+      if (/^\d{8}$/.test(trimmed)) {
+        const d = trimmed.slice(0, 2);
+        const m = trimmed.slice(2, 4);
+        const y = trimmed.slice(4, 8);
+        return `${y}-${m}-${d}`;
+      }
+      return trimmed;
+    }
+
+    function normalizeTimeInput(raw) {
+      if (!raw) return "";
+      const cleaned = raw.replace(/\s/g, "");
+      if (/^\d{1,2}$/.test(cleaned)) return `${cleaned.padStart(2, "0")}:00`;
+      if (/^\d{3}$/.test(cleaned)) return `${cleaned.slice(0, 1).padStart(2, "0")}:${cleaned.slice(1)}`;
+      if (/^\d{4}$/.test(cleaned)) return `${cleaned.slice(0, 2)}:${cleaned.slice(2)}`;
+      if (/^\d{2}:\d{2}$/.test(cleaned)) return cleaned;
+      return cleaned;
+    }
+
+    function normalizeNumberInput(raw) {
+      if (raw === null || raw === undefined || raw === "") return "";
+      const normalized = String(raw).replace(/\./g, "").replace(",", ".");
+      return normalized;
+    }
+
+    function formatNumberDisplay(value, options = {}) {
+      if (value === "" || value === null || value === undefined || Number.isNaN(Number(value))) return "";
+      const numeric = Number(value);
+      const formatter = new Intl.NumberFormat("tr-TR", {
+        minimumFractionDigits: options.minimumFractionDigits || 0,
+        maximumFractionDigits: options.maximumFractionDigits || 2
+      });
+      return formatter.format(numeric);
+    }
+
+    function getDefaultValue(field, config) {
+      if (!field.default) return "";
+      const token = field.default;
+      const now = getCurrentDateTime(config);
+      if (token === "$NOW") return now;
+      if (token === "$TODAY") return getDateFromIso(now);
+      if (token === "$CURRENT_TIME") return getTimeFromIso(now);
+      return token;
+    }
+
+    function getInitialValue(field, config) {
+      const initialValues = config.initialValues || {};
+      if (initialValues[field.key] !== undefined) return initialValues[field.key];
+      if (config.mode === "create") {
+        return getDefaultValue(field, config);
+      }
+      return "";
+    }
+
+    function isEmptyValue(value) {
+      if (Array.isArray(value)) return value.length === 0;
+      if (value === null || value === undefined) return true;
+      if (typeof value === "string") return value.trim() === "";
       return false;
     }
 
-    function getPredictionValue(column) {
-      if (!state.prediction) {
-        return undefined;
+    function validateField(field, value) {
+      if (field.required && isEmptyValue(value)) {
+        if (field.type === "boolean") {
+          return "Zorunlu onay gerekir.";
+        }
+        return "Bu alan zorunlu.";
       }
-      if (state.prediction[column.id] === undefined) {
-        return undefined;
+      if (field.type === "email" && value) {
+        if (!String(value).includes("@")) return "Geçerli bir e-posta girin.";
       }
-      return state.prediction[column.id];
-    }
-
-    function hasPredictionValue(value) {
-      return value !== undefined && value !== null && value !== "";
-    }
-
-    function getInitialValue(column) {
-      const id = column.id;
-      const dataValue = state.data && state.data[id] !== undefined ? state.data[id] : null;
-      if (dataValue !== null && dataValue !== "") {
-        state.fieldSources[id] = "human";
-        return dataValue;
+      if (field.type === "phone" && value) {
+        if (!/\d{10,}/.test(String(value).replace(/\D/g, ""))) return "Telefon formatı hatalı.";
       }
-      const predictedValue = getPredictionValue(column);
-      if (hasPredictionValue(predictedValue)) {
-        state.fieldSources[id] = "ai";
-        return predictedValue;
+      if (field.type === "url" && value) {
+        if (!/^https?:\/\//.test(String(value))) return "URL http(s):// ile başlamalı.";
       }
-      state.fieldSources[id] = "human";
-      return column.default || "";
-    }
-
-    function createTag(source, isHidden) {
-      if (!source) {
-        return null;
+      if (["integer", "decimal", "currency", "percent"].includes(field.type) && value !== "") {
+        const numeric = Number(value);
+        if (Number.isNaN(numeric)) return "Geçerli bir sayı girin.";
+        if (field.min !== undefined && numeric < field.min) return `Minimum ${field.min}`;
+        if (field.max !== undefined && numeric > field.max) return `Maksimum ${field.max}`;
+        if (field.type === "percent" && (numeric < 0 || numeric > 100)) return "0-100 arası girin.";
       }
-      const tag = document.createElement("span");
-      tag.classList.add("tag");
-      if (isHidden) {
-        tag.classList.add("hidden");
-        tag.textContent = "Gizli";
-        return tag;
-      }
-      if (source === "ai") {
-        tag.classList.add("ai");
-        tag.textContent = "🤖 ChatGPT";
-      } else {
-        tag.classList.add("human");
-        tag.textContent = "👤 İnsan";
-      }
-      return tag;
-    }
-
-    function updateTag(label, source, isHidden, hasPrediction) {
-      label.querySelector(".tag")?.remove();
-      if (!hasPrediction) {
-        return;
-      }
-      const tag = createTag(source, isHidden);
-      if (tag) {
-        label.appendChild(tag);
-      }
-    }
-
-    function setFieldValue(field, value) {
-      if (field.type === "checkbox") {
-        field.checked = Boolean(value);
-        return;
-      }
-      if (field.multiple && Array.isArray(value)) {
-        Array.from(field.options || []).forEach((option) => {
-          option.selected = value.includes(option.value);
-        });
-        return;
-      }
-      field.value = value ?? "";
-    }
-
-    function getTypeIcon(type) {
-      const normalized = getNormalizedType(type);
-      if (normalized === "text" || normalized === "embed" || normalized === "user") return "T";
-      if (normalized === "text long" || normalized === "multiline text") return "≡";
-      if (normalized === "number") return "№";
-      if (normalized === "phone") return "☎";
-      if (normalized === "email" || normalized === "e-mail") return "@";
-      if (normalized === "date") return "📅";
-      if (normalized === "checkbox") return "☑";
-      if (normalized === "dropdown") return "▾";
-      if (normalized === "imagepdf" || normalized === "image&pdf" || normalized === "image/pdf") return "📎";
-      return "•";
-    }
-
-    function autoResizeTextarea(textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-
-    function applyFieldUX(field, column) {
-      field.classList.add("field-input");
-      const type = getNormalizedType(column.type);
-      if (type === "number") {
-        field.inputMode = "decimal";
-      }
-      if (type === "phone") {
-        field.inputMode = "tel";
-        field.autocomplete = "tel";
-      }
-      if (type === "email" || type === "e-mail") {
-        field.inputMode = "email";
-        field.autocomplete = "email";
-      }
-      if (field.tagName === "TEXTAREA") {
-        field.spellcheck = true;
-        requestAnimationFrame(() => autoResizeTextarea(field));
-      }
-    }
-
-    function createBadges(column) {
-      const badges = document.createElement("div");
-      badges.className = "field-badges";
-      if (column.control) {
-        const badge = document.createElement("span");
-        badge.className = "badge control";
-        badge.textContent = "Control";
-        badges.appendChild(badge);
-      }
-      if (column.mandatory) {
-        const badge = document.createElement("span");
-        badge.className = "badge mandatory";
-        badge.textContent = "Mandatory";
-        badges.appendChild(badge);
-      }
-      if (column.optional) {
-        const badge = document.createElement("span");
-        badge.className = "badge optional";
-        badge.textContent = "Optional";
-        badges.appendChild(badge);
-      }
-      return badges;
-    }
-
-    function updateOutputList() {
-      state.outputlist1 = state.columns.map((column) => {
-        const id = column.id;
-        const value = state.data[id];
-        return {
-          id,
-          header: column.header || id,
-          type: column.type || "text",
-          value,
-          source: state.fieldSources[id] || "human",
-          readOnly: Boolean(column.readOnly),
-          control: Boolean(column.control),
-          mandatory: Boolean(column.mandatory),
-          optional: Boolean(column.optional)
-        };
-      });
-
-      const payload = JSON.stringify(state.outputlist1);
-      window.outputlist1 = payload;
-      if (typeof window.bubble_fn_outputlist1 === "function") {
-        window.bubble_fn_outputlist1(payload);
-      }
-      log("outputlist1 güncellendi.", payload);
-    }
-
-    async function compressImage(file, maxWidth = 1600, quality = 0.8) {
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error("Dosya okunamadı"));
-        reader.readAsDataURL(file);
-      });
-
-      const image = await new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Görsel yüklenemedi"));
-        img.src = dataUrl;
-      });
-
-      const scale = Math.min(1, maxWidth / image.width);
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(image.width * scale);
-      canvas.height = Math.round(image.height * scale);
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", quality);
-    }
-
-    async function handleFileUpload(column, input) {
-      const files = Array.from(input.files || []);
-      const existing = state.data[column.id] || [];
-      const normalizedExisting = Array.isArray(existing) ? existing : existing ? [existing] : [];
-      const uploads = [];
-
-      for (const file of files) {
-        if (file.type.startsWith("image/")) {
-          const compressed = await compressImage(file);
-          uploads.push({
-            name: file.name,
-            type: file.type,
-            base64: compressed
-          });
-        } else {
-          const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => reject(new Error("Dosya okunamadı"));
-            reader.readAsDataURL(file);
-          });
-          uploads.push({
-            name: file.name,
-            type: file.type,
-            base64
-          });
+      if (["text", "textarea", "password", "email", "url"].includes(field.type) && value) {
+        if (field.minLen && String(value).length < field.minLen) return `En az ${field.minLen} karakter.`;
+        if (field.maxLen && String(value).length > field.maxLen) return `En fazla ${field.maxLen} karakter.`;
+        if (field.pattern) {
+          const regex = new RegExp(field.pattern);
+          if (!regex.test(String(value))) return field.validate?.find((r) => r.name === "regex")?.message || "Format hatası.";
         }
       }
-
-      state.data[column.id] = {
-        existingUrls: normalizedExisting,
-        uploads
-      };
-      state.fieldSources[column.id] = "human";
-      if (input.dataset.previewId) {
-        const preview = document.getElementById(input.dataset.previewId);
-        if (preview) {
-          renderFilePreview(preview, state.data[column.id]);
+      if (["date", "datetime", "time"].includes(field.type) && value) {
+        if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(String(value)) && !/^\d{2}\.\d{2}\.\d{4}$/.test(String(value))) {
+          return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
         }
+        if (field.type === "time" && !/^\d{2}:\d{2}$/.test(String(value))) return "Saat formatı HH:mm olmalı.";
+        if (field.type === "datetime" && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(value))) return "Tarih ve saat gerekli.";
       }
-      updateOutputList();
+      return "";
     }
 
-    function isPdfUrl(url) {
-      return /\.pdf$/i.test(url);
+    function setFieldValue(key, value, field, displayValue) {
+      state.values[key] = value;
+      const error = validateField(field, value);
+      state.errors[key] = error;
+      state.validMap[key] = !error;
+      emit("onFieldChange", {
+        key,
+        value,
+        displayValue: displayValue ?? value,
+        isValid: !error
+      });
+      debounceFormChange();
     }
 
-    function renderFilePreview(previewEl, value) {
-      previewEl.innerHTML = "";
-      if (!value) {
-        return;
+    function debounceFormChange() {
+      if (state.autoSaveTimer) {
+        clearTimeout(state.autoSaveTimer);
       }
-
-      const urls = Array.isArray(value)
-        ? value
-        : value?.existingUrls
-        ? value.existingUrls
-        : value
-        ? [value]
-        : [];
-      const uploads = Array.isArray(value?.uploads) ? value.uploads : [];
-
-      if (urls.length > 0) {
-        urls.forEach((url) => {
-          const pill = document.createElement("div");
-          pill.className = "file-pill";
-          const link = document.createElement("a");
-          link.href = url;
-          link.target = "_blank";
-          link.rel = "noopener";
-          link.textContent = "Dosya görüntüle";
-          const span = document.createElement("span");
-          span.textContent = url;
-          pill.appendChild(link);
-          pill.appendChild(span);
-          previewEl.appendChild(pill);
+      state.autoSaveTimer = setTimeout(() => {
+        emit("onFormChange", {
+          values: state.values,
+          validMap: state.validMap,
+          isFormValid: Object.values(state.validMap).every(Boolean)
         });
-      }
-
-      if (uploads.length > 0) {
-        const grid = document.createElement("div");
-        grid.className = "file-preview-grid";
-        uploads.forEach((upload) => {
-          const card = document.createElement("div");
-          card.className = "file-thumb";
-          const chip = document.createElement("span");
-          chip.className = "file-chip";
-          chip.textContent = upload.type?.startsWith("image/") ? "Görsel" : isPdfUrl(upload.name) ? "PDF" : "Dosya";
-          card.appendChild(chip);
-
-          if (upload.type?.startsWith("image/") && upload.base64) {
-            const img = document.createElement("img");
-            img.src = upload.base64;
-            img.alt = upload.name || "Yüklenen görsel";
-            card.appendChild(img);
-          }
-
-          if (upload.base64 && !upload.type?.startsWith("image/")) {
-            const link = document.createElement("a");
-            link.href = upload.base64;
-            link.target = "_blank";
-            link.rel = "noopener";
-            link.textContent = "Dosyayı aç";
-            card.appendChild(link);
-          }
-
-          const name = document.createElement("div");
-          name.className = "file-name";
-          name.textContent = upload.name || "Dosya";
-          card.appendChild(name);
-          grid.appendChild(card);
-        });
-        previewEl.appendChild(grid);
-      }
+      }, 500);
     }
 
-    function renderForm() {
-      formContainer.innerHTML = "";
-      state.columns = (safeParseJson(columnsJsonEl.value) || []).filter((col) => !shouldIgnoreColumn(col));
-      state.data = safeParseJson(dataJsonEl.value) || {};
-      state.prediction = safeParseJson(predictionJsonEl.value) || {};
-      state.fieldSources = {};
+    function renderForm(config) {
+      formEl.innerHTML = "";
+      state.values = {};
+      state.validMap = {};
+      state.errors = {};
+      state.touched = {};
+      state.fileBuffers = {};
+      summaryBox.style.display = "none";
 
-      const sorted = [...state.columns].sort((a, b) => (a.order || 0) - (b.order || 0));
-      state.columns = sorted;
-
-      if (sorted.length === 0) {
-        formContainer.innerHTML = "<p class=\"muted\">Column JSON boş veya geçersiz.</p>";
-        return;
-      }
-
-      sorted.forEach((column) => {
-        const row = document.createElement("div");
-        row.className = "form-row";
+      config.fields.forEach((field, index) => {
         const wrapper = document.createElement("div");
-        wrapper.className = "field-meta";
-        const label = document.createElement("div");
-        label.className = "field-title";
-        const predictedValue = getPredictionValue(column);
-        const hasPrediction = hasPredictionValue(predictedValue);
-        const initialValue = getInitialValue(column);
-        const icon = document.createElement("span");
-        icon.className = "field-icon";
-        icon.textContent = getTypeIcon(column.type);
-        label.appendChild(icon);
-        const labelText = document.createElement("span");
-        labelText.textContent = column.header || column.id || "Alan";
-        label.appendChild(labelText);
+        wrapper.className = "field-wrapper";
 
-        const isHidden = getNormalizedType(column.type) === "hidden";
-        updateTag(label, state.fieldSources[column.id], isHidden, hasPrediction);
-        wrapper.appendChild(label);
-        wrapper.appendChild(createBadges(column));
-
-        if (isHidden) {
-          state.data[column.id] = initialValue;
-          const hiddenHint = document.createElement("div");
-          hiddenHint.className = "muted";
-          hiddenHint.textContent = initialValue ? `Gizli değer mevcut (${initialValue}).` : "Gizli değer boş.";
-          wrapper.appendChild(hiddenHint);
-          row.appendChild(wrapper);
-          formContainer.appendChild(row);
-          return;
+        const label = document.createElement("label");
+        label.htmlFor = `field-${field.key}`;
+        label.textContent = field.label;
+        if (field.required) {
+          const star = document.createElement("span");
+          star.className = "required-star";
+          star.textContent = "*";
+          const hint = document.createElement("span");
+          hint.className = "required-hint";
+          hint.textContent = "zorunlu";
+          label.append(star, hint);
         }
+        wrapper.append(label);
 
-        const type = getNormalizedType(column.type);
-        let field;
-        if (type === "text" || type === "embed" || type === "user") {
-          field = document.createElement("input");
-          field.type = "text";
-        } else if (type === "text long" || type === "multiline text") {
-          field = document.createElement("textarea");
-        } else if (type === "number") {
-          field = document.createElement("input");
-          field.type = "number";
-        } else if (type === "phone") {
-          field = document.createElement("input");
-          field.type = "tel";
-        } else if (type === "e-mail" || type === "email") {
-          field = document.createElement("input");
-          field.type = "email";
-        } else if (type === "date") {
-          field = document.createElement("input");
-          field.type = "date";
-        } else if (type === "checkbox") {
-          field = document.createElement("input");
-          field.type = "checkbox";
-        } else if (type === "dropdown") {
-          field = document.createElement("select");
-          if (column.multiple) {
-            field.multiple = true;
-          }
-          const options = Array.isArray(column.source) ? column.source : [];
-          if (options.length === 0 && state.data[column.id]) {
-            options.push(state.data[column.id]);
-          }
-          options.forEach((opt) => {
-            const option = document.createElement("option");
-            option.value = opt;
-            option.textContent = opt;
-            field.appendChild(option);
-          });
-        } else if (type === "imagepdf" || type === "image&pdf" || type === "image/pdf") {
-          field = document.createElement("input");
-          field.type = "file";
-          field.accept = "image/*,application/pdf";
-          field.multiple = true;
-        } else {
-          field = document.createElement("input");
-          field.type = "text";
-        }
-
-        if (field.type === "checkbox") {
-          field.checked = Boolean(initialValue);
-        } else if (field.type === "file") {
-          // no initial
-        } else if (field.multiple && Array.isArray(initialValue)) {
-          Array.from(field.options || []).forEach((option) => {
-            option.selected = initialValue.includes(option.value);
-          });
-        } else {
-          field.value = initialValue;
-        }
-
-        applyFieldUX(field, column);
-
-        if (column.readOnly) {
-          field.disabled = true;
-        }
-
-        let control;
-        let revertButton;
-
-        if (field.type === "file") {
-          const safeColumnId = String(column.id || "file").replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
-          const previewId = `file-preview-${safeColumnId}`;
-          field.dataset.previewId = previewId;
-          field.addEventListener("change", () => handleFileUpload(column, field));
-          const preview = document.createElement("div");
-          preview.className = "file-preview";
-          preview.id = previewId;
-          renderFilePreview(preview, state.data[column.id]);
-
-          const fileStack = document.createElement("div");
-          fileStack.className = "grid";
-          const fileControl = document.createElement("div");
-          fileControl.className = "field-control";
-          fileControl.appendChild(field);
-          fileStack.appendChild(fileControl);
-          fileStack.appendChild(preview);
-          row.appendChild(wrapper);
-          row.appendChild(fileStack);
-          formContainer.appendChild(row);
-          return;
-        }
-
-        row.appendChild(wrapper);
-        control = document.createElement("div");
+        const control = document.createElement("div");
         control.className = "field-control";
-        if (field.type === "checkbox") {
-          control.classList.add("checkbox");
-        }
-        const aiIndicator = document.createElement("span");
-        aiIndicator.className = "ai-indicator";
-        aiIndicator.textContent = "🤖";
-        aiIndicator.title = "ChatGPT önerisi";
-        control.appendChild(field);
-        control.appendChild(aiIndicator);
-        row.appendChild(control);
-        const actions = document.createElement("div");
-        actions.className = "field-actions";
-        revertButton = document.createElement("button");
-        revertButton.type = "button";
-        revertButton.className = "ai-reset";
-        revertButton.textContent = "ChatGPT önerisine dön";
-        revertButton.hidden = true;
-        actions.appendChild(revertButton);
-        actions.hidden = !hasPrediction;
-        row.appendChild(actions);
-        formContainer.appendChild(row);
-        if (field.type !== "file") {
-          field.addEventListener("input", (event) => {
-            state.fieldSources[column.id] = "human";
-            if (event.target.type === "checkbox") {
-              state.data[column.id] = event.target.checked;
-            } else if (event.target.multiple) {
-              const values = Array.from(event.target.selectedOptions || []).map((opt) => opt.value);
-              state.data[column.id] = values;
-            } else {
-              state.data[column.id] = event.target.value;
-            }
-            if (event.target.tagName === "TEXTAREA") {
-              autoResizeTextarea(event.target);
-            }
-            updateTag(label, "human", isHidden, hasPrediction);
-            if (hasPrediction) {
-              control.classList.remove("ai-suggested");
-              revertButton.hidden = false;
-            }
-            updateOutputList();
-          });
-        }
-        if (hasPrediction && state.fieldSources[column.id] === "ai") {
-          control.classList.add("ai-suggested");
-        }
-        if (hasPrediction && state.fieldSources[column.id] === "human") {
-          revertButton.hidden = false;
-        }
-        revertButton.addEventListener("click", () => {
-          if (!hasPrediction) return;
-          state.fieldSources[column.id] = "ai";
-          setFieldValue(field, predictedValue);
-          state.data[column.id] = predictedValue;
-          updateTag(label, "ai", isHidden, hasPrediction);
-          control.classList.add("ai-suggested");
-          revertButton.hidden = true;
-          if (field.tagName === "TEXTAREA") {
-            autoResizeTextarea(field);
-          }
-          updateOutputList();
-        });
-        state.data[column.id] = initialValue;
-      });
 
-      updateOutputList();
+        let inputEl = null;
+        let extraControls = null;
+        let inlineActions = null;
+
+        const initialValue = getInitialValue(field, config);
+        state.values[field.key] = initialValue;
+        state.validMap[field.key] = !validateField(field, initialValue);
+
+        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "time"].includes(field.type)) {
+          inputEl = document.createElement("input");
+          inputEl.className = "field-input";
+          inputEl.id = `field-${field.key}`;
+          inputEl.setAttribute("aria-describedby", `error-${field.key}`);
+          inputEl.placeholder = field.placeholder || "";
+          inputEl.value = initialValue || "";
+          if (field.type === "password") inputEl.type = "password";
+          if (field.type === "email") inputEl.type = "email";
+          if (field.type === "url") inputEl.type = "url";
+          if (field.type === "phone") inputEl.type = "tel";
+          if (["integer", "decimal", "currency", "percent"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
+          if (field.type === "time") inputEl.type = "time";
+
+          inputEl.addEventListener("input", (event) => {
+            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+              const raw = event.target.value;
+              setFieldValue(field.key, normalizeNumberInput(raw), field, raw);
+            } else {
+              setFieldValue(field.key, event.target.value, field);
+            }
+          });
+
+          inputEl.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            let value = event.target.value;
+            if (field.type === "time") {
+              value = normalizeTimeInput(value);
+              event.target.value = value;
+            }
+            if (field.type === "email" && value) {
+              value = value.toLowerCase();
+              event.target.value = value;
+            }
+            if (field.type === "phone" && value && field.ui?.autoTrPrefix) {
+              const digits = value.replace(/\D/g, "");
+              if (digits.startsWith("0")) {
+                value = `+90${digits.slice(1)}`;
+                event.target.value = value;
+              }
+            }
+            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+              const normalized = normalizeNumberInput(value);
+              const formatted = field.type === "integer" ? formatNumberDisplay(normalized, { maximumFractionDigits: 0 }) : formatNumberDisplay(normalized, { maximumFractionDigits: 2 });
+              event.target.value = formatted || value;
+              setFieldValue(field.key, normalized, field, formatted);
+            } else {
+              setFieldValue(field.key, value, field);
+            }
+            updateError(control, field);
+          });
+
+          if (field.type === "time" && field.ui?.quickActions) {
+            const actions = document.createElement("div");
+            actions.className = "field-actions";
+            const nowBtn = document.createElement("button");
+            nowBtn.type = "button";
+            nowBtn.className = "ghost";
+            nowBtn.textContent = "Şu an";
+            nowBtn.addEventListener("click", () => {
+              const now = getCurrentDateTime(config);
+              const timeValue = getTimeFromIso(now);
+              inputEl.value = timeValue;
+              setFieldValue(field.key, timeValue, field);
+              updateError(control, field);
+            });
+            actions.append(nowBtn);
+            inlineActions = actions;
+          }
+        } else if (field.type === "textarea" || field.type === "json") {
+          inputEl = document.createElement("textarea");
+          inputEl.className = "field-input";
+          inputEl.id = `field-${field.key}`;
+          inputEl.setAttribute("aria-describedby", `error-${field.key}`);
+          inputEl.placeholder = field.placeholder || "";
+          inputEl.value = initialValue || "";
+
+          inputEl.addEventListener("input", (event) => {
+            setFieldValue(field.key, event.target.value, field);
+          });
+          inputEl.addEventListener("blur", () => {
+            updateError(control, field);
+          });
+        } else if (field.type === "boolean") {
+          control.classList.add("toggle");
+          inputEl = document.createElement("input");
+          inputEl.type = "checkbox";
+          inputEl.id = `field-${field.key}`;
+          inputEl.setAttribute("aria-describedby", `error-${field.key}`);
+          inputEl.checked = Boolean(initialValue);
+          const toggleLabel = document.createElement("span");
+          toggleLabel.textContent = field.label;
+          control.append(inputEl, toggleLabel);
+          inputEl.addEventListener("change", () => {
+            setFieldValue(field.key, inputEl.checked, field);
+            updateError(control, field);
+          });
+        } else if (field.type === "single_select") {
+          const searchInput = document.createElement("input");
+          searchInput.className = "field-input";
+          searchInput.placeholder = "Ara...";
+          const select = document.createElement("select");
+          select.className = "field-input";
+          select.id = `field-${field.key}`;
+          select.setAttribute("aria-describedby", `error-${field.key}`);
+
+          const buildOptions = (filter = "") => {
+            select.innerHTML = "";
+            const emptyOption = document.createElement("option");
+            emptyOption.value = "";
+            emptyOption.textContent = "Seçiniz";
+            select.append(emptyOption);
+            const groups = {};
+            (field.options || []).forEach((opt) => {
+              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
+              if (opt.group) {
+                if (!groups[opt.group]) groups[opt.group] = [];
+                groups[opt.group].push(opt);
+              } else {
+                groups.__default = groups.__default || [];
+                groups.__default.push(opt);
+              }
+            });
+
+            Object.entries(groups).forEach(([groupName, opts]) => {
+              if (groupName === "__default") {
+                opts.forEach((opt) => {
+                  const option = document.createElement("option");
+                  option.value = opt.value;
+                  option.textContent = opt.label;
+                  if (opt.disabled) option.disabled = true;
+                  select.append(option);
+                });
+              } else {
+                const group = document.createElement("optgroup");
+                group.label = groupName;
+                opts.forEach((opt) => {
+                  const option = document.createElement("option");
+                  option.value = opt.value;
+                  option.textContent = opt.label;
+                  if (opt.disabled) option.disabled = true;
+                  group.append(option);
+                });
+                select.append(group);
+              }
+            });
+          };
+
+          buildOptions();
+          select.value = initialValue || "";
+
+          searchInput.addEventListener("input", (event) => {
+            buildOptions(event.target.value);
+          });
+          select.addEventListener("change", () => {
+            setFieldValue(field.key, select.value, field);
+            updateError(control, field);
+          });
+
+          extraControls = document.createElement("div");
+          extraControls.className = "field-actions";
+          extraControls.append(searchInput);
+          control.append(select);
+        } else if (field.type === "multi_select") {
+          const searchInput = document.createElement("input");
+          searchInput.className = "field-input";
+          searchInput.placeholder = "Ara...";
+
+          const optionsWrapper = document.createElement("div");
+          optionsWrapper.className = "grid";
+
+          const chips = document.createElement("div");
+          chips.className = "chip-row";
+
+          let selectedValues = Array.isArray(initialValue) ? initialValue : [];
+
+          const renderOptions = (filter = "") => {
+            optionsWrapper.innerHTML = "";
+            (field.options || []).forEach((opt) => {
+              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
+              const optionRow = document.createElement("label");
+              optionRow.className = "inline-row";
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = selectedValues.includes(opt.value);
+              checkbox.disabled = opt.disabled || false;
+              const text = document.createElement("span");
+              text.textContent = opt.label;
+              optionRow.append(checkbox, text);
+              checkbox.addEventListener("change", () => {
+                if (checkbox.checked) {
+                  selectedValues = [...new Set([...selectedValues, opt.value])];
+                } else {
+                  selectedValues = selectedValues.filter((val) => val !== opt.value);
+                }
+                renderChips();
+                setFieldValue(field.key, selectedValues, field);
+                updateError(control, field);
+              });
+              optionsWrapper.append(optionRow);
+            });
+          };
+
+          const renderChips = () => {
+            chips.innerHTML = "";
+            selectedValues.forEach((val) => {
+              const opt = (field.options || []).find((o) => o.value === val);
+              const chip = document.createElement("span");
+              chip.className = "chip";
+              chip.textContent = opt ? opt.label : val;
+              const removeBtn = document.createElement("button");
+              removeBtn.type = "button";
+              removeBtn.textContent = "×";
+              removeBtn.addEventListener("click", () => {
+                selectedValues = selectedValues.filter((v) => v !== val);
+                renderChips();
+                renderOptions(searchInput.value);
+                setFieldValue(field.key, selectedValues, field);
+              });
+              chip.append(removeBtn);
+              chips.append(chip);
+            });
+          };
+
+          searchInput.addEventListener("input", (event) => {
+            renderOptions(event.target.value);
+          });
+
+          renderOptions();
+          renderChips();
+          control.append(searchInput, chips, optionsWrapper);
+          setFieldValue(field.key, selectedValues, field);
+        } else if (field.type === "date") {
+          const textInput = document.createElement("input");
+          textInput.className = "field-input";
+          textInput.id = `field-${field.key}`;
+          textInput.setAttribute("aria-describedby", `error-${field.key}`);
+          textInput.placeholder = field.placeholder || "gg.aa.yyyy";
+          textInput.inputMode = "numeric";
+
+          const nativeInput = document.createElement("input");
+          nativeInput.type = "date";
+          nativeInput.className = "field-input";
+          nativeInput.style.display = "none";
+
+          const initialDate = initialValue ? normalizeDateInput(initialValue) : "";
+          if (initialDate) {
+            const [y, m, d] = initialDate.split("-");
+            textInput.value = `${d}.${m}.${y}`;
+            nativeInput.value = initialDate;
+          }
+
+          const syncDate = (raw) => {
+            const normalized = normalizeDateInput(raw);
+            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized)) {
+              const [y, m, d] = normalized.split("-");
+              textInput.value = `${d}.${m}.${y}`;
+              nativeInput.value = normalized;
+              setFieldValue(field.key, normalized, field, textInput.value);
+            } else {
+              setFieldValue(field.key, "", field, raw);
+            }
+            updateError(control, field);
+          };
+
+          textInput.addEventListener("input", (event) => {
+            const digits = event.target.value.replace(/\\D/g, "");
+            if (digits.length === 8) {
+              const formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+              event.target.value = formatted;
+            }
+            setFieldValue(field.key, event.target.value, field);
+          });
+          textInput.addEventListener("blur", () => syncDate(textInput.value));
+          nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
+
+          const actions = document.createElement("div");
+          actions.className = "field-actions";
+          if (field.ui?.showCalendar) {
+            const calendarBtn = document.createElement("button");
+            calendarBtn.type = "button";
+            calendarBtn.className = "ghost";
+            calendarBtn.setAttribute("aria-label", "Takvim aç");
+            calendarBtn.textContent = "📅";
+            calendarBtn.addEventListener("click", () => {
+              if (nativeInput.showPicker) {
+                nativeInput.showPicker();
+              } else {
+                nativeInput.focus();
+              }
+            });
+            actions.append(calendarBtn);
+          }
+          if (field.ui?.quickActions) {
+            const todayBtn = document.createElement("button");
+            todayBtn.type = "button";
+            todayBtn.className = "ghost";
+            todayBtn.textContent = "Bugün";
+            todayBtn.addEventListener("click", () => syncDate(getDateFromIso(getCurrentDateTime(config))));
+            const tomorrowBtn = document.createElement("button");
+            tomorrowBtn.type = "button";
+            tomorrowBtn.className = "ghost";
+            tomorrowBtn.textContent = "Yarın";
+            tomorrowBtn.addEventListener("click", () => {
+              const base = new Date(getCurrentDateTime(config));
+              base.setDate(base.getDate() + 1);
+              syncDate(base.toISOString().slice(0, 10));
+            });
+            const yesterdayBtn = document.createElement("button");
+            yesterdayBtn.type = "button";
+            yesterdayBtn.className = "ghost";
+            yesterdayBtn.textContent = "Dün";
+            yesterdayBtn.addEventListener("click", () => {
+              const base = new Date(getCurrentDateTime(config));
+              base.setDate(base.getDate() - 1);
+              syncDate(base.toISOString().slice(0, 10));
+            });
+            const clearBtn = document.createElement("button");
+            clearBtn.type = "button";
+            clearBtn.className = "ghost";
+            clearBtn.textContent = "Temizle";
+            clearBtn.addEventListener("click", () => {
+              textInput.value = "";
+              nativeInput.value = "";
+              setFieldValue(field.key, "", field);
+              updateError(control, field);
+            });
+            actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
+          }
+
+          control.append(textInput, nativeInput, actions);
+        } else if (field.type === "datetime") {
+          const dateInput = document.createElement("input");
+          const timeInput = document.createElement("input");
+          dateInput.type = "text";
+          timeInput.type = "time";
+          dateInput.className = "field-input";
+          timeInput.className = "field-input";
+          dateInput.id = `field-${field.key}`;
+          dateInput.setAttribute("aria-describedby", `error-${field.key}`);
+          timeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          const dateValue = initialValue ? getDateFromIso(initialValue) : "";
+          const timeValue = initialValue ? getTimeFromIso(initialValue) : "";
+          if (dateValue) {
+            const [y, m, d] = dateValue.split("-");
+            dateInput.value = `${d}.${m}.${y}`;
+          }
+          timeInput.value = timeValue;
+          dateInput.placeholder = "gg.aa.yyyy";
+          dateInput.inputMode = "numeric";
+
+          const quickActions = document.createElement("div");
+          quickActions.className = "field-actions";
+          if (field.ui?.quickActions) {
+            const nowBtn = document.createElement("button");
+            nowBtn.type = "button";
+            nowBtn.className = "ghost";
+            nowBtn.textContent = "Şimdi";
+            nowBtn.addEventListener("click", () => {
+              const now = getCurrentDateTime(config);
+              const isoDate = getDateFromIso(now);
+              const isoTime = getTimeFromIso(now);
+              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
+              timeInput.value = isoTime;
+              syncDatetime();
+            });
+            quickActions.append(nowBtn);
+          }
+
+          const syncDatetime = () => {
+            const date = normalizeDateInput(dateInput.value);
+            const time = normalizeTimeInput(timeInput.value);
+            if (!date || !time) {
+              setFieldValue(field.key, "", field);
+            } else {
+              const offset = getOffsetFromIso(getCurrentDateTime(config));
+              setFieldValue(field.key, `${date}T${time}${offset}`, field);
+            }
+            updateError(control, field);
+          };
+
+          dateInput.addEventListener("change", syncDatetime);
+          timeInput.addEventListener("change", syncDatetime);
+          dateInput.addEventListener("blur", syncDatetime);
+          timeInput.addEventListener("blur", syncDatetime);
+
+          inputEl = document.createElement("div");
+          inputEl.className = "grid two";
+          inputEl.append(dateInput, timeInput);
+          inlineActions = quickActions;
+        } else if (field.type === "duration") {
+          const durationInput = document.createElement("input");
+          durationInput.className = "field-input";
+          durationInput.setAttribute("aria-describedby", `error-${field.key}`);
+          durationInput.placeholder = "hh:mm";
+          durationInput.value = initialValue || "";
+          durationInput.addEventListener("blur", () => {
+            const normalized = normalizeTimeInput(durationInput.value);
+            durationInput.value = normalized;
+            const [h, m] = normalized.split(":");
+            const minutes = (Number(h || 0) * 60) + Number(m || 0);
+            if (field.ui?.durationFormat === "iso") {
+              setFieldValue(field.key, `PT${Number(h || 0)}H${Number(m || 0)}M`, field, normalized);
+            } else {
+              setFieldValue(field.key, minutes, field, normalized);
+            }
+            updateError(control, field);
+          });
+          durationInput.addEventListener("input", () => {
+            setFieldValue(field.key, durationInput.value, field);
+          });
+          inputEl = durationInput;
+        } else if (field.type === "address") {
+          const street = document.createElement("input");
+          const district = document.createElement("input");
+          const city = document.createElement("input");
+          const postal = document.createElement("input");
+          const country = document.createElement("input");
+          [street, district, city, postal, country].forEach((input) => {
+            input.className = "field-input";
+          });
+          street.placeholder = "Sokak / Mahalle";
+          district.placeholder = "İlçe";
+          city.placeholder = "İl";
+          postal.placeholder = "Posta Kodu";
+          country.placeholder = "Ülke";
+          const grid = document.createElement("div");
+          grid.className = "grid two";
+          grid.append(street, district, city, postal, country);
+          const updateAddress = () => {
+            const value = {
+              street: street.value,
+              district: district.value,
+              city: city.value,
+              postalCode: postal.value,
+              country: country.value
+            };
+            setFieldValue(field.key, value, field);
+            updateError(control, field);
+          };
+          [street, district, city, postal, country].forEach((input) => {
+            input.addEventListener("input", updateAddress);
+            input.addEventListener("blur", updateAddress);
+          });
+          inputEl = grid;
+        } else if (["file", "multifile", "image"].includes(field.type)) {
+          const drop = document.createElement("div");
+          drop.className = "file-drop";
+          drop.textContent = "Dosya sürükleyin veya seçin";
+
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.className = "field-input";
+          fileInput.id = `field-${field.key}`;
+          fileInput.setAttribute("aria-describedby", `error-${field.key}`);
+          const accept = field.ui?.accept || "";
+          if (accept) fileInput.accept = accept;
+          if (field.type !== "file" && field.type !== "image") fileInput.multiple = true;
+
+          const list = document.createElement("div");
+          list.className = "file-list";
+
+          const renderFiles = () => {
+            list.innerHTML = "";
+            const files = state.fileBuffers[field.key] || [];
+            files.forEach((file, idx) => {
+              const row = document.createElement("div");
+              row.className = "file-item";
+              const left = document.createElement("div");
+              left.className = "inline-row";
+              const thumb = document.createElement("img");
+              thumb.className = "file-thumb";
+              if (file.preview) {
+                thumb.src = file.preview;
+              } else {
+                thumb.alt = "dosya";
+              }
+              const meta = document.createElement("div");
+              meta.className = "file-meta";
+              meta.innerHTML = `<strong>${file.name}</strong><span>${Math.round(file.size / 1024)} KB</span>`;
+              left.append(thumb, meta);
+              const removeBtn = document.createElement("button");
+              removeBtn.type = "button";
+              removeBtn.className = "ghost";
+              removeBtn.textContent = "Kaldır";
+              removeBtn.addEventListener("click", () => {
+                state.fileBuffers[field.key] = files.filter((_, fileIdx) => fileIdx !== idx);
+                renderFiles();
+                const filePayload = (state.fileBuffers[field.key] || []).map((f) => ({
+                  name: f.name,
+                  size: f.size,
+                  type: f.type,
+                  lastModified: f.lastModified
+                }));
+                setFieldValue(field.key, filePayload, field);
+                emit("onFileSelected", {
+                  key: field.key,
+                  files: filePayload,
+                  rawFiles: (state.fileBuffers[field.key] || []).map((f) => f.raw)
+                });
+              });
+              row.append(left, removeBtn);
+              list.append(row);
+            });
+          };
+
+          const handleFiles = (fileList) => {
+            const files = Array.from(fileList);
+            const maxFiles = field.ui?.maxFiles || (field.type === "multifile" ? 10 : 1);
+            const maxSizeMB = field.ui?.maxSizeMB || 25;
+            const errors = [];
+            const accepted = [];
+
+            files.forEach((file) => {
+              if (accepted.length >= maxFiles) return;
+              if (file.size > maxSizeMB * 1024 * 1024) {
+                errors.push(`${file.name}: Dosya çok büyük.`);
+                return;
+              }
+              if (accept && !file.type.match(accept.replace("*", ".*"))) {
+                errors.push(`${file.name}: Tür desteklenmiyor.`);
+                return;
+              }
+              accepted.push({
+                raw: file,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: file.lastModified,
+                preview: field.ui?.showPreview && file.type.startsWith("image/") ? URL.createObjectURL(file) : ""
+              });
+            });
+
+            if (errors.length) {
+              setFieldValue(field.key, "", field);
+              state.errors[field.key] = errors.join(" ");
+            }
+
+            state.fileBuffers[field.key] = field.type === "multifile" ? accepted : accepted.slice(0, 1);
+            renderFiles();
+
+            const filePayload = (state.fileBuffers[field.key] || []).map((file) => ({
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              lastModified: file.lastModified
+            }));
+            setFieldValue(field.key, filePayload, field);
+            emit("onFileSelected", {
+              key: field.key,
+              files: filePayload,
+              rawFiles: (state.fileBuffers[field.key] || []).map((file) => file.raw)
+            });
+          };
+
+          drop.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            drop.style.borderColor = varPrimary();
+          });
+          drop.addEventListener("dragleave", () => {
+            drop.style.borderColor = "";
+          });
+          drop.addEventListener("drop", (event) => {
+            event.preventDefault();
+            handleFiles(event.dataTransfer.files);
+            drop.style.borderColor = "";
+          });
+
+          fileInput.addEventListener("change", (event) => {
+            handleFiles(event.target.files);
+          });
+
+          control.append(drop, fileInput, list);
+          setFieldValue(field.key, "", field);
+        }
+
+        if (inputEl) {
+          control.append(inputEl);
+          if (inlineActions) {
+            control.append(inlineActions);
+          }
+        }
+
+        wrapper.append(control);
+
+        if (field.helpText && config.showInlineHelp) {
+          const help = document.createElement("div");
+          help.className = "helper-text";
+          help.textContent = field.helpText;
+          wrapper.append(help);
+        }
+
+        const errorText = document.createElement("div");
+        errorText.className = "error-text";
+        errorText.id = `error-${field.key}`;
+        wrapper.append(errorText);
+
+        formEl.append(wrapper);
+
+        if (extraControls) {
+          wrapper.append(extraControls);
+        }
+
+        if (index === 0 && config.autoFocusFirstInvalid) {
+          setTimeout(() => {
+            const focusTarget = wrapper.querySelector("input, textarea, select");
+            if (focusTarget) focusTarget.focus();
+          }, 0);
+        }
+      });
+      updateSubmitState(config);
     }
+
+    function varPrimary() {
+      return getComputedStyle(document.documentElement).getPropertyValue("--primary");
+    }
+
+    function updateError(control, field) {
+      const errorText = formEl.querySelector(`#error-${field.key}`);
+      const error = state.errors[field.key] || "";
+      errorText.textContent = error;
+      if (error) {
+        control.classList.add("invalid");
+      } else {
+        control.classList.remove("invalid");
+      }
+      updateSubmitState(state.config);
+    }
+
+    function updateSubmitState(config) {
+      const isValid = Object.values(state.validMap).every(Boolean);
+      if (config.requiredPolicy === "strict") {
+        submitBtn.disabled = !isValid;
+        submitBtn.title = isValid ? "" : "Zorunlu alanları doldurun";
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.title = "";
+      }
+    }
+
+    function focusFirstInvalid() {
+      const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
+      if (!firstInvalid) return null;
+      const target = document.querySelector(`#field-${firstInvalid}`) || document.querySelector(`[data-field='${firstInvalid}']`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (target.focus) target.focus();
+      }
+      return firstInvalid;
+    }
+
+    function validateAll() {
+      state.config.fields.forEach((field) => {
+        let value = state.values[field.key];
+        if (field.type === "date" && typeof value === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
+          value = normalizeDateInput(value);
+          state.values[field.key] = value;
+        }
+        if (field.type === "time" && typeof value === "string") {
+          value = normalizeTimeInput(value);
+          state.values[field.key] = value;
+        }
+        state.errors[field.key] = validateField(field, value);
+        state.validMap[field.key] = !state.errors[field.key];
+        const control = document.querySelector(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
+        if (control) updateError(control, field);
+      });
+    }
+
+    formEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      validateAll();
+      const firstInvalidKey = focusFirstInvalid();
+      const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
+      if (invalidCount > 0) {
+        summaryBox.style.display = "block";
+        summaryBox.textContent = `${invalidCount} alan eksik veya hatalı.`;
+      } else {
+        summaryBox.style.display = "none";
+      }
+      emit("onSubmitAttempt", {
+        values: state.values,
+        isFormValid: invalidCount === 0,
+        firstInvalidKey
+      });
+    });
+
+    formEl.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        if (event.target && event.target.blur) event.target.blur();
+        return;
+      }
+      if (event.key !== "Enter") return;
+      if (event.target?.tagName === "TEXTAREA") return;
+      if (event.target?.type === "button") return;
+      event.preventDefault();
+      const focusables = Array.from(formEl.querySelectorAll("input, select, textarea")).filter((el) => !el.disabled && el.type !== "hidden");
+      const currentIndex = focusables.indexOf(event.target);
+      const next = focusables[currentIndex + 1];
+      if (next) {
+        next.focus();
+      } else {
+        submitBtn.click();
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      emit("onClear", {});
+      renderForm(state.config);
+    });
 
     document.getElementById("loadSample").addEventListener("click", () => {
-      dataJsonEl.value = JSON.stringify(sampleData, null, 2);
-      columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
-      predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
-      log("Örnek senaryo 1 yüklendi (karışık).");
-      renderForm();
+      schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+      currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+      localeInput.value = defaultSchema.locale;
+      timezoneInput.value = defaultSchema.timezone;
+      modeInput.value = defaultSchema.mode;
+      requiredPolicyInput.value = defaultSchema.requiredPolicy;
+      showInlineHelpInput.checked = defaultSchema.showInlineHelp;
+      autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
     });
 
-    document.getElementById("loadSampleAlt").addEventListener("click", () => {
-      dataJsonEl.value = JSON.stringify(sampleDataAlt, null, 2);
-      columnsJsonEl.value = JSON.stringify(sampleColumnsAlt, null, 2);
-      predictionJsonEl.value = "";
-      log("Örnek senaryo 2 yüklendi (form + dropdown).");
-      renderForm();
+    document.getElementById("renderForm").addEventListener("click", () => {
+      const parsed = safeJsonParse(schemaInput.value);
+      if (!parsed || !parsed.fields) {
+        setConsole("Schema parse edilemedi", "");
+        return;
+      }
+      state.config = {
+        ...parsed,
+        currentDateTimeISO: currentDateTimeInput.value || parsed.currentDateTimeISO,
+        locale: localeInput.value || parsed.locale || "tr-TR",
+        timezone: timezoneInput.value || parsed.timezone || "Europe/Istanbul",
+        mode: modeInput.value || parsed.mode || "create",
+        requiredPolicy: requiredPolicyInput.value || parsed.requiredPolicy || "strict",
+        showInlineHelp: showInlineHelpInput.checked,
+        autoFocusFirstInvalid: autoFocusInvalidInput.checked
+      };
+      renderForm(state.config);
     });
 
-    document.getElementById("loadSampleFiles").addEventListener("click", () => {
-      dataJsonEl.value = JSON.stringify(sampleDataFiles, null, 2);
-      columnsJsonEl.value = JSON.stringify(sampleColumnsFiles, null, 2);
-      predictionJsonEl.value = "";
-      log("Örnek senaryo 3 yüklendi (dosya).");
-      renderForm();
-    });
-
-    document.getElementById("loadDataOnly").addEventListener("click", () => {
-      dataJsonEl.value = JSON.stringify(sampleData, null, 2);
-      log("Data JSON yüklendi.");
-    });
-
-    document.getElementById("loadColumnsOnly").addEventListener("click", () => {
-      columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
-      log("Columns JSON yüklendi.");
-    });
-
-    document.getElementById("loadPrediction").addEventListener("click", () => {
-      predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
-      log("Prediction JSON yüklendi.");
-      renderForm();
-    });
-
-    document.getElementById("renderForm").addEventListener("click", renderForm);
     document.getElementById("clearConsole").addEventListener("click", () => {
-      devConsole.textContent = "";
-    });
-    document.getElementById("logOutput").addEventListener("click", () => {
-      log("outputlist1:", window.outputlist1 || "");
+      consoleEl.textContent = "";
     });
 
-    log("Dynamic form elementi hazır.");
+    currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+    schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+    state.config = { ...defaultSchema };
+    renderForm(state.config);
   </script>
 </body>
 </html>
