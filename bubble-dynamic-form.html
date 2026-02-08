@@ -71,6 +71,8 @@
     select,
     textarea {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -184,15 +186,21 @@
 
     .file-pill span {
       color: var(--muted);
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .form-row {
       display: grid;
-      grid-template-columns: minmax(180px, 240px) 1fr;
+      grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
       gap: 16px;
       align-items: start;
       padding: 8px 0;
       border-bottom: 1px solid #f3f4f6;
+    }
+
+    .form-row > * {
+      min-width: 0;
     }
 
     .form-row:last-child {
