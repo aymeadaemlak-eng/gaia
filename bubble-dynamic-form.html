@@ -210,7 +210,12 @@
         </div>
       </div>
       <div class="actions" style="margin-top: 16px;">
-        <button id="loadSample">Örnek Veri Yükle</button>
+        <button id="loadSample">Örnek Senaryo 1 (Karışık)</button>
+        <button class="secondary" id="loadSampleAlt">Örnek Senaryo 2 (Form + Dropdown)</button>
+        <button class="secondary" id="loadSampleFiles">Örnek Senaryo 3 (Dosya)</button>
+        <button class="ghost" id="loadDataOnly">Sadece Data JSON Yükle</button>
+        <button class="ghost" id="loadColumnsOnly">Sadece Columns JSON Yükle</button>
+        <button class="ghost" id="loadPrediction">Prediction JSON Yükle</button>
         <button class="secondary" id="renderForm">Formu Yenile</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
         <button class="ghost" id="logOutput">Outputlist1 Logla</button>
@@ -278,7 +283,6 @@
         order: 1,
         default: "",
         columnWidth: 120,
-        readOnly: true,
         source: [],
         multiple: false
       },
@@ -289,7 +293,6 @@
         order: 2,
         default: "",
         columnWidth: 120,
-        readOnly: true,
         source: [],
         multiple: false
       },
@@ -300,7 +303,6 @@
         order: 3,
         default: "",
         columnWidth: 120,
-        readOnly: true,
         source: [],
         multiple: false
       },
@@ -311,7 +313,6 @@
         order: 4,
         default: "",
         columnWidth: 120,
-        readOnly: true,
         source: [],
         multiple: false
       },
@@ -322,7 +323,6 @@
         order: 5,
         default: "",
         columnWidth: 120,
-        readOnly: true,
         source: [],
         multiple: false
       },
@@ -330,7 +330,100 @@
         id: "Belgeleri Yükle",
         header: "Belgeleri Yükle",
         type: "imagepdf",
-        readOnly: true
+        readOnly: false
+      }
+    ];
+
+    const sampleDataAlt = {
+      "Ad Soyad": "Ayşe Yılmaz",
+      "Telefon": "+90 532 000 00 00",
+      "E-mail": "ayse@example.com",
+      "Onay": true,
+      "Araç Tipi": "Hususi",
+      "Hasar Açıklaması": "Arka tampon hasarlı.",
+      "Randevu Tarihi": "2025-02-10"
+    };
+
+    const sampleColumnsAlt = [
+      {
+        id: "Ad Soyad",
+        header: "Ad Soyad",
+        type: "text",
+        order: 1,
+        default: ""
+      },
+      {
+        id: "Telefon",
+        header: "Telefon",
+        type: "phone",
+        order: 2,
+        default: ""
+      },
+      {
+        id: "E-mail",
+        header: "E-mail",
+        type: "email",
+        order: 3,
+        default: ""
+      },
+      {
+        id: "Araç Tipi",
+        header: "Araç Tipi",
+        type: "dropdown",
+        order: 4,
+        default: "Hususi",
+        source: ["Hususi", "Ticari", "Kiralık"],
+        multiple: false
+      },
+      {
+        id: "Hasar Açıklaması",
+        header: "Hasar Açıklaması",
+        type: "text long",
+        order: 5,
+        default: ""
+      },
+      {
+        id: "Randevu Tarihi",
+        header: "Randevu Tarihi",
+        type: "date",
+        order: 6,
+        default: ""
+      },
+      {
+        id: "Onay",
+        header: "Onay",
+        type: "checkbox",
+        order: 7,
+        default: false
+      }
+    ];
+
+    const sampleDataFiles = {
+      "Dosyalar": [
+        "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf"
+      ],
+      "Fotoğraf Notu": "Ön tampon fotoğrafı eklendi.",
+      "Kaza Tarihi": "2024-11-15"
+    };
+
+    const sampleColumnsFiles = [
+      {
+        id: "Dosyalar",
+        header: "Dosyalar",
+        type: "imagepdf",
+        order: 1
+      },
+      {
+        id: "Fotoğraf Notu",
+        header: "Fotoğraf Notu",
+        type: "text long",
+        order: 2
+      },
+      {
+        id: "Kaza Tarihi",
+        header: "Kaza Tarihi",
+        type: "date",
+        order: 3
       }
     ];
 
@@ -658,8 +751,39 @@
       dataJsonEl.value = JSON.stringify(sampleData, null, 2);
       columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
       predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
-      log("Örnek veri yüklendi.");
+      log("Örnek senaryo 1 yüklendi (karışık).");
       renderForm();
+    });
+
+    document.getElementById("loadSampleAlt").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleDataAlt, null, 2);
+      columnsJsonEl.value = JSON.stringify(sampleColumnsAlt, null, 2);
+      predictionJsonEl.value = "";
+      log("Örnek senaryo 2 yüklendi (form + dropdown).");
+      renderForm();
+    });
+
+    document.getElementById("loadSampleFiles").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleDataFiles, null, 2);
+      columnsJsonEl.value = JSON.stringify(sampleColumnsFiles, null, 2);
+      predictionJsonEl.value = "";
+      log("Örnek senaryo 3 yüklendi (dosya).");
+      renderForm();
+    });
+
+    document.getElementById("loadDataOnly").addEventListener("click", () => {
+      dataJsonEl.value = JSON.stringify(sampleData, null, 2);
+      log("Data JSON yüklendi.");
+    });
+
+    document.getElementById("loadColumnsOnly").addEventListener("click", () => {
+      columnsJsonEl.value = JSON.stringify(sampleColumns, null, 2);
+      log("Columns JSON yüklendi.");
+    });
+
+    document.getElementById("loadPrediction").addEventListener("click", () => {
+      predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
+      log("Prediction JSON yüklendi.");
     });
 
     document.getElementById("renderForm").addEventListener("click", renderForm);
