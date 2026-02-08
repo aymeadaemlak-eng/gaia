@@ -269,12 +269,63 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 2px;
+      position: relative;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .field-control:focus-within {
       border-color: rgba(37, 99, 235, 0.7);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .field-control.ai-suggested {
+      border-color: rgba(37, 99, 235, 0.6);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22), 0 0 14px rgba(59, 130, 246, 0.25);
+    }
+
+    .field-control.ai-suggested .field-input {
+      padding-right: 38px;
+    }
+
+    .ai-indicator {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .field-control.ai-suggested .ai-indicator {
+      opacity: 1;
+    }
+
+    .field-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .ai-reset {
+      border: 1px solid rgba(37, 99, 235, 0.35);
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     .field-input {
@@ -652,6 +703,20 @@
       return false;
     }
 
+    function getPredictionValue(column) {
+      if (!state.prediction) {
+        return undefined;
+      }
+      if (state.prediction[column.id] === undefined) {
+        return undefined;
+      }
+      return state.prediction[column.id];
+    }
+
+    function hasPredictionValue(value) {
+      return value !== undefined && value !== null && value !== "";
+    }
+
     function getInitialValue(column) {
       const id = column.id;
       const dataValue = state.data && state.data[id] !== undefined ? state.data[id] : null;
@@ -659,8 +724,8 @@
         state.fieldSources[id] = "human";
         return dataValue;
       }
-      const predictedValue = state.prediction && state.prediction[id] !== undefined ? state.prediction[id] : "";
-      if (predictedValue !== "") {
+      const predictedValue = getPredictionValue(column);
+      if (hasPredictionValue(predictedValue)) {
         state.fieldSources[id] = "ai";
         return predictedValue;
       }
@@ -669,6 +734,9 @@
     }
 
     function createTag(source, isHidden) {
+      if (!source) {
+        return null;
+      }
       const tag = document.createElement("span");
       tag.classList.add("tag");
       if (isHidden) {
@@ -684,6 +752,31 @@
         tag.textContent = "👤 İnsan";
       }
       return tag;
+    }
+
+    function updateTag(label, source, isHidden, hasPrediction) {
+      label.querySelector(".tag")?.remove();
+      if (!hasPrediction) {
+        return;
+      }
+      const tag = createTag(source, isHidden);
+      if (tag) {
+        label.appendChild(tag);
+      }
+    }
+
+    function setFieldValue(field, value) {
+      if (field.type === "checkbox") {
+        field.checked = Boolean(value);
+        return;
+      }
+      if (field.multiple && Array.isArray(value)) {
+        Array.from(field.options || []).forEach((option) => {
+          option.selected = value.includes(option.value);
+        });
+        return;
+      }
+      field.value = value ?? "";
     }
 
     function getTypeIcon(type) {
@@ -857,6 +950,8 @@
         wrapper.className = "field-meta";
         const label = document.createElement("div");
         label.className = "field-title";
+        const predictedValue = getPredictionValue(column);
+        const hasPrediction = hasPredictionValue(predictedValue);
         const initialValue = getInitialValue(column);
         const icon = document.createElement("span");
         icon.className = "field-icon";
@@ -867,7 +962,7 @@
         label.appendChild(labelText);
 
         const isHidden = getNormalizedType(column.type) === "hidden";
-        label.appendChild(createTag(state.fieldSources[column.id], isHidden));
+        updateTag(label, state.fieldSources[column.id], isHidden, hasPrediction);
         wrapper.appendChild(label);
         wrapper.appendChild(createBadges(column));
 
@@ -947,23 +1042,8 @@
           field.disabled = true;
         }
 
-        field.addEventListener("input", (event) => {
-          if (field.type === "file") return;
-          state.fieldSources[column.id] = "human";
-          if (event.target.type === "checkbox") {
-            state.data[column.id] = event.target.checked;
-          } else if (event.target.multiple) {
-            const values = Array.from(event.target.selectedOptions || []).map((opt) => opt.value);
-            state.data[column.id] = values;
-          } else {
-            state.data[column.id] = event.target.value;
-          }
-          if (event.target.tagName === "TEXTAREA") {
-            autoResizeTextarea(event.target);
-          }
-          label.querySelector(".tag")?.replaceWith(createTag("human"));
-          updateOutputList();
-        });
+        let control;
+        let revertButton;
 
         if (field.type === "file") {
           field.addEventListener("change", () => handleFileUpload(column, field));
@@ -1008,14 +1088,70 @@
         }
 
         row.appendChild(wrapper);
-        const control = document.createElement("div");
+        control = document.createElement("div");
         control.className = "field-control";
         if (field.type === "checkbox") {
           control.classList.add("checkbox");
         }
+        const aiIndicator = document.createElement("span");
+        aiIndicator.className = "ai-indicator";
+        aiIndicator.textContent = "🤖";
+        aiIndicator.title = "ChatGPT önerisi";
         control.appendChild(field);
+        control.appendChild(aiIndicator);
         row.appendChild(control);
+        const actions = document.createElement("div");
+        actions.className = "field-actions";
+        revertButton = document.createElement("button");
+        revertButton.type = "button";
+        revertButton.className = "ai-reset";
+        revertButton.textContent = "ChatGPT önerisine dön";
+        revertButton.hidden = true;
+        actions.appendChild(revertButton);
+        actions.hidden = !hasPrediction;
+        row.appendChild(actions);
         formContainer.appendChild(row);
+        if (field.type !== "file") {
+          field.addEventListener("input", (event) => {
+            state.fieldSources[column.id] = "human";
+            if (event.target.type === "checkbox") {
+              state.data[column.id] = event.target.checked;
+            } else if (event.target.multiple) {
+              const values = Array.from(event.target.selectedOptions || []).map((opt) => opt.value);
+              state.data[column.id] = values;
+            } else {
+              state.data[column.id] = event.target.value;
+            }
+            if (event.target.tagName === "TEXTAREA") {
+              autoResizeTextarea(event.target);
+            }
+            updateTag(label, "human", isHidden, hasPrediction);
+            if (hasPrediction) {
+              control.classList.remove("ai-suggested");
+              revertButton.hidden = false;
+            }
+            updateOutputList();
+          });
+        }
+        if (hasPrediction && state.fieldSources[column.id] === "ai") {
+          control.classList.add("ai-suggested");
+        }
+        if (hasPrediction && state.fieldSources[column.id] === "human") {
+          revertButton.hidden = false;
+        }
+        revertButton.addEventListener("click", () => {
+          if (!hasPrediction) return;
+          state.fieldSources[column.id] = "ai";
+          setFieldValue(field, predictedValue);
+          state.data[column.id] = predictedValue;
+          updateTag(label, "ai", isHidden, hasPrediction);
+          control.classList.add("ai-suggested");
+          revertButton.hidden = true;
+          if (field.tagName === "TEXTAREA") {
+            autoResizeTextarea(field);
+          }
+          updateOutputList();
+        });
         state.data[column.id] = initialValue;
       });
 
