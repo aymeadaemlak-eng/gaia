@@ -28,6 +28,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
+      font-size: 14px;
     }
 
     .page {
@@ -66,10 +67,9 @@
     label {
       font-size: 0.9rem;
       font-weight: 600;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 6px;
     }
 
     .required-star {
@@ -85,13 +85,97 @@
 
     .field-wrapper {
       display: grid;
-      gap: 8px;
-      padding: 12px 0;
-      border-bottom: 1px solid #f3f4f6;
+      gap: 6px;
+      padding: 8px 0;
+      border-bottom: 1px solid #eef2f7;
     }
 
     .field-wrapper:last-child {
       border-bottom: none;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 35%) minmax(0, 65%);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .field-label {
+      display: grid;
+      gap: 4px;
+    }
+
+    .label-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .label-text {
+      font-weight: 700;
+    }
+
+    .label-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .type-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .stage-optional {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .stage-mandatory {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+    }
+
+    .stage-control {
+      background: rgba(37, 99, 235, 0.12);
+      color: var(--primary);
+    }
+
+    .ai-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .ai-toggle.is-human {
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.4);
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .control-stack {
+      display: grid;
+      gap: 6px;
     }
 
     .field-control {
@@ -118,34 +202,35 @@
     textarea {
       width: 100%;
       border: none;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-radius: 10px;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       background: transparent;
       color: var(--text);
       outline: none;
+      min-height: 34px;
     }
 
     textarea.field-input {
       resize: vertical;
-      min-height: 110px;
+      min-height: 96px;
     }
 
     .field-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 6px;
     }
 
     .helper-text {
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       color: var(--muted);
     }
 
     .error-text {
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       color: var(--danger);
+      min-height: 16px;
     }
 
     .inline-row {
@@ -215,11 +300,11 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 8px;
+      padding: 3px 8px;
       border-radius: 999px;
       background: rgba(37, 99, 235, 0.1);
       color: var(--primary);
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
     }
 
@@ -233,7 +318,7 @@
     .file-drop {
       border: 1px dashed var(--border);
       border-radius: 12px;
-      padding: 16px;
+      padding: 12px;
       text-align: center;
       color: var(--muted);
       background: #fafafa;
@@ -243,6 +328,13 @@
       display: grid;
       gap: 8px;
       margin-top: 10px;
+    }
+
+    .file-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
 
     .file-item {
@@ -256,6 +348,15 @@
       background: #fff;
     }
 
+    .file-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      background: #fff;
+    }
+
     .file-meta {
       display: grid;
       gap: 4px;
@@ -263,12 +364,31 @@
     }
 
     .file-thumb {
-      width: 44px;
-      height: 44px;
+      width: 52px;
+      height: 52px;
       border-radius: 8px;
       object-fit: cover;
       border: 1px solid var(--border);
       background: #f3f4f6;
+    }
+
+    .file-thumb.large {
+      width: 100%;
+      height: 90px;
+    }
+
+    .file-icon {
+      font-size: 22px;
+      width: 44px;
+      text-align: center;
+    }
+
+    .file-remove {
+      border: none;
+      background: transparent;
+      color: var(--danger);
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .toggle {
@@ -290,6 +410,53 @@
       padding: 10px 12px;
       border-radius: 12px;
       font-size: 0.85rem;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 999;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox-content {
+      max-width: min(720px, 90vw);
+      max-height: 80vh;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .lightbox-content img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    .lightbox-close {
+      justify-self: end;
+      background: #111827;
+      color: #fff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    @media (max-width: 720px) {
+      .field-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
     }
   </style>
 </head>
@@ -370,6 +537,12 @@
       </div>
     </section>
   </main>
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <div class="lightbox-content">
+      <button type="button" class="lightbox-close">Kapat</button>
+      <img id="lightboxImage" alt="Önizleme" />
+    </div>
+  </div>
 
   <script>
     const schemaInput = document.getElementById("schemaInput");
@@ -385,6 +558,8 @@
     const clearBtn = document.getElementById("clearBtn");
     const summaryBox = document.getElementById("summaryBox");
     const consoleEl = document.getElementById("eventConsole");
+    const lightboxEl = document.getElementById("lightbox");
+    const lightboxImage = document.getElementById("lightboxImage");
 
     const state = {
       config: null,
@@ -393,7 +568,8 @@
       touched: {},
       errors: {},
       autoSaveTimer: null,
-      fileBuffers: {}
+      fileBuffers: {},
+      aiMode: {}
     };
 
     const defaultSchema = {
@@ -661,6 +837,69 @@
       return false;
     }
 
+    const typeMetaMap = {
+      text: { icon: "📝", label: "Text" },
+      textarea: { icon: "📝", label: "Textarea" },
+      email: { icon: "✉️", label: "Email" },
+      phone: { icon: "📞", label: "Phone" },
+      url: { icon: "🔗", label: "URL" },
+      integer: { icon: "🔢", label: "Integer" },
+      decimal: { icon: "🔢", label: "Decimal" },
+      currency: { icon: "🔢", label: "Currency" },
+      percent: { icon: "🔢", label: "Percent" },
+      boolean: { icon: "✅", label: "Boolean" },
+      single_select: { icon: "⬇️", label: "Single select" },
+      multi_select: { icon: "🧩", label: "Multi select" },
+      date: { icon: "📅", label: "Date" },
+      time: { icon: "⏱️", label: "Time" },
+      datetime: { icon: "🗓️⏱️", label: "Datetime" },
+      file: { icon: "📎", label: "File" },
+      image: { icon: "🖼️", label: "Image" },
+      multifile: { icon: "🗂️", label: "Multi file" }
+    };
+
+    function getTypeMeta(type) {
+      return typeMetaMap[type] || { icon: "📝", label: type || "text" };
+    }
+
+    function normalizeStageType(stageType) {
+      if (!stageType) return "";
+      return String(stageType).trim().toLowerCase();
+    }
+
+    function getStageBadge(stageType) {
+      const normalized = normalizeStageType(stageType);
+      if (!["optional", "mandatory", "control"].includes(normalized)) return null;
+      const badge = document.createElement("span");
+      badge.className = `stage-badge stage-${normalized}`;
+      badge.textContent = normalized === "optional" ? "Optional" : normalized === "mandatory" ? "Mandatory" : "Control";
+      return badge;
+    }
+
+    function isImageLike(file) {
+      if (!file) return false;
+      if (file.type && file.type.startsWith("image/")) return true;
+      if (file.url) {
+        return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.url);
+      }
+      return false;
+    }
+
+    function parseInitialFiles(initialValue) {
+      if (!initialValue) return [];
+      const values = Array.isArray(initialValue) ? initialValue : [initialValue];
+      return values
+        .filter((val) => typeof val === "string")
+        .map((url) => ({
+          url,
+          name: url.split("/").pop() || "dosya",
+          size: 0,
+          type: isImageLike({ url }) ? "image/*" : "",
+          lastModified: null,
+          preview: url
+        }));
+    }
+
     function validateField(field, value) {
       if (field.required && isEmptyValue(value)) {
         if (field.type === "boolean") {
@@ -736,25 +975,70 @@
       state.errors = {};
       state.touched = {};
       state.fileBuffers = {};
+      state.aiMode = {};
       summaryBox.style.display = "none";
 
       config.fields.forEach((field, index) => {
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
 
+        const row = document.createElement("div");
+        row.className = "field-row";
+
+        const labelColumn = document.createElement("div");
+        labelColumn.className = "field-label";
+
+        const labelTop = document.createElement("div");
+        labelTop.className = "label-top";
+
+        const typeMeta = getTypeMeta(field.type);
+        const typeIcon = document.createElement("span");
+        typeIcon.className = "type-icon";
+        typeIcon.textContent = typeMeta.icon;
+        typeIcon.title = typeMeta.label;
+
         const label = document.createElement("label");
+        label.className = "label-text";
         label.htmlFor = `field-${field.key}`;
         label.textContent = field.label;
+
+        labelTop.append(typeIcon, label);
+
         if (field.required) {
           const star = document.createElement("span");
           star.className = "required-star";
           star.textContent = "*";
-          const hint = document.createElement("span");
-          hint.className = "required-hint";
-          hint.textContent = "zorunlu";
-          label.append(star, hint);
+          labelTop.append(star);
         }
-        wrapper.append(label);
+
+        const labelMeta = document.createElement("div");
+        labelMeta.className = "label-meta";
+
+        const stageBadge = getStageBadge(field.stageType);
+        if (stageBadge) labelMeta.append(stageBadge);
+
+        if (field.ui?.predicted) {
+          const aiToggle = document.createElement("button");
+          aiToggle.type = "button";
+          aiToggle.className = "ai-toggle";
+          aiToggle.innerHTML = `<span title="Predicted">🤖</span><span>Human mode</span>`;
+          state.aiMode[field.key] = true;
+          aiToggle.addEventListener("click", () => {
+            const isHuman = aiToggle.classList.toggle("is-human");
+            state.aiMode[field.key] = isHuman ? "human" : "ai";
+            aiToggle.querySelector("span:last-child").textContent = isHuman ? "AI mode" : "Human mode";
+            emit("onPredictedToggle", {
+              key: field.key,
+              mode: isHuman ? "human" : "ai"
+            });
+          });
+          labelMeta.append(aiToggle);
+        }
+
+        labelColumn.append(labelTop);
+        if (labelMeta.childElementCount) {
+          labelColumn.append(labelMeta);
+        }
 
         const control = document.createElement("div");
         control.className = "field-control";
@@ -856,9 +1140,10 @@
           inputEl.type = "checkbox";
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
+          inputEl.setAttribute("aria-label", field.label);
           inputEl.checked = Boolean(initialValue);
           const toggleLabel = document.createElement("span");
-          toggleLabel.textContent = field.label;
+          toggleLabel.textContent = "Evet";
           control.append(inputEl, toggleLabel);
           inputEl.addEventListener("change", () => {
             setFieldValue(field.key, inputEl.checked, field);
@@ -1225,6 +1510,7 @@
           const accept = field.ui?.accept || "";
           if (accept) fileInput.accept = accept;
           if (field.type !== "file" && field.type !== "image") fileInput.multiple = true;
+          if (field.type === "image" && field.ui?.allowMultiple) fileInput.multiple = true;
 
           const list = document.createElement("div");
           list.className = "file-list";
@@ -1232,26 +1518,45 @@
           const renderFiles = () => {
             list.innerHTML = "";
             const files = state.fileBuffers[field.key] || [];
+            const isImageGrid = field.type === "image" && (fileInput.multiple || files.length > 1);
+            list.className = isImageGrid ? "file-grid" : "file-list";
+
             files.forEach((file, idx) => {
+              const isImage = isImageLike(file);
               const row = document.createElement("div");
-              row.className = "file-item";
-              const left = document.createElement("div");
-              left.className = "inline-row";
-              const thumb = document.createElement("img");
-              thumb.className = "file-thumb";
-              if (file.preview) {
-                thumb.src = file.preview;
-              } else {
-                thumb.alt = "dosya";
-              }
+              row.className = isImageGrid ? "file-card" : "file-item";
               const meta = document.createElement("div");
               meta.className = "file-meta";
               meta.innerHTML = `<strong>${file.name}</strong><span>${Math.round(file.size / 1024)} KB</span>`;
-              left.append(thumb, meta);
+
+              if (isImage) {
+                const thumb = document.createElement("img");
+                thumb.className = isImageGrid ? "file-thumb large" : "file-thumb";
+                thumb.src = file.preview || file.url || "";
+                thumb.alt = file.name || "görsel";
+                thumb.addEventListener("click", () => openLightbox(file.preview || file.url || ""));
+                if (isImageGrid) {
+                  row.append(thumb);
+                } else {
+                  const left = document.createElement("div");
+                  left.className = "inline-row";
+                  left.append(thumb, meta);
+                  row.append(left);
+                }
+              } else {
+                const left = document.createElement("div");
+                left.className = "inline-row";
+                const icon = document.createElement("div");
+                icon.className = "file-icon";
+                icon.textContent = "📄";
+                left.append(icon, meta);
+                row.append(left);
+              }
+
               const removeBtn = document.createElement("button");
               removeBtn.type = "button";
-              removeBtn.className = "ghost";
-              removeBtn.textContent = "Kaldır";
+              removeBtn.className = "file-remove";
+              removeBtn.textContent = "×";
               removeBtn.addEventListener("click", () => {
                 state.fileBuffers[field.key] = files.filter((_, fileIdx) => fileIdx !== idx);
                 renderFiles();
@@ -1268,7 +1573,13 @@
                   rawFiles: (state.fileBuffers[field.key] || []).map((f) => f.raw)
                 });
               });
-              row.append(left, removeBtn);
+
+              if (isImageGrid) {
+                row.append(meta, removeBtn);
+              } else {
+                row.append(removeBtn);
+              }
+
               list.append(row);
             });
           };
@@ -1305,7 +1616,7 @@
               state.errors[field.key] = errors.join(" ");
             }
 
-            state.fileBuffers[field.key] = field.type === "multifile" ? accepted : accepted.slice(0, 1);
+            state.fileBuffers[field.key] = field.type === "multifile" || fileInput.multiple ? accepted : accepted.slice(0, 1);
             renderFiles();
 
             const filePayload = (state.fileBuffers[field.key] || []).map((file) => ({
@@ -1340,6 +1651,11 @@
           });
 
           control.append(drop, fileInput, list);
+          const initialFiles = parseInitialFiles(initialValue);
+          if (initialFiles.length) {
+            state.fileBuffers[field.key] = initialFiles;
+            renderFiles();
+          }
           setFieldValue(field.key, "", field);
         }
 
@@ -1350,25 +1666,28 @@
           }
         }
 
-        wrapper.append(control);
-
         if (field.helpText && config.showInlineHelp) {
           const help = document.createElement("div");
           help.className = "helper-text";
           help.textContent = field.helpText;
-          wrapper.append(help);
+          labelColumn.append(help);
         }
 
         const errorText = document.createElement("div");
         errorText.className = "error-text";
         errorText.id = `error-${field.key}`;
-        wrapper.append(errorText);
 
-        formEl.append(wrapper);
-
+        const controlStack = document.createElement("div");
+        controlStack.className = "control-stack";
+        controlStack.append(control);
         if (extraControls) {
-          wrapper.append(extraControls);
+          controlStack.append(extraControls);
         }
+        controlStack.append(errorText);
+
+        row.append(labelColumn, controlStack);
+        wrapper.append(row);
+        formEl.append(wrapper);
 
         if (index === 0 && config.autoFocusFirstInvalid) {
           setTimeout(() => {
@@ -1383,6 +1702,27 @@
     function varPrimary() {
       return getComputedStyle(document.documentElement).getPropertyValue("--primary");
     }
+
+    function openLightbox(src) {
+      if (!src) return;
+      lightboxImage.src = src;
+      lightboxEl.classList.add("open");
+      lightboxEl.setAttribute("aria-hidden", "false");
+    }
+
+    function closeLightbox() {
+      lightboxEl.classList.remove("open");
+      lightboxEl.setAttribute("aria-hidden", "true");
+      lightboxImage.src = "";
+    }
+
+    lightboxEl.addEventListener("click", (event) => {
+      if (event.target === lightboxEl) {
+        closeLightbox();
+      }
+    });
+
+    lightboxEl.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
 
     function updateError(control, field) {
       const errorText = formEl.querySelector(`#error-${field.key}`);
