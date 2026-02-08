@@ -1207,6 +1207,109 @@
       min-width: 0;
     }
 
+    .whatsapp-cta-card {
+      padding: 22px;
+      border-radius: 18px;
+      border: 1px solid #cfe7d4;
+      background: linear-gradient(135deg, #f3fff6 0%, #ffffff 60%);
+      display: grid;
+      gap: 16px;
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.16);
+    }
+
+    .whatsapp-cta-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .whatsapp-cta-tag {
+      align-self: flex-start;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #0f6b4e;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .whatsapp-cta-title {
+      font-size: 20px;
+      color: #115e3c;
+    }
+
+    .whatsapp-cta-text {
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .whatsapp-cta-phone {
+      font-weight: 700;
+      color: #0f6b4e;
+    }
+
+    .whatsapp-cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .whatsapp-cta-button {
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 20px rgba(22, 163, 74, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .whatsapp-cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px rgba(22, 163, 74, 0.3);
+    }
+
+    .whatsapp-greeting {
+      position: fixed;
+      right: 20px;
+      bottom: 24px;
+      max-width: 320px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #cfe7d4;
+      box-shadow: 0 16px 30px rgba(15, 23, 42, 0.15);
+      display: grid;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      z-index: 2100;
+    }
+
+    .whatsapp-greeting.is-active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .whatsapp-greeting-title {
+      font-weight: 700;
+      color: #0f6b4e;
+    }
+
+    .whatsapp-greeting-text {
+      color: #1f2937;
+      font-size: 14px;
+      margin: 0;
+    }
+
     .hero-cta-group {
       display: grid;
       gap: 8px;
@@ -2312,6 +2415,28 @@
             <a class="trust-link" href="#" id="trustDetailsLink">Detaylar</a>
           </div>
 
+          <section class="whatsapp-cta-card" id="whatsappCta">
+            <div class="whatsapp-cta-header">
+              <span class="whatsapp-cta-tag">WhatsApp</span>
+              <h2 class="whatsapp-cta-title">Hemen iletişime geçin</h2>
+              <p class="whatsapp-cta-text">
+                Sorularınızı hızlıca yanıtlıyoruz. WhatsApp üzerinden bize yazın:
+                <span class="whatsapp-cta-phone">+90 544 165 07 81</span>
+              </p>
+            </div>
+            <div class="whatsapp-cta-actions">
+              <a
+                class="whatsapp-cta-button"
+                href="https://wa.me/905441650781?text=Merhaba%2C%20hemen%20ileti%C5%9Fime%20ge%C3%A7mek%20istiyorum."
+                target="_blank"
+                rel="noopener"
+              >
+                WhatsApp'tan Yaz
+              </a>
+              <span class="hero-cta-note">Tıklayın, mesajınız hazır gelsin.</span>
+            </div>
+          </section>
+
           <section class="hero-block">
             <h1 class="hero-title-lg">Ücretsiz Danışmanlık Talebi</h1>
             <p class="hero-subtitle">
@@ -2826,6 +2951,13 @@
         <li>Silme süreci otomatik çalışır, manuel işlem gerekmez.</li>
       </ul>
     </div>
+  </div>
+
+  <div class="whatsapp-greeting" id="whatsappGreeting" role="status" aria-live="polite">
+    <div class="whatsapp-greeting-title">👋 Merhaba!</div>
+    <p class="whatsapp-greeting-text">
+      Hemen iletişime geçmek için WhatsApp butonuna tıklayın.
+    </p>
   </div>
 
   <div class="modal-backdrop" id="howItWorksModal" aria-hidden="true">
@@ -4471,6 +4603,54 @@
         });
       }
 
+      const whatsappGreeting = document.getElementById("whatsappGreeting");
+
+      function playWhatsappSound() {
+        if (!("AudioContext" in window || "webkitAudioContext" in window)) {
+          return;
+        }
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioCtx();
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.35);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.4);
+      }
+
+      function showWhatsappGreeting() {
+        if (!whatsappGreeting) {
+          return;
+        }
+        whatsappGreeting.classList.add("is-active");
+      }
+
+      function triggerWhatsappGreeting() {
+        showWhatsappGreeting();
+        try {
+          playWhatsappSound();
+        } catch (error) {
+          // Autoplay restrictions; retry on first user interaction.
+          const retry = () => {
+            try {
+              playWhatsappSound();
+            } catch (innerError) {}
+            window.removeEventListener("click", retry);
+            window.removeEventListener("touchstart", retry);
+            window.removeEventListener("keydown", retry);
+          };
+          window.addEventListener("click", retry, { once: true });
+          window.addEventListener("touchstart", retry, { once: true });
+          window.addEventListener("keydown", retry, { once: true });
+        }
+      }
+
       if (howItWorksModal) {
         howItWorksModal.addEventListener("click", (event) => {
           if (event.target === howItWorksModal) {
@@ -4502,6 +4682,8 @@
           }
         });
       }
+
+      triggerWhatsappGreeting();
 
       const WATCHER_KEY = "__DK_WATCHER__";
       if (window[WATCHER_KEY] && typeof window[WATCHER_KEY].stop === "function") {
