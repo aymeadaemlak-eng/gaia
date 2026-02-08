@@ -1297,6 +1297,7 @@
     document.getElementById("loadPrediction").addEventListener("click", () => {
       predictionJsonEl.value = JSON.stringify(samplePrediction, null, 2);
       log("Prediction JSON yüklendi.");
+      renderForm();
     });
 
     document.getElementById("renderForm").addEventListener("click", renderForm);
