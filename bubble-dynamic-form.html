@@ -263,6 +263,75 @@
       color: var(--success);
       border-color: rgba(22, 163, 74, 0.2);
     }
+
+    .field-control {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-control:focus-within {
+      border-color: rgba(37, 99, 235, 0.7);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .field-input {
+      width: 100%;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: transparent;
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--text);
+      caret-color: var(--primary);
+      outline: none;
+      font-variant-ligatures: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    .field-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .field-input:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .field-control:has(.field-input:disabled) {
+      background: #f3f4f6;
+    }
+
+    .field-control.checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+    }
+
+    .field-control.checkbox .field-input {
+      width: 20px;
+      height: 20px;
+      padding: 0;
+    }
+
+    textarea.field-input {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    select.field-input {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+        linear-gradient(135deg, #6b7280 50%, transparent 50%);
+      background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 32px;
+    }
   </style>
 </head>
 <body>
@@ -631,6 +700,31 @@
       return "•";
     }
 
+    function autoResizeTextarea(textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    function applyFieldUX(field, column) {
+      field.classList.add("field-input");
+      const type = getNormalizedType(column.type);
+      if (type === "number") {
+        field.inputMode = "decimal";
+      }
+      if (type === "phone") {
+        field.inputMode = "tel";
+        field.autocomplete = "tel";
+      }
+      if (type === "email" || type === "e-mail") {
+        field.inputMode = "email";
+        field.autocomplete = "email";
+      }
+      if (field.tagName === "TEXTAREA") {
+        field.spellcheck = true;
+        requestAnimationFrame(() => autoResizeTextarea(field));
+      }
+    }
+
     function createBadges(column) {
       const badges = document.createElement("div");
       badges.className = "field-badges";
@@ -847,6 +941,8 @@
           field.value = initialValue;
         }
 
+        applyFieldUX(field, column);
+
         if (column.readOnly) {
           field.disabled = true;
         }
@@ -861,6 +957,9 @@
             state.data[column.id] = values;
           } else {
             state.data[column.id] = event.target.value;
+          }
+          if (event.target.tagName === "TEXTAREA") {
+            autoResizeTextarea(event.target);
           }
           label.querySelector(".tag")?.replaceWith(createTag("human"));
           updateOutputList();
@@ -897,7 +996,10 @@
 
           const fileStack = document.createElement("div");
           fileStack.className = "grid";
-          fileStack.appendChild(field);
+          const fileControl = document.createElement("div");
+          fileControl.className = "field-control";
+          fileControl.appendChild(field);
+          fileStack.appendChild(fileControl);
           fileStack.appendChild(preview);
           row.appendChild(wrapper);
           row.appendChild(fileStack);
@@ -906,7 +1008,13 @@
         }
 
         row.appendChild(wrapper);
-        row.appendChild(field);
+        const control = document.createElement("div");
+        control.className = "field-control";
+        if (field.type === "checkbox") {
+          control.classList.add("checkbox");
+        }
+        control.appendChild(field);
+        row.appendChild(control);
         formContainer.appendChild(row);
         state.data[column.id] = initialValue;
       });
