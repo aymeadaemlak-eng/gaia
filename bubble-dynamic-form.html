@@ -185,6 +185,76 @@
     .file-pill span {
       color: var(--muted);
     }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 240px) 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-meta {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .field-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #4b5563;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .field-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .badge.control {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .badge.mandatory {
+      background: rgba(239, 68, 68, 0.08);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .badge.optional {
+      background: rgba(22, 163, 74, 0.08);
+      color: var(--success);
+      border-color: rgba(22, 163, 74, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -283,6 +353,8 @@
         order: 1,
         default: "",
         columnWidth: 120,
+        control: true,
+        mandatory: true,
         source: [],
         multiple: false
       },
@@ -293,6 +365,8 @@
         order: 2,
         default: "",
         columnWidth: 120,
+        control: true,
+        mandatory: true,
         source: [],
         multiple: false
       },
@@ -303,6 +377,8 @@
         order: 3,
         default: "",
         columnWidth: 120,
+        control: true,
+        optional: true,
         source: [],
         multiple: false
       },
@@ -313,6 +389,8 @@
         order: 4,
         default: "",
         columnWidth: 120,
+        control: true,
+        optional: true,
         source: [],
         multiple: false
       },
@@ -323,6 +401,8 @@
         order: 5,
         default: "",
         columnWidth: 120,
+        control: true,
+        optional: true,
         source: [],
         multiple: false
       },
@@ -330,6 +410,8 @@
         id: "Belgeleri Yükle",
         header: "Belgeleri Yükle",
         type: "imagepdf",
+        control: true,
+        optional: true,
         readOnly: false
       }
     ];
@@ -350,21 +432,27 @@
         header: "Ad Soyad",
         type: "text",
         order: 1,
-        default: ""
+        default: "",
+        control: true,
+        mandatory: true
       },
       {
         id: "Telefon",
         header: "Telefon",
         type: "phone",
         order: 2,
-        default: ""
+        default: "",
+        control: true,
+        mandatory: true
       },
       {
         id: "E-mail",
         header: "E-mail",
         type: "email",
         order: 3,
-        default: ""
+        default: "",
+        control: true,
+        mandatory: true
       },
       {
         id: "Araç Tipi",
@@ -373,6 +461,7 @@
         order: 4,
         default: "Hususi",
         source: ["Hususi", "Ticari", "Kiralık"],
+        control: true,
         multiple: false
       },
       {
@@ -380,21 +469,27 @@
         header: "Hasar Açıklaması",
         type: "text long",
         order: 5,
-        default: ""
+        default: "",
+        control: true,
+        optional: true
       },
       {
         id: "Randevu Tarihi",
         header: "Randevu Tarihi",
         type: "date",
         order: 6,
-        default: ""
+        default: "",
+        control: true,
+        optional: true
       },
       {
         id: "Onay",
         header: "Onay",
         type: "checkbox",
         order: 7,
-        default: false
+        default: false,
+        control: true,
+        optional: true
       }
     ];
 
@@ -411,19 +506,25 @@
         id: "Dosyalar",
         header: "Dosyalar",
         type: "imagepdf",
-        order: 1
+        order: 1,
+        control: true,
+        optional: true
       },
       {
         id: "Fotoğraf Notu",
         header: "Fotoğraf Notu",
         type: "text long",
-        order: 2
+        order: 2,
+        control: true,
+        optional: true
       },
       {
         id: "Kaza Tarihi",
         header: "Kaza Tarihi",
         type: "date",
-        order: 3
+        order: 3,
+        control: true,
+        optional: true
       }
     ];
 
@@ -508,6 +609,44 @@
       return tag;
     }
 
+    function getTypeIcon(type) {
+      const normalized = getNormalizedType(type);
+      if (normalized === "text" || normalized === "embed" || normalized === "user") return "T";
+      if (normalized === "text long" || normalized === "multiline text") return "≡";
+      if (normalized === "number") return "№";
+      if (normalized === "phone") return "☎";
+      if (normalized === "email" || normalized === "e-mail") return "@";
+      if (normalized === "date") return "📅";
+      if (normalized === "checkbox") return "☑";
+      if (normalized === "dropdown") return "▾";
+      if (normalized === "imagepdf" || normalized === "image&pdf" || normalized === "image/pdf") return "📎";
+      return "•";
+    }
+
+    function createBadges(column) {
+      const badges = document.createElement("div");
+      badges.className = "field-badges";
+      if (column.control) {
+        const badge = document.createElement("span");
+        badge.className = "badge control";
+        badge.textContent = "Control";
+        badges.appendChild(badge);
+      }
+      if (column.mandatory) {
+        const badge = document.createElement("span");
+        badge.className = "badge mandatory";
+        badge.textContent = "Mandatory";
+        badges.appendChild(badge);
+      }
+      if (column.optional) {
+        const badge = document.createElement("span");
+        badge.className = "badge optional";
+        badge.textContent = "Optional";
+        badges.appendChild(badge);
+      }
+      return badges;
+    }
+
     function updateOutputList() {
       state.outputlist1 = state.columns.map((column) => {
         const id = column.id;
@@ -518,7 +657,10 @@
           type: column.type || "text",
           value,
           source: state.fieldSources[id] || "human",
-          readOnly: Boolean(column.readOnly)
+          readOnly: Boolean(column.readOnly),
+          control: Boolean(column.control),
+          mandatory: Boolean(column.mandatory),
+          optional: Boolean(column.optional)
         };
       });
 
@@ -607,14 +749,25 @@
       }
 
       sorted.forEach((column) => {
+        const row = document.createElement("div");
+        row.className = "form-row";
         const wrapper = document.createElement("div");
-        const label = document.createElement("label");
+        wrapper.className = "field-meta";
+        const label = document.createElement("div");
+        label.className = "field-title";
         const initialValue = getInitialValue(column);
-        label.textContent = column.header || column.id || "Alan";
+        const icon = document.createElement("span");
+        icon.className = "field-icon";
+        icon.textContent = getTypeIcon(column.type);
+        label.appendChild(icon);
+        const labelText = document.createElement("span");
+        labelText.textContent = column.header || column.id || "Alan";
+        label.appendChild(labelText);
 
         const isHidden = getNormalizedType(column.type) === "hidden";
         label.appendChild(createTag(state.fieldSources[column.id], isHidden));
         wrapper.appendChild(label);
+        wrapper.appendChild(createBadges(column));
 
         if (isHidden) {
           state.data[column.id] = initialValue;
@@ -622,7 +775,8 @@
           hiddenHint.className = "muted";
           hiddenHint.textContent = initialValue ? `Gizli değer mevcut (${initialValue}).` : "Gizli değer boş.";
           wrapper.appendChild(hiddenHint);
-          formContainer.appendChild(wrapper);
+          row.appendChild(wrapper);
+          formContainer.appendChild(row);
           return;
         }
 
@@ -733,14 +887,19 @@
             preview.appendChild(pill);
           });
 
-          wrapper.appendChild(field);
-          wrapper.appendChild(preview);
-          formContainer.appendChild(wrapper);
+          const fileStack = document.createElement("div");
+          fileStack.className = "grid";
+          fileStack.appendChild(field);
+          fileStack.appendChild(preview);
+          row.appendChild(wrapper);
+          row.appendChild(fileStack);
+          formContainer.appendChild(row);
           return;
         }
 
-        wrapper.appendChild(field);
-        formContainer.appendChild(wrapper);
+        row.appendChild(wrapper);
+        row.appendChild(field);
+        formContainer.appendChild(row);
         state.data[column.id] = initialValue;
       });
 
