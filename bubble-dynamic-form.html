@@ -159,7 +159,7 @@
       align-items: center;
       gap: 6px;
       border: 1px solid rgba(37, 99, 235, 0.25);
-      background: rgba(37, 99, 235, 0.08);
+      background: linear-gradient(120deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.2));
       border-radius: 999px;
       padding: 2px 10px;
       font-size: 0.7rem;
@@ -508,6 +508,64 @@
       font-weight: 600;
     }
 
+    .debug-warning {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      background: #f8fafc;
+      margin-bottom: 16px;
+    }
+
+    .export-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+    }
+
+    .export-modal.open {
+      display: flex;
+    }
+
+    .export-panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      width: min(920px, 95vw);
+      max-height: 85vh;
+      display: grid;
+      gap: 12px;
+    }
+
+    .export-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .export-tabs button {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    .export-tabs button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .export-panel textarea {
+      width: 100%;
+      min-height: 240px;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 0.78rem;
+    }
+
     @media (max-width: 720px) {
       .field-row {
         grid-template-columns: 1fr;
@@ -585,25 +643,31 @@
 
     <section class="card">
       <h2>Dynamic Form</h2>
-      <div class="debug-toolbar">
+      <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
-          <button type="button" id="loadHumanJson">JSON Data Yükle</button>
+          <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
+          <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
           <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
-          <button type="button" class="ghost" id="loadColumnJson">Column Data Yükle</button>
-          <button type="button" class="secondary" id="applyAiToEmpty">AI -> Forma Uygula</button>
-          <button type="button" class="secondary" id="overwriteAiToAll">AI -> Tümünü Yaz</button>
+          <button type="button" class="ghost" id="applyAiToEmpty">AI -> Boş Human Alanlara Uygula</button>
+          <button type="button" class="ghost" id="overwriteAiToAll">AI -> Hepsini Overwrite</button>
           <button type="button" class="ghost" id="resetStores">Reset</button>
+          <button type="button" class="secondary" id="exportJson">Export JSON</button>
         </div>
         <div class="toolbar-status">
           <span id="aiFieldCount">AI alan sayısı: 0</span>
           <span id="humanFieldCount">Human değiştirilen alan sayısı: 0</span>
         </div>
       </div>
-      <div id="summaryBox" class="summary-box" style="display:none;"></div>
-      <form id="dynamicForm" class="grid"></form>
-      <div class="inline-row" style="margin-top: 12px;">
-        <button id="submitBtn" type="submit">Submit</button>
-        <button id="clearBtn" type="button" class="ghost">Temizle</button>
+      <div id="columnWarning" class="debug-warning" style="display:none;">
+        Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+      </div>
+      <div id="formContainer">
+        <div id="summaryBox" class="summary-box" style="display:none;"></div>
+        <form id="dynamicForm" class="grid"></form>
+        <div class="inline-row" style="margin-top: 12px;">
+          <button id="submitBtn" type="submit">Submit</button>
+          <button id="clearBtn" type="button" class="ghost">Temizle</button>
+        </div>
       </div>
     </section>
   </main>
@@ -613,8 +677,172 @@
       <img id="lightboxImage" alt="Önizleme" />
     </div>
   </div>
+  <div id="exportModal" class="export-modal" aria-hidden="true">
+    <div class="export-panel">
+      <div class="inline-row" style="justify-content: space-between;">
+        <strong>JSON Export</strong>
+        <button type="button" class="ghost" id="closeExport">Kapat</button>
+      </div>
+      <div class="export-tabs">
+        <button type="button" class="secondary active" data-export-tab="export">Aktif JSON</button>
+        <button type="button" class="secondary" data-export-tab="human">Human JSON</button>
+        <button type="button" class="secondary" data-export-tab="ai">AI JSON</button>
+      </div>
+      <textarea id="exportContent" readonly></textarea>
+    </div>
+  </div>
 
   <script>
+    const DEBUG_MODE = true;
+
+    let MANUAL_COLUMN_JSON = null;
+    let MANUAL_DATA_JSON = null;
+    let MANUAL_PREDICTED_JSON = null;
+
+    const SAMPLE_COLUMN_JSON = {
+      columns: [
+        {
+          fieldName: "Davacı Ad Soyad",
+          type: "text",
+          required: true,
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Davacı TCKN/VKN",
+          type: "text",
+          required: true,
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Kaza Tarihi",
+          type: "date",
+          required: true,
+          stageType: "mandatory",
+          default: "$TODAY"
+        },
+        {
+          fieldName: "İhtar Tarihi",
+          type: "date",
+          required: false,
+          stageType: "optional"
+        },
+        {
+          fieldName: "Randevu Datetime",
+          type: "datetime",
+          stageType: "control"
+        },
+        {
+          fieldName: "Uygun Saat",
+          type: "time",
+          stageType: "optional"
+        },
+        {
+          fieldName: "Aracın Tipi",
+          type: "single_select",
+          stageType: "mandatory",
+          options: [
+            { value: "Hususi", label: "Hususi" },
+            { value: "Ticari", label: "Ticari" },
+            { value: "Kiralık", label: "Kiralık" }
+          ]
+        },
+        {
+          fieldName: "Ek Özellikler",
+          type: "multi_select",
+          stageType: "optional",
+          options: [
+            { value: "camTavan", label: "Cam tavan" },
+            { value: "navigasyon", label: "Navigasyon" },
+            { value: "kamera", label: "Geri görüş kamera" }
+          ]
+        },
+        {
+          fieldName: "Hasar Onarım Tutarı",
+          type: "currency",
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Kusur Oranı",
+          type: "percent",
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Aracın Kilometresi",
+          type: "number",
+          stageType: "optional"
+        },
+        {
+          fieldName: "Belgeleri Yükle",
+          type: "file",
+          allowMultiple: false,
+          stageType: "control"
+        },
+        {
+          fieldName: "Hasar Fotoğrafları",
+          type: "image",
+          allowMultiple: true,
+          stageType: "optional"
+        },
+        {
+          fieldName: "Ek Dosyalar",
+          type: "multifile",
+          allowMultiple: true,
+          stageType: "optional"
+        }
+      ],
+      currentDateTimeISO: "2026-02-09T12:34:56+03:00",
+      locale: "tr-TR",
+      timezone: "Europe/Istanbul",
+      mode: "create"
+    };
+
+    const SAMPLE_DATA_JSON = {
+      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
+      "Davacı Kimlik Tipi": "TC Kimlik",
+      "Davacı Ad Soyad": "İSMAİL DİNCER",
+      "Davacı TCKN/VKN": "12928963404",
+      "Davacı Plaka": "19BA618",
+      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
+      "Davacı Şase No": "NMTBZ28E90R141719",
+      "Karşı Ad Soyad": "YILMAZ HIŞIR",
+      "Karşı TCKN/VKN": "31066362344",
+      "Karşı Plaka": "19ABA563",
+      "Kaza Tarihi": "2024-11-15",
+      "Aracın Markası": "TOYOTA",
+      "Aracın Tipi": "Hususi",
+      "Aracın Model Yılı": "2006",
+      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
+      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
+      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
+      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
+      "Karşı Poliçe No": "104781355",
+      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
+      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
+      "Eksper Rp Tarihi": "2025-02-28",
+      "Hasar Onarım Tutarı": "140000",
+      "Kusur Oranı": "75",
+      "Davali Adi": "Corpus Sigorta A.Ş.",
+      "Aracın Kilometresi": "231328",
+      "action": "DK Hesaba Taşı",
+      "İhtar Tarihi": "Bugünün tarihi",
+      "predictedAction": "İhtar Dilekçesi Hazırla",
+      "uniqueid": "1770577890579x349136294770973500",
+      "Stage": "DK Hesabı",
+      "Esas No": ""
+    };
+
+    const SAMPLE_PREDICTED_JSON = {
+      "İhtar Tarihi": "$TODAY",
+      "Hasar Onarım Tutarı": "145000",
+      "Kusur Oranı": "80",
+      "predictedAction": "İhtar Dilekçesi Hazırla"
+    };
+
+    let columnJson = null;
+    let humanData = {};
+    let aiData = {};
+    let sourceByField = {};
+
     const schemaInput = document.getElementById("schemaInput");
     const currentDateTimeInput = document.getElementById("currentDateTime");
     const localeInput = document.getElementById("localeInput");
@@ -627,17 +855,25 @@
     const submitBtn = document.getElementById("submitBtn");
     const clearBtn = document.getElementById("clearBtn");
     const summaryBox = document.getElementById("summaryBox");
+    const formContainer = document.getElementById("formContainer");
     const consoleEl = document.getElementById("eventConsole");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
+    const exportModal = document.getElementById("exportModal");
+    const exportContent = document.getElementById("exportContent");
+    const exportTabs = document.querySelectorAll("[data-export-tab]");
     const loadHumanJsonBtn = document.getElementById("loadHumanJson");
     const loadPredictedJsonBtn = document.getElementById("loadPredictedJson");
     const loadColumnJsonBtn = document.getElementById("loadColumnJson");
     const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
     const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
     const resetStoresBtn = document.getElementById("resetStores");
+    const exportJsonBtn = document.getElementById("exportJson");
+    const closeExportBtn = document.getElementById("closeExport");
     const aiFieldCountEl = document.getElementById("aiFieldCount");
     const humanFieldCountEl = document.getElementById("humanFieldCount");
+    const columnWarning = document.getElementById("columnWarning");
+    const debugToolbar = document.getElementById("debugToolbar");
 
     const state = {
       config: null,
@@ -648,9 +884,6 @@
       autoSaveTimer: null,
       fileBuffers: {},
       fileStaging: {},
-      formDataHuman: {},
-      formDataAI: {},
-      activeSourceByField: new Map(),
       fieldRefs: {},
       columnData: null
     };
@@ -813,50 +1046,6 @@
       autoFocusFirstInvalid: true
     };
 
-    const sampleHumanJson = {
-      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
-      "Davacı Kimlik Tipi": "TC Kimlik",
-      "Davacı Ad Soyad": "İSMAİL DİNCER",
-      "Davacı TCKN/VKN": "12928963404",
-      "Davacı Plaka": "19BA618",
-      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
-      "Davacı Şase No": "NMTBZ28E90R141719",
-      "Karşı Ad Soyad": "YILMAZ HIŞIR",
-      "Karşı TCKN/VKN": "31066362344",
-      "Karşı Plaka": "19ABA563",
-      "Kaza Tarihi": "2024-11-15",
-      "Aracın Markası": "TOYOTA",
-      "Aracın Tipi": "Hususi",
-      "Aracın Model Yılı": "2006",
-      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
-      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
-      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
-      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
-      "Karşı Poliçe No": "104781355",
-      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
-      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
-      "Eksper Rp Tarihi": "2025-02-28",
-      "Hasar Onarım Tutarı": "140000",
-      "Kusur Oranı": "75",
-      "Davali Adi": "Corpus Sigorta A.Ş.",
-      "Aracın Kilometresi": "231328",
-      "action": "DK Hesaba Taşı",
-      "İhtar Tarihi": "Bugünün tarihi",
-      "predictedAction": "İhtar Dilekçesi Hazırla",
-      "uniqueid": "1770577890579x349136294770973500",
-      "Stage": "DK Hesabı",
-      "Esas No": ""
-    };
-
-    const samplePredictedJson = {
-      "İhtar Tarihi": "$TODAY",
-      "Hasar Onarım Tutarı": "145000",
-      "Kusur Oranı": "80",
-      "predictedAction": "İhtar Dilekçesi Hazırla",
-      "Kaza Yeri": "Çorum/Merkez",
-      "Karşı Poliçe No": "104781355"
-    };
-
     const sampleColumnData = {
       columns: defaultSchema.fields.map((field) => ({
         key: field.key,
@@ -984,12 +1173,13 @@
 
     function normalizeKey(key) {
       if (key === null || key === undefined) return "";
-      return String(key).trim().toLocaleLowerCase("tr-TR");
+      return String(key).trim();
     }
 
     function buildFieldKeyMap() {
       const map = new Map();
       (state.config?.fields || []).forEach((field) => {
+        if (field.fieldName) map.set(normalizeKey(field.fieldName), field.key);
         if (field.key) map.set(normalizeKey(field.key), field.key);
         if (field.label) map.set(normalizeKey(field.label), field.key);
       });
@@ -1002,25 +1192,25 @@
     }
 
     function getActiveSource(fieldKey) {
-      return state.activeSourceByField.get(fieldKey) || "human";
+      return sourceByField[fieldKey] || "human";
     }
 
     function getStoreValue(fieldKey, source) {
-      return source === "ai" ? state.formDataAI[fieldKey] : state.formDataHuman[fieldKey];
+      return source === "ai" ? aiData[fieldKey] : humanData[fieldKey];
     }
 
     function getEffectiveValue(fieldKey) {
       const activeSource = getActiveSource(fieldKey);
-      const aiValue = state.formDataAI[fieldKey];
+      const aiValue = aiData[fieldKey];
       if (activeSource === "ai" && !isEmptyValue(aiValue)) {
         return aiValue;
       }
-      return state.formDataHuman[fieldKey];
+      return humanData[fieldKey];
     }
 
     function setHumanValue(fieldKey, value, field, displayValue) {
-      state.formDataHuman[fieldKey] = value;
-      state.activeSourceByField.set(fieldKey, "human");
+      humanData[fieldKey] = value;
+      sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
       updateAiVisuals(fieldKey);
       updateToolbarStatus();
@@ -1050,8 +1240,10 @@
     }
 
     function updateToolbarStatus() {
-      const aiCount = Object.values(state.formDataAI).filter((value) => !isEmptyValue(value)).length;
-      const humanCount = Object.values(state.formDataHuman).filter((value) => !isEmptyValue(value)).length;
+      const aiCount = Object.values(aiData).filter((value) => !isEmptyValue(value)).length;
+      const humanCount = Object.entries(humanData).filter(([key, value]) => {
+        return sourceByField[key] === "human" && !isEmptyValue(value);
+      }).length;
       aiFieldCountEl.textContent = `AI alan sayısı: ${aiCount}`;
       humanFieldCountEl.textContent = `Human değiştirilen alan sayısı: ${humanCount}`;
     }
@@ -1063,6 +1255,7 @@
       phone: { icon: "📞", label: "Phone" },
       url: { icon: "🔗", label: "URL" },
       integer: { icon: "🔢", label: "Integer" },
+      number: { icon: "🔢", label: "Number" },
       decimal: { icon: "🔢", label: "Decimal" },
       currency: { icon: "🔢", label: "Currency" },
       percent: { icon: "🔢", label: "Percent" },
@@ -1104,9 +1297,12 @@
       return false;
     }
 
-    function parseInitialFiles(initialValue) {
+    function parseInitialFiles(initialValue, allowMultiple) {
       if (!initialValue) return [];
-      const values = Array.isArray(initialValue) ? initialValue : [initialValue];
+      let values = Array.isArray(initialValue) ? initialValue : [initialValue];
+      if (!allowMultiple && values.length > 1) {
+        values = [values[0]];
+      }
       return values
         .filter((val) => typeof val === "string")
         .map((url) => ({
@@ -1156,7 +1352,7 @@
         }
         return raw;
       }
-      if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
         return normalizeNumberInput(resolved);
       }
       if (field.type === "boolean") {
@@ -1180,7 +1376,7 @@
     function updateAiVisuals(fieldKey) {
       const ref = state.fieldRefs[fieldKey];
       if (!ref) return;
-      const aiValue = state.formDataAI[fieldKey];
+      const aiValue = aiData[fieldKey];
       const hasAi = !isEmptyValue(aiValue);
       const activeSource = getActiveSource(fieldKey);
       ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
@@ -1221,24 +1417,91 @@
         if (!field) return;
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
         if (kind === "ai") {
-          state.formDataAI[fieldKey] = normalized;
-          if (isEmptyValue(state.formDataHuman[fieldKey]) && !isEmptyValue(normalized)) {
-            state.activeSourceByField.set(fieldKey, "ai");
-          }
+          aiData[fieldKey] = normalized;
         } else {
-          state.formDataHuman[fieldKey] = normalized;
-          state.activeSourceByField.set(fieldKey, "human");
+          humanData[fieldKey] = normalized;
+          sourceByField[fieldKey] = "human";
         }
       });
       refreshAllFields();
     }
 
-    function exportFormJsonSafe() {
+    function initializeSourceByFieldFromAi() {
+      if (!state.config) return;
+      state.config.fields.forEach((field) => {
+        const aiValue = aiData[field.key];
+        sourceByField[field.key] = !isEmptyValue(aiValue) ? "ai" : "human";
+      });
+    }
+
+    function buildConfigFromColumnJson(columnData) {
+      if (!columnData) return null;
+      const columns = columnData.columns || [];
+      const fields = columns.map((column, index) => {
+        const fieldName = column.fieldName || column.label || column.key || `field_${index + 1}`;
+        return {
+          key: fieldName,
+          fieldName,
+          label: column.label || fieldName,
+          type: column.type || "text",
+          required: Boolean(column.required),
+          stageType: column.stageType || "optional",
+          allowMultiple: Boolean(column.allowMultiple),
+          options: column.options || [],
+          default: column.default,
+          ui: column.ui || {}
+        };
+      });
+      return {
+        fields,
+        currentDateTimeISO: columnData.currentDateTimeISO || defaultSchema.currentDateTimeISO,
+        locale: columnData.locale || "tr-TR",
+        timezone: columnData.timezone || "Europe/Istanbul",
+        mode: columnData.mode || "create",
+        requiredPolicy: defaultSchema.requiredPolicy,
+        showInlineHelp: defaultSchema.showInlineHelp,
+        autoFocusFirstInvalid: defaultSchema.autoFocusFirstInvalid
+      };
+    }
+
+    function applyColumnJson(columnData) {
+      columnJson = columnData;
+      if (!columnJson) {
+        columnWarning.style.display = "block";
+        formEl.innerHTML = "";
+        formContainer.style.display = "none";
+        return;
+      }
+      columnWarning.style.display = "none";
+      formContainer.style.display = "block";
+      state.config = buildConfigFromColumnJson(columnJson);
+      if (!state.config) return;
+      renderForm(state.config);
+    }
+
+    function normalizeExportValue(field, value) {
+      if (value === undefined) return "";
+      if (value === null) return "";
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
+        if (value === "") return "";
+        const numeric = Number(value);
+        return Number.isNaN(numeric) ? value : numeric;
+      }
+      if (field.type === "date") {
+        return value ? normalizeDateInput(String(value)) : "";
+      }
+      if (field.type === "time") {
+        return value ? normalizeTimeInput(String(value)) : "";
+      }
+      return value;
+    }
+
+    function buildExportJson() {
       const payload = {};
       (state.config?.fields || []).forEach((field) => {
         const value = getEffectiveValue(field.key);
-        const jsonKey = field.label || field.key;
-        payload[jsonKey] = value ?? "";
+        const jsonKey = field.fieldName || field.label || field.key;
+        payload[jsonKey] = normalizeExportValue(field, value);
       });
       return payload;
     }
@@ -1259,7 +1522,7 @@
       if (field.type === "url" && value) {
         if (!/^https?:\/\//.test(String(value))) return "URL http(s):// ile başlamalı.";
       }
-      if (["integer", "decimal", "currency", "percent"].includes(field.type) && value !== "") {
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type) && value !== "") {
         const numeric = Number(value);
         if (Number.isNaN(numeric)) return "Geçerli bir sayı girin.";
         if (field.min !== undefined && numeric < field.min) return `Minimum ${field.min}`;
@@ -1294,7 +1557,7 @@
       }
       state.autoSaveTimer = setTimeout(() => {
         emit("onFormChange", {
-          values: exportFormJsonSafe(),
+          values: buildExportJson(),
           validMap: state.validMap,
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
@@ -1358,10 +1621,10 @@
         aiBadge.innerHTML = `<span>🤖</span><span>ChatGPT</span>`;
         aiBadge.addEventListener("click", () => {
           const currentSource = getActiveSource(field.key);
-          const hasAi = !isEmptyValue(state.formDataAI[field.key]);
+          const hasAi = !isEmptyValue(aiData[field.key]);
           if (!hasAi) return;
           const nextSource = currentSource === "ai" ? "human" : "ai";
-          state.activeSourceByField.set(field.key, nextSource);
+          sourceByField[field.key] = nextSource;
           updateFieldDisplayValue(field.key);
           emit("onPredictedToggle", {
             key: field.key,
@@ -1389,20 +1652,20 @@
         let setValue = null;
 
         const initialValue = getInitialValue(field, config);
-        if (state.formDataHuman[field.key] === undefined) {
-          state.formDataHuman[field.key] = initialValue;
+        if (humanData[field.key] === undefined) {
+          humanData[field.key] = initialValue;
         }
-        if (!state.activeSourceByField.has(field.key)) {
-          state.activeSourceByField.set(field.key, "human");
+        if (!sourceByField[field.key]) {
+          sourceByField[field.key] = "human";
         }
-        if (isEmptyValue(state.formDataHuman[field.key]) && !isEmptyValue(state.formDataAI[field.key])) {
-          state.activeSourceByField.set(field.key, "ai");
+        if (isEmptyValue(humanData[field.key]) && !isEmptyValue(aiData[field.key])) {
+          sourceByField[field.key] = "ai";
         }
         const effectiveInitial = getEffectiveValue(field.key);
         state.values[field.key] = effectiveInitial;
         state.validMap[field.key] = !validateField(field, effectiveInitial);
 
-        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "time"].includes(field.type)) {
+        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number", "time"].includes(field.type)) {
           inputEl = document.createElement("input");
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
@@ -1412,11 +1675,11 @@
           if (field.type === "email") inputEl.type = "email";
           if (field.type === "url") inputEl.type = "url";
           if (field.type === "phone") inputEl.type = "tel";
-          if (["integer", "decimal", "currency", "percent"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
+          if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
           if (field.type === "time") inputEl.type = "time";
 
           setValue = (value) => {
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const formatted = field.type === "integer"
                 ? formatNumberDisplay(value, { maximumFractionDigits: 0 })
                 : formatNumberDisplay(value, { maximumFractionDigits: 2 });
@@ -1432,7 +1695,7 @@
           setValue(effectiveInitial);
 
           inputEl.addEventListener("input", (event) => {
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const raw = event.target.value;
               setFieldValue(field.key, normalizeNumberInput(raw), field, raw);
             } else {
@@ -1458,7 +1721,7 @@
                 event.target.value = value;
               }
             }
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const normalized = normalizeNumberInput(value);
               const formatted = field.type === "integer" ? formatNumberDisplay(normalized, { maximumFractionDigits: 0 }) : formatNumberDisplay(normalized, { maximumFractionDigits: 2 });
               event.target.value = formatted || value;
@@ -1920,6 +2183,8 @@
           drop.className = "file-drop";
           drop.textContent = "Dosya sürükleyin veya seçin";
 
+          const allowMultiple = field.type === "multifile" || field.allowMultiple === true;
+
           const fileInput = document.createElement("input");
           fileInput.type = "file";
           fileInput.className = "field-input";
@@ -1927,8 +2192,7 @@
           fileInput.setAttribute("aria-describedby", `error-${field.key}`);
           const accept = field.ui?.accept || "";
           if (accept) fileInput.accept = accept;
-          if (field.type !== "file" && field.type !== "image") fileInput.multiple = true;
-          if (field.type === "image" && field.ui?.allowMultiple) fileInput.multiple = true;
+          fileInput.multiple = allowMultiple;
 
           const list = document.createElement("div");
           list.className = "file-list";
@@ -1978,6 +2242,18 @@
               removeBtn.addEventListener("click", () => {
                 state.fileBuffers[field.key] = files.filter((_, fileIdx) => fileIdx !== idx);
                 renderFiles();
+                if (file.url) {
+                  const currentValue = getEffectiveValue(field.key);
+                  const values = Array.isArray(currentValue) ? currentValue : currentValue ? [currentValue] : [];
+                  const filtered = values.filter((val) => val !== file.url);
+                  if (allowMultiple) {
+                    humanData[field.key] = filtered;
+                  } else {
+                    humanData[field.key] = filtered[0] || "";
+                  }
+                } else {
+                  humanData[field.key] = "";
+                }
                 const filePayload = (state.fileBuffers[field.key] || []).map((f) => ({
                   name: f.name,
                   size: f.size,
@@ -1985,8 +2261,7 @@
                   lastModified: f.lastModified
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
-                state.formDataHuman[field.key] = "";
-                state.activeSourceByField.set(field.key, "human");
+                sourceByField[field.key] = "human";
                 updateEffectiveState(field.key, field);
                 updateAiVisuals(field.key);
                 emit("onFileSelected", {
@@ -2008,7 +2283,7 @@
 
           const handleFiles = (fileList) => {
             const files = Array.from(fileList);
-            const maxFiles = field.ui?.maxFiles || (field.type === "multifile" ? 10 : 1);
+            const maxFiles = field.ui?.maxFiles || (allowMultiple ? 10 : 1);
             const maxSizeMB = field.ui?.maxSizeMB || 25;
             const errors = [];
             const accepted = [];
@@ -2048,10 +2323,14 @@
               lastModified: file.lastModified
             }));
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
-            state.formDataHuman[field.key] = "";
-            state.activeSourceByField.set(field.key, "human");
+            humanData[field.key] = "";
+            sourceByField[field.key] = "human";
             updateEffectiveState(field.key, field);
             updateAiVisuals(field.key);
+            console.log("Pending file selected", {
+              field: field.key,
+              files: filePayload
+            });
             emit("onFileSelected", {
               key: field.key,
               files: filePayload,
@@ -2078,7 +2357,7 @@
 
           control.append(drop, fileInput, list);
           setValue = (value) => {
-            const initialFiles = parseInitialFiles(value);
+            const initialFiles = parseInitialFiles(value, allowMultiple);
             if (initialFiles.length) {
               state.fileBuffers[field.key] = initialFiles;
             } else if (!state.fileStaging[field.key]?.length) {
@@ -2158,6 +2437,33 @@
       lightboxImage.src = "";
     }
 
+    function openExportModal(kind = "export") {
+      exportModal.classList.add("open");
+      exportModal.setAttribute("aria-hidden", "false");
+      setExportTab(kind);
+    }
+
+    function closeExportModal() {
+      exportModal.classList.remove("open");
+      exportModal.setAttribute("aria-hidden", "true");
+      exportContent.value = "";
+    }
+
+    function setExportTab(kind) {
+      exportTabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.exportTab === kind);
+      });
+      if (kind === "human") {
+        exportContent.value = JSON.stringify(humanData, null, 2);
+        return;
+      }
+      if (kind === "ai") {
+        exportContent.value = JSON.stringify(aiData, null, 2);
+        return;
+      }
+      exportContent.value = JSON.stringify(buildExportJson(), null, 2);
+    }
+
     lightboxEl.addEventListener("click", (event) => {
       if (event.target === lightboxEl) {
         closeLightbox();
@@ -2165,6 +2471,17 @@
     });
 
     lightboxEl.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+    closeExportBtn.addEventListener("click", closeExportModal);
+    exportModal.addEventListener("click", (event) => {
+      if (event.target === exportModal) {
+        closeExportModal();
+      }
+    });
+    exportTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        setExportTab(tab.dataset.exportTab);
+      });
+    });
 
     function updateError(control, field) {
       const errorText = formEl.querySelector(`#error-${field.key}`);
@@ -2227,25 +2544,31 @@
     function applyAiValuesToHuman({ overwrite }) {
       if (!state.config) return;
       state.config.fields.forEach((field) => {
-        const aiValue = state.formDataAI[field.key];
+        const aiValue = aiData[field.key];
         if (isEmptyValue(aiValue)) return;
-        if (!overwrite && !isEmptyValue(state.formDataHuman[field.key])) return;
-        state.formDataHuman[field.key] = aiValue;
-        state.activeSourceByField.set(field.key, "human");
+        if (!overwrite && !isEmptyValue(humanData[field.key])) return;
+        humanData[field.key] = aiValue;
+        sourceByField[field.key] = "human";
       });
       refreshAllFields();
     }
 
     function resetAllStores() {
-      state.formDataHuman = {};
-      state.formDataAI = {};
-      state.activeSourceByField = new Map();
+      humanData = {};
+      aiData = {};
+      sourceByField = {};
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
       state.validMap = {};
       state.errors = {};
-      renderForm(state.config);
+      if (columnJson) {
+        applyColumnJson(columnJson);
+      } else {
+        columnWarning.style.display = "block";
+        formEl.innerHTML = "";
+        formContainer.style.display = "none";
+      }
     }
 
     formEl.addEventListener("submit", (event) => {
@@ -2260,7 +2583,7 @@
         summaryBox.style.display = "none";
       }
       emit("onSubmitAttempt", {
-        values: exportFormJsonSafe(),
+        values: buildExportJson(),
         isFormValid: invalidCount === 0,
         firstInvalidKey
       });
@@ -2291,16 +2614,32 @@
     });
 
     loadHumanJsonBtn.addEventListener("click", () => {
-      loadJsonSafeToForm("human", sampleHumanJson);
+      const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
+      if (!payload) {
+        humanData = {};
+        refreshAllFields();
+        return;
+      }
+      loadJsonSafeToForm("human", payload);
     });
 
     loadPredictedJsonBtn.addEventListener("click", () => {
-      loadJsonSafeToForm("ai", samplePredictedJson);
+      const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
+      if (!payload) {
+        aiData = {};
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        return;
+      }
+      loadJsonSafeToForm("ai", payload);
+      initializeSourceByFieldFromAi();
+      refreshAllFields();
     });
 
     loadColumnJsonBtn.addEventListener("click", () => {
-      state.columnData = sampleColumnData;
-      setConsole("Column data yüklendi", JSON.stringify(state.columnData, null, 2));
+      columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
+      applyColumnJson(columnJson);
+      setConsole("Column data yüklendi", JSON.stringify(columnJson, null, 2));
     });
 
     applyAiToEmptyBtn.addEventListener("click", () => {
@@ -2315,6 +2654,10 @@
 
     resetStoresBtn.addEventListener("click", () => {
       resetAllStores();
+    });
+
+    exportJsonBtn.addEventListener("click", () => {
+      openExportModal("export");
     });
 
     document.getElementById("loadSample").addEventListener("click", () => {
@@ -2344,6 +2687,25 @@
         showInlineHelp: showInlineHelpInput.checked,
         autoFocusFirstInvalid: autoFocusInvalidInput.checked
       };
+      columnJson = {
+        columns: (state.config.fields || []).map((field) => ({
+          fieldName: field.label || field.key,
+          label: field.label,
+          type: field.type,
+          required: field.required,
+          stageType: field.stageType || "optional",
+          options: field.options || [],
+          default: field.default,
+          allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
+          ui: field.ui || {}
+        })),
+        currentDateTimeISO: state.config.currentDateTimeISO,
+        locale: state.config.locale,
+        timezone: state.config.timezone,
+        mode: state.config.mode
+      };
+      columnWarning.style.display = "none";
+      formContainer.style.display = "block";
       renderForm(state.config);
     });
 
@@ -2353,8 +2715,18 @@
 
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-    state.config = { ...defaultSchema };
-    renderForm(state.config);
+    debugToolbar.style.display = DEBUG_MODE ? "grid" : "none";
+    if (!DEBUG_MODE) {
+      columnWarning.style.display = "none";
+    } else {
+      columnWarning.style.display = columnJson ? "none" : "block";
+    }
+    if (columnJson) {
+      applyColumnJson(columnJson);
+    } else {
+      formEl.innerHTML = "";
+      formContainer.style.display = "none";
+    }
   </script>
 </body>
 </html>
