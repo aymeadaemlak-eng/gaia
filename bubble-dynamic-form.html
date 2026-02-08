@@ -154,23 +154,24 @@
       color: var(--primary);
     }
 
-    .ai-toggle {
+    .ai-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      border: 1px solid var(--border);
-      background: #fff;
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      background: rgba(37, 99, 235, 0.08);
       border-radius: 999px;
-      padding: 2px 8px;
+      padding: 2px 10px;
       font-size: 0.7rem;
       cursor: pointer;
-      color: var(--muted);
+      color: var(--primary);
+      white-space: nowrap;
     }
 
-    .ai-toggle.is-human {
-      color: var(--primary);
-      border-color: rgba(37, 99, 235, 0.4);
-      background: rgba(37, 99, 235, 0.08);
+    .ai-badge.is-active {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
     }
 
     .control-stack {
@@ -185,6 +186,27 @@
       background: #fff;
       position: relative;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-control.ai-active {
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    .field-control.ai-active .field-input {
+      background: rgba(37, 99, 235, 0.04);
+    }
+
+    .ai-pill {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.14);
+      color: var(--primary);
+      pointer-events: none;
     }
 
     .field-control:focus-within {
@@ -452,6 +474,40 @@
       font-size: 0.75rem;
     }
 
+    .debug-toolbar {
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.95);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(6px);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar-actions button {
+      padding: 8px 12px;
+      font-size: 0.78rem;
+    }
+
+    .toolbar-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
     @media (max-width: 720px) {
       .field-row {
         grid-template-columns: 1fr;
@@ -529,6 +585,20 @@
 
     <section class="card">
       <h2>Dynamic Form</h2>
+      <div class="debug-toolbar">
+        <div class="toolbar-actions">
+          <button type="button" id="loadHumanJson">JSON Data Yükle</button>
+          <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
+          <button type="button" class="ghost" id="loadColumnJson">Column Data Yükle</button>
+          <button type="button" class="secondary" id="applyAiToEmpty">AI -> Forma Uygula</button>
+          <button type="button" class="secondary" id="overwriteAiToAll">AI -> Tümünü Yaz</button>
+          <button type="button" class="ghost" id="resetStores">Reset</button>
+        </div>
+        <div class="toolbar-status">
+          <span id="aiFieldCount">AI alan sayısı: 0</span>
+          <span id="humanFieldCount">Human değiştirilen alan sayısı: 0</span>
+        </div>
+      </div>
       <div id="summaryBox" class="summary-box" style="display:none;"></div>
       <form id="dynamicForm" class="grid"></form>
       <div class="inline-row" style="margin-top: 12px;">
@@ -560,6 +630,14 @@
     const consoleEl = document.getElementById("eventConsole");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
+    const loadHumanJsonBtn = document.getElementById("loadHumanJson");
+    const loadPredictedJsonBtn = document.getElementById("loadPredictedJson");
+    const loadColumnJsonBtn = document.getElementById("loadColumnJson");
+    const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
+    const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
+    const resetStoresBtn = document.getElementById("resetStores");
+    const aiFieldCountEl = document.getElementById("aiFieldCount");
+    const humanFieldCountEl = document.getElementById("humanFieldCount");
 
     const state = {
       config: null,
@@ -569,7 +647,12 @@
       errors: {},
       autoSaveTimer: null,
       fileBuffers: {},
-      aiMode: {}
+      fileStaging: {},
+      formDataHuman: {},
+      formDataAI: {},
+      activeSourceByField: new Map(),
+      fieldRefs: {},
+      columnData: null
     };
 
     const defaultSchema = {
@@ -730,6 +813,59 @@
       autoFocusFirstInvalid: true
     };
 
+    const sampleHumanJson = {
+      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
+      "Davacı Kimlik Tipi": "TC Kimlik",
+      "Davacı Ad Soyad": "İSMAİL DİNCER",
+      "Davacı TCKN/VKN": "12928963404",
+      "Davacı Plaka": "19BA618",
+      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
+      "Davacı Şase No": "NMTBZ28E90R141719",
+      "Karşı Ad Soyad": "YILMAZ HIŞIR",
+      "Karşı TCKN/VKN": "31066362344",
+      "Karşı Plaka": "19ABA563",
+      "Kaza Tarihi": "2024-11-15",
+      "Aracın Markası": "TOYOTA",
+      "Aracın Tipi": "Hususi",
+      "Aracın Model Yılı": "2006",
+      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
+      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
+      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
+      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
+      "Karşı Poliçe No": "104781355",
+      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
+      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
+      "Eksper Rp Tarihi": "2025-02-28",
+      "Hasar Onarım Tutarı": "140000",
+      "Kusur Oranı": "75",
+      "Davali Adi": "Corpus Sigorta A.Ş.",
+      "Aracın Kilometresi": "231328",
+      "action": "DK Hesaba Taşı",
+      "İhtar Tarihi": "Bugünün tarihi",
+      "predictedAction": "İhtar Dilekçesi Hazırla",
+      "uniqueid": "1770577890579x349136294770973500",
+      "Stage": "DK Hesabı",
+      "Esas No": ""
+    };
+
+    const samplePredictedJson = {
+      "İhtar Tarihi": "$TODAY",
+      "Hasar Onarım Tutarı": "145000",
+      "Kusur Oranı": "80",
+      "predictedAction": "İhtar Dilekçesi Hazırla",
+      "Kaza Yeri": "Çorum/Merkez",
+      "Karşı Poliçe No": "104781355"
+    };
+
+    const sampleColumnData = {
+      columns: defaultSchema.fields.map((field) => ({
+        key: field.key,
+        label: field.label,
+        type: field.type
+      })),
+      source: "sample-column-json"
+    };
+
     function setConsole(message, payload) {
       const timestamp = new Date().toLocaleTimeString("tr-TR");
       consoleEl.textContent += `[${timestamp}] ${message}` + (payload ? `\n${payload}` : "") + "\n";
@@ -811,6 +947,15 @@
       return formatter.format(numeric);
     }
 
+    function formatDateDisplay(value) {
+      if (!value) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split("-");
+        return `${d}.${m}.${y}`;
+      }
+      return value;
+    }
+
     function getDefaultValue(field, config) {
       if (!field.default) return "";
       const token = field.default;
@@ -835,6 +980,80 @@
       if (value === null || value === undefined) return true;
       if (typeof value === "string") return value.trim() === "";
       return false;
+    }
+
+    function normalizeKey(key) {
+      if (key === null || key === undefined) return "";
+      return String(key).trim().toLocaleLowerCase("tr-TR");
+    }
+
+    function buildFieldKeyMap() {
+      const map = new Map();
+      (state.config?.fields || []).forEach((field) => {
+        if (field.key) map.set(normalizeKey(field.key), field.key);
+        if (field.label) map.set(normalizeKey(field.label), field.key);
+      });
+      return map;
+    }
+
+    function getFieldKeyFromJsonKey(jsonKey, keyMap) {
+      if (!jsonKey) return null;
+      return keyMap.get(normalizeKey(jsonKey)) || null;
+    }
+
+    function getActiveSource(fieldKey) {
+      return state.activeSourceByField.get(fieldKey) || "human";
+    }
+
+    function getStoreValue(fieldKey, source) {
+      return source === "ai" ? state.formDataAI[fieldKey] : state.formDataHuman[fieldKey];
+    }
+
+    function getEffectiveValue(fieldKey) {
+      const activeSource = getActiveSource(fieldKey);
+      const aiValue = state.formDataAI[fieldKey];
+      if (activeSource === "ai" && !isEmptyValue(aiValue)) {
+        return aiValue;
+      }
+      return state.formDataHuman[fieldKey];
+    }
+
+    function setHumanValue(fieldKey, value, field, displayValue) {
+      state.formDataHuman[fieldKey] = value;
+      state.activeSourceByField.set(fieldKey, "human");
+      updateEffectiveState(fieldKey, field, displayValue);
+      updateAiVisuals(fieldKey);
+      updateToolbarStatus();
+    }
+
+    function updateEffectiveState(fieldKey, field, displayValue) {
+      const effectiveValue = getEffectiveValue(fieldKey);
+      state.values[fieldKey] = effectiveValue;
+      let validationValue = effectiveValue;
+      if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(effectiveValue)) {
+        const stagedFiles = state.fileBuffers[fieldKey] || [];
+        if (stagedFiles.length) {
+          validationValue = ["__file_selected__"];
+        }
+      }
+      const error = validateField(field, validationValue);
+      state.errors[fieldKey] = error;
+      state.validMap[fieldKey] = !error;
+      emit("onFieldChange", {
+        key: fieldKey,
+        value: effectiveValue,
+        displayValue: displayValue ?? effectiveValue,
+        source: getActiveSource(fieldKey),
+        isValid: !error
+      });
+      debounceFormChange();
+    }
+
+    function updateToolbarStatus() {
+      const aiCount = Object.values(state.formDataAI).filter((value) => !isEmptyValue(value)).length;
+      const humanCount = Object.values(state.formDataHuman).filter((value) => !isEmptyValue(value)).length;
+      aiFieldCountEl.textContent = `AI alan sayısı: ${aiCount}`;
+      humanFieldCountEl.textContent = `Human değiştirilen alan sayısı: ${humanCount}`;
     }
 
     const typeMetaMap = {
@@ -900,6 +1119,130 @@
         }));
     }
 
+    function resolveTokenValue(rawValue, field, config) {
+      if (rawValue === "$TODAY") {
+        return getDateFromIso(getCurrentDateTime(config));
+      }
+      if (rawValue === "$NOW") {
+        return getCurrentDateTime(config);
+      }
+      if (rawValue === "$CURRENT_TIME") {
+        return getTimeFromIso(getCurrentDateTime(config));
+      }
+      return rawValue;
+    }
+
+    function normalizeJsonValueForField(field, value, config) {
+      if (value === null || value === undefined) return "";
+      let resolved = resolveTokenValue(value, field, config);
+      if (field.type === "date") {
+        resolved = normalizeDateInput(String(resolved));
+        return resolved;
+      }
+      if (field.type === "time") {
+        resolved = normalizeTimeInput(String(resolved));
+        return resolved;
+      }
+      if (field.type === "datetime") {
+        const raw = String(resolved);
+        if (raw === "$TODAY") {
+          const date = getDateFromIso(getCurrentDateTime(config));
+          const offset = getOffsetFromIso(getCurrentDateTime(config));
+          return `${date}T00:00${offset}`;
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          const offset = getOffsetFromIso(getCurrentDateTime(config));
+          return `${raw}T00:00${offset}`;
+        }
+        return raw;
+      }
+      if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+        return normalizeNumberInput(resolved);
+      }
+      if (field.type === "boolean") {
+        if (typeof resolved === "string") {
+          return resolved.toLowerCase() === "true";
+        }
+        return Boolean(resolved);
+      }
+      if (field.type === "multi_select") {
+        if (Array.isArray(resolved)) return resolved;
+        if (typeof resolved === "string") return resolved.split(",").map((val) => val.trim()).filter(Boolean);
+      }
+      if (["file", "image", "multifile"].includes(field.type)) {
+        if (Array.isArray(resolved)) return resolved.filter((val) => typeof val === "string");
+        if (typeof resolved === "string") return resolved;
+        return "";
+      }
+      return resolved;
+    }
+
+    function updateAiVisuals(fieldKey) {
+      const ref = state.fieldRefs[fieldKey];
+      if (!ref) return;
+      const aiValue = state.formDataAI[fieldKey];
+      const hasAi = !isEmptyValue(aiValue);
+      const activeSource = getActiveSource(fieldKey);
+      ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
+      ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
+      ref.control.classList.toggle("ai-active", activeSource === "ai" && hasAi);
+      ref.aiPill.style.display = activeSource === "ai" && hasAi ? "inline-flex" : "none";
+    }
+
+    function updateFieldDisplayValue(fieldKey) {
+      const ref = state.fieldRefs[fieldKey];
+      if (!ref) return;
+      const value = getEffectiveValue(fieldKey);
+      if (ref.setValue) {
+        ref.setValue(value);
+      }
+      updateAiVisuals(fieldKey);
+      updateEffectiveState(fieldKey, ref.field);
+    }
+
+    function refreshAllFields() {
+      Object.keys(state.fieldRefs).forEach((fieldKey) => {
+        updateFieldDisplayValue(fieldKey);
+      });
+      updateToolbarStatus();
+    }
+
+    function loadJsonSafeToForm(kind, jsonObj) {
+      if (!jsonObj || !state.config) return;
+      const keyMap = buildFieldKeyMap();
+      Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
+        const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
+        if (!fieldKey) {
+          console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
+          setConsole("Eşleşmeyen JSON key", jsonKey);
+          return;
+        }
+        const field = state.config.fields.find((f) => f.key === fieldKey);
+        if (!field) return;
+        const normalized = normalizeJsonValueForField(field, rawValue, state.config);
+        if (kind === "ai") {
+          state.formDataAI[fieldKey] = normalized;
+          if (isEmptyValue(state.formDataHuman[fieldKey]) && !isEmptyValue(normalized)) {
+            state.activeSourceByField.set(fieldKey, "ai");
+          }
+        } else {
+          state.formDataHuman[fieldKey] = normalized;
+          state.activeSourceByField.set(fieldKey, "human");
+        }
+      });
+      refreshAllFields();
+    }
+
+    function exportFormJsonSafe() {
+      const payload = {};
+      (state.config?.fields || []).forEach((field) => {
+        const value = getEffectiveValue(field.key);
+        const jsonKey = field.label || field.key;
+        payload[jsonKey] = value ?? "";
+      });
+      return payload;
+    }
+
     function validateField(field, value) {
       if (field.required && isEmptyValue(value)) {
         if (field.type === "boolean") {
@@ -942,17 +1285,7 @@
     }
 
     function setFieldValue(key, value, field, displayValue) {
-      state.values[key] = value;
-      const error = validateField(field, value);
-      state.errors[key] = error;
-      state.validMap[key] = !error;
-      emit("onFieldChange", {
-        key,
-        value,
-        displayValue: displayValue ?? value,
-        isValid: !error
-      });
-      debounceFormChange();
+      setHumanValue(key, value, field, displayValue);
     }
 
     function debounceFormChange() {
@@ -961,7 +1294,7 @@
       }
       state.autoSaveTimer = setTimeout(() => {
         emit("onFormChange", {
-          values: state.values,
+          values: exportFormJsonSafe(),
           validMap: state.validMap,
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
@@ -975,7 +1308,8 @@
       state.errors = {};
       state.touched = {};
       state.fileBuffers = {};
-      state.aiMode = {};
+      state.fileStaging = {};
+      state.fieldRefs = {};
       summaryBox.style.display = "none";
 
       config.fields.forEach((field, index) => {
@@ -1017,23 +1351,24 @@
         const stageBadge = getStageBadge(field.stageType);
         if (stageBadge) labelMeta.append(stageBadge);
 
-        if (field.ui?.predicted) {
-          const aiToggle = document.createElement("button");
-          aiToggle.type = "button";
-          aiToggle.className = "ai-toggle";
-          aiToggle.innerHTML = `<span title="Predicted">🤖</span><span>Human mode</span>`;
-          state.aiMode[field.key] = true;
-          aiToggle.addEventListener("click", () => {
-            const isHuman = aiToggle.classList.toggle("is-human");
-            state.aiMode[field.key] = isHuman ? "human" : "ai";
-            aiToggle.querySelector("span:last-child").textContent = isHuman ? "AI mode" : "Human mode";
-            emit("onPredictedToggle", {
-              key: field.key,
-              mode: isHuman ? "human" : "ai"
-            });
+        const aiBadge = document.createElement("button");
+        aiBadge.type = "button";
+        aiBadge.className = "ai-badge";
+        aiBadge.title = "AI önerisi var. Tıkla: İnsan moduna geç / AI moduna dön";
+        aiBadge.innerHTML = `<span>🤖</span><span>ChatGPT</span>`;
+        aiBadge.addEventListener("click", () => {
+          const currentSource = getActiveSource(field.key);
+          const hasAi = !isEmptyValue(state.formDataAI[field.key]);
+          if (!hasAi) return;
+          const nextSource = currentSource === "ai" ? "human" : "ai";
+          state.activeSourceByField.set(field.key, nextSource);
+          updateFieldDisplayValue(field.key);
+          emit("onPredictedToggle", {
+            key: field.key,
+            mode: nextSource
           });
-          labelMeta.append(aiToggle);
-        }
+        });
+        labelMeta.append(aiBadge);
 
         labelColumn.append(labelTop);
         if (labelMeta.childElementCount) {
@@ -1042,14 +1377,30 @@
 
         const control = document.createElement("div");
         control.className = "field-control";
+        const aiPill = document.createElement("span");
+        aiPill.className = "ai-pill";
+        aiPill.textContent = "AI";
+        aiPill.style.display = "none";
+        control.append(aiPill);
 
         let inputEl = null;
         let extraControls = null;
         let inlineActions = null;
+        let setValue = null;
 
         const initialValue = getInitialValue(field, config);
-        state.values[field.key] = initialValue;
-        state.validMap[field.key] = !validateField(field, initialValue);
+        if (state.formDataHuman[field.key] === undefined) {
+          state.formDataHuman[field.key] = initialValue;
+        }
+        if (!state.activeSourceByField.has(field.key)) {
+          state.activeSourceByField.set(field.key, "human");
+        }
+        if (isEmptyValue(state.formDataHuman[field.key]) && !isEmptyValue(state.formDataAI[field.key])) {
+          state.activeSourceByField.set(field.key, "ai");
+        }
+        const effectiveInitial = getEffectiveValue(field.key);
+        state.values[field.key] = effectiveInitial;
+        state.validMap[field.key] = !validateField(field, effectiveInitial);
 
         if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "time"].includes(field.type)) {
           inputEl = document.createElement("input");
@@ -1057,13 +1408,28 @@
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
           inputEl.placeholder = field.placeholder || "";
-          inputEl.value = initialValue || "";
           if (field.type === "password") inputEl.type = "password";
           if (field.type === "email") inputEl.type = "email";
           if (field.type === "url") inputEl.type = "url";
           if (field.type === "phone") inputEl.type = "tel";
           if (["integer", "decimal", "currency", "percent"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
           if (field.type === "time") inputEl.type = "time";
+
+          setValue = (value) => {
+            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+              const formatted = field.type === "integer"
+                ? formatNumberDisplay(value, { maximumFractionDigits: 0 })
+                : formatNumberDisplay(value, { maximumFractionDigits: 2 });
+              inputEl.value = formatted || (value ?? "");
+              return;
+            }
+            if (field.type === "time") {
+              inputEl.value = value ? normalizeTimeInput(String(value)) : "";
+              return;
+            }
+            inputEl.value = value ?? "";
+          };
+          setValue(effectiveInitial);
 
           inputEl.addEventListener("input", (event) => {
             if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
@@ -1126,7 +1492,10 @@
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
           inputEl.placeholder = field.placeholder || "";
-          inputEl.value = initialValue || "";
+          inputEl.value = effectiveInitial || "";
+          setValue = (value) => {
+            inputEl.value = value ?? "";
+          };
 
           inputEl.addEventListener("input", (event) => {
             setFieldValue(field.key, event.target.value, field);
@@ -1141,7 +1510,10 @@
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
           inputEl.setAttribute("aria-label", field.label);
-          inputEl.checked = Boolean(initialValue);
+          inputEl.checked = Boolean(effectiveInitial);
+          setValue = (value) => {
+            inputEl.checked = Boolean(value);
+          };
           const toggleLabel = document.createElement("span");
           toggleLabel.textContent = "Evet";
           control.append(inputEl, toggleLabel);
@@ -1201,7 +1573,10 @@
           };
 
           buildOptions();
-          select.value = initialValue || "";
+          select.value = effectiveInitial || "";
+          setValue = (value) => {
+            select.value = value ?? "";
+          };
 
           searchInput.addEventListener("input", (event) => {
             buildOptions(event.target.value);
@@ -1226,7 +1601,7 @@
           const chips = document.createElement("div");
           chips.className = "chip-row";
 
-          let selectedValues = Array.isArray(initialValue) ? initialValue : [];
+          let selectedValues = Array.isArray(effectiveInitial) ? effectiveInitial : [];
 
           const renderOptions = (filter = "") => {
             optionsWrapper.innerHTML = "";
@@ -1282,8 +1657,13 @@
 
           renderOptions();
           renderChips();
+          setValue = (value) => {
+            selectedValues = Array.isArray(value) ? value : [];
+            renderOptions(searchInput.value);
+            renderChips();
+          };
           control.append(searchInput, chips, optionsWrapper);
-          setFieldValue(field.key, selectedValues, field);
+          updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
           const textInput = document.createElement("input");
           textInput.className = "field-input";
@@ -1297,12 +1677,24 @@
           nativeInput.className = "field-input";
           nativeInput.style.display = "none";
 
-          const initialDate = initialValue ? normalizeDateInput(initialValue) : "";
+          const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
           if (initialDate) {
             const [y, m, d] = initialDate.split("-");
             textInput.value = `${d}.${m}.${y}`;
             nativeInput.value = initialDate;
           }
+
+          setValue = (value) => {
+            const normalized = value ? normalizeDateInput(String(value)) : "";
+            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+              const [y, m, d] = normalized.split("-");
+              textInput.value = `${d}.${m}.${y}`;
+              nativeInput.value = normalized;
+            } else {
+              textInput.value = value ?? "";
+              nativeInput.value = "";
+            }
+          };
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
@@ -1393,8 +1785,8 @@
           dateInput.id = `field-${field.key}`;
           dateInput.setAttribute("aria-describedby", `error-${field.key}`);
           timeInput.setAttribute("aria-describedby", `error-${field.key}`);
-          const dateValue = initialValue ? getDateFromIso(initialValue) : "";
-          const timeValue = initialValue ? getTimeFromIso(initialValue) : "";
+          const dateValue = effectiveInitial ? getDateFromIso(effectiveInitial) : "";
+          const timeValue = effectiveInitial ? getTimeFromIso(effectiveInitial) : "";
           if (dateValue) {
             const [y, m, d] = dateValue.split("-");
             dateInput.value = `${d}.${m}.${y}`;
@@ -1402,6 +1794,20 @@
           timeInput.value = timeValue;
           dateInput.placeholder = "gg.aa.yyyy";
           dateInput.inputMode = "numeric";
+
+          setValue = (value) => {
+            if (!value) {
+              dateInput.value = "";
+              timeInput.value = "";
+              return;
+            }
+            const isoDate = getDateFromIso(value);
+            const isoTime = getTimeFromIso(value);
+            if (isoDate) {
+              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
+            }
+            timeInput.value = isoTime || "";
+          };
 
           const quickActions = document.createElement("div");
           quickActions.className = "field-actions";
@@ -1447,7 +1853,10 @@
           durationInput.className = "field-input";
           durationInput.setAttribute("aria-describedby", `error-${field.key}`);
           durationInput.placeholder = "hh:mm";
-          durationInput.value = initialValue || "";
+          durationInput.value = effectiveInitial || "";
+          setValue = (value) => {
+            durationInput.value = value ?? "";
+          };
           durationInput.addEventListener("blur", () => {
             const normalized = normalizeTimeInput(durationInput.value);
             durationInput.value = normalized;
@@ -1481,6 +1890,15 @@
           const grid = document.createElement("div");
           grid.className = "grid two";
           grid.append(street, district, city, postal, country);
+          setValue = (value) => {
+            const normalized = value && typeof value === "object" ? value : {};
+            street.value = normalized.street || "";
+            district.value = normalized.district || "";
+            city.value = normalized.city || "";
+            postal.value = normalized.postalCode || "";
+            country.value = normalized.country || "";
+          };
+          setValue(effectiveInitial);
           const updateAddress = () => {
             const value = {
               street: street.value,
@@ -1566,7 +1984,11 @@
                   type: f.type,
                   lastModified: f.lastModified
                 }));
-                setFieldValue(field.key, filePayload, field);
+                state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
+                state.formDataHuman[field.key] = "";
+                state.activeSourceByField.set(field.key, "human");
+                updateEffectiveState(field.key, field);
+                updateAiVisuals(field.key);
                 emit("onFileSelected", {
                   key: field.key,
                   files: filePayload,
@@ -1625,7 +2047,11 @@
               type: file.type,
               lastModified: file.lastModified
             }));
-            setFieldValue(field.key, filePayload, field);
+            state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
+            state.formDataHuman[field.key] = "";
+            state.activeSourceByField.set(field.key, "human");
+            updateEffectiveState(field.key, field);
+            updateAiVisuals(field.key);
             emit("onFileSelected", {
               key: field.key,
               files: filePayload,
@@ -1651,12 +2077,17 @@
           });
 
           control.append(drop, fileInput, list);
-          const initialFiles = parseInitialFiles(initialValue);
-          if (initialFiles.length) {
-            state.fileBuffers[field.key] = initialFiles;
+          setValue = (value) => {
+            const initialFiles = parseInitialFiles(value);
+            if (initialFiles.length) {
+              state.fileBuffers[field.key] = initialFiles;
+            } else if (!state.fileStaging[field.key]?.length) {
+              state.fileBuffers[field.key] = [];
+            }
             renderFiles();
-          }
-          setFieldValue(field.key, "", field);
+          };
+          setValue(effectiveInitial);
+          updateEffectiveState(field.key, field);
         }
 
         if (inputEl) {
@@ -1685,6 +2116,16 @@
         }
         controlStack.append(errorText);
 
+        state.fieldRefs[field.key] = {
+          field,
+          control,
+          inputEl,
+          setValue,
+          aiBadge,
+          aiPill
+        };
+        updateAiVisuals(field.key);
+
         row.append(labelColumn, controlStack);
         wrapper.append(row);
         formEl.append(wrapper);
@@ -1696,6 +2137,7 @@
           }, 0);
         }
       });
+      updateToolbarStatus();
       updateSubmitState(config);
     }
 
@@ -1760,20 +2202,50 @@
 
     function validateAll() {
       state.config.fields.forEach((field) => {
-        let value = state.values[field.key];
+        let value = getEffectiveValue(field.key);
         if (field.type === "date" && typeof value === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
           value = normalizeDateInput(value);
-          state.values[field.key] = value;
         }
         if (field.type === "time" && typeof value === "string") {
           value = normalizeTimeInput(value);
-          state.values[field.key] = value;
         }
-        state.errors[field.key] = validateField(field, value);
+        state.values[field.key] = value;
+        let validationValue = value;
+        if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(value)) {
+          const stagedFiles = state.fileBuffers[field.key] || [];
+          if (stagedFiles.length) {
+            validationValue = ["__file_selected__"];
+          }
+        }
+        state.errors[field.key] = validateField(field, validationValue);
         state.validMap[field.key] = !state.errors[field.key];
         const control = document.querySelector(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
         if (control) updateError(control, field);
       });
+    }
+
+    function applyAiValuesToHuman({ overwrite }) {
+      if (!state.config) return;
+      state.config.fields.forEach((field) => {
+        const aiValue = state.formDataAI[field.key];
+        if (isEmptyValue(aiValue)) return;
+        if (!overwrite && !isEmptyValue(state.formDataHuman[field.key])) return;
+        state.formDataHuman[field.key] = aiValue;
+        state.activeSourceByField.set(field.key, "human");
+      });
+      refreshAllFields();
+    }
+
+    function resetAllStores() {
+      state.formDataHuman = {};
+      state.formDataAI = {};
+      state.activeSourceByField = new Map();
+      state.fileBuffers = {};
+      state.fileStaging = {};
+      state.values = {};
+      state.validMap = {};
+      state.errors = {};
+      renderForm(state.config);
     }
 
     formEl.addEventListener("submit", (event) => {
@@ -1788,7 +2260,7 @@
         summaryBox.style.display = "none";
       }
       emit("onSubmitAttempt", {
-        values: state.values,
+        values: exportFormJsonSafe(),
         isFormValid: invalidCount === 0,
         firstInvalidKey
       });
@@ -1815,7 +2287,34 @@
 
     clearBtn.addEventListener("click", () => {
       emit("onClear", {});
-      renderForm(state.config);
+      resetAllStores();
+    });
+
+    loadHumanJsonBtn.addEventListener("click", () => {
+      loadJsonSafeToForm("human", sampleHumanJson);
+    });
+
+    loadPredictedJsonBtn.addEventListener("click", () => {
+      loadJsonSafeToForm("ai", samplePredictedJson);
+    });
+
+    loadColumnJsonBtn.addEventListener("click", () => {
+      state.columnData = sampleColumnData;
+      setConsole("Column data yüklendi", JSON.stringify(state.columnData, null, 2));
+    });
+
+    applyAiToEmptyBtn.addEventListener("click", () => {
+      applyAiValuesToHuman({ overwrite: false });
+    });
+
+    overwriteAiToAllBtn.addEventListener("click", () => {
+      const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
+      if (!confirmed) return;
+      applyAiValuesToHuman({ overwrite: true });
+    });
+
+    resetStoresBtn.addEventListener("click", () => {
+      resetAllStores();
     });
 
     document.getElementById("loadSample").addEventListener("click", () => {
