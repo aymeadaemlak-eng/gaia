@@ -1031,6 +1031,8 @@
     let humanData = {};
     let aiData = {};
     let sourceByField = {};
+    let taskStartTimestamp = null;
+    let initialSnapshot = null;
 
     const schemaInput = document.getElementById("schemaInput");
     const currentDateTimeInput = document.getElementById("currentDateTime");
@@ -1425,7 +1427,19 @@
       return humanData[fieldKey];
     }
 
+    function captureInitialSnapshot(overwrite = false) {
+      if (initialSnapshot && !overwrite) return;
+      initialSnapshot = buildExportJson();
+    }
+
+    function ensureTaskStartTimestamp() {
+      if (!taskStartTimestamp) {
+        taskStartTimestamp = new Date().toISOString();
+      }
+    }
+
     function setHumanValue(fieldKey, value, field, displayValue) {
+      ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
       sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
@@ -1688,6 +1702,9 @@
         }
       });
       refreshAllFields();
+      if (kind === "human") {
+        captureInitialSnapshot(true);
+      }
     }
 
     function applyScenario({ name, column, human, ai }) {
@@ -1793,6 +1810,39 @@
         payload[jsonKey] = normalizeExportValue(field, value);
       });
       return payload;
+    }
+
+    function buildKeyValueList(payload) {
+      return Object.entries(payload).map(([key, value]) => {
+        const safeValue = JSON.stringify(value ?? "");
+        return `${key}: ${safeValue}`;
+      });
+    }
+
+    function buildAddedCustomFields(payload) {
+      const base = initialSnapshot || {};
+      return Object.keys(payload).filter((key) => {
+        const currentValue = payload[key];
+        const initialValue = base[key];
+        return !isEmptyValue(currentValue) && isEmptyValue(initialValue);
+      });
+    }
+
+    function buildDeletedFields(payload) {
+      const base = initialSnapshot || {};
+      return Object.keys(base).filter((key) => {
+        const initialValue = base[key];
+        const currentValue = payload[key];
+        return !isEmptyValue(initialValue) && isEmptyValue(currentValue);
+      });
+    }
+
+    function getActivityType() {
+      const hasPredictedData = Object.values(aiData).some((value) => !isEmptyValue(value));
+      const hasAiUsage = (state.config?.fields || []).some((field) => {
+        return getActiveSource(field.key) === "ai" && !isEmptyValue(aiData[field.key]);
+      });
+      return hasPredictedData && hasAiUsage ? "Stage complated/HITL" : "Stage complated";
     }
 
     function validateField(field, value) {
@@ -2812,6 +2862,7 @@
       });
       updateToolbarStatus();
       updateSubmitState(config);
+      captureInitialSnapshot();
     }
 
     function varPrimary() {
@@ -2965,6 +3016,8 @@
       state.values = {};
       state.validMap = {};
       state.errors = {};
+      taskStartTimestamp = null;
+      initialSnapshot = null;
       if (columnJson) {
         applyColumnJson(columnJson);
       } else {
@@ -2985,10 +3038,24 @@
       } else {
         summaryBox.style.display = "none";
       }
+      const exportPayload = buildExportJson();
+      const outputlist1 = buildKeyValueList(exportPayload);
+      const outputlist2 = buildAddedCustomFields(exportPayload);
+      const outputlist3 = buildDeletedFields(exportPayload);
+      const output1 = taskStartTimestamp || "";
+      const output2 = new Date().toISOString();
+      const output3 = getActivityType();
+      setConsole("debug:submit-outputs", JSON.stringify({ output1, output2, output3, outputlist1, outputlist2, outputlist3 }, null, 2));
       emit("onSubmitAttempt", {
-        values: buildExportJson(),
+        values: exportPayload,
         isFormValid: invalidCount === 0,
-        firstInvalidKey
+        firstInvalidKey,
+        output1,
+        output2,
+        output3,
+        outputlist1,
+        outputlist2,
+        outputlist3
       });
     });
 
