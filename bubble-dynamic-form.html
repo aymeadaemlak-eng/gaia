@@ -88,10 +88,17 @@
       gap: 6px;
       padding: 8px 0;
       border-bottom: 1px solid #eef2f7;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     .field-wrapper:last-child {
       border-bottom: none;
+    }
+
+    .field-wrapper:hover {
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+      transform: translateY(-1px);
+      border-radius: 12px;
     }
 
     .field-row {
@@ -159,19 +166,53 @@
       align-items: center;
       gap: 6px;
       border: 1px solid rgba(37, 99, 235, 0.25);
-      background: rgba(37, 99, 235, 0.08);
+      background: linear-gradient(120deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.2));
       border-radius: 999px;
       padding: 2px 10px;
       font-size: 0.7rem;
       cursor: pointer;
       color: var(--primary);
       white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-badge img {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      object-fit: contain;
     }
 
     .ai-badge.is-active {
       border-color: rgba(34, 197, 94, 0.4);
       background: rgba(34, 197, 94, 0.12);
       color: #15803d;
+    }
+
+    .ai-badge.is-passive {
+      opacity: 0.7;
+      filter: grayscale(0.2);
+    }
+
+    .ai-badge::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+      transform: translateX(-120%);
+      animation: sparkle 4s ease-in-out infinite;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    @keyframes sparkle {
+      0%, 70% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(120%);
+      }
     }
 
     .control-stack {
@@ -186,6 +227,30 @@
       background: #fff;
       position: relative;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-control::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 4px;
+      border-radius: 999px;
+      background: transparent;
+      opacity: 0.6;
+    }
+
+    .field-control.stage-optional::before {
+      background: #d1d5db;
+    }
+
+    .field-control.stage-mandatory::before {
+      background: var(--danger);
+    }
+
+    .field-control.stage-control::before {
+      background: var(--primary);
     }
 
     .field-control.ai-active {
@@ -377,6 +442,8 @@
       display: grid;
       gap: 6px;
       background: #fff;
+      position: relative;
+      overflow: hidden;
     }
 
     .file-meta {
@@ -397,6 +464,90 @@
     .file-thumb.large {
       width: 100%;
       height: 90px;
+    }
+
+    .file-thumb-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      border-radius: 8px;
+    }
+
+    .file-thumb-wrap:hover .file-thumb-overlay {
+      opacity: 1;
+    }
+
+    .preview-btn {
+      border: none;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .conflict-chip {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .conflict-popover {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      min-width: 220px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+      display: none;
+      z-index: 20;
+    }
+
+    .conflict-popover.open {
+      display: grid;
+      gap: 6px;
+    }
+
+    .conflict-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .date-wrapper {
+      position: relative;
+      display: grid;
+      gap: 6px;
+    }
+
+    .date-overlay-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
     }
 
     .file-icon {
@@ -508,6 +659,64 @@
       font-weight: 600;
     }
 
+    .debug-warning {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      background: #f8fafc;
+      margin-bottom: 16px;
+    }
+
+    .export-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+    }
+
+    .export-modal.open {
+      display: flex;
+    }
+
+    .export-panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      width: min(920px, 95vw);
+      max-height: 85vh;
+      display: grid;
+      gap: 12px;
+    }
+
+    .export-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .export-tabs button {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    .export-tabs button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .export-panel textarea {
+      width: 100%;
+      min-height: 240px;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 0.78rem;
+    }
+
     @media (max-width: 720px) {
       .field-row {
         grid-template-columns: 1fr;
@@ -585,25 +794,36 @@
 
     <section class="card">
       <h2>Dynamic Form</h2>
-      <div class="debug-toolbar">
+      <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
-          <button type="button" id="loadHumanJson">JSON Data Yükle</button>
+          <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
+          <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
           <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
-          <button type="button" class="ghost" id="loadColumnJson">Column Data Yükle</button>
-          <button type="button" class="secondary" id="applyAiToEmpty">AI -> Forma Uygula</button>
-          <button type="button" class="secondary" id="overwriteAiToAll">AI -> Tümünü Yaz</button>
+          <button type="button" class="ghost" id="applyAiToEmpty">AI -> Boş Human Alanlara Uygula</button>
+          <button type="button" class="ghost" id="overwriteAiToAll">AI -> Hepsini Overwrite</button>
           <button type="button" class="ghost" id="resetStores">Reset</button>
+          <button type="button" class="secondary" id="exportJson">Export JSON</button>
+          <button type="button" class="ghost" id="scenarioColumnOnly">Scenario: Column</button>
+          <button type="button" class="ghost" id="scenarioColumnHuman">Scenario: Column+Human</button>
+          <button type="button" class="ghost" id="scenarioColumnAi">Scenario: Column+AI</button>
+          <button type="button" class="ghost" id="scenarioColumnAiHuman">Scenario: Column+AI+Human</button>
+          <button type="button" class="ghost" id="scenarioConflict">Scenario: Conflict</button>
         </div>
         <div class="toolbar-status">
           <span id="aiFieldCount">AI alan sayısı: 0</span>
           <span id="humanFieldCount">Human değiştirilen alan sayısı: 0</span>
         </div>
       </div>
-      <div id="summaryBox" class="summary-box" style="display:none;"></div>
-      <form id="dynamicForm" class="grid"></form>
-      <div class="inline-row" style="margin-top: 12px;">
-        <button id="submitBtn" type="submit">Submit</button>
-        <button id="clearBtn" type="button" class="ghost">Temizle</button>
+      <div id="columnWarning" class="debug-warning" style="display:none;">
+        Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+      </div>
+      <div id="formContainer">
+        <div id="summaryBox" class="summary-box" style="display:none;"></div>
+        <form id="dynamicForm" class="grid"></form>
+        <div class="inline-row" style="margin-top: 12px;">
+          <button id="submitBtn" type="submit">Submit</button>
+          <button id="clearBtn" type="button" class="ghost">Temizle</button>
+        </div>
       </div>
     </section>
   </main>
@@ -613,8 +833,181 @@
       <img id="lightboxImage" alt="Önizleme" />
     </div>
   </div>
+  <div id="exportModal" class="export-modal" aria-hidden="true">
+    <div class="export-panel">
+      <div class="inline-row" style="justify-content: space-between;">
+        <strong>JSON Export</strong>
+        <button type="button" class="ghost" id="closeExport">Kapat</button>
+      </div>
+      <div class="export-tabs">
+        <button type="button" class="secondary active" data-export-tab="export">Aktif JSON</button>
+        <button type="button" class="secondary" data-export-tab="human">Human JSON</button>
+        <button type="button" class="secondary" data-export-tab="ai">Predicted JSON</button>
+        <button type="button" class="secondary" data-export-tab="column">Column JSON</button>
+      </div>
+      <textarea id="exportContent" readonly></textarea>
+    </div>
+  </div>
 
   <script>
+    const DEBUG_MODE = true;
+
+    let MANUAL_COLUMN_JSON = null;
+    let MANUAL_DATA_JSON = null;
+    let MANUAL_PREDICTED_JSON = null;
+
+    const SAMPLE_COLUMN_JSON = {
+      columns: [
+        {
+          fieldName: "Davacı Ad Soyad",
+          type: "text",
+          required: true,
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Davacı TCKN/VKN",
+          type: "text",
+          required: true,
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Kaza Tarihi",
+          type: "date",
+          required: true,
+          stageType: "mandatory",
+          default: "$TODAY"
+        },
+        {
+          fieldName: "İhtar Tarihi",
+          type: "date",
+          required: false,
+          stageType: "optional"
+        },
+        {
+          fieldName: "Randevu Datetime",
+          type: "datetime",
+          stageType: "control"
+        },
+        {
+          fieldName: "Uygun Saat",
+          type: "time",
+          stageType: "optional"
+        },
+        {
+          fieldName: "Aracın Tipi",
+          type: "single_select",
+          stageType: "mandatory",
+          options: [
+            { value: "Hususi", label: "Hususi" },
+            { value: "Ticari", label: "Ticari" },
+            { value: "Kiralık", label: "Kiralık" }
+          ]
+        },
+        {
+          fieldName: "Ek Özellikler",
+          type: "multi_select",
+          stageType: "optional",
+          options: [
+            { value: "camTavan", label: "Cam tavan" },
+            { value: "navigasyon", label: "Navigasyon" },
+            { value: "kamera", label: "Geri görüş kamera" }
+          ]
+        },
+        {
+          fieldName: "Hasar Onarım Tutarı",
+          type: "currency",
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Kusur Oranı",
+          type: "percent",
+          stageType: "mandatory"
+        },
+        {
+          fieldName: "Aracın Kilometresi",
+          type: "number",
+          stageType: "optional"
+        },
+        {
+          fieldName: "Belgeleri Yükle",
+          type: "file",
+          allowMultiple: false,
+          stageType: "control"
+        },
+        {
+          fieldName: "Hasar Fotoğrafları",
+          type: "image",
+          allowMultiple: true,
+          stageType: "optional"
+        },
+        {
+          fieldName: "Ek Dosyalar",
+          type: "multifile",
+          allowMultiple: true,
+          stageType: "optional"
+        }
+      ],
+      currentDateTimeISO: "2026-02-09T12:34:56+03:00",
+      locale: "tr-TR",
+      timezone: "Europe/Istanbul",
+      mode: "create"
+    };
+
+    const SAMPLE_DATA_JSON = {
+      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
+      "Davacı Kimlik Tipi": "TC Kimlik",
+      "Davacı Ad Soyad": "İSMAİL DİNCER",
+      "Davacı TCKN/VKN": "12928963404",
+      "Davacı Plaka": "19BA618",
+      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
+      "Davacı Şase No": "NMTBZ28E90R141719",
+      "Karşı Ad Soyad": "YILMAZ HIŞIR",
+      "Karşı TCKN/VKN": "31066362344",
+      "Karşı Plaka": "19ABA563",
+      "Kaza Tarihi": "2024-11-15",
+      "Aracın Markası": "TOYOTA",
+      "Aracın Tipi": "Hususi",
+      "Aracın Model Yılı": "2006",
+      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
+      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
+      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
+      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
+      "Karşı Poliçe No": "104781355",
+      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
+      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
+      "Eksper Rp Tarihi": "2025-02-28",
+      "Hasar Onarım Tutarı": "140000",
+      "Kusur Oranı": "75",
+      "Davali Adi": "Corpus Sigorta A.Ş.",
+      "Aracın Kilometresi": "231328",
+      "action": "DK Hesaba Taşı",
+      "İhtar Tarihi": "Bugünün tarihi",
+      "predictedAction": "İhtar Dilekçesi Hazırla",
+      "uniqueid": "1770577890579x349136294770973500",
+      "Stage": "DK Hesabı",
+      "Hasar Fotoğrafları": [
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=800&q=60",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60"
+      ],
+      "Ek Dosyalar": [
+        "https://example.com/docs/hasar-foto-1.pdf",
+        "https://example.com/docs/hasar-foto-2.pdf"
+      ],
+      "Esas No": ""
+    };
+
+    const SAMPLE_PREDICTED_JSON = {
+      "İhtar Tarihi": "$TODAY",
+      "Hasar Onarım Tutarı": "145000",
+      "Kusur Oranı": "80",
+      "predictedAction": "İhtar Dilekçesi Hazırla"
+    };
+
+    let columnJson = null;
+    let humanData = {};
+    let aiData = {};
+    let sourceByField = {};
+
     const schemaInput = document.getElementById("schemaInput");
     const currentDateTimeInput = document.getElementById("currentDateTime");
     const localeInput = document.getElementById("localeInput");
@@ -627,17 +1020,30 @@
     const submitBtn = document.getElementById("submitBtn");
     const clearBtn = document.getElementById("clearBtn");
     const summaryBox = document.getElementById("summaryBox");
+    const formContainer = document.getElementById("formContainer");
     const consoleEl = document.getElementById("eventConsole");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
+    const exportModal = document.getElementById("exportModal");
+    const exportContent = document.getElementById("exportContent");
+    const exportTabs = document.querySelectorAll("[data-export-tab]");
     const loadHumanJsonBtn = document.getElementById("loadHumanJson");
     const loadPredictedJsonBtn = document.getElementById("loadPredictedJson");
     const loadColumnJsonBtn = document.getElementById("loadColumnJson");
     const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
     const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
     const resetStoresBtn = document.getElementById("resetStores");
+    const scenarioColumnOnlyBtn = document.getElementById("scenarioColumnOnly");
+    const scenarioColumnHumanBtn = document.getElementById("scenarioColumnHuman");
+    const scenarioColumnAiBtn = document.getElementById("scenarioColumnAi");
+    const scenarioColumnAiHumanBtn = document.getElementById("scenarioColumnAiHuman");
+    const scenarioConflictBtn = document.getElementById("scenarioConflict");
+    const exportJsonBtn = document.getElementById("exportJson");
+    const closeExportBtn = document.getElementById("closeExport");
     const aiFieldCountEl = document.getElementById("aiFieldCount");
     const humanFieldCountEl = document.getElementById("humanFieldCount");
+    const columnWarning = document.getElementById("columnWarning");
+    const debugToolbar = document.getElementById("debugToolbar");
 
     const state = {
       config: null,
@@ -648,9 +1054,6 @@
       autoSaveTimer: null,
       fileBuffers: {},
       fileStaging: {},
-      formDataHuman: {},
-      formDataAI: {},
-      activeSourceByField: new Map(),
       fieldRefs: {},
       columnData: null
     };
@@ -813,50 +1216,6 @@
       autoFocusFirstInvalid: true
     };
 
-    const sampleHumanJson = {
-      "Belgeleri Yükle": "https://gaiasphere.io/version-live/fileupload/f1770577885537x578585456537153500/hasar_ekspertiz_raporu.pdf",
-      "Davacı Kimlik Tipi": "TC Kimlik",
-      "Davacı Ad Soyad": "İSMAİL DİNCER",
-      "Davacı TCKN/VKN": "12928963404",
-      "Davacı Plaka": "19BA618",
-      "Davacı Marka Model": "TOYOTA COROLLA 1,6 TERRA SEDAN (Y) 2006",
-      "Davacı Şase No": "NMTBZ28E90R141719",
-      "Karşı Ad Soyad": "YILMAZ HIŞIR",
-      "Karşı TCKN/VKN": "31066362344",
-      "Karşı Plaka": "19ABA563",
-      "Kaza Tarihi": "2024-11-15",
-      "Aracın Markası": "TOYOTA",
-      "Aracın Tipi": "Hususi",
-      "Aracın Model Yılı": "2006",
-      "Kaza Yeri": "Çorum / Merkez / Öğretmen Lisesi 1. Cad. – Öğretmen Lisesi Cad. kavşağı",
-      "Davacı Araç Sürücüsü": "İSMAİL DİNCER",
-      "Karşı Araç Sürücüsü": "YILMAZ HIŞIR",
-      "Karşı Poliçe Türü": "Zorunlu Trafik Sigortası",
-      "Karşı Poliçe No": "104781355",
-      "Karşı Poliçe Bitiş Tarihi": "2025-09-03",
-      "Kaza tespit tutanağı türü": "Anlaşmalı Kaza Tespit Tutanağı",
-      "Eksper Rp Tarihi": "2025-02-28",
-      "Hasar Onarım Tutarı": "140000",
-      "Kusur Oranı": "75",
-      "Davali Adi": "Corpus Sigorta A.Ş.",
-      "Aracın Kilometresi": "231328",
-      "action": "DK Hesaba Taşı",
-      "İhtar Tarihi": "Bugünün tarihi",
-      "predictedAction": "İhtar Dilekçesi Hazırla",
-      "uniqueid": "1770577890579x349136294770973500",
-      "Stage": "DK Hesabı",
-      "Esas No": ""
-    };
-
-    const samplePredictedJson = {
-      "İhtar Tarihi": "$TODAY",
-      "Hasar Onarım Tutarı": "145000",
-      "Kusur Oranı": "80",
-      "predictedAction": "İhtar Dilekçesi Hazırla",
-      "Kaza Yeri": "Çorum/Merkez",
-      "Karşı Poliçe No": "104781355"
-    };
-
     const sampleColumnData = {
       columns: defaultSchema.fields.map((field) => ({
         key: field.key,
@@ -919,6 +1278,29 @@
         return `${y}-${m}-${d}`;
       }
       return trimmed;
+    }
+
+    function isValidDateString(value) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const [year, month, day] = value.split("-").map((part) => Number(part));
+      if (year < 1000 || year > 9999) return false;
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function areValuesDifferent(a, b) {
+      if (isEmptyValue(a) && isEmptyValue(b)) return false;
+      if (Array.isArray(a) || Array.isArray(b) || typeof a === "object" || typeof b === "object") {
+        return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
+      }
+      return String(a ?? "") !== String(b ?? "");
+    }
+
+    function formatValueForDisplay(value) {
+      if (Array.isArray(value) || typeof value === "object") {
+        return JSON.stringify(value, null, 2);
+      }
+      return String(value ?? "");
     }
 
     function normalizeTimeInput(raw) {
@@ -984,12 +1366,13 @@
 
     function normalizeKey(key) {
       if (key === null || key === undefined) return "";
-      return String(key).trim().toLocaleLowerCase("tr-TR");
+      return String(key).trim();
     }
 
     function buildFieldKeyMap() {
       const map = new Map();
       (state.config?.fields || []).forEach((field) => {
+        if (field.fieldName) map.set(normalizeKey(field.fieldName), field.key);
         if (field.key) map.set(normalizeKey(field.key), field.key);
         if (field.label) map.set(normalizeKey(field.label), field.key);
       });
@@ -1002,25 +1385,25 @@
     }
 
     function getActiveSource(fieldKey) {
-      return state.activeSourceByField.get(fieldKey) || "human";
+      return sourceByField[fieldKey] || "human";
     }
 
     function getStoreValue(fieldKey, source) {
-      return source === "ai" ? state.formDataAI[fieldKey] : state.formDataHuman[fieldKey];
+      return source === "ai" ? aiData[fieldKey] : humanData[fieldKey];
     }
 
     function getEffectiveValue(fieldKey) {
       const activeSource = getActiveSource(fieldKey);
-      const aiValue = state.formDataAI[fieldKey];
+      const aiValue = aiData[fieldKey];
       if (activeSource === "ai" && !isEmptyValue(aiValue)) {
         return aiValue;
       }
-      return state.formDataHuman[fieldKey];
+      return humanData[fieldKey];
     }
 
     function setHumanValue(fieldKey, value, field, displayValue) {
-      state.formDataHuman[fieldKey] = value;
-      state.activeSourceByField.set(fieldKey, "human");
+      humanData[fieldKey] = value;
+      sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
       updateAiVisuals(fieldKey);
       updateToolbarStatus();
@@ -1050,8 +1433,10 @@
     }
 
     function updateToolbarStatus() {
-      const aiCount = Object.values(state.formDataAI).filter((value) => !isEmptyValue(value)).length;
-      const humanCount = Object.values(state.formDataHuman).filter((value) => !isEmptyValue(value)).length;
+      const aiCount = Object.values(aiData).filter((value) => !isEmptyValue(value)).length;
+      const humanCount = Object.entries(humanData).filter(([key, value]) => {
+        return sourceByField[key] === "human" && !isEmptyValue(value);
+      }).length;
       aiFieldCountEl.textContent = `AI alan sayısı: ${aiCount}`;
       humanFieldCountEl.textContent = `Human değiştirilen alan sayısı: ${humanCount}`;
     }
@@ -1063,6 +1448,7 @@
       phone: { icon: "📞", label: "Phone" },
       url: { icon: "🔗", label: "URL" },
       integer: { icon: "🔢", label: "Integer" },
+      number: { icon: "🔢", label: "Number" },
       decimal: { icon: "🔢", label: "Decimal" },
       currency: { icon: "🔢", label: "Currency" },
       percent: { icon: "🔢", label: "Percent" },
@@ -1098,22 +1484,51 @@
     function isImageLike(file) {
       if (!file) return false;
       if (file.type && file.type.startsWith("image/")) return true;
+      if (file.url && String(file.url).startsWith("data:image/")) return true;
       if (file.url) {
         return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.url);
       }
       return false;
     }
 
-    function parseInitialFiles(initialValue) {
+    function isDataUrl(value) {
+      return typeof value === "string" && value.startsWith("data:");
+    }
+
+    function isPdfDataUrl(value) {
+      return typeof value === "string" && value.startsWith("data:application/pdf");
+    }
+
+    function isLikelyBase64(value) {
+      if (typeof value !== "string") return false;
+      if (value.length < 60) return false;
+      if (value.includes("://")) return false;
+      if (value.startsWith("data:")) return false;
+      return /^[A-Za-z0-9+/=\r\n]+$/.test(value);
+    }
+
+    function normalizeFileValueForPreview(field, value) {
+      if (!value || typeof value !== "string") return value;
+      if (field.type === "image" && isLikelyBase64(value)) {
+        return `data:image/*;base64,${value}`;
+      }
+      return value;
+    }
+
+    function parseInitialFiles(initialValue, allowMultiple, field) {
       if (!initialValue) return [];
-      const values = Array.isArray(initialValue) ? initialValue : [initialValue];
+      let values = Array.isArray(initialValue) ? initialValue : [initialValue];
+      if (!allowMultiple && values.length > 1) {
+        values = [values[0]];
+      }
+      values = values.map((value) => normalizeFileValueForPreview(field, value));
       return values
         .filter((val) => typeof val === "string")
         .map((url) => ({
           url,
-          name: url.split("/").pop() || "dosya",
+          name: isDataUrl(url) ? (isPdfDataUrl(url) ? "dosya.pdf" : "gorsel") : url.split("/").pop() || "dosya",
           size: 0,
-          type: isImageLike({ url }) ? "image/*" : "",
+          type: isImageLike({ url }) ? "image/*" : isPdfDataUrl(url) ? "application/pdf" : "",
           lastModified: null,
           preview: url
         }));
@@ -1156,7 +1571,7 @@
         }
         return raw;
       }
-      if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
         return normalizeNumberInput(resolved);
       }
       if (field.type === "boolean") {
@@ -1180,13 +1595,34 @@
     function updateAiVisuals(fieldKey) {
       const ref = state.fieldRefs[fieldKey];
       if (!ref) return;
-      const aiValue = state.formDataAI[fieldKey];
+      const aiValue = aiData[fieldKey];
       const hasAi = !isEmptyValue(aiValue);
       const activeSource = getActiveSource(fieldKey);
+      const humanValue = humanData[fieldKey];
+      const hasHuman = !isEmptyValue(humanValue);
+      const hasConflict = hasAi && hasHuman && areValuesDifferent(humanValue, aiValue);
       ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
       ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
+      ref.aiBadge.classList.toggle("is-passive", activeSource !== "ai" && hasAi);
       ref.control.classList.toggle("ai-active", activeSource === "ai" && hasAi);
       ref.aiPill.style.display = activeSource === "ai" && hasAi ? "inline-flex" : "none";
+      if (ref.applyAiBtn) {
+        ref.applyAiBtn.style.display = !hasHuman && hasAi ? "inline-flex" : "none";
+      }
+      if (ref.revertAiBtn) {
+        ref.revertAiBtn.style.display = hasHuman && hasAi && activeSource !== "ai" ? "inline-flex" : "none";
+      }
+      if (ref.conflictChip) {
+        ref.conflictChip.style.display = hasConflict ? "inline-flex" : "none";
+      }
+      if (ref.conflictPopover) {
+        if (hasConflict) {
+          ref.conflictPopover.querySelector("[data-conflict-human]").textContent = formatValueForDisplay(humanValue);
+          ref.conflictPopover.querySelector("[data-conflict-ai]").textContent = formatValueForDisplay(aiValue);
+        } else {
+          ref.conflictPopover.classList.remove("open");
+        }
+      }
     }
 
     function updateFieldDisplayValue(fieldKey) {
@@ -1221,24 +1657,116 @@
         if (!field) return;
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
         if (kind === "ai") {
-          state.formDataAI[fieldKey] = normalized;
-          if (isEmptyValue(state.formDataHuman[fieldKey]) && !isEmptyValue(normalized)) {
-            state.activeSourceByField.set(fieldKey, "ai");
-          }
+          aiData[fieldKey] = normalized;
         } else {
-          state.formDataHuman[fieldKey] = normalized;
-          state.activeSourceByField.set(fieldKey, "human");
+          humanData[fieldKey] = normalized;
+          sourceByField[fieldKey] = "human";
         }
       });
       refreshAllFields();
     }
 
-    function exportFormJsonSafe() {
+    function applyScenario({ name, column, human, ai }) {
+      emit("debug:scenario", { name, column, human, ai });
+      applyColumnJson(column);
+      humanData = {};
+      aiData = {};
+      sourceByField = {};
+      if (human) {
+        loadJsonSafeToForm("human", human);
+      }
+      if (ai) {
+        loadJsonSafeToForm("ai", ai);
+      }
+      initializeSourceByFieldFromAi();
+      refreshAllFields();
+      if (ai && human) {
+        openExportModal("export");
+      } else if (ai) {
+        openExportModal("ai");
+      } else if (human) {
+        openExportModal("human");
+      } else {
+        openExportModal("column");
+      }
+    }
+
+    function initializeSourceByFieldFromAi() {
+      if (!state.config) return;
+      state.config.fields.forEach((field) => {
+        const aiValue = aiData[field.key];
+        sourceByField[field.key] = !isEmptyValue(aiValue) ? "ai" : "human";
+      });
+    }
+
+    function buildConfigFromColumnJson(columnData) {
+      if (!columnData) return null;
+      const columns = columnData.columns || [];
+      const fields = columns.map((column, index) => {
+        const fieldName = column.fieldName || column.label || column.key || `field_${index + 1}`;
+        return {
+          key: fieldName,
+          fieldName,
+          label: column.label || fieldName,
+          type: column.type || "text",
+          required: Boolean(column.required),
+          stageType: column.stageType || "optional",
+          allowMultiple: Boolean(column.allowMultiple),
+          options: column.options || [],
+          default: column.default,
+          ui: column.ui || {}
+        };
+      });
+      return {
+        fields,
+        currentDateTimeISO: columnData.currentDateTimeISO || defaultSchema.currentDateTimeISO,
+        locale: columnData.locale || "tr-TR",
+        timezone: columnData.timezone || "Europe/Istanbul",
+        mode: columnData.mode || "create",
+        requiredPolicy: defaultSchema.requiredPolicy,
+        showInlineHelp: defaultSchema.showInlineHelp,
+        autoFocusFirstInvalid: defaultSchema.autoFocusFirstInvalid
+      };
+    }
+
+    function applyColumnJson(columnData) {
+      columnJson = columnData;
+      if (!columnJson) {
+        columnWarning.style.display = "block";
+        formEl.innerHTML = "";
+        formContainer.style.display = "none";
+        return;
+      }
+      columnWarning.style.display = "none";
+      formContainer.style.display = "block";
+      state.config = buildConfigFromColumnJson(columnJson);
+      if (!state.config) return;
+      renderForm(state.config);
+    }
+
+    function normalizeExportValue(field, value) {
+      if (value === undefined) return "";
+      if (value === null) return "";
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
+        if (value === "") return "";
+        const numeric = Number(value);
+        return Number.isNaN(numeric) ? value : numeric;
+      }
+      if (field.type === "date") {
+        return value ? normalizeDateInput(String(value)) : "";
+      }
+      if (field.type === "time") {
+        return value ? normalizeTimeInput(String(value)) : "";
+      }
+      return value;
+    }
+
+    function buildExportJson() {
       const payload = {};
       (state.config?.fields || []).forEach((field) => {
         const value = getEffectiveValue(field.key);
-        const jsonKey = field.label || field.key;
-        payload[jsonKey] = value ?? "";
+        const jsonKey = field.fieldName || field.label || field.key;
+        payload[jsonKey] = normalizeExportValue(field, value);
       });
       return payload;
     }
@@ -1259,7 +1787,7 @@
       if (field.type === "url" && value) {
         if (!/^https?:\/\//.test(String(value))) return "URL http(s):// ile başlamalı.";
       }
-      if (["integer", "decimal", "currency", "percent"].includes(field.type) && value !== "") {
+      if (["integer", "decimal", "currency", "percent", "number"].includes(field.type) && value !== "") {
         const numeric = Number(value);
         if (Number.isNaN(numeric)) return "Geçerli bir sayı girin.";
         if (field.min !== undefined && numeric < field.min) return `Minimum ${field.min}`;
@@ -1275,8 +1803,14 @@
         }
       }
       if (["date", "datetime", "time"].includes(field.type) && value) {
-        if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(String(value)) && !/^\d{2}\.\d{2}\.\d{4}$/.test(String(value))) {
-          return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
+        if (field.type === "date") {
+          const normalized = normalizeDateInput(String(value));
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+            return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
+          }
+          if (!isValidDateString(normalized)) {
+            return "Geçerli bir tarih girin.";
+          }
         }
         if (field.type === "time" && !/^\d{2}:\d{2}$/.test(String(value))) return "Saat formatı HH:mm olmalı.";
         if (field.type === "datetime" && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(value))) return "Tarih ve saat gerekli.";
@@ -1294,7 +1828,7 @@
       }
       state.autoSaveTimer = setTimeout(() => {
         emit("onFormChange", {
-          values: exportFormJsonSafe(),
+          values: buildExportJson(),
           validMap: state.validMap,
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
@@ -1355,13 +1889,13 @@
         aiBadge.type = "button";
         aiBadge.className = "ai-badge";
         aiBadge.title = "AI önerisi var. Tıkla: İnsan moduna geç / AI moduna dön";
-        aiBadge.innerHTML = `<span>🤖</span><span>ChatGPT</span>`;
+        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT logo" /><span>ChatGPT</span>`;
         aiBadge.addEventListener("click", () => {
           const currentSource = getActiveSource(field.key);
-          const hasAi = !isEmptyValue(state.formDataAI[field.key]);
+          const hasAi = !isEmptyValue(aiData[field.key]);
           if (!hasAi) return;
           const nextSource = currentSource === "ai" ? "human" : "ai";
-          state.activeSourceByField.set(field.key, nextSource);
+          sourceByField[field.key] = nextSource;
           updateFieldDisplayValue(field.key);
           emit("onPredictedToggle", {
             key: field.key,
@@ -1370,6 +1904,66 @@
         });
         labelMeta.append(aiBadge);
 
+        const applyAiBtn = document.createElement("button");
+        applyAiBtn.type = "button";
+        applyAiBtn.className = "pill";
+        applyAiBtn.textContent = "AI'den doldur";
+        applyAiBtn.style.display = "none";
+        applyAiBtn.addEventListener("click", () => {
+          const aiValue = aiData[field.key];
+          if (isEmptyValue(aiValue)) return;
+          humanData[field.key] = aiValue;
+          sourceByField[field.key] = "human";
+          updateFieldDisplayValue(field.key);
+        });
+        labelMeta.append(applyAiBtn);
+
+        const revertAiBtn = document.createElement("button");
+        revertAiBtn.type = "button";
+        revertAiBtn.className = "pill";
+        revertAiBtn.textContent = "AI'ye dön";
+        revertAiBtn.style.display = "none";
+        revertAiBtn.addEventListener("click", () => {
+          if (isEmptyValue(aiData[field.key])) return;
+          sourceByField[field.key] = "ai";
+          updateFieldDisplayValue(field.key);
+        });
+        labelMeta.append(revertAiBtn);
+
+        const conflictWrap = document.createElement("div");
+        conflictWrap.style.position = "relative";
+        const conflictChip = document.createElement("button");
+        conflictChip.type = "button";
+        conflictChip.className = "conflict-chip";
+        conflictChip.textContent = "Çakışma";
+        conflictChip.style.display = "none";
+        const conflictPopover = document.createElement("div");
+        conflictPopover.className = "conflict-popover";
+        conflictPopover.innerHTML = `
+          <strong>AI vs Human</strong>
+          <div><small>Human</small><pre data-conflict-human></pre></div>
+          <div><small>AI</small><pre data-conflict-ai></pre></div>
+          <div class="conflict-actions">
+            <button type="button" class="secondary" data-apply-human>Human uygula</button>
+            <button type="button" class="secondary" data-apply-ai>AI uygula</button>
+          </div>
+        `;
+        conflictChip.addEventListener("click", () => {
+          conflictPopover.classList.toggle("open");
+        });
+        conflictPopover.querySelector("[data-apply-human]").addEventListener("click", () => {
+          sourceByField[field.key] = "human";
+          updateFieldDisplayValue(field.key);
+          conflictPopover.classList.remove("open");
+        });
+        conflictPopover.querySelector("[data-apply-ai]").addEventListener("click", () => {
+          sourceByField[field.key] = "ai";
+          updateFieldDisplayValue(field.key);
+          conflictPopover.classList.remove("open");
+        });
+        conflictWrap.append(conflictChip, conflictPopover);
+        labelMeta.append(conflictWrap);
+
         labelColumn.append(labelTop);
         if (labelMeta.childElementCount) {
           labelColumn.append(labelMeta);
@@ -1377,6 +1971,10 @@
 
         const control = document.createElement("div");
         control.className = "field-control";
+        const stageClass = normalizeStageType(field.stageType);
+        if (stageClass) {
+          control.classList.add(`stage-${stageClass}`);
+        }
         const aiPill = document.createElement("span");
         aiPill.className = "ai-pill";
         aiPill.textContent = "AI";
@@ -1389,20 +1987,20 @@
         let setValue = null;
 
         const initialValue = getInitialValue(field, config);
-        if (state.formDataHuman[field.key] === undefined) {
-          state.formDataHuman[field.key] = initialValue;
+        if (humanData[field.key] === undefined) {
+          humanData[field.key] = initialValue;
         }
-        if (!state.activeSourceByField.has(field.key)) {
-          state.activeSourceByField.set(field.key, "human");
+        if (!sourceByField[field.key]) {
+          sourceByField[field.key] = "human";
         }
-        if (isEmptyValue(state.formDataHuman[field.key]) && !isEmptyValue(state.formDataAI[field.key])) {
-          state.activeSourceByField.set(field.key, "ai");
+        if (isEmptyValue(humanData[field.key]) && !isEmptyValue(aiData[field.key])) {
+          sourceByField[field.key] = "ai";
         }
         const effectiveInitial = getEffectiveValue(field.key);
         state.values[field.key] = effectiveInitial;
         state.validMap[field.key] = !validateField(field, effectiveInitial);
 
-        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "time"].includes(field.type)) {
+        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number", "time"].includes(field.type)) {
           inputEl = document.createElement("input");
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
@@ -1412,11 +2010,11 @@
           if (field.type === "email") inputEl.type = "email";
           if (field.type === "url") inputEl.type = "url";
           if (field.type === "phone") inputEl.type = "tel";
-          if (["integer", "decimal", "currency", "percent"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
+          if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
           if (field.type === "time") inputEl.type = "time";
 
           setValue = (value) => {
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const formatted = field.type === "integer"
                 ? formatNumberDisplay(value, { maximumFractionDigits: 0 })
                 : formatNumberDisplay(value, { maximumFractionDigits: 2 });
@@ -1432,7 +2030,7 @@
           setValue(effectiveInitial);
 
           inputEl.addEventListener("input", (event) => {
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const raw = event.target.value;
               setFieldValue(field.key, normalizeNumberInput(raw), field, raw);
             } else {
@@ -1458,7 +2056,7 @@
                 event.target.value = value;
               }
             }
-            if (["integer", "decimal", "currency", "percent"].includes(field.type)) {
+            if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const normalized = normalizeNumberInput(value);
               const formatted = field.type === "integer" ? formatNumberDisplay(normalized, { maximumFractionDigits: 0 }) : formatNumberDisplay(normalized, { maximumFractionDigits: 2 });
               event.target.value = formatted || value;
@@ -1671,11 +2269,11 @@
           textInput.setAttribute("aria-describedby", `error-${field.key}`);
           textInput.placeholder = field.placeholder || "gg.aa.yyyy";
           textInput.inputMode = "numeric";
+          textInput.maxLength = 10;
 
           const nativeInput = document.createElement("input");
           nativeInput.type = "date";
-          nativeInput.className = "field-input";
-          nativeInput.style.display = "none";
+          nativeInput.className = "field-input date-overlay-input";
 
           const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
           if (initialDate) {
@@ -1698,7 +2296,7 @@
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
-            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized)) {
+            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized) && isValidDateString(normalized)) {
               const [y, m, d] = normalized.split("-");
               textInput.value = `${d}.${m}.${y}`;
               nativeInput.value = normalized;
@@ -1710,15 +2308,28 @@
           };
 
           textInput.addEventListener("input", (event) => {
-            const digits = event.target.value.replace(/\\D/g, "");
-            if (digits.length === 8) {
-              const formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
-              event.target.value = formatted;
+            const digits = event.target.value.replace(/\\D/g, "").slice(0, 8);
+            let formatted = digits;
+            if (digits.length >= 3) {
+              formatted = `${digits.slice(0, 2)}.${digits.slice(2)}`;
             }
-            setFieldValue(field.key, event.target.value, field);
+            if (digits.length >= 5) {
+              formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+            }
+            event.target.value = formatted;
+            setFieldValue(field.key, formatted, field);
           });
           textInput.addEventListener("blur", () => syncDate(textInput.value));
           nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
+          textInput.addEventListener("focus", () => {
+            if (field.ui?.autoOpenCalendar) {
+              if (nativeInput.showPicker) {
+                nativeInput.showPicker();
+              } else {
+                nativeInput.focus();
+              }
+            }
+          });
 
           const actions = document.createElement("div");
           actions.className = "field-actions";
@@ -1774,7 +2385,10 @@
             actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
           }
 
-          control.append(textInput, nativeInput, actions);
+          const dateWrapper = document.createElement("div");
+          dateWrapper.className = "date-wrapper";
+          dateWrapper.append(textInput, nativeInput);
+          control.append(dateWrapper, actions);
         } else if (field.type === "datetime") {
           const dateInput = document.createElement("input");
           const timeInput = document.createElement("input");
@@ -1920,6 +2534,8 @@
           drop.className = "file-drop";
           drop.textContent = "Dosya sürükleyin veya seçin";
 
+          const allowMultiple = field.type === "multifile" || field.allowMultiple === true;
+
           const fileInput = document.createElement("input");
           fileInput.type = "file";
           fileInput.className = "field-input";
@@ -1927,8 +2543,7 @@
           fileInput.setAttribute("aria-describedby", `error-${field.key}`);
           const accept = field.ui?.accept || "";
           if (accept) fileInput.accept = accept;
-          if (field.type !== "file" && field.type !== "image") fileInput.multiple = true;
-          if (field.type === "image" && field.ui?.allowMultiple) fileInput.multiple = true;
+          fileInput.multiple = allowMultiple;
 
           const list = document.createElement("div");
           list.className = "file-list";
@@ -1940,7 +2555,7 @@
             list.className = isImageGrid ? "file-grid" : "file-list";
 
             files.forEach((file, idx) => {
-              const isImage = isImageLike(file);
+              const isImage = field.type === "image" || isImageLike(file);
               const row = document.createElement("div");
               row.className = isImageGrid ? "file-card" : "file-item";
               const meta = document.createElement("div");
@@ -1948,17 +2563,23 @@
               meta.innerHTML = `<strong>${file.name}</strong><span>${Math.round(file.size / 1024)} KB</span>`;
 
               if (isImage) {
+                const thumbWrap = document.createElement("div");
+                thumbWrap.className = "file-thumb-wrap";
                 const thumb = document.createElement("img");
                 thumb.className = isImageGrid ? "file-thumb large" : "file-thumb";
                 thumb.src = file.preview || file.url || "";
                 thumb.alt = file.name || "görsel";
-                thumb.addEventListener("click", () => openLightbox(file.preview || file.url || ""));
+                const overlay = document.createElement("div");
+                overlay.className = "file-thumb-overlay";
+                overlay.textContent = "🔍";
+                thumbWrap.append(thumb, overlay);
+                thumbWrap.addEventListener("click", () => openLightbox(file.preview || file.url || ""));
                 if (isImageGrid) {
-                  row.append(thumb);
+                  row.append(thumbWrap);
                 } else {
                   const left = document.createElement("div");
                   left.className = "inline-row";
-                  left.append(thumb, meta);
+                  left.append(thumbWrap, meta);
                   row.append(left);
                 }
               } else {
@@ -1968,6 +2589,14 @@
                 icon.className = "file-icon";
                 icon.textContent = "📄";
                 left.append(icon, meta);
+                if (file.url && (isPdfDataUrl(file.url) || file.url.startsWith("http"))) {
+                  const previewBtn = document.createElement("button");
+                  previewBtn.type = "button";
+                  previewBtn.className = "preview-btn";
+                  previewBtn.textContent = "Önizle";
+                  previewBtn.addEventListener("click", () => openFilePreview(file.url));
+                  left.append(previewBtn);
+                }
                 row.append(left);
               }
 
@@ -1978,6 +2607,18 @@
               removeBtn.addEventListener("click", () => {
                 state.fileBuffers[field.key] = files.filter((_, fileIdx) => fileIdx !== idx);
                 renderFiles();
+                if (file.url) {
+                  const currentValue = getEffectiveValue(field.key);
+                  const values = Array.isArray(currentValue) ? currentValue : currentValue ? [currentValue] : [];
+                  const filtered = values.filter((val) => val !== file.url);
+                  if (allowMultiple) {
+                    humanData[field.key] = filtered;
+                  } else {
+                    humanData[field.key] = filtered[0] || "";
+                  }
+                } else {
+                  humanData[field.key] = "";
+                }
                 const filePayload = (state.fileBuffers[field.key] || []).map((f) => ({
                   name: f.name,
                   size: f.size,
@@ -1985,8 +2626,7 @@
                   lastModified: f.lastModified
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
-                state.formDataHuman[field.key] = "";
-                state.activeSourceByField.set(field.key, "human");
+                sourceByField[field.key] = "human";
                 updateEffectiveState(field.key, field);
                 updateAiVisuals(field.key);
                 emit("onFileSelected", {
@@ -2008,7 +2648,7 @@
 
           const handleFiles = (fileList) => {
             const files = Array.from(fileList);
-            const maxFiles = field.ui?.maxFiles || (field.type === "multifile" ? 10 : 1);
+            const maxFiles = field.ui?.maxFiles || (allowMultiple ? 10 : 1);
             const maxSizeMB = field.ui?.maxSizeMB || 25;
             const errors = [];
             const accepted = [];
@@ -2023,13 +2663,14 @@
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
                 return;
               }
+              const shouldPreview = field.type === "image" || file.type.startsWith("image/");
               accepted.push({
                 raw: file,
                 name: file.name,
                 size: file.size,
                 type: file.type,
                 lastModified: file.lastModified,
-                preview: field.ui?.showPreview && file.type.startsWith("image/") ? URL.createObjectURL(file) : ""
+                preview: shouldPreview ? URL.createObjectURL(file) : ""
               });
             });
 
@@ -2048,10 +2689,14 @@
               lastModified: file.lastModified
             }));
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
-            state.formDataHuman[field.key] = "";
-            state.activeSourceByField.set(field.key, "human");
+            humanData[field.key] = "";
+            sourceByField[field.key] = "human";
             updateEffectiveState(field.key, field);
             updateAiVisuals(field.key);
+            console.log("Pending file selected", {
+              field: field.key,
+              files: filePayload
+            });
             emit("onFileSelected", {
               key: field.key,
               files: filePayload,
@@ -2078,7 +2723,7 @@
 
           control.append(drop, fileInput, list);
           setValue = (value) => {
-            const initialFiles = parseInitialFiles(value);
+            const initialFiles = parseInitialFiles(value, allowMultiple, field);
             if (initialFiles.length) {
               state.fileBuffers[field.key] = initialFiles;
             } else if (!state.fileStaging[field.key]?.length) {
@@ -2122,7 +2767,11 @@
           inputEl,
           setValue,
           aiBadge,
-          aiPill
+          aiPill,
+          applyAiBtn,
+          revertAiBtn,
+          conflictChip,
+          conflictPopover
         };
         updateAiVisuals(field.key);
 
@@ -2152,10 +2801,46 @@
       lightboxEl.setAttribute("aria-hidden", "false");
     }
 
+    function openFilePreview(url) {
+      if (!url) return;
+      window.open(url, "_blank", "noopener");
+    }
+
     function closeLightbox() {
       lightboxEl.classList.remove("open");
       lightboxEl.setAttribute("aria-hidden", "true");
       lightboxImage.src = "";
+    }
+
+    function openExportModal(kind = "export") {
+      exportModal.classList.add("open");
+      exportModal.setAttribute("aria-hidden", "false");
+      setExportTab(kind);
+    }
+
+    function closeExportModal() {
+      exportModal.classList.remove("open");
+      exportModal.setAttribute("aria-hidden", "true");
+      exportContent.value = "";
+    }
+
+    function setExportTab(kind) {
+      exportTabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.exportTab === kind);
+      });
+      if (kind === "human") {
+        exportContent.value = JSON.stringify(humanData, null, 2);
+        return;
+      }
+      if (kind === "ai") {
+        exportContent.value = JSON.stringify(aiData, null, 2);
+        return;
+      }
+      if (kind === "column") {
+        exportContent.value = JSON.stringify(columnJson || {}, null, 2);
+        return;
+      }
+      exportContent.value = JSON.stringify(buildExportJson(), null, 2);
     }
 
     lightboxEl.addEventListener("click", (event) => {
@@ -2165,6 +2850,17 @@
     });
 
     lightboxEl.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+    closeExportBtn.addEventListener("click", closeExportModal);
+    exportModal.addEventListener("click", (event) => {
+      if (event.target === exportModal) {
+        closeExportModal();
+      }
+    });
+    exportTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        setExportTab(tab.dataset.exportTab);
+      });
+    });
 
     function updateError(control, field) {
       const errorText = formEl.querySelector(`#error-${field.key}`);
@@ -2227,25 +2923,31 @@
     function applyAiValuesToHuman({ overwrite }) {
       if (!state.config) return;
       state.config.fields.forEach((field) => {
-        const aiValue = state.formDataAI[field.key];
+        const aiValue = aiData[field.key];
         if (isEmptyValue(aiValue)) return;
-        if (!overwrite && !isEmptyValue(state.formDataHuman[field.key])) return;
-        state.formDataHuman[field.key] = aiValue;
-        state.activeSourceByField.set(field.key, "human");
+        if (!overwrite && !isEmptyValue(humanData[field.key])) return;
+        humanData[field.key] = aiValue;
+        sourceByField[field.key] = "human";
       });
       refreshAllFields();
     }
 
     function resetAllStores() {
-      state.formDataHuman = {};
-      state.formDataAI = {};
-      state.activeSourceByField = new Map();
+      humanData = {};
+      aiData = {};
+      sourceByField = {};
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
       state.validMap = {};
       state.errors = {};
-      renderForm(state.config);
+      if (columnJson) {
+        applyColumnJson(columnJson);
+      } else {
+        columnWarning.style.display = "block";
+        formEl.innerHTML = "";
+        formContainer.style.display = "none";
+      }
     }
 
     formEl.addEventListener("submit", (event) => {
@@ -2260,7 +2962,7 @@
         summaryBox.style.display = "none";
       }
       emit("onSubmitAttempt", {
-        values: exportFormJsonSafe(),
+        values: buildExportJson(),
         isFormValid: invalidCount === 0,
         firstInvalidKey
       });
@@ -2291,16 +2993,37 @@
     });
 
     loadHumanJsonBtn.addEventListener("click", () => {
-      loadJsonSafeToForm("human", sampleHumanJson);
+      const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
+      if (!payload) {
+        humanData = {};
+        refreshAllFields();
+        return;
+      }
+      emit("debug:human-json", payload);
+      loadJsonSafeToForm("human", payload);
+      openExportModal("human");
     });
 
     loadPredictedJsonBtn.addEventListener("click", () => {
-      loadJsonSafeToForm("ai", samplePredictedJson);
+      const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
+      if (!payload) {
+        aiData = {};
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        return;
+      }
+      emit("debug:predicted-json", payload);
+      loadJsonSafeToForm("ai", payload);
+      initializeSourceByFieldFromAi();
+      refreshAllFields();
+      openExportModal("ai");
     });
 
     loadColumnJsonBtn.addEventListener("click", () => {
-      state.columnData = sampleColumnData;
-      setConsole("Column data yüklendi", JSON.stringify(state.columnData, null, 2));
+      columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
+      applyColumnJson(columnJson);
+      emit("debug:column-json", columnJson);
+      openExportModal("column");
     });
 
     applyAiToEmptyBtn.addEventListener("click", () => {
@@ -2316,6 +3039,67 @@
     resetStoresBtn.addEventListener("click", () => {
       resetAllStores();
     });
+
+    exportJsonBtn.addEventListener("click", () => {
+      openExportModal("export");
+    });
+
+    if (scenarioColumnOnlyBtn) {
+      scenarioColumnOnlyBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-only",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnHumanBtn) {
+      scenarioColumnHumanBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-human",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnAiBtn) {
+      scenarioColumnAiBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-ai",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnAiHumanBtn) {
+      scenarioColumnAiHumanBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-ai-human",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON,
+          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+        });
+      });
+    }
+
+    if (scenarioConflictBtn) {
+      scenarioConflictBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "conflict",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: {
+            "Kusur Oranı": "40",
+            "Hasar Onarım Tutarı": "120000"
+          },
+          ai: {
+            "Kusur Oranı": "80",
+            "Hasar Onarım Tutarı": "145000"
+          }
+        });
+      });
+    }
 
     document.getElementById("loadSample").addEventListener("click", () => {
       schemaInput.value = JSON.stringify(defaultSchema, null, 2);
@@ -2344,6 +3128,25 @@
         showInlineHelp: showInlineHelpInput.checked,
         autoFocusFirstInvalid: autoFocusInvalidInput.checked
       };
+      columnJson = {
+        columns: (state.config.fields || []).map((field) => ({
+          fieldName: field.label || field.key,
+          label: field.label,
+          type: field.type,
+          required: field.required,
+          stageType: field.stageType || "optional",
+          options: field.options || [],
+          default: field.default,
+          allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
+          ui: field.ui || {}
+        })),
+        currentDateTimeISO: state.config.currentDateTimeISO,
+        locale: state.config.locale,
+        timezone: state.config.timezone,
+        mode: state.config.mode
+      };
+      columnWarning.style.display = "none";
+      formContainer.style.display = "block";
       renderForm(state.config);
     });
 
@@ -2353,8 +3156,18 @@
 
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-    state.config = { ...defaultSchema };
-    renderForm(state.config);
+    debugToolbar.style.display = DEBUG_MODE ? "grid" : "none";
+    if (!DEBUG_MODE) {
+      columnWarning.style.display = "none";
+    } else {
+      columnWarning.style.display = columnJson ? "none" : "block";
+    }
+    if (columnJson) {
+      applyColumnJson(columnJson);
+    } else {
+      formEl.innerHTML = "";
+      formContainer.style.display = "none";
+    }
   </script>
 </body>
 </html>
