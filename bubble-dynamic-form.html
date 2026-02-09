@@ -990,7 +990,7 @@
         },
         {
           fieldName: "Aracın Tipi",
-          type: "single_select",
+          type: "dropdown",
           stageType: "mandatory",
           options: [
             { value: "Hususi", label: "Hususi" },
@@ -1000,8 +1000,9 @@
         },
         {
           fieldName: "Ek Özellikler",
-          type: "multi_select",
+          type: "dropdown",
           stageType: "optional",
+          allowMultiple: true,
           options: [
             { value: "camTavan", label: "Cam tavan" },
             { value: "navigasyon", label: "Navigasyon" },
@@ -1254,7 +1255,7 @@
         {
           key: "vehicleType",
           label: "Araç Tipi",
-          type: "single_select",
+          type: "dropdown",
           options: [
             { value: "hususi", label: "Hususi", group: "Binek" },
             { value: "ticari", label: "Ticari", group: "Ticari" },
@@ -1265,7 +1266,8 @@
         {
           key: "extras",
           label: "Ek Özellikler",
-          type: "multi_select",
+          type: "dropdown",
+          allowMultiple: true,
           options: [
             { value: "camTavan", label: "Cam tavan" },
             { value: "navigasyon", label: "Navigasyon" },
@@ -1659,8 +1661,7 @@
       currency: { icon: "🔢", label: "Currency" },
       percent: { icon: "🔢", label: "Percent" },
       boolean: { icon: "✅", label: "Boolean" },
-      single_select: { icon: "⬇️", label: "Single select" },
-      multi_select: { icon: "🧩", label: "Multi select" },
+      dropdown: { icon: "⬇️", label: "Dropdown" },
       date: { icon: "📅", label: "Date" },
       time: { icon: "⏱️", label: "Time" },
       datetime: { icon: "🗓️⏱️", label: "Datetime" },
@@ -1669,8 +1670,21 @@
       multifile: { icon: "🗂️", label: "Multi file" }
     };
 
-    function getTypeMeta(type) {
-      return typeMetaMap[type] || { icon: "📝", label: type || "text" };
+    const displayTypeMetaMap = {
+      "text (long)": { icon: "📝", label: "Text (long)" },
+      "multiline text": { icon: "📝", label: "Multiline text" },
+      "e-mail": { icon: "✉️", label: "E-mail" },
+      "image&pdf": { icon: "📎", label: "Image&Pdf" },
+      reference: { icon: "🔗", label: "Reference" },
+      embed: { icon: "🔗", label: "Embed" },
+      user: { icon: "👤", label: "User" },
+      "sys.cf": { icon: "⚙️", label: "Sys.cf" },
+      "action.cf": { icon: "⚙️", label: "Action.cf" }
+    };
+
+    function getTypeMeta(field) {
+      const displayKey = String(field.displayType || "").toLowerCase();
+      return displayTypeMetaMap[displayKey] || typeMetaMap[field.type] || { icon: "📝", label: field.type || "text" };
     }
 
     function normalizeStageType(stageType) {
@@ -1806,7 +1820,7 @@
         }
         return Boolean(resolved);
       }
-      if (field.type === "multi_select") {
+      if (field.type === "dropdown" && field.allowMultiple) {
         if (Array.isArray(resolved)) return resolved;
         if (typeof resolved === "string") return resolved.split(",").map((val) => val.trim()).filter(Boolean);
       }
@@ -1936,19 +1950,69 @@
       });
     }
 
+    function normalizeAllowMultiple(value) {
+      if (typeof value === "string") {
+        return ["yes", "true", "1"].includes(value.trim().toLowerCase());
+      }
+      return Boolean(value);
+    }
+
+    function normalizeColumnType(rawType, allowMultipleValue) {
+      const raw = String(rawType || "").trim();
+      const normalizedRaw = raw.toLowerCase();
+      let allowMultiple = normalizeAllowMultiple(allowMultipleValue);
+      if (["single_select", "multi_select", "dropdown"].includes(normalizedRaw)) {
+        if (normalizedRaw === "multi_select") {
+          allowMultiple = true;
+        }
+        return { type: "dropdown", allowMultiple, displayType: raw || "dropdown" };
+      }
+      if (normalizedRaw === "checkbox") {
+        return { type: "boolean", allowMultiple, displayType: raw || "checkbox" };
+      }
+      if (normalizedRaw === "text (long)" || normalizedRaw === "multiline text") {
+        return { type: "textarea", allowMultiple, displayType: raw || "text (long)" };
+      }
+      if (normalizedRaw === "e-mail") {
+        return { type: "email", allowMultiple, displayType: raw || "e-mail" };
+      }
+      if (normalizedRaw === "image&pdf") {
+        return { type: allowMultiple ? "multifile" : "file", allowMultiple, displayType: raw || "image&pdf" };
+      }
+      if (["reference", "embed", "user", "sys.cf", "action.cf"].includes(normalizedRaw)) {
+        return { type: "text", allowMultiple, displayType: raw || normalizedRaw };
+      }
+      if (normalizedRaw === "phone") {
+        return { type: "phone", allowMultiple, displayType: raw || "phone" };
+      }
+      if (normalizedRaw === "number") {
+        return { type: "number", allowMultiple, displayType: raw || "number" };
+      }
+      if (normalizedRaw === "date") {
+        return { type: "date", allowMultiple, displayType: raw || "date" };
+      }
+      if (normalizedRaw === "text") {
+        return { type: "text", allowMultiple, displayType: raw || "text" };
+      }
+      return { type: raw || "text", allowMultiple, displayType: raw || "text" };
+    }
+
     function buildConfigFromColumnJson(columnData) {
       if (!columnData) return null;
       const columns = columnData.columns || [];
       const fields = columns.map((column, index) => {
         const fieldName = column.fieldName || column.label || column.key || `field_${index + 1}`;
+        const normalized = normalizeColumnType(column.type, column.allowMultiple);
+        const stageType = column.stageType || "optional";
         return {
           key: fieldName,
           fieldName,
           label: column.label || fieldName,
-          type: column.type || "text",
-          required: Boolean(column.required),
-          stageType: column.stageType || "optional",
-          allowMultiple: Boolean(column.allowMultiple),
+          type: normalized.type,
+          displayType: normalized.displayType,
+          required: normalizeStageType(stageType) === "mandatory" || Boolean(column.required),
+          stageType,
+          allowMultiple: normalized.allowMultiple,
           options: column.options || [],
           default: column.default,
           ui: column.ui || {}
@@ -2148,7 +2212,7 @@
         const labelTop = document.createElement("div");
         labelTop.className = "label-top";
 
-        const typeMeta = getTypeMeta(field.type);
+        const typeMeta = getTypeMeta(field);
         const typeIcon = document.createElement("span");
         typeIcon.className = "type-icon";
         typeIcon.textContent = typeMeta.icon;
@@ -2408,7 +2472,7 @@
             setFieldValue(field.key, inputEl.checked, field);
             updateError(control, field);
           });
-        } else if (field.type === "single_select") {
+        } else if (field.type === "dropdown" && !field.allowMultiple) {
           const select = document.createElement("select");
           select.className = "field-input";
           select.id = `field-${field.key}`;
@@ -2467,7 +2531,7 @@
           });
 
           control.append(select);
-        } else if (field.type === "multi_select") {
+        } else if (field.type === "dropdown" && field.allowMultiple) {
           const optionsWrapper = document.createElement("div");
           optionsWrapper.className = "grid";
 
@@ -3437,7 +3501,7 @@
           fieldName: field.label || field.key,
           label: field.label,
           type: field.type,
-          required: field.required,
+          required: field.required || normalizeStageType(field.stageType) === "mandatory",
           stageType: field.stageType || "optional",
           options: field.options || [],
           default: field.default,
