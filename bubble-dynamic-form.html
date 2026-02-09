@@ -1286,14 +1286,13 @@
     }
 
     function buildSubmitOutputsPayload() {
-      const exportPayload = buildExportJson();
       return {
         output1: taskStartTimestamp || "",
         output2: new Date().toISOString(),
         output3: getActivityType(),
-        outputlist1: buildKeyValueList(exportPayload),
-        outputlist2: buildAddedCustomFields(exportPayload),
-        outputlist3: buildDeletedFields(exportPayload)
+        outputlist1: buildKeyValueListFromSources(),
+        outputlist2: buildAddedCustomFields(),
+        outputlist3: buildDeletedFields()
       };
     }
 
@@ -1883,29 +1882,48 @@
       return payload;
     }
 
-    function buildKeyValueList(payload) {
-      return Object.entries(payload).map(([key, value]) => {
-        const safeValue = JSON.stringify(value ?? "");
-        return `${key}: ${safeValue}`;
+    function buildKeyValueListFromSources() {
+      const entries = [];
+      (state.config?.fields || []).forEach((field) => {
+        const humanValue = humanData[field.key];
+        const aiValue = aiData[field.key];
+        if (isEmptyValue(humanValue) && isEmptyValue(aiValue)) {
+          return;
+        }
+        const value = !isEmptyValue(humanValue) ? humanValue : aiValue;
+        const jsonKey = field.fieldName || field.label || field.key;
+        const normalized = normalizeExportValue(field, value);
+        entries.push(`\"${jsonKey}\": ${JSON.stringify(normalized ?? \"\")}`);
       });
+      return entries;
     }
 
-    function buildAddedCustomFields(payload) {
+    function buildAddedCustomFields() {
+      const entries = [];
       const base = initialSnapshot || {};
-      return Object.keys(payload).filter((key) => {
-        const currentValue = payload[key];
-        const initialValue = base[key];
-        return !isEmptyValue(currentValue) && isEmptyValue(initialValue);
+      (state.config?.fields || []).forEach((field) => {
+        const jsonKey = field.fieldName || field.label || field.key;
+        const initialValue = base[jsonKey];
+        const currentValue = getMergedValidationValue(field);
+        if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
+          entries.push(jsonKey);
+        }
       });
+      return entries;
     }
 
-    function buildDeletedFields(payload) {
+    function buildDeletedFields() {
+      const entries = [];
       const base = initialSnapshot || {};
-      return Object.keys(base).filter((key) => {
-        const initialValue = base[key];
-        const currentValue = payload[key];
-        return !isEmptyValue(initialValue) && isEmptyValue(currentValue);
+      (state.config?.fields || []).forEach((field) => {
+        const jsonKey = field.fieldName || field.label || field.key;
+        const initialValue = base[jsonKey];
+        const currentValue = getMergedValidationValue(field);
+        if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
+          entries.push(jsonKey);
+        }
       });
+      return entries;
     }
 
     function getActivityType() {
