@@ -1265,7 +1265,10 @@
     }
 
     function renderSubmitOutputs(payload) {
-      if (!submitOutputsEl) return;
+      if (!submitOutputsEl) {
+        console.warn("submitOutputs panel not found");
+        return;
+      }
       const safePayload = payload || {};
       const listToText = (list) => (Array.isArray(list) ? list.join("\n") : String(list ?? ""));
       submitOutputsEl.textContent = [
@@ -1279,6 +1282,7 @@
         "outputlist3:",
         listToText(safePayload.outputlist3)
       ].join("\n");
+      console.info("submitOutputs rendered", safePayload);
     }
 
     function emit(eventName, detail) {
@@ -3067,6 +3071,7 @@
       const output2 = new Date().toISOString();
       const output3 = getActivityType();
       const submitOutputsPayload = { output1, output2, output3, outputlist1, outputlist2, outputlist3 };
+      console.info("submitOutputs payload", submitOutputsPayload);
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
       renderSubmitOutputs(submitOutputsPayload);
       emit("onSubmitAttempt", {
