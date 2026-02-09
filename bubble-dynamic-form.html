@@ -3544,6 +3544,9 @@
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
     syncManualJsonInputs();
+    if (IS_VERSION_MODE && MANUAL_COLUMN_JSON) {
+      columnJson = MANUAL_COLUMN_JSON;
+    }
     applyVersionVisibility();
     if (columnJson) {
       applyColumnJson(columnJson);
