@@ -259,12 +259,13 @@
 
     .field-control.ai-active .field-input {
       background: rgba(37, 99, 235, 0.04);
+      padding-right: 56px;
     }
 
     .ai-pill {
       position: absolute;
       top: 6px;
-      right: 8px;
+      right: 36px;
       font-size: 0.65rem;
       font-weight: 700;
       padding: 2px 8px;
@@ -817,6 +818,11 @@
     </section>
 
     <section class="card">
+      <h2>Submit Outputs</h2>
+      <div id="submitOutputs" class="console"></div>
+    </section>
+
+    <section class="card">
       <h2>Dynamic Form</h2>
       <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
@@ -1048,6 +1054,7 @@
     const summaryBox = document.getElementById("summaryBox");
     const formContainer = document.getElementById("formContainer");
     const consoleEl = document.getElementById("eventConsole");
+    const submitOutputsEl = document.getElementById("submitOutputs");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
     const exportModal = document.getElementById("exportModal");
@@ -2201,15 +2208,12 @@
             updateError(control, field);
           });
         } else if (field.type === "single_select") {
-          const searchInput = document.createElement("input");
-          searchInput.className = "field-input";
-          searchInput.placeholder = "Ara...";
           const select = document.createElement("select");
           select.className = "field-input";
           select.id = `field-${field.key}`;
           select.setAttribute("aria-describedby", `error-${field.key}`);
 
-          const buildOptions = (filter = "") => {
+          const buildOptions = () => {
             select.innerHTML = "";
             const emptyOption = document.createElement("option");
             emptyOption.value = "";
@@ -2217,7 +2221,6 @@
             select.append(emptyOption);
             const groups = {};
             (field.options || []).forEach((opt) => {
-              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
               if (opt.group) {
                 if (!groups[opt.group]) groups[opt.group] = [];
                 groups[opt.group].push(opt);
@@ -2257,23 +2260,13 @@
             select.value = value ?? "";
           };
 
-          searchInput.addEventListener("input", (event) => {
-            buildOptions(event.target.value);
-          });
           select.addEventListener("change", () => {
             setFieldValue(field.key, select.value, field);
             updateError(control, field);
           });
 
-          extraControls = document.createElement("div");
-          extraControls.className = "field-actions";
-          extraControls.append(searchInput);
           control.append(select);
         } else if (field.type === "multi_select") {
-          const searchInput = document.createElement("input");
-          searchInput.className = "field-input";
-          searchInput.placeholder = "Ara...";
-
           const optionsWrapper = document.createElement("div");
           optionsWrapper.className = "grid";
 
@@ -2282,10 +2275,9 @@
 
           let selectedValues = Array.isArray(effectiveInitial) ? effectiveInitial : [];
 
-          const renderOptions = (filter = "") => {
+          const renderOptions = () => {
             optionsWrapper.innerHTML = "";
             (field.options || []).forEach((opt) => {
-              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
               const optionRow = document.createElement("label");
               optionRow.className = "inline-row";
               const checkbox = document.createElement("input");
@@ -2322,7 +2314,7 @@
               removeBtn.addEventListener("click", () => {
                 selectedValues = selectedValues.filter((v) => v !== val);
                 renderChips();
-                renderOptions(searchInput.value);
+                renderOptions();
                 setFieldValue(field.key, selectedValues, field);
               });
               chip.append(removeBtn);
@@ -2330,18 +2322,14 @@
             });
           };
 
-          searchInput.addEventListener("input", (event) => {
-            renderOptions(event.target.value);
-          });
-
           renderOptions();
           renderChips();
           setValue = (value) => {
             selectedValues = Array.isArray(value) ? value : [];
-            renderOptions(searchInput.value);
+            renderOptions();
             renderChips();
           };
-          control.append(searchInput, chips, optionsWrapper);
+          control.append(chips, optionsWrapper);
           updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
           const dateInput = document.createElement("input");
@@ -3037,7 +3025,11 @@
       const output1 = taskStartTimestamp || "";
       const output2 = new Date().toISOString();
       const output3 = getActivityType();
-      setConsole("debug:submit-outputs", JSON.stringify({ output1, output2, output3, outputlist1, outputlist2, outputlist3 }, null, 2));
+      const submitOutputsPayload = { output1, output2, output3, outputlist1, outputlist2, outputlist3 };
+      setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
+      if (submitOutputsEl) {
+        submitOutputsEl.textContent = JSON.stringify(submitOutputsPayload, null, 2);
+      }
       emit("onSubmitAttempt", {
         values: exportPayload,
         isFormValid: invalidCount === 0,
