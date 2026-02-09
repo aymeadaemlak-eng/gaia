@@ -1704,6 +1704,9 @@
         updateFieldDisplayValue(fieldKey);
       });
       updateToolbarStatus();
+      if (state.config) {
+        updateSubmitState(state.config);
+      }
     }
 
     function loadJsonSafeToForm(kind, jsonObj) {
@@ -1729,6 +1732,9 @@
       refreshAllFields();
       if (kind === "human") {
         captureInitialSnapshot(true);
+      }
+      if (state.config) {
+        updateSubmitState(state.config);
       }
     }
 
