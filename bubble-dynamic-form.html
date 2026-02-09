@@ -168,6 +168,13 @@
       white-space: nowrap;
     }
 
+    .ai-badge img {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      object-fit: contain;
+    }
+
     .ai-badge.is-active {
       border-color: rgba(34, 197, 94, 0.4);
       background: rgba(34, 197, 94, 0.12);
@@ -686,7 +693,8 @@
       <div class="export-tabs">
         <button type="button" class="secondary active" data-export-tab="export">Aktif JSON</button>
         <button type="button" class="secondary" data-export-tab="human">Human JSON</button>
-        <button type="button" class="secondary" data-export-tab="ai">AI JSON</button>
+        <button type="button" class="secondary" data-export-tab="ai">Predicted JSON</button>
+        <button type="button" class="secondary" data-export-tab="column">Column JSON</button>
       </div>
       <textarea id="exportContent" readonly></textarea>
     </div>
@@ -828,6 +836,14 @@
       "predictedAction": "İhtar Dilekçesi Hazırla",
       "uniqueid": "1770577890579x349136294770973500",
       "Stage": "DK Hesabı",
+      "Hasar Fotoğrafları": [
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=800&q=60",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60"
+      ],
+      "Ek Dosyalar": [
+        "https://example.com/docs/hasar-foto-1.pdf",
+        "https://example.com/docs/hasar-foto-2.pdf"
+      ],
       "Esas No": ""
     };
 
@@ -1618,7 +1634,7 @@
         aiBadge.type = "button";
         aiBadge.className = "ai-badge";
         aiBadge.title = "AI önerisi var. Tıkla: İnsan moduna geç / AI moduna dön";
-        aiBadge.innerHTML = `<span>🤖</span><span>ChatGPT</span>`;
+        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT logo" /><span>ChatGPT</span>`;
         aiBadge.addEventListener("click", () => {
           const currentSource = getActiveSource(field.key);
           const hasAi = !isEmptyValue(aiData[field.key]);
@@ -2204,7 +2220,7 @@
             list.className = isImageGrid ? "file-grid" : "file-list";
 
             files.forEach((file, idx) => {
-              const isImage = isImageLike(file);
+              const isImage = field.type === "image" || isImageLike(file);
               const row = document.createElement("div");
               row.className = isImageGrid ? "file-card" : "file-item";
               const meta = document.createElement("div");
@@ -2459,6 +2475,10 @@
       }
       if (kind === "ai") {
         exportContent.value = JSON.stringify(aiData, null, 2);
+        return;
+      }
+      if (kind === "column") {
+        exportContent.value = JSON.stringify(columnJson || {}, null, 2);
         return;
       }
       exportContent.value = JSON.stringify(buildExportJson(), null, 2);
