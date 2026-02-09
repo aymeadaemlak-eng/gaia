@@ -742,6 +742,13 @@
       font-size: 0.78rem;
     }
 
+    .input-error {
+      color: var(--danger);
+      font-size: 0.75rem;
+      font-weight: 600;
+      min-height: 16px;
+    }
+
     @media (max-width: 720px) {
       .field-row {
         grid-template-columns: 1fr;
@@ -752,6 +759,34 @@
 </head>
 <body>
   <main class="page">
+    <section class="card" id="jsonInputsSection">
+      <h2>Bubble JSON Girişleri</h2>
+      <p class="helper-text">
+        Bubble’dan gelen JSON verilerini buraya yapıştırın. Hatalı JSON girildiğinde ilgili alan kırmızı uyarı verir.
+      </p>
+      <div class="grid three">
+        <div>
+          <label for="columnJsonInput">Column JSON</label>
+          <textarea id="columnJsonInput" class="field-input" rows="10" placeholder="{}"></textarea>
+          <div class="input-error" id="columnJsonError"></div>
+        </div>
+        <div>
+          <label for="humanJsonInput">Bubble Data JSON</label>
+          <textarea id="humanJsonInput" class="field-input" rows="10" placeholder="{}"></textarea>
+          <div class="input-error" id="humanJsonError"></div>
+        </div>
+        <div>
+          <label for="predictedJsonInput">Predicted JSON</label>
+          <textarea id="predictedJsonInput" class="field-input" rows="10" placeholder="{}"></textarea>
+          <div class="input-error" id="predictedJsonError"></div>
+        </div>
+      </div>
+      <div class="inline-row" style="margin-top: 12px;">
+        <input id="versionInput" type="checkbox" />
+        <label for="versionInput">version (true ise sadece form görünsün)</label>
+      </div>
+    </section>
+
     <section class="card">
       <h1>Bubble Dynamic Form Element</h1>
       <p class="helper-text">
@@ -812,12 +847,12 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="eventConsoleSection">
       <h2>Event Console</h2>
       <div id="eventConsole" class="console"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="submitOutputsSection">
       <h2>Submit Outputs</h2>
       <div id="submitOutputs" class="console"></div>
     </section>
@@ -880,7 +915,7 @@
   </div>
 
   <script>
-    const DEBUG_MODE = true;
+    let DEBUG_MODE = true;
 
     let MANUAL_COLUMN_JSON = null;
     let MANUAL_DATA_JSON = null;
@@ -1041,6 +1076,13 @@
     let initialSnapshot = null;
 
     const schemaInput = document.getElementById("schemaInput");
+    const columnJsonInput = document.getElementById("columnJsonInput");
+    const humanJsonInput = document.getElementById("humanJsonInput");
+    const predictedJsonInput = document.getElementById("predictedJsonInput");
+    const columnJsonError = document.getElementById("columnJsonError");
+    const humanJsonError = document.getElementById("humanJsonError");
+    const predictedJsonError = document.getElementById("predictedJsonError");
+    const versionInput = document.getElementById("versionInput");
     const currentDateTimeInput = document.getElementById("currentDateTime");
     const localeInput = document.getElementById("localeInput");
     const timezoneInput = document.getElementById("timezoneInput");
@@ -1055,6 +1097,8 @@
     const formContainer = document.getElementById("formContainer");
     const consoleEl = document.getElementById("eventConsole");
     const submitOutputsEl = document.getElementById("submitOutputs");
+    const eventConsoleSection = document.getElementById("eventConsoleSection");
+    const submitOutputsSection = document.getElementById("submitOutputsSection");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
     const exportModal = document.getElementById("exportModal");
@@ -1248,6 +1292,45 @@
       showInlineHelp: true,
       autoFocusFirstInvalid: true
     };
+
+    function parseJsonInput(value, errorEl) {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        if (errorEl) errorEl.textContent = "";
+        return null;
+      }
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (errorEl) errorEl.textContent = "";
+        return parsed;
+      } catch (error) {
+        if (errorEl) errorEl.textContent = "JSON formatı hatalı.";
+        return null;
+      }
+    }
+
+    function syncManualJsonInputs() {
+      MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
+      MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
+      MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
+    }
+
+    function applyVersionVisibility() {
+      const formOnly = Boolean(versionInput?.checked);
+      DEBUG_MODE = !formOnly;
+      if (eventConsoleSection) {
+        eventConsoleSection.style.display = formOnly ? "none" : "block";
+      }
+      if (submitOutputsSection) {
+        submitOutputsSection.style.display = formOnly ? "none" : "block";
+      }
+      if (debugToolbar) {
+        debugToolbar.style.display = DEBUG_MODE ? "grid" : "none";
+      }
+      if (columnWarning) {
+        columnWarning.style.display = DEBUG_MODE && !columnJson ? "block" : "none";
+      }
+    }
 
     const sampleColumnData = {
       columns: defaultSchema.fields.map((field) => ({
@@ -3154,7 +3237,21 @@
       resetAllStores();
     });
 
+    [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
+      if (!input) return;
+      input.addEventListener("input", () => {
+        syncManualJsonInputs();
+      });
+    });
+
+    if (versionInput) {
+      versionInput.addEventListener("change", () => {
+        applyVersionVisibility();
+      });
+    }
+
     loadHumanJsonBtn.addEventListener("click", () => {
+      syncManualJsonInputs();
       const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
       if (!payload) {
         humanData = {};
@@ -3167,6 +3264,7 @@
     });
 
     loadPredictedJsonBtn.addEventListener("click", () => {
+      syncManualJsonInputs();
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
         aiData = {};
@@ -3182,6 +3280,7 @@
     });
 
     loadColumnJsonBtn.addEventListener("click", () => {
+      syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
       emit("debug:column-json", columnJson);
@@ -3318,12 +3417,8 @@
 
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-    debugToolbar.style.display = DEBUG_MODE ? "grid" : "none";
-    if (!DEBUG_MODE) {
-      columnWarning.style.display = "none";
-    } else {
-      columnWarning.style.display = columnJson ? "none" : "block";
-    }
+    syncManualJsonInputs();
+    applyVersionVisibility();
     if (columnJson) {
       applyColumnJson(columnJson);
     } else {
