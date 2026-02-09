@@ -1893,7 +1893,7 @@
         const value = !isEmptyValue(humanValue) ? humanValue : aiValue;
         const jsonKey = field.fieldName || field.label || field.key;
         const normalized = normalizeExportValue(field, value);
-        entries.push(`\"${jsonKey}\": ${JSON.stringify(normalized ?? \"\")}`);
+        entries.push(`"${jsonKey}": ${JSON.stringify(normalized ?? "")}`);
       });
       return entries;
     }
