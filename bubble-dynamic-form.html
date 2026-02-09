@@ -1524,6 +1524,12 @@
       return Boolean(field.required) || normalizeStageType(field.stageType) === "mandatory";
     }
 
+    function getInitialSnapshotValue(field) {
+      if (!initialSnapshot) return undefined;
+      const jsonKey = field.fieldName || field.label || field.key;
+      return initialSnapshot[jsonKey];
+    }
+
     function getStageBadge(stageType) {
       const normalized = normalizeStageType(stageType);
       if (!["optional", "mandatory", "control"].includes(normalized)) return null;
@@ -2922,8 +2928,10 @@
     function updateSubmitState(config) {
       const isValid = (config.fields || []).every((field) => {
         const effectiveValue = getEffectiveValue(field.key);
-        let validationValue = effectiveValue;
-        if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(effectiveValue)) {
+        const initialValue = getInitialSnapshotValue(field);
+        const mergedValue = !isEmptyValue(effectiveValue) ? effectiveValue : initialValue;
+        let validationValue = mergedValue;
+        if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
           const stagedFiles = state.fileBuffers[field.key] || [];
           if (stagedFiles.length) {
             validationValue = ["__file_selected__"];
