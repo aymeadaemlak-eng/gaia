@@ -2659,13 +2659,14 @@
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
                 return;
               }
+              const shouldPreview = field.type === "image" || file.type.startsWith("image/");
               accepted.push({
                 raw: file,
                 name: file.name,
                 size: file.size,
                 type: file.type,
                 lastModified: file.lastModified,
-                preview: field.ui?.showPreview && file.type.startsWith("image/") ? URL.createObjectURL(file) : ""
+                preview: shouldPreview ? URL.createObjectURL(file) : ""
               });
             });
 
