@@ -2094,9 +2094,7 @@
       formContainer.style.display = "block";
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
-      if (!initialSnapshot) {
-        initialSnapshot = buildBaselineSnapshot();
-      }
+      initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
       renderForm(state.config);
     }
 
@@ -2110,8 +2108,8 @@
       return payload;
     }
 
-    function buildBaselineSnapshot() {
-      const baseline = MANUAL_DATA_JSON || {};
+    function buildBaselineSnapshot(baselineData) {
+      const baseline = baselineData || {};
       const snapshot = {};
       const keyMap = buildFieldKeyMap();
       Object.entries(baseline || {}).forEach(([jsonKey, rawValue]) => {
@@ -3171,7 +3169,6 @@
       });
       updateToolbarStatus();
       updateSubmitState(config);
-      captureInitialSnapshot();
     }
 
     function varPrimary() {
@@ -3431,16 +3428,20 @@
       });
 
       loadHumanJsonBtn.addEventListener("click", () => {
-      syncManualJsonInputs();
-      const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
-      if (!payload) {
-        humanData = {};
-        refreshAllFields();
-        return;
-      }
-      emit("debug:human-json", payload);
-      loadJsonSafeToForm("human", payload);
-      openExportModal("human");
+        syncManualJsonInputs();
+        initialSnapshot = null;
+        if (state.config) {
+          initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
+        }
+        const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
+        if (!payload) {
+          humanData = {};
+          refreshAllFields();
+          return;
+        }
+        emit("debug:human-json", payload);
+        loadJsonSafeToForm("human", payload);
+        openExportModal("human");
       });
 
       loadPredictedJsonBtn.addEventListener("click", () => {
