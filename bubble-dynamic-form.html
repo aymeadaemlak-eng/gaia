@@ -1,18 +1,37 @@
-<!--
-❗️BU BLOK ARTIK DEĞİŞTİRİLMEYECEK. ALTINDAN GÜNCELLEME YAPILACAK.
-
-Veriyi tam buraya gireceksin (örnek değerlerle gösterim):
-COLUMN_JSON={{ {"columns":[{"fieldName":"Ad Soyad","type":"text","required":true}],"currentDateTimeISO":"2026-02-09T12:34:56+03:00","locale":"tr-TR","timezone":"Europe/Istanbul","mode":"create"} }}
-BUBBLE_DATA_JSON={{ {"Ad Soyad":"Ayşe Yılmaz","Telefon":"0532 123 45 67","E-posta":"ayse@example.com"} }}
-PREDICTED_JSON={{ {"Ad Soyad":"Ayşe Yılmaz","Telefon":"0532 123 45 67","E-posta":"ayse@example.com"} }}
-VERSION={{ true }}
--->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bubble Dynamic Form Element Demo</title>
+  <!--
+  ❗️BU BLOK ARTIK DEĞİŞTİRİLMEYECEK. ALTINDAN GÜNCELLEME YAPILACAK.
+  Veriyi tam buraya gireceksin (örnek değerlerle gösterim):
+  -->
+  <script>
+    window.BUBBLE_INPUTS = {
+      COLUMN_JSON: {
+        columns: [
+          { fieldName: "Ad Soyad", type: "text", required: true }
+        ],
+        currentDateTimeISO: "2026-02-09T12:34:56+03:00",
+        locale: "tr-TR",
+        timezone: "Europe/Istanbul",
+        mode: "create"
+      },
+      BUBBLE_DATA_JSON: {
+        "Ad Soyad": "Ayşe Yılmaz",
+        "Telefon": "0532 123 45 67",
+        "E-posta": "ayse@example.com"
+      },
+      PREDICTED_JSON: {
+        "Ad Soyad": "Ayşe Yılmaz",
+        "Telefon": "0532 123 45 67",
+        "E-posta": "ayse@example.com"
+      },
+      VERSION: true
+    };
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -926,9 +945,11 @@ VERSION={{ true }}
   <script>
     let DEBUG_MODE = true;
 
-    let MANUAL_COLUMN_JSON = null;
-    let MANUAL_DATA_JSON = null;
-    let MANUAL_PREDICTED_JSON = null;
+    const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
+
+    let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
+    let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
+    let MANUAL_PREDICTED_JSON = INITIAL_INPUTS.PREDICTED_JSON || null;
 
     const SAMPLE_COLUMN_JSON = {
       columns: [
@@ -1130,6 +1151,19 @@ VERSION={{ true }}
     const humanFieldCountEl = document.getElementById("humanFieldCount");
     const columnWarning = document.getElementById("columnWarning");
     const debugToolbar = document.getElementById("debugToolbar");
+
+    if (columnJsonInput && MANUAL_COLUMN_JSON) {
+      columnJsonInput.value = JSON.stringify(MANUAL_COLUMN_JSON, null, 2);
+    }
+    if (humanJsonInput && MANUAL_DATA_JSON) {
+      humanJsonInput.value = JSON.stringify(MANUAL_DATA_JSON, null, 2);
+    }
+    if (predictedJsonInput && MANUAL_PREDICTED_JSON) {
+      predictedJsonInput.value = JSON.stringify(MANUAL_PREDICTED_JSON, null, 2);
+    }
+    if (versionInput) {
+      versionInput.checked = Boolean(INITIAL_INPUTS.VERSION);
+    }
 
     const state = {
       config: null,
