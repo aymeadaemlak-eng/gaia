@@ -1586,9 +1586,7 @@
     function buildFieldKeyMap() {
       const map = new Map();
       (state.config?.fields || []).forEach((field) => {
-        if (field.fieldName) map.set(normalizeKey(field.fieldName), field.key);
         if (field.key) map.set(normalizeKey(field.key), field.key);
-        if (field.label) map.set(normalizeKey(field.label), field.key);
       });
       return map;
     }
@@ -2022,19 +2020,20 @@
       if (!columnData) return null;
       const columns = columnData.columns || [];
       const fields = columns.map((column, index) => {
-        const fieldName = column.fieldName || column.label || column.key || `field_${index + 1}`;
-        const normalized = normalizeColumnType(column.type, column.allowMultiple);
+        const fieldName = column.id || `field_${index + 1}`;
+        const normalized = normalizeColumnType(column.type, column.multiple);
         const stageType = column.stageType || "optional";
         return {
           key: fieldName,
           fieldName,
-          label: column.label || fieldName,
+          label: column.header || fieldName,
           type: normalized.type,
           displayType: normalized.displayType,
           required: normalizeStageType(stageType) === "mandatory" || Boolean(column.required),
           stageType,
-          allowMultiple: normalized.allowMultiple,
-          options: column.options || [],
+          allowMultiple: Boolean(column.multiple),
+          readOnly: Boolean(column.readOnly),
+          options: Array.isArray(column.source) ? column.source.map((value) => ({ value, label: value })) : [],
           default: column.default,
           ui: column.ui || {}
         };
@@ -2087,7 +2086,7 @@
       const payload = {};
       (state.config?.fields || []).forEach((field) => {
         const value = getEffectiveValue(field.key);
-        const jsonKey = field.fieldName || field.label || field.key;
+        const jsonKey = field.key;
         payload[jsonKey] = normalizeExportValue(field, value);
       });
       return payload;
