@@ -1285,6 +1285,18 @@
       console.info("submitOutputs rendered", safePayload);
     }
 
+    function buildSubmitOutputsPayload() {
+      const exportPayload = buildExportJson();
+      return {
+        output1: taskStartTimestamp || "",
+        output2: new Date().toISOString(),
+        output3: getActivityType(),
+        outputlist1: buildKeyValueList(exportPayload),
+        outputlist2: buildAddedCustomFields(exportPayload),
+        outputlist3: buildDeletedFields(exportPayload)
+      };
+    }
+
     function emit(eventName, detail) {
       setConsole(eventName, JSON.stringify(detail, null, 2));
     }
@@ -2415,14 +2427,13 @@
 
           dateInput.addEventListener("input", (event) => syncDate(event.target.value));
           dateInput.addEventListener("change", (event) => syncDate(event.target.value));
-          dateInput.addEventListener("focus", () => {
-            if (dateInput.showPicker) {
-              dateInput.showPicker();
-            }
-          });
           dateInput.addEventListener("click", () => {
             if (dateInput.showPicker) {
-              dateInput.showPicker();
+              try {
+                dateInput.showPicker();
+              } catch (error) {
+                console.warn("showPicker blocked", error);
+              }
             }
           });
 
@@ -2538,14 +2549,13 @@
 
           datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
           datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
-          datetimeInput.addEventListener("focus", () => {
-            if (datetimeInput.showPicker) {
-              datetimeInput.showPicker();
-            }
-          });
           datetimeInput.addEventListener("click", () => {
             if (datetimeInput.showPicker) {
-              datetimeInput.showPicker();
+              try {
+                datetimeInput.showPicker();
+              } catch (error) {
+                console.warn("showPicker blocked", error);
+              }
             }
           });
 
@@ -2840,7 +2850,7 @@
 
         const errorText = document.createElement("div");
         errorText.className = "error-text";
-        errorText.id = `error-${field.key}`;
+        errorText.dataset.errorFor = field.key;
 
         const controlStack = document.createElement("div");
         controlStack.className = "control-stack";
@@ -2953,7 +2963,7 @@
     });
 
     function updateError(control, field) {
-      const errorText = formEl.querySelector(`#error-${field.key}`);
+      const errorText = formEl.querySelector(`[data-error-for="${CSS.escape(field.key)}"]`);
       if (!errorText) {
         console.warn("error element missing", { fieldKey: field.key, field });
         return;
@@ -3000,7 +3010,7 @@
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = document.querySelector(`#field-${firstInvalid}`) || document.querySelector(`[data-field='${firstInvalid}']`);
+      const target = document.querySelector(`#field-${CSS.escape(firstInvalid)}`) || document.querySelector(`[data-field='${firstInvalid}']`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -3076,13 +3086,7 @@
         summaryBox.style.display = "none";
       }
       const exportPayload = buildExportJson();
-      const outputlist1 = buildKeyValueList(exportPayload);
-      const outputlist2 = buildAddedCustomFields(exportPayload);
-      const outputlist3 = buildDeletedFields(exportPayload);
-      const output1 = taskStartTimestamp || "";
-      const output2 = new Date().toISOString();
-      const output3 = getActivityType();
-      const submitOutputsPayload = { output1, output2, output3, outputlist1, outputlist2, outputlist3 };
+      const submitOutputsPayload = buildSubmitOutputsPayload();
       console.info("submitOutputs payload", submitOutputsPayload);
       console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl) });
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
@@ -3091,14 +3095,22 @@
         values: exportPayload,
         isFormValid: invalidCount === 0,
         firstInvalidKey,
-        output1,
-        output2,
-        output3,
-        outputlist1,
-        outputlist2,
-        outputlist3
+        output1: submitOutputsPayload.output1,
+        output2: submitOutputsPayload.output2,
+        output3: submitOutputsPayload.output3,
+        outputlist1: submitOutputsPayload.outputlist1,
+        outputlist2: submitOutputsPayload.outputlist2,
+        outputlist3: submitOutputsPayload.outputlist3
       });
     });
+
+    if (submitBtn) {
+      submitBtn.addEventListener("click", () => {
+        console.info("submit button clicked");
+        const submitOutputsPayload = buildSubmitOutputsPayload();
+        renderSubmitOutputs(submitOutputsPayload);
+      });
+    }
 
     formEl.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
