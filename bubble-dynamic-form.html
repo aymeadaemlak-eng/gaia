@@ -1513,6 +1513,10 @@
       return String(stageType).trim().toLowerCase();
     }
 
+    function isFieldRequired(field) {
+      return Boolean(field.required) || normalizeStageType(field.stageType) === "mandatory";
+    }
+
     function getStageBadge(stageType) {
       const normalized = normalizeStageType(stageType);
       if (!["optional", "mandatory", "control"].includes(normalized)) return null;
@@ -1849,7 +1853,7 @@
     }
 
     function validateField(field, value) {
-      if (field.required && isEmptyValue(value)) {
+      if (isFieldRequired(field) && isEmptyValue(value)) {
         if (field.type === "boolean") {
           return "Zorunlu onay gerekir.";
         }
@@ -2928,7 +2932,17 @@
     }
 
     function updateSubmitState(config) {
-      const isValid = Object.values(state.validMap).every(Boolean);
+      const isValid = (config.fields || []).every((field) => {
+        const effectiveValue = getEffectiveValue(field.key);
+        let validationValue = effectiveValue;
+        if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(effectiveValue)) {
+          const stagedFiles = state.fileBuffers[field.key] || [];
+          if (stagedFiles.length) {
+            validationValue = ["__file_selected__"];
+          }
+        }
+        return !validateField(field, validationValue);
+      });
       if (config.requiredPolicy === "strict") {
         submitBtn.disabled = !isValid;
         submitBtn.title = isValid ? "" : "Zorunlu alanları doldurun";
