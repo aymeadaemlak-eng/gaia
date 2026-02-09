@@ -2967,7 +2967,10 @@
             validationValue = ["__file_selected__"];
           }
         }
-        return !validateField(field, validationValue);
+        if (isFieldRequired(field)) {
+          return !isEmptyValue(validationValue);
+        }
+        return true;
       });
       if (config.requiredPolicy === "strict") {
         submitBtn.disabled = !isValid;
