@@ -1264,6 +1264,11 @@
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
+    function renderSubmitOutputs(payload) {
+      if (!submitOutputsEl) return;
+      submitOutputsEl.textContent = JSON.stringify(payload || {}, null, 2);
+    }
+
     function emit(eventName, detail) {
       setConsole(eventName, JSON.stringify(detail, null, 2));
     }
@@ -3035,9 +3040,7 @@
       const output3 = getActivityType();
       const submitOutputsPayload = { output1, output2, output3, outputlist1, outputlist2, outputlist3 };
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
-      if (submitOutputsEl) {
-        submitOutputsEl.textContent = JSON.stringify(submitOutputsPayload, null, 2);
-      }
+      renderSubmitOutputs(submitOutputsPayload);
       emit("onSubmitAttempt", {
         values: exportPayload,
         isFormValid: invalidCount === 0,
