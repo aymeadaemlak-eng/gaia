@@ -259,12 +259,13 @@
 
     .field-control.ai-active .field-input {
       background: rgba(37, 99, 235, 0.04);
+      padding-right: 56px;
     }
 
     .ai-pill {
       position: absolute;
       top: 6px;
-      right: 8px;
+      right: 36px;
       font-size: 0.65rem;
       font-weight: 700;
       padding: 2px 8px;
@@ -817,6 +818,11 @@
     </section>
 
     <section class="card">
+      <h2>Submit Outputs</h2>
+      <div id="submitOutputs" class="console"></div>
+    </section>
+
+    <section class="card">
       <h2>Dynamic Form</h2>
       <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
@@ -1031,6 +1037,8 @@
     let humanData = {};
     let aiData = {};
     let sourceByField = {};
+    let taskStartTimestamp = null;
+    let initialSnapshot = null;
 
     const schemaInput = document.getElementById("schemaInput");
     const currentDateTimeInput = document.getElementById("currentDateTime");
@@ -1046,6 +1054,7 @@
     const summaryBox = document.getElementById("summaryBox");
     const formContainer = document.getElementById("formContainer");
     const consoleEl = document.getElementById("eventConsole");
+    const submitOutputsEl = document.getElementById("submitOutputs");
     const lightboxEl = document.getElementById("lightbox");
     const lightboxImage = document.getElementById("lightboxImage");
     const exportModal = document.getElementById("exportModal");
@@ -1255,6 +1264,38 @@
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
+    function renderSubmitOutputs(payload) {
+      if (!submitOutputsEl) {
+        console.warn("submitOutputs panel not found");
+        return;
+      }
+      const safePayload = payload || {};
+      const listToText = (list) => (Array.isArray(list) ? list.join("\n") : String(list ?? ""));
+      submitOutputsEl.textContent = [
+        `output1: ${safePayload.output1 ?? ""}`,
+        `output2: ${safePayload.output2 ?? ""}`,
+        `output3: ${safePayload.output3 ?? ""}`,
+        "outputlist1:",
+        listToText(safePayload.outputlist1),
+        "outputlist2:",
+        listToText(safePayload.outputlist2),
+        "outputlist3:",
+        listToText(safePayload.outputlist3)
+      ].join("\n");
+      console.info("submitOutputs rendered", safePayload);
+    }
+
+    function buildSubmitOutputsPayload() {
+      return {
+        output1: taskStartTimestamp || "",
+        output2: new Date().toISOString(),
+        output3: getActivityType(),
+        outputlist1: buildKeyValueListFromSources(),
+        outputlist2: buildAddedCustomFields(),
+        outputlist3: buildDeletedFields()
+      };
+    }
+
     function emit(eventName, detail) {
       setConsole(eventName, JSON.stringify(detail, null, 2));
     }
@@ -1425,7 +1466,19 @@
       return humanData[fieldKey];
     }
 
+    function captureInitialSnapshot(overwrite = false) {
+      if (initialSnapshot && !overwrite) return;
+      initialSnapshot = buildExportJson();
+    }
+
+    function ensureTaskStartTimestamp() {
+      if (!taskStartTimestamp) {
+        taskStartTimestamp = new Date().toISOString();
+      }
+    }
+
     function setHumanValue(fieldKey, value, field, displayValue) {
+      ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
       sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
@@ -1453,6 +1506,9 @@
         source: getActiveSource(fieldKey),
         isValid: !error
       });
+      if (state.config) {
+        updateSubmitState(state.config);
+      }
       debounceFormChange();
     }
 
@@ -1494,6 +1550,26 @@
     function normalizeStageType(stageType) {
       if (!stageType) return "";
       return String(stageType).trim().toLowerCase();
+    }
+
+    function isFieldRequired(field) {
+      return Boolean(field.required) || normalizeStageType(field.stageType) === "mandatory";
+    }
+
+    function getInitialSnapshotValue(field) {
+      if (!initialSnapshot) return undefined;
+      const jsonKey = field.fieldName || field.label || field.key;
+      return initialSnapshot[jsonKey];
+    }
+
+    function getMergedValidationValue(field) {
+      const effectiveValue = getEffectiveValue(field.key);
+      if (!isEmptyValue(effectiveValue)) return effectiveValue;
+      const humanValue = humanData[field.key];
+      if (!isEmptyValue(humanValue)) return humanValue;
+      const aiValue = aiData[field.key];
+      if (!isEmptyValue(aiValue)) return aiValue;
+      return getInitialSnapshotValue(field);
     }
 
     function getStageBadge(stageType) {
@@ -1665,11 +1741,15 @@
         updateFieldDisplayValue(fieldKey);
       });
       updateToolbarStatus();
+      if (state.config) {
+        updateSubmitState(state.config);
+      }
     }
 
     function loadJsonSafeToForm(kind, jsonObj) {
       if (!jsonObj || !state.config) return;
       const keyMap = buildFieldKeyMap();
+      console.info("loadJsonSafeToForm:start", { kind, keys: Object.keys(jsonObj || {}) });
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
@@ -1688,6 +1768,13 @@
         }
       });
       refreshAllFields();
+      if (kind === "human") {
+        captureInitialSnapshot(true);
+      }
+      if (state.config) {
+        updateSubmitState(state.config);
+      }
+      console.info("loadJsonSafeToForm:done", { kind, values: buildExportJson() });
     }
 
     function applyScenario({ name, column, human, ai }) {
@@ -1795,8 +1882,60 @@
       return payload;
     }
 
+    function buildKeyValueListFromSources() {
+      const entries = [];
+      (state.config?.fields || []).forEach((field) => {
+        const humanValue = humanData[field.key];
+        const aiValue = aiData[field.key];
+        if (isEmptyValue(humanValue) && isEmptyValue(aiValue)) {
+          return;
+        }
+        const value = !isEmptyValue(humanValue) ? humanValue : aiValue;
+        const jsonKey = field.fieldName || field.label || field.key;
+        const normalized = normalizeExportValue(field, value);
+        entries.push(`"${jsonKey}": ${JSON.stringify(normalized ?? "")}`);
+      });
+      return entries;
+    }
+
+    function buildAddedCustomFields() {
+      const entries = [];
+      const base = initialSnapshot || {};
+      (state.config?.fields || []).forEach((field) => {
+        const jsonKey = field.fieldName || field.label || field.key;
+        const initialValue = base[jsonKey];
+        const currentValue = getMergedValidationValue(field);
+        if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
+          entries.push(jsonKey);
+        }
+      });
+      return entries;
+    }
+
+    function buildDeletedFields() {
+      const entries = [];
+      const base = initialSnapshot || {};
+      (state.config?.fields || []).forEach((field) => {
+        const jsonKey = field.fieldName || field.label || field.key;
+        const initialValue = base[jsonKey];
+        const currentValue = getMergedValidationValue(field);
+        if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
+          entries.push(jsonKey);
+        }
+      });
+      return entries;
+    }
+
+    function getActivityType() {
+      const hasPredictedData = Object.values(aiData).some((value) => !isEmptyValue(value));
+      const hasAiUsage = (state.config?.fields || []).some((field) => {
+        return getActiveSource(field.key) === "ai" && !isEmptyValue(aiData[field.key]);
+      });
+      return hasPredictedData && hasAiUsage ? "Stage complated/HITL" : "Stage complated";
+    }
+
     function validateField(field, value) {
-      if (field.required && isEmptyValue(value)) {
+      if (isFieldRequired(field) && isEmptyValue(value)) {
         if (field.type === "boolean") {
           return "Zorunlu onay gerekir.";
         }
@@ -2144,15 +2283,12 @@
             updateError(control, field);
           });
         } else if (field.type === "single_select") {
-          const searchInput = document.createElement("input");
-          searchInput.className = "field-input";
-          searchInput.placeholder = "Ara...";
           const select = document.createElement("select");
           select.className = "field-input";
           select.id = `field-${field.key}`;
           select.setAttribute("aria-describedby", `error-${field.key}`);
 
-          const buildOptions = (filter = "") => {
+          const buildOptions = () => {
             select.innerHTML = "";
             const emptyOption = document.createElement("option");
             emptyOption.value = "";
@@ -2160,7 +2296,6 @@
             select.append(emptyOption);
             const groups = {};
             (field.options || []).forEach((opt) => {
-              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
               if (opt.group) {
                 if (!groups[opt.group]) groups[opt.group] = [];
                 groups[opt.group].push(opt);
@@ -2200,23 +2335,13 @@
             select.value = value ?? "";
           };
 
-          searchInput.addEventListener("input", (event) => {
-            buildOptions(event.target.value);
-          });
           select.addEventListener("change", () => {
             setFieldValue(field.key, select.value, field);
             updateError(control, field);
           });
 
-          extraControls = document.createElement("div");
-          extraControls.className = "field-actions";
-          extraControls.append(searchInput);
           control.append(select);
         } else if (field.type === "multi_select") {
-          const searchInput = document.createElement("input");
-          searchInput.className = "field-input";
-          searchInput.placeholder = "Ara...";
-
           const optionsWrapper = document.createElement("div");
           optionsWrapper.className = "grid";
 
@@ -2225,10 +2350,9 @@
 
           let selectedValues = Array.isArray(effectiveInitial) ? effectiveInitial : [];
 
-          const renderOptions = (filter = "") => {
+          const renderOptions = () => {
             optionsWrapper.innerHTML = "";
             (field.options || []).forEach((opt) => {
-              if (filter && !opt.label.toLowerCase().includes(filter.toLowerCase())) return;
               const optionRow = document.createElement("label");
               optionRow.className = "inline-row";
               const checkbox = document.createElement("input");
@@ -2265,7 +2389,7 @@
               removeBtn.addEventListener("click", () => {
                 selectedValues = selectedValues.filter((v) => v !== val);
                 renderChips();
-                renderOptions(searchInput.value);
+                renderOptions();
                 setFieldValue(field.key, selectedValues, field);
               });
               chip.append(removeBtn);
@@ -2273,84 +2397,60 @@
             });
           };
 
-          searchInput.addEventListener("input", (event) => {
-            renderOptions(event.target.value);
-          });
-
           renderOptions();
           renderChips();
           setValue = (value) => {
             selectedValues = Array.isArray(value) ? value : [];
-            renderOptions(searchInput.value);
+            renderOptions();
             renderChips();
           };
-          control.append(searchInput, chips, optionsWrapper);
+          control.append(chips, optionsWrapper);
           updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
-          const textInput = document.createElement("input");
-          textInput.className = "field-input";
-          textInput.id = `field-${field.key}`;
-          textInput.setAttribute("aria-describedby", `error-${field.key}`);
-          textInput.placeholder = field.placeholder || "gg.aa.yyyy";
-          textInput.inputMode = "numeric";
-          textInput.maxLength = 10;
-
-          const nativeInput = document.createElement("input");
-          nativeInput.type = "date";
-          nativeInput.className = "field-input date-overlay-input";
+          const dateInput = document.createElement("input");
+          dateInput.type = "date";
+          dateInput.className = "field-input";
+          dateInput.id = `field-${field.key}`;
+          dateInput.setAttribute("aria-describedby", `error-${field.key}`);
+          dateInput.placeholder = field.placeholder || "";
 
           const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
-          if (initialDate) {
-            const [y, m, d] = initialDate.split("-");
-            textInput.value = `${d}.${m}.${y}`;
-            nativeInput.value = initialDate;
+          if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+            dateInput.value = initialDate;
           }
 
           setValue = (value) => {
             const normalized = value ? normalizeDateInput(String(value)) : "";
-            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-              const [y, m, d] = normalized.split("-");
-              textInput.value = `${d}.${m}.${y}`;
-              nativeInput.value = normalized;
-            } else {
-              textInput.value = value ?? "";
-              nativeInput.value = "";
-            }
+            dateInput.value = normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
           };
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
-            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized) && isValidDateString(normalized)) {
-              const [y, m, d] = normalized.split("-");
-              textInput.value = `${d}.${m}.${y}`;
-              nativeInput.value = normalized;
-              setFieldValue(field.key, normalized, field, textInput.value);
+            const yearPart = normalized ? normalized.split("-")[0] : "";
+            if (yearPart && yearPart.length > 4) {
+              const parts = normalized.split("-");
+              parts[0] = parts[0].slice(0, 4);
+              dateInput.value = parts.join("-");
+              setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
+            }
+            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) && isValidDateString(normalized)) {
+              setFieldValue(field.key, normalized, field, normalized);
             } else {
               setFieldValue(field.key, "", field, raw);
             }
             updateError(control, field);
           };
 
-          textInput.addEventListener("input", (event) => {
-            const digits = event.target.value.replace(/\\D/g, "").slice(0, 8);
-            let formatted = digits;
-            if (digits.length >= 3) {
-              formatted = `${digits.slice(0, 2)}.${digits.slice(2)}`;
-            }
-            if (digits.length >= 5) {
-              formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
-            }
-            event.target.value = formatted;
-            setFieldValue(field.key, formatted, field);
-          });
-          textInput.addEventListener("blur", () => syncDate(textInput.value));
-          nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
-          textInput.addEventListener("focus", () => {
-            if (field.ui?.autoOpenCalendar) {
-              if (nativeInput.showPicker) {
-                nativeInput.showPicker();
-              } else {
-                nativeInput.focus();
+          dateInput.addEventListener("input", (event) => syncDate(event.target.value));
+          dateInput.addEventListener("change", (event) => syncDate(event.target.value));
+          dateInput.addEventListener("click", () => {
+            if (dateInput.showPicker) {
+              try {
+                dateInput.showPicker();
+              } catch (error) {
+                console.warn("showPicker blocked", error);
               }
             }
           });
@@ -2364,10 +2464,10 @@
             calendarBtn.setAttribute("aria-label", "Takvim aç");
             calendarBtn.textContent = "📅";
             calendarBtn.addEventListener("click", () => {
-              if (nativeInput.showPicker) {
-                nativeInput.showPicker();
+              if (dateInput.showPicker) {
+                dateInput.showPicker();
               } else {
-                nativeInput.focus();
+                dateInput.focus();
               }
             });
             actions.append(calendarBtn);
@@ -2401,50 +2501,29 @@
             clearBtn.className = "ghost";
             clearBtn.textContent = "Temizle";
             clearBtn.addEventListener("click", () => {
-              textInput.value = "";
-              nativeInput.value = "";
+              dateInput.value = "";
               setFieldValue(field.key, "", field);
               updateError(control, field);
             });
             actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
           }
-
-          const dateWrapper = document.createElement("div");
-          dateWrapper.className = "date-wrapper";
-          dateWrapper.append(textInput, nativeInput);
-          control.append(dateWrapper, actions);
+          control.append(dateInput, actions);
         } else if (field.type === "datetime") {
-          const dateInput = document.createElement("input");
-          const timeInput = document.createElement("input");
-          dateInput.type = "text";
-          timeInput.type = "time";
-          dateInput.className = "field-input";
-          timeInput.className = "field-input";
-          dateInput.id = `field-${field.key}`;
-          dateInput.setAttribute("aria-describedby", `error-${field.key}`);
-          timeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          const datetimeInput = document.createElement("input");
+          datetimeInput.type = "datetime-local";
+          datetimeInput.className = "field-input";
+          datetimeInput.id = `field-${field.key}`;
+          datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
+
           const dateValue = effectiveInitial ? getDateFromIso(effectiveInitial) : "";
           const timeValue = effectiveInitial ? getTimeFromIso(effectiveInitial) : "";
-          if (dateValue) {
-            const [y, m, d] = dateValue.split("-");
-            dateInput.value = `${d}.${m}.${y}`;
+          if (dateValue && timeValue) {
+            datetimeInput.value = `${dateValue}T${timeValue}`;
           }
-          timeInput.value = timeValue;
-          dateInput.placeholder = "gg.aa.yyyy";
-          dateInput.inputMode = "numeric";
 
           setValue = (value) => {
-            if (!value) {
-              dateInput.value = "";
-              timeInput.value = "";
-              return;
-            }
-            const isoDate = getDateFromIso(value);
-            const isoTime = getTimeFromIso(value);
-            if (isoDate) {
-              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
-            }
-            timeInput.value = isoTime || "";
+            const normalized = value ? String(value).slice(0, 16) : "";
+            datetimeInput.value = normalized;
           };
 
           const quickActions = document.createElement("div");
@@ -2458,33 +2537,47 @@
               const now = getCurrentDateTime(config);
               const isoDate = getDateFromIso(now);
               const isoTime = getTimeFromIso(now);
-              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
-              timeInput.value = isoTime;
-              syncDatetime();
+              const nextValue = `${isoDate}T${isoTime}`;
+              datetimeInput.value = nextValue;
+              syncDatetime(nextValue);
             });
             quickActions.append(nowBtn);
           }
 
-          const syncDatetime = () => {
-            const date = normalizeDateInput(dateInput.value);
-            const time = normalizeTimeInput(timeInput.value);
-            if (!date || !time) {
-              setFieldValue(field.key, "", field);
-            } else {
-              const offset = getOffsetFromIso(getCurrentDateTime(config));
-              setFieldValue(field.key, `${date}T${time}${offset}`, field);
+          const syncDatetime = (raw) => {
+            if (!raw) {
+              setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
             }
+            const [datePart] = raw.split("T");
+            const yearPart = datePart ? datePart.split("-")[0] : "";
+            if (yearPart && yearPart.length > 4) {
+              const parts = datePart.split("-");
+              parts[0] = parts[0].slice(0, 4);
+              const nextValue = `${parts.join("-")}T${raw.split("T")[1] || ""}`;
+              datetimeInput.value = nextValue;
+              setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
+            }
+            setFieldValue(field.key, raw, field, raw);
             updateError(control, field);
           };
 
-          dateInput.addEventListener("change", syncDatetime);
-          timeInput.addEventListener("change", syncDatetime);
-          dateInput.addEventListener("blur", syncDatetime);
-          timeInput.addEventListener("blur", syncDatetime);
+          datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
+          datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
+          datetimeInput.addEventListener("click", () => {
+            if (datetimeInput.showPicker) {
+              try {
+                datetimeInput.showPicker();
+              } catch (error) {
+                console.warn("showPicker blocked", error);
+              }
+            }
+          });
 
-          inputEl = document.createElement("div");
-          inputEl.className = "grid two";
-          inputEl.append(dateInput, timeInput);
+          inputEl = datetimeInput;
           inlineActions = quickActions;
         } else if (field.type === "duration") {
           const durationInput = document.createElement("input");
@@ -2775,7 +2868,7 @@
 
         const errorText = document.createElement("div");
         errorText.className = "error-text";
-        errorText.id = `error-${field.key}`;
+        errorText.dataset.errorFor = field.key;
 
         const controlStack = document.createElement("div");
         controlStack.className = "control-stack";
@@ -2812,6 +2905,7 @@
       });
       updateToolbarStatus();
       updateSubmitState(config);
+      captureInitialSnapshot();
     }
 
     function varPrimary() {
@@ -2887,7 +2981,11 @@
     });
 
     function updateError(control, field) {
-      const errorText = formEl.querySelector(`#error-${field.key}`);
+      const errorText = formEl.querySelector(`[data-error-for="${CSS.escape(field.key)}"]`);
+      if (!errorText) {
+        console.warn("error element missing", { fieldKey: field.key, field });
+        return;
+      }
       const error = state.errors[field.key] || "";
       errorText.textContent = error;
       if (error) {
@@ -2899,7 +2997,24 @@
     }
 
     function updateSubmitState(config) {
-      const isValid = Object.values(state.validMap).every(Boolean);
+      console.info("updateSubmitState:start", { fieldCount: (config.fields || []).length });
+      const isValid = (config.fields || []).every((field) => {
+        let validationValue = getMergedValidationValue(field);
+        if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
+          const stagedFiles = state.fileBuffers[field.key] || [];
+          if (stagedFiles.length) {
+            validationValue = ["__file_selected__"];
+          }
+        }
+        if (isFieldRequired(field)) {
+          const fieldOk = !isEmptyValue(validationValue);
+          if (!fieldOk) {
+            console.info("updateSubmitState:missing", { fieldKey: field.key, label: field.label });
+          }
+          return fieldOk;
+        }
+        return true;
+      });
       if (config.requiredPolicy === "strict") {
         submitBtn.disabled = !isValid;
         submitBtn.title = isValid ? "" : "Zorunlu alanları doldurun";
@@ -2907,12 +3022,13 @@
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
+      console.info("updateSubmitState:done", { isValid, requiredPolicy: config.requiredPolicy });
     }
 
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = document.querySelector(`#field-${firstInvalid}`) || document.querySelector(`[data-field='${firstInvalid}']`);
+      const target = document.querySelector(`#field-${CSS.escape(firstInvalid)}`) || document.querySelector(`[data-field='${firstInvalid}']`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -2965,6 +3081,8 @@
       state.values = {};
       state.validMap = {};
       state.errors = {};
+      taskStartTimestamp = null;
+      initialSnapshot = null;
       if (columnJson) {
         applyColumnJson(columnJson);
       } else {
@@ -2985,12 +3103,32 @@
       } else {
         summaryBox.style.display = "none";
       }
+      const exportPayload = buildExportJson();
+      const submitOutputsPayload = buildSubmitOutputsPayload();
+      console.info("submitOutputs payload", submitOutputsPayload);
+      console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl) });
+      setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
+      renderSubmitOutputs(submitOutputsPayload);
       emit("onSubmitAttempt", {
-        values: buildExportJson(),
+        values: exportPayload,
         isFormValid: invalidCount === 0,
-        firstInvalidKey
+        firstInvalidKey,
+        output1: submitOutputsPayload.output1,
+        output2: submitOutputsPayload.output2,
+        output3: submitOutputsPayload.output3,
+        outputlist1: submitOutputsPayload.outputlist1,
+        outputlist2: submitOutputsPayload.outputlist2,
+        outputlist3: submitOutputsPayload.outputlist3
       });
     });
+
+    if (submitBtn) {
+      submitBtn.addEventListener("click", () => {
+        console.info("submit button clicked");
+        const submitOutputsPayload = buildSubmitOutputsPayload();
+        renderSubmitOutputs(submitOutputsPayload);
+      });
+    }
 
     formEl.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
