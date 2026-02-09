@@ -1266,7 +1266,19 @@
 
     function renderSubmitOutputs(payload) {
       if (!submitOutputsEl) return;
-      submitOutputsEl.textContent = JSON.stringify(payload || {}, null, 2);
+      const safePayload = payload || {};
+      const listToText = (list) => (Array.isArray(list) ? list.join("\n") : String(list ?? ""));
+      submitOutputsEl.textContent = [
+        `output1: ${safePayload.output1 ?? ""}`,
+        `output2: ${safePayload.output2 ?? ""}`,
+        `output3: ${safePayload.output3 ?? ""}`,
+        "outputlist1:",
+        listToText(safePayload.outputlist1),
+        "outputlist2:",
+        listToText(safePayload.outputlist2),
+        "outputlist3:",
+        listToText(safePayload.outputlist3)
+      ].join("\n");
     }
 
     function emit(eventName, detail) {
@@ -1533,6 +1545,16 @@
       if (!initialSnapshot) return undefined;
       const jsonKey = field.fieldName || field.label || field.key;
       return initialSnapshot[jsonKey];
+    }
+
+    function getMergedValidationValue(field) {
+      const effectiveValue = getEffectiveValue(field.key);
+      if (!isEmptyValue(effectiveValue)) return effectiveValue;
+      const humanValue = humanData[field.key];
+      if (!isEmptyValue(humanValue)) return humanValue;
+      const aiValue = aiData[field.key];
+      if (!isEmptyValue(aiValue)) return aiValue;
+      return getInitialSnapshotValue(field);
     }
 
     function getStageBadge(stageType) {
@@ -2938,10 +2960,7 @@
 
     function updateSubmitState(config) {
       const isValid = (config.fields || []).every((field) => {
-        const effectiveValue = getEffectiveValue(field.key);
-        const initialValue = getInitialSnapshotValue(field);
-        const mergedValue = !isEmptyValue(effectiveValue) ? effectiveValue : initialValue;
-        let validationValue = mergedValue;
+        let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
           const stagedFiles = state.fileBuffers[field.key] || [];
           if (stagedFiles.length) {
