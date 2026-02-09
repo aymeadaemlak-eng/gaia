@@ -2309,23 +2309,27 @@
 
           textInput.addEventListener("input", (event) => {
             const digits = event.target.value.replace(/\\D/g, "").slice(0, 8);
-            if (digits.length === 8) {
-              const formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
-              event.target.value = formatted;
+            let formatted = digits;
+            if (digits.length >= 3) {
+              formatted = `${digits.slice(0, 2)}.${digits.slice(2)}`;
             }
-            setFieldValue(field.key, event.target.value, field);
+            if (digits.length >= 5) {
+              formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+            }
+            event.target.value = formatted;
+            setFieldValue(field.key, formatted, field);
           });
           textInput.addEventListener("blur", () => syncDate(textInput.value));
           nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
-          if (field.ui?.autoOpenCalendar) {
-            textInput.addEventListener("focus", () => {
+          textInput.addEventListener("focus", () => {
+            if (field.ui?.autoOpenCalendar) {
               if (nativeInput.showPicker) {
                 nativeInput.showPicker();
               } else {
                 nativeInput.focus();
               }
-            });
-          }
+            }
+          });
 
           const actions = document.createElement("div");
           actions.className = "field-actions";
