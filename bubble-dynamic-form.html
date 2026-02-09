@@ -1467,6 +1467,9 @@
         source: getActiveSource(fieldKey),
         isValid: !error
       });
+      if (state.config) {
+        updateSubmitState(state.config);
+      }
       debounceFormChange();
     }
 
@@ -2356,6 +2359,15 @@
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
+            const yearPart = normalized ? normalized.split("-")[0] : "";
+            if (yearPart && yearPart.length > 4) {
+              const parts = normalized.split("-");
+              parts[0] = parts[0].slice(0, 4);
+              dateInput.value = parts.join("-");
+              setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
+            }
             if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) && isValidDateString(normalized)) {
               setFieldValue(field.key, normalized, field, normalized);
             } else {
@@ -2366,6 +2378,16 @@
 
           dateInput.addEventListener("input", (event) => syncDate(event.target.value));
           dateInput.addEventListener("change", (event) => syncDate(event.target.value));
+          dateInput.addEventListener("focus", () => {
+            if (dateInput.showPicker) {
+              dateInput.showPicker();
+            }
+          });
+          dateInput.addEventListener("click", () => {
+            if (dateInput.showPicker) {
+              dateInput.showPicker();
+            }
+          });
 
           const actions = document.createElement("div");
           actions.className = "field-actions";
@@ -2457,16 +2479,38 @@
           }
 
           const syncDatetime = (raw) => {
-            if (raw) {
-              setFieldValue(field.key, raw, field, raw);
-            } else {
+            if (!raw) {
               setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
             }
+            const [datePart] = raw.split("T");
+            const yearPart = datePart ? datePart.split("-")[0] : "";
+            if (yearPart && yearPart.length > 4) {
+              const parts = datePart.split("-");
+              parts[0] = parts[0].slice(0, 4);
+              const nextValue = `${parts.join("-")}T${raw.split("T")[1] || ""}`;
+              datetimeInput.value = nextValue;
+              setFieldValue(field.key, "", field, raw);
+              updateError(control, field);
+              return;
+            }
+            setFieldValue(field.key, raw, field, raw);
             updateError(control, field);
           };
 
           datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
           datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
+          datetimeInput.addEventListener("focus", () => {
+            if (datetimeInput.showPicker) {
+              datetimeInput.showPicker();
+            }
+          });
+          datetimeInput.addEventListener("click", () => {
+            if (datetimeInput.showPicker) {
+              datetimeInput.showPicker();
+            }
+          });
 
           inputEl = datetimeInput;
           inlineActions = quickActions;
