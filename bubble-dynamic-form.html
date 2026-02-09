@@ -2337,73 +2337,35 @@
           control.append(searchInput, chips, optionsWrapper);
           updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
-          const textInput = document.createElement("input");
-          textInput.className = "field-input";
-          textInput.id = `field-${field.key}`;
-          textInput.setAttribute("aria-describedby", `error-${field.key}`);
-          textInput.placeholder = field.placeholder || "gg.aa.yyyy";
-          textInput.inputMode = "numeric";
-          textInput.maxLength = 10;
-
-          const nativeInput = document.createElement("input");
-          nativeInput.type = "date";
-          nativeInput.className = "field-input date-overlay-input";
+          const dateInput = document.createElement("input");
+          dateInput.type = "date";
+          dateInput.className = "field-input";
+          dateInput.id = `field-${field.key}`;
+          dateInput.setAttribute("aria-describedby", `error-${field.key}`);
+          dateInput.placeholder = field.placeholder || "";
 
           const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
-          if (initialDate) {
-            const [y, m, d] = initialDate.split("-");
-            textInput.value = `${d}.${m}.${y}`;
-            nativeInput.value = initialDate;
+          if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+            dateInput.value = initialDate;
           }
 
           setValue = (value) => {
             const normalized = value ? normalizeDateInput(String(value)) : "";
-            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-              const [y, m, d] = normalized.split("-");
-              textInput.value = `${d}.${m}.${y}`;
-              nativeInput.value = normalized;
-            } else {
-              textInput.value = value ?? "";
-              nativeInput.value = "";
-            }
+            dateInput.value = normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
           };
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
-            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized) && isValidDateString(normalized)) {
-              const [y, m, d] = normalized.split("-");
-              textInput.value = `${d}.${m}.${y}`;
-              nativeInput.value = normalized;
-              setFieldValue(field.key, normalized, field, textInput.value);
+            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) && isValidDateString(normalized)) {
+              setFieldValue(field.key, normalized, field, normalized);
             } else {
               setFieldValue(field.key, "", field, raw);
             }
             updateError(control, field);
           };
 
-          textInput.addEventListener("input", (event) => {
-            const digits = event.target.value.replace(/\\D/g, "").slice(0, 8);
-            let formatted = digits;
-            if (digits.length >= 3) {
-              formatted = `${digits.slice(0, 2)}.${digits.slice(2)}`;
-            }
-            if (digits.length >= 5) {
-              formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
-            }
-            event.target.value = formatted;
-            setFieldValue(field.key, formatted, field);
-          });
-          textInput.addEventListener("blur", () => syncDate(textInput.value));
-          nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
-          textInput.addEventListener("focus", () => {
-            if (field.ui?.autoOpenCalendar) {
-              if (nativeInput.showPicker) {
-                nativeInput.showPicker();
-              } else {
-                nativeInput.focus();
-              }
-            }
-          });
+          dateInput.addEventListener("input", (event) => syncDate(event.target.value));
+          dateInput.addEventListener("change", (event) => syncDate(event.target.value));
 
           const actions = document.createElement("div");
           actions.className = "field-actions";
@@ -2414,10 +2376,10 @@
             calendarBtn.setAttribute("aria-label", "Takvim aç");
             calendarBtn.textContent = "📅";
             calendarBtn.addEventListener("click", () => {
-              if (nativeInput.showPicker) {
-                nativeInput.showPicker();
+              if (dateInput.showPicker) {
+                dateInput.showPicker();
               } else {
-                nativeInput.focus();
+                dateInput.focus();
               }
             });
             actions.append(calendarBtn);
@@ -2451,50 +2413,29 @@
             clearBtn.className = "ghost";
             clearBtn.textContent = "Temizle";
             clearBtn.addEventListener("click", () => {
-              textInput.value = "";
-              nativeInput.value = "";
+              dateInput.value = "";
               setFieldValue(field.key, "", field);
               updateError(control, field);
             });
             actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
           }
-
-          const dateWrapper = document.createElement("div");
-          dateWrapper.className = "date-wrapper";
-          dateWrapper.append(textInput, nativeInput);
-          control.append(dateWrapper, actions);
+          control.append(dateInput, actions);
         } else if (field.type === "datetime") {
-          const dateInput = document.createElement("input");
-          const timeInput = document.createElement("input");
-          dateInput.type = "text";
-          timeInput.type = "time";
-          dateInput.className = "field-input";
-          timeInput.className = "field-input";
-          dateInput.id = `field-${field.key}`;
-          dateInput.setAttribute("aria-describedby", `error-${field.key}`);
-          timeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          const datetimeInput = document.createElement("input");
+          datetimeInput.type = "datetime-local";
+          datetimeInput.className = "field-input";
+          datetimeInput.id = `field-${field.key}`;
+          datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
+
           const dateValue = effectiveInitial ? getDateFromIso(effectiveInitial) : "";
           const timeValue = effectiveInitial ? getTimeFromIso(effectiveInitial) : "";
-          if (dateValue) {
-            const [y, m, d] = dateValue.split("-");
-            dateInput.value = `${d}.${m}.${y}`;
+          if (dateValue && timeValue) {
+            datetimeInput.value = `${dateValue}T${timeValue}`;
           }
-          timeInput.value = timeValue;
-          dateInput.placeholder = "gg.aa.yyyy";
-          dateInput.inputMode = "numeric";
 
           setValue = (value) => {
-            if (!value) {
-              dateInput.value = "";
-              timeInput.value = "";
-              return;
-            }
-            const isoDate = getDateFromIso(value);
-            const isoTime = getTimeFromIso(value);
-            if (isoDate) {
-              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
-            }
-            timeInput.value = isoTime || "";
+            const normalized = value ? String(value).slice(0, 16) : "";
+            datetimeInput.value = normalized;
           };
 
           const quickActions = document.createElement("div");
@@ -2508,33 +2449,26 @@
               const now = getCurrentDateTime(config);
               const isoDate = getDateFromIso(now);
               const isoTime = getTimeFromIso(now);
-              dateInput.value = `${isoDate.slice(8, 10)}.${isoDate.slice(5, 7)}.${isoDate.slice(0, 4)}`;
-              timeInput.value = isoTime;
-              syncDatetime();
+              const nextValue = `${isoDate}T${isoTime}`;
+              datetimeInput.value = nextValue;
+              syncDatetime(nextValue);
             });
             quickActions.append(nowBtn);
           }
 
-          const syncDatetime = () => {
-            const date = normalizeDateInput(dateInput.value);
-            const time = normalizeTimeInput(timeInput.value);
-            if (!date || !time) {
-              setFieldValue(field.key, "", field);
+          const syncDatetime = (raw) => {
+            if (raw) {
+              setFieldValue(field.key, raw, field, raw);
             } else {
-              const offset = getOffsetFromIso(getCurrentDateTime(config));
-              setFieldValue(field.key, `${date}T${time}${offset}`, field);
+              setFieldValue(field.key, "", field, raw);
             }
             updateError(control, field);
           };
 
-          dateInput.addEventListener("change", syncDatetime);
-          timeInput.addEventListener("change", syncDatetime);
-          dateInput.addEventListener("blur", syncDatetime);
-          timeInput.addEventListener("blur", syncDatetime);
+          datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
+          datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
 
-          inputEl = document.createElement("div");
-          inputEl.className = "grid two";
-          inputEl.append(dateInput, timeInput);
+          inputEl = datetimeInput;
           inlineActions = quickActions;
         } else if (field.type === "duration") {
           const durationInput = document.createElement("input");
