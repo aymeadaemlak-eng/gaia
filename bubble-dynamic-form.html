@@ -943,9 +943,12 @@
   </div>
 
   <script>
-    let DEBUG_MODE = true;
+    (function () {
+      const BDF = (window.__BDF__ = window.__BDF__ || {});
+      BDF.DEBUG_MODE = BDF.DEBUG_MODE ?? true;
+      const IS_VERSION_MODE = Boolean(window.BUBBLE_INPUTS?.VERSION);
 
-    const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
+      const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
 
     let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
     let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
@@ -1114,6 +1117,7 @@
     const humanJsonError = document.getElementById("humanJsonError");
     const predictedJsonError = document.getElementById("predictedJsonError");
     const versionInput = document.getElementById("versionInput");
+    const jsonInputsSection = document.getElementById("jsonInputsSection");
     const currentDateTimeInput = document.getElementById("currentDateTime");
     const localeInput = document.getElementById("localeInput");
     const timezoneInput = document.getElementById("timezoneInput");
@@ -1163,7 +1167,7 @@
       predictedJsonInput.value = JSON.stringify(MANUAL_PREDICTED_JSON, null, 2);
     }
     if (versionInput) {
-      versionInput.checked = Boolean(INITIAL_INPUTS.VERSION);
+      versionInput.checked = IS_VERSION_MODE;
     }
 
     const state = {
@@ -1361,8 +1365,11 @@
     }
 
     function applyVersionVisibility() {
-      const formOnly = Boolean(versionInput?.checked);
-      DEBUG_MODE = !formOnly;
+      const formOnly = IS_VERSION_MODE;
+      BDF.DEBUG_MODE = !formOnly;
+      if (jsonInputsSection) {
+        jsonInputsSection.style.display = formOnly ? "none" : "block";
+      }
       if (eventConsoleSection) {
         eventConsoleSection.style.display = formOnly ? "none" : "block";
       }
@@ -1370,10 +1377,20 @@
         submitOutputsSection.style.display = formOnly ? "none" : "block";
       }
       if (debugToolbar) {
-        debugToolbar.style.display = DEBUG_MODE ? "grid" : "none";
+        debugToolbar.style.display = BDF.DEBUG_MODE ? "grid" : "none";
       }
       if (columnWarning) {
-        columnWarning.style.display = DEBUG_MODE && !columnJson ? "block" : "none";
+        columnWarning.style.display = BDF.DEBUG_MODE && !columnJson ? "block" : "none";
+      }
+      if (formContainer) {
+        formContainer.style.display = "block";
+        const formSection = formContainer.closest("section");
+        if (formSection) {
+          Array.from(formSection.children).forEach((child) => {
+            if (child === formContainer) return;
+            child.style.display = formOnly ? "none" : "";
+          });
+        }
       }
     }
 
@@ -1387,12 +1404,15 @@
     };
 
     function setConsole(message, payload) {
+      if (IS_VERSION_MODE || !BDF.DEBUG_MODE) return;
+      if (!consoleEl) return;
       const timestamp = new Date().toLocaleTimeString("tr-TR");
       consoleEl.textContent += `[${timestamp}] ${message}` + (payload ? `\n${payload}` : "") + "\n";
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
     function renderSubmitOutputs(payload) {
+      if (IS_VERSION_MODE) return;
       if (!submitOutputsEl) {
         console.warn("submitOutputs panel not found");
         return;
@@ -1425,6 +1445,7 @@
     }
 
     function emit(eventName, detail) {
+      if (IS_VERSION_MODE || !BDF.DEBUG_MODE) return;
       setConsole(eventName, JSON.stringify(detail, null, 2));
     }
 
@@ -3282,7 +3303,10 @@
       }
     }
 
-    formEl.addEventListener("submit", (event) => {
+    if (!BDF.__listenersBound) {
+      BDF.__listenersBound = true;
+
+      formEl.addEventListener("submit", (event) => {
       event.preventDefault();
       validateAll();
       const firstInvalidKey = focusFirstInvalid();
@@ -3310,17 +3334,17 @@
         outputlist2: submitOutputsPayload.outputlist2,
         outputlist3: submitOutputsPayload.outputlist3
       });
-    });
-
-    if (submitBtn) {
-      submitBtn.addEventListener("click", () => {
-        console.info("submit button clicked");
-        const submitOutputsPayload = buildSubmitOutputsPayload();
-        renderSubmitOutputs(submitOutputsPayload);
       });
-    }
 
-    formEl.addEventListener("keydown", (event) => {
+      if (submitBtn) {
+        submitBtn.addEventListener("click", () => {
+          console.info("submit button clicked");
+          const submitOutputsPayload = buildSubmitOutputsPayload();
+          renderSubmitOutputs(submitOutputsPayload);
+        });
+      }
+
+      formEl.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         if (event.target && event.target.blur) event.target.blur();
         return;
@@ -3337,27 +3361,21 @@
       } else {
         submitBtn.click();
       }
-    });
-
-    clearBtn.addEventListener("click", () => {
-      emit("onClear", {});
-      resetAllStores();
-    });
-
-    [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
-      if (!input) return;
-      input.addEventListener("input", () => {
-        syncManualJsonInputs();
       });
-    });
 
-    if (versionInput) {
-      versionInput.addEventListener("change", () => {
-        applyVersionVisibility();
+      clearBtn.addEventListener("click", () => {
+        emit("onClear", {});
+        resetAllStores();
       });
-    }
 
-    loadHumanJsonBtn.addEventListener("click", () => {
+      [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
+        if (!input) return;
+        input.addEventListener("input", () => {
+          syncManualJsonInputs();
+        });
+      });
+
+      loadHumanJsonBtn.addEventListener("click", () => {
       syncManualJsonInputs();
       const payload = MANUAL_DATA_JSON || SAMPLE_DATA_JSON;
       if (!payload) {
@@ -3368,9 +3386,9 @@
       emit("debug:human-json", payload);
       loadJsonSafeToForm("human", payload);
       openExportModal("human");
-    });
+      });
 
-    loadPredictedJsonBtn.addEventListener("click", () => {
+      loadPredictedJsonBtn.addEventListener("click", () => {
       syncManualJsonInputs();
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
@@ -3384,143 +3402,144 @@
       initializeSourceByFieldFromAi();
       refreshAllFields();
       openExportModal("ai");
-    });
+      });
 
-    loadColumnJsonBtn.addEventListener("click", () => {
+      loadColumnJsonBtn.addEventListener("click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
       emit("debug:column-json", columnJson);
       openExportModal("column");
-    });
-
-    applyAiToEmptyBtn.addEventListener("click", () => {
-      applyAiValuesToHuman({ overwrite: false });
-    });
-
-    overwriteAiToAllBtn.addEventListener("click", () => {
-      const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
-      if (!confirmed) return;
-      applyAiValuesToHuman({ overwrite: true });
-    });
-
-    resetStoresBtn.addEventListener("click", () => {
-      resetAllStores();
-    });
-
-    exportJsonBtn.addEventListener("click", () => {
-      openExportModal("export");
-    });
-
-    if (scenarioColumnOnlyBtn) {
-      scenarioColumnOnlyBtn.addEventListener("click", () => {
-        applyScenario({
-          name: "column-only",
-          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
-        });
       });
-    }
 
-    if (scenarioColumnHumanBtn) {
-      scenarioColumnHumanBtn.addEventListener("click", () => {
-        applyScenario({
-          name: "column-human",
-          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
-          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON
-        });
+      applyAiToEmptyBtn.addEventListener("click", () => {
+        applyAiValuesToHuman({ overwrite: false });
       });
-    }
 
-    if (scenarioColumnAiBtn) {
-      scenarioColumnAiBtn.addEventListener("click", () => {
-        applyScenario({
-          name: "column-ai",
-          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
-          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
-        });
+      overwriteAiToAllBtn.addEventListener("click", () => {
+        const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
+        if (!confirmed) return;
+        applyAiValuesToHuman({ overwrite: true });
       });
-    }
 
-    if (scenarioColumnAiHumanBtn) {
-      scenarioColumnAiHumanBtn.addEventListener("click", () => {
-        applyScenario({
-          name: "column-ai-human",
-          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
-          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON,
-          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
-        });
+      resetStoresBtn.addEventListener("click", () => {
+        resetAllStores();
       });
-    }
 
-    if (scenarioConflictBtn) {
-      scenarioConflictBtn.addEventListener("click", () => {
-        applyScenario({
-          name: "conflict",
-          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
-          human: {
-            "Kusur Oranı": "40",
-            "Hasar Onarım Tutarı": "120000"
-          },
-          ai: {
-            "Kusur Oranı": "80",
-            "Hasar Onarım Tutarı": "145000"
-          }
-        });
+      exportJsonBtn.addEventListener("click", () => {
+        openExportModal("export");
       });
-    }
 
-    document.getElementById("loadSample").addEventListener("click", () => {
-      schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-      currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
-      localeInput.value = defaultSchema.locale;
-      timezoneInput.value = defaultSchema.timezone;
-      modeInput.value = defaultSchema.mode;
-      requiredPolicyInput.value = defaultSchema.requiredPolicy;
-      showInlineHelpInput.checked = defaultSchema.showInlineHelp;
-      autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
-    });
-
-    document.getElementById("renderForm").addEventListener("click", () => {
-      const parsed = safeJsonParse(schemaInput.value);
-      if (!parsed || !parsed.fields) {
-        setConsole("Schema parse edilemedi", "");
-        return;
+      if (scenarioColumnOnlyBtn) {
+        scenarioColumnOnlyBtn.addEventListener("click", () => {
+          applyScenario({
+            name: "column-only",
+            column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
+          });
+        });
       }
-      state.config = {
-        ...parsed,
-        currentDateTimeISO: currentDateTimeInput.value || parsed.currentDateTimeISO,
-        locale: localeInput.value || parsed.locale || "tr-TR",
-        timezone: timezoneInput.value || parsed.timezone || "Europe/Istanbul",
-        mode: modeInput.value || parsed.mode || "create",
-        requiredPolicy: requiredPolicyInput.value || parsed.requiredPolicy || "strict",
-        showInlineHelp: showInlineHelpInput.checked,
-        autoFocusFirstInvalid: autoFocusInvalidInput.checked
-      };
-      columnJson = {
-        columns: (state.config.fields || []).map((field) => ({
-          fieldName: field.label || field.key,
-          label: field.label,
-          type: field.type,
-          required: field.required || normalizeStageType(field.stageType) === "mandatory",
-          stageType: field.stageType || "optional",
-          options: field.options || [],
-          default: field.default,
-          allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
-          ui: field.ui || {}
-        })),
-        currentDateTimeISO: state.config.currentDateTimeISO,
-        locale: state.config.locale,
-        timezone: state.config.timezone,
-        mode: state.config.mode
-      };
-      columnWarning.style.display = "none";
-      formContainer.style.display = "block";
-      renderForm(state.config);
-    });
 
-    document.getElementById("clearConsole").addEventListener("click", () => {
-      consoleEl.textContent = "";
-    });
+      if (scenarioColumnHumanBtn) {
+        scenarioColumnHumanBtn.addEventListener("click", () => {
+          applyScenario({
+            name: "column-human",
+            column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+            human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON
+          });
+        });
+      }
+
+      if (scenarioColumnAiBtn) {
+        scenarioColumnAiBtn.addEventListener("click", () => {
+          applyScenario({
+            name: "column-ai",
+            column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+            ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+          });
+        });
+      }
+
+      if (scenarioColumnAiHumanBtn) {
+        scenarioColumnAiHumanBtn.addEventListener("click", () => {
+          applyScenario({
+            name: "column-ai-human",
+            column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+            human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON,
+            ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+          });
+        });
+      }
+
+      if (scenarioConflictBtn) {
+        scenarioConflictBtn.addEventListener("click", () => {
+          applyScenario({
+            name: "conflict",
+            column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+            human: {
+              "Kusur Oranı": "40",
+              "Hasar Onarım Tutarı": "120000"
+            },
+            ai: {
+              "Kusur Oranı": "80",
+              "Hasar Onarım Tutarı": "145000"
+            }
+          });
+        });
+      }
+
+      document.getElementById("loadSample").addEventListener("click", () => {
+        schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+        currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+        localeInput.value = defaultSchema.locale;
+        timezoneInput.value = defaultSchema.timezone;
+        modeInput.value = defaultSchema.mode;
+        requiredPolicyInput.value = defaultSchema.requiredPolicy;
+        showInlineHelpInput.checked = defaultSchema.showInlineHelp;
+        autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
+      });
+
+      document.getElementById("renderForm").addEventListener("click", () => {
+        const parsed = safeJsonParse(schemaInput.value);
+        if (!parsed || !parsed.fields) {
+          setConsole("Schema parse edilemedi", "");
+          return;
+        }
+        state.config = {
+          ...parsed,
+          currentDateTimeISO: currentDateTimeInput.value || parsed.currentDateTimeISO,
+          locale: localeInput.value || parsed.locale || "tr-TR",
+          timezone: timezoneInput.value || parsed.timezone || "Europe/Istanbul",
+          mode: modeInput.value || parsed.mode || "create",
+          requiredPolicy: requiredPolicyInput.value || parsed.requiredPolicy || "strict",
+          showInlineHelp: showInlineHelpInput.checked,
+          autoFocusFirstInvalid: autoFocusInvalidInput.checked
+        };
+        columnJson = {
+          columns: (state.config.fields || []).map((field) => ({
+            fieldName: field.label || field.key,
+            label: field.label,
+            type: field.type,
+            required: field.required || normalizeStageType(field.stageType) === "mandatory",
+            stageType: field.stageType || "optional",
+            options: field.options || [],
+            default: field.default,
+            allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
+            ui: field.ui || {}
+          })),
+          currentDateTimeISO: state.config.currentDateTimeISO,
+          locale: state.config.locale,
+          timezone: state.config.timezone,
+          mode: state.config.mode
+        };
+        columnWarning.style.display = "none";
+        formContainer.style.display = "block";
+        renderForm(state.config);
+      });
+
+      document.getElementById("clearConsole").addEventListener("click", () => {
+        consoleEl.textContent = "";
+      });
+    }
 
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
@@ -3532,6 +3551,7 @@
       formEl.innerHTML = "";
       formContainer.style.display = "none";
     }
+    })();
   </script>
 </body>
 </html>
