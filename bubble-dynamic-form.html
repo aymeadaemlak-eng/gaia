@@ -88,10 +88,17 @@
       gap: 6px;
       padding: 8px 0;
       border-bottom: 1px solid #eef2f7;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     .field-wrapper:last-child {
       border-bottom: none;
+    }
+
+    .field-wrapper:hover {
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+      transform: translateY(-1px);
+      border-radius: 12px;
     }
 
     .field-row {
@@ -166,6 +173,8 @@
       cursor: pointer;
       color: var(--primary);
       white-space: nowrap;
+      position: relative;
+      overflow: hidden;
     }
 
     .ai-badge img {
@@ -181,6 +190,31 @@
       color: #15803d;
     }
 
+    .ai-badge.is-passive {
+      opacity: 0.7;
+      filter: grayscale(0.2);
+    }
+
+    .ai-badge::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+      transform: translateX(-120%);
+      animation: sparkle 4s ease-in-out infinite;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    @keyframes sparkle {
+      0%, 70% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(120%);
+      }
+    }
+
     .control-stack {
       display: grid;
       gap: 6px;
@@ -193,6 +227,30 @@
       background: #fff;
       position: relative;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-control::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 4px;
+      border-radius: 999px;
+      background: transparent;
+      opacity: 0.6;
+    }
+
+    .field-control.stage-optional::before {
+      background: #d1d5db;
+    }
+
+    .field-control.stage-mandatory::before {
+      background: var(--danger);
+    }
+
+    .field-control.stage-control::before {
+      background: var(--primary);
     }
 
     .field-control.ai-active {
@@ -384,6 +442,8 @@
       display: grid;
       gap: 6px;
       background: #fff;
+      position: relative;
+      overflow: hidden;
     }
 
     .file-meta {
@@ -404,6 +464,90 @@
     .file-thumb.large {
       width: 100%;
       height: 90px;
+    }
+
+    .file-thumb-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      border-radius: 8px;
+    }
+
+    .file-thumb-wrap:hover .file-thumb-overlay {
+      opacity: 1;
+    }
+
+    .preview-btn {
+      border: none;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .conflict-chip {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .conflict-popover {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      min-width: 220px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+      display: none;
+      z-index: 20;
+    }
+
+    .conflict-popover.open {
+      display: grid;
+      gap: 6px;
+    }
+
+    .conflict-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .date-wrapper {
+      position: relative;
+      display: grid;
+      gap: 6px;
+    }
+
+    .date-overlay-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
     }
 
     .file-icon {
@@ -659,6 +803,11 @@
           <button type="button" class="ghost" id="overwriteAiToAll">AI -> Hepsini Overwrite</button>
           <button type="button" class="ghost" id="resetStores">Reset</button>
           <button type="button" class="secondary" id="exportJson">Export JSON</button>
+          <button type="button" class="ghost" id="scenarioColumnOnly">Scenario: Column</button>
+          <button type="button" class="ghost" id="scenarioColumnHuman">Scenario: Column+Human</button>
+          <button type="button" class="ghost" id="scenarioColumnAi">Scenario: Column+AI</button>
+          <button type="button" class="ghost" id="scenarioColumnAiHuman">Scenario: Column+AI+Human</button>
+          <button type="button" class="ghost" id="scenarioConflict">Scenario: Conflict</button>
         </div>
         <div class="toolbar-status">
           <span id="aiFieldCount">AI alan sayısı: 0</span>
@@ -884,6 +1033,11 @@
     const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
     const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
     const resetStoresBtn = document.getElementById("resetStores");
+    const scenarioColumnOnlyBtn = document.getElementById("scenarioColumnOnly");
+    const scenarioColumnHumanBtn = document.getElementById("scenarioColumnHuman");
+    const scenarioColumnAiBtn = document.getElementById("scenarioColumnAi");
+    const scenarioColumnAiHumanBtn = document.getElementById("scenarioColumnAiHuman");
+    const scenarioConflictBtn = document.getElementById("scenarioConflict");
     const exportJsonBtn = document.getElementById("exportJson");
     const closeExportBtn = document.getElementById("closeExport");
     const aiFieldCountEl = document.getElementById("aiFieldCount");
@@ -1126,6 +1280,29 @@
       return trimmed;
     }
 
+    function isValidDateString(value) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const [year, month, day] = value.split("-").map((part) => Number(part));
+      if (year < 1000 || year > 9999) return false;
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function areValuesDifferent(a, b) {
+      if (isEmptyValue(a) && isEmptyValue(b)) return false;
+      if (Array.isArray(a) || Array.isArray(b) || typeof a === "object" || typeof b === "object") {
+        return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
+      }
+      return String(a ?? "") !== String(b ?? "");
+    }
+
+    function formatValueForDisplay(value) {
+      if (Array.isArray(value) || typeof value === "object") {
+        return JSON.stringify(value, null, 2);
+      }
+      return String(value ?? "");
+    }
+
     function normalizeTimeInput(raw) {
       if (!raw) return "";
       const cleaned = raw.replace(/\s/g, "");
@@ -1307,25 +1484,51 @@
     function isImageLike(file) {
       if (!file) return false;
       if (file.type && file.type.startsWith("image/")) return true;
+      if (file.url && String(file.url).startsWith("data:image/")) return true;
       if (file.url) {
         return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.url);
       }
       return false;
     }
 
-    function parseInitialFiles(initialValue, allowMultiple) {
+    function isDataUrl(value) {
+      return typeof value === "string" && value.startsWith("data:");
+    }
+
+    function isPdfDataUrl(value) {
+      return typeof value === "string" && value.startsWith("data:application/pdf");
+    }
+
+    function isLikelyBase64(value) {
+      if (typeof value !== "string") return false;
+      if (value.length < 60) return false;
+      if (value.includes("://")) return false;
+      if (value.startsWith("data:")) return false;
+      return /^[A-Za-z0-9+/=\r\n]+$/.test(value);
+    }
+
+    function normalizeFileValueForPreview(field, value) {
+      if (!value || typeof value !== "string") return value;
+      if (field.type === "image" && isLikelyBase64(value)) {
+        return `data:image/*;base64,${value}`;
+      }
+      return value;
+    }
+
+    function parseInitialFiles(initialValue, allowMultiple, field) {
       if (!initialValue) return [];
       let values = Array.isArray(initialValue) ? initialValue : [initialValue];
       if (!allowMultiple && values.length > 1) {
         values = [values[0]];
       }
+      values = values.map((value) => normalizeFileValueForPreview(field, value));
       return values
         .filter((val) => typeof val === "string")
         .map((url) => ({
           url,
-          name: url.split("/").pop() || "dosya",
+          name: isDataUrl(url) ? (isPdfDataUrl(url) ? "dosya.pdf" : "gorsel") : url.split("/").pop() || "dosya",
           size: 0,
-          type: isImageLike({ url }) ? "image/*" : "",
+          type: isImageLike({ url }) ? "image/*" : isPdfDataUrl(url) ? "application/pdf" : "",
           lastModified: null,
           preview: url
         }));
@@ -1395,10 +1598,31 @@
       const aiValue = aiData[fieldKey];
       const hasAi = !isEmptyValue(aiValue);
       const activeSource = getActiveSource(fieldKey);
+      const humanValue = humanData[fieldKey];
+      const hasHuman = !isEmptyValue(humanValue);
+      const hasConflict = hasAi && hasHuman && areValuesDifferent(humanValue, aiValue);
       ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
       ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
+      ref.aiBadge.classList.toggle("is-passive", activeSource !== "ai" && hasAi);
       ref.control.classList.toggle("ai-active", activeSource === "ai" && hasAi);
       ref.aiPill.style.display = activeSource === "ai" && hasAi ? "inline-flex" : "none";
+      if (ref.applyAiBtn) {
+        ref.applyAiBtn.style.display = !hasHuman && hasAi ? "inline-flex" : "none";
+      }
+      if (ref.revertAiBtn) {
+        ref.revertAiBtn.style.display = hasHuman && hasAi && activeSource !== "ai" ? "inline-flex" : "none";
+      }
+      if (ref.conflictChip) {
+        ref.conflictChip.style.display = hasConflict ? "inline-flex" : "none";
+      }
+      if (ref.conflictPopover) {
+        if (hasConflict) {
+          ref.conflictPopover.querySelector("[data-conflict-human]").textContent = formatValueForDisplay(humanValue);
+          ref.conflictPopover.querySelector("[data-conflict-ai]").textContent = formatValueForDisplay(aiValue);
+        } else {
+          ref.conflictPopover.classList.remove("open");
+        }
+      }
     }
 
     function updateFieldDisplayValue(fieldKey) {
@@ -1440,6 +1664,31 @@
         }
       });
       refreshAllFields();
+    }
+
+    function applyScenario({ name, column, human, ai }) {
+      emit("debug:scenario", { name, column, human, ai });
+      applyColumnJson(column);
+      humanData = {};
+      aiData = {};
+      sourceByField = {};
+      if (human) {
+        loadJsonSafeToForm("human", human);
+      }
+      if (ai) {
+        loadJsonSafeToForm("ai", ai);
+      }
+      initializeSourceByFieldFromAi();
+      refreshAllFields();
+      if (ai && human) {
+        openExportModal("export");
+      } else if (ai) {
+        openExportModal("ai");
+      } else if (human) {
+        openExportModal("human");
+      } else {
+        openExportModal("column");
+      }
     }
 
     function initializeSourceByFieldFromAi() {
@@ -1554,8 +1803,14 @@
         }
       }
       if (["date", "datetime", "time"].includes(field.type) && value) {
-        if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(String(value)) && !/^\d{2}\.\d{2}\.\d{4}$/.test(String(value))) {
-          return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
+        if (field.type === "date") {
+          const normalized = normalizeDateInput(String(value));
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+            return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
+          }
+          if (!isValidDateString(normalized)) {
+            return "Geçerli bir tarih girin.";
+          }
         }
         if (field.type === "time" && !/^\d{2}:\d{2}$/.test(String(value))) return "Saat formatı HH:mm olmalı.";
         if (field.type === "datetime" && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(value))) return "Tarih ve saat gerekli.";
@@ -1649,6 +1904,66 @@
         });
         labelMeta.append(aiBadge);
 
+        const applyAiBtn = document.createElement("button");
+        applyAiBtn.type = "button";
+        applyAiBtn.className = "pill";
+        applyAiBtn.textContent = "AI'den doldur";
+        applyAiBtn.style.display = "none";
+        applyAiBtn.addEventListener("click", () => {
+          const aiValue = aiData[field.key];
+          if (isEmptyValue(aiValue)) return;
+          humanData[field.key] = aiValue;
+          sourceByField[field.key] = "human";
+          updateFieldDisplayValue(field.key);
+        });
+        labelMeta.append(applyAiBtn);
+
+        const revertAiBtn = document.createElement("button");
+        revertAiBtn.type = "button";
+        revertAiBtn.className = "pill";
+        revertAiBtn.textContent = "AI'ye dön";
+        revertAiBtn.style.display = "none";
+        revertAiBtn.addEventListener("click", () => {
+          if (isEmptyValue(aiData[field.key])) return;
+          sourceByField[field.key] = "ai";
+          updateFieldDisplayValue(field.key);
+        });
+        labelMeta.append(revertAiBtn);
+
+        const conflictWrap = document.createElement("div");
+        conflictWrap.style.position = "relative";
+        const conflictChip = document.createElement("button");
+        conflictChip.type = "button";
+        conflictChip.className = "conflict-chip";
+        conflictChip.textContent = "Çakışma";
+        conflictChip.style.display = "none";
+        const conflictPopover = document.createElement("div");
+        conflictPopover.className = "conflict-popover";
+        conflictPopover.innerHTML = `
+          <strong>AI vs Human</strong>
+          <div><small>Human</small><pre data-conflict-human></pre></div>
+          <div><small>AI</small><pre data-conflict-ai></pre></div>
+          <div class="conflict-actions">
+            <button type="button" class="secondary" data-apply-human>Human uygula</button>
+            <button type="button" class="secondary" data-apply-ai>AI uygula</button>
+          </div>
+        `;
+        conflictChip.addEventListener("click", () => {
+          conflictPopover.classList.toggle("open");
+        });
+        conflictPopover.querySelector("[data-apply-human]").addEventListener("click", () => {
+          sourceByField[field.key] = "human";
+          updateFieldDisplayValue(field.key);
+          conflictPopover.classList.remove("open");
+        });
+        conflictPopover.querySelector("[data-apply-ai]").addEventListener("click", () => {
+          sourceByField[field.key] = "ai";
+          updateFieldDisplayValue(field.key);
+          conflictPopover.classList.remove("open");
+        });
+        conflictWrap.append(conflictChip, conflictPopover);
+        labelMeta.append(conflictWrap);
+
         labelColumn.append(labelTop);
         if (labelMeta.childElementCount) {
           labelColumn.append(labelMeta);
@@ -1656,6 +1971,10 @@
 
         const control = document.createElement("div");
         control.className = "field-control";
+        const stageClass = normalizeStageType(field.stageType);
+        if (stageClass) {
+          control.classList.add(`stage-${stageClass}`);
+        }
         const aiPill = document.createElement("span");
         aiPill.className = "ai-pill";
         aiPill.textContent = "AI";
@@ -1950,11 +2269,11 @@
           textInput.setAttribute("aria-describedby", `error-${field.key}`);
           textInput.placeholder = field.placeholder || "gg.aa.yyyy";
           textInput.inputMode = "numeric";
+          textInput.maxLength = 10;
 
           const nativeInput = document.createElement("input");
           nativeInput.type = "date";
-          nativeInput.className = "field-input";
-          nativeInput.style.display = "none";
+          nativeInput.className = "field-input date-overlay-input";
 
           const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
           if (initialDate) {
@@ -1977,7 +2296,7 @@
 
           const syncDate = (raw) => {
             const normalized = normalizeDateInput(raw);
-            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized)) {
+            if (normalized && /^\\d{4}-\\d{2}-\\d{2}$/.test(normalized) && isValidDateString(normalized)) {
               const [y, m, d] = normalized.split("-");
               textInput.value = `${d}.${m}.${y}`;
               nativeInput.value = normalized;
@@ -1989,7 +2308,7 @@
           };
 
           textInput.addEventListener("input", (event) => {
-            const digits = event.target.value.replace(/\\D/g, "");
+            const digits = event.target.value.replace(/\\D/g, "").slice(0, 8);
             if (digits.length === 8) {
               const formatted = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
               event.target.value = formatted;
@@ -1998,6 +2317,15 @@
           });
           textInput.addEventListener("blur", () => syncDate(textInput.value));
           nativeInput.addEventListener("change", (event) => syncDate(event.target.value));
+          if (field.ui?.autoOpenCalendar) {
+            textInput.addEventListener("focus", () => {
+              if (nativeInput.showPicker) {
+                nativeInput.showPicker();
+              } else {
+                nativeInput.focus();
+              }
+            });
+          }
 
           const actions = document.createElement("div");
           actions.className = "field-actions";
@@ -2053,7 +2381,10 @@
             actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
           }
 
-          control.append(textInput, nativeInput, actions);
+          const dateWrapper = document.createElement("div");
+          dateWrapper.className = "date-wrapper";
+          dateWrapper.append(textInput, nativeInput);
+          control.append(dateWrapper, actions);
         } else if (field.type === "datetime") {
           const dateInput = document.createElement("input");
           const timeInput = document.createElement("input");
@@ -2228,17 +2559,23 @@
               meta.innerHTML = `<strong>${file.name}</strong><span>${Math.round(file.size / 1024)} KB</span>`;
 
               if (isImage) {
+                const thumbWrap = document.createElement("div");
+                thumbWrap.className = "file-thumb-wrap";
                 const thumb = document.createElement("img");
                 thumb.className = isImageGrid ? "file-thumb large" : "file-thumb";
                 thumb.src = file.preview || file.url || "";
                 thumb.alt = file.name || "görsel";
-                thumb.addEventListener("click", () => openLightbox(file.preview || file.url || ""));
+                const overlay = document.createElement("div");
+                overlay.className = "file-thumb-overlay";
+                overlay.textContent = "🔍";
+                thumbWrap.append(thumb, overlay);
+                thumbWrap.addEventListener("click", () => openLightbox(file.preview || file.url || ""));
                 if (isImageGrid) {
-                  row.append(thumb);
+                  row.append(thumbWrap);
                 } else {
                   const left = document.createElement("div");
                   left.className = "inline-row";
-                  left.append(thumb, meta);
+                  left.append(thumbWrap, meta);
                   row.append(left);
                 }
               } else {
@@ -2248,6 +2585,14 @@
                 icon.className = "file-icon";
                 icon.textContent = "📄";
                 left.append(icon, meta);
+                if (file.url && (isPdfDataUrl(file.url) || file.url.startsWith("http"))) {
+                  const previewBtn = document.createElement("button");
+                  previewBtn.type = "button";
+                  previewBtn.className = "preview-btn";
+                  previewBtn.textContent = "Önizle";
+                  previewBtn.addEventListener("click", () => openFilePreview(file.url));
+                  left.append(previewBtn);
+                }
                 row.append(left);
               }
 
@@ -2373,7 +2718,7 @@
 
           control.append(drop, fileInput, list);
           setValue = (value) => {
-            const initialFiles = parseInitialFiles(value, allowMultiple);
+            const initialFiles = parseInitialFiles(value, allowMultiple, field);
             if (initialFiles.length) {
               state.fileBuffers[field.key] = initialFiles;
             } else if (!state.fileStaging[field.key]?.length) {
@@ -2417,7 +2762,11 @@
           inputEl,
           setValue,
           aiBadge,
-          aiPill
+          aiPill,
+          applyAiBtn,
+          revertAiBtn,
+          conflictChip,
+          conflictPopover
         };
         updateAiVisuals(field.key);
 
@@ -2445,6 +2794,11 @@
       lightboxImage.src = src;
       lightboxEl.classList.add("open");
       lightboxEl.setAttribute("aria-hidden", "false");
+    }
+
+    function openFilePreview(url) {
+      if (!url) return;
+      window.open(url, "_blank", "noopener");
     }
 
     function closeLightbox() {
@@ -2640,7 +2994,9 @@
         refreshAllFields();
         return;
       }
+      emit("debug:human-json", payload);
       loadJsonSafeToForm("human", payload);
+      openExportModal("human");
     });
 
     loadPredictedJsonBtn.addEventListener("click", () => {
@@ -2651,15 +3007,18 @@
         refreshAllFields();
         return;
       }
+      emit("debug:predicted-json", payload);
       loadJsonSafeToForm("ai", payload);
       initializeSourceByFieldFromAi();
       refreshAllFields();
+      openExportModal("ai");
     });
 
     loadColumnJsonBtn.addEventListener("click", () => {
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
-      setConsole("Column data yüklendi", JSON.stringify(columnJson, null, 2));
+      emit("debug:column-json", columnJson);
+      openExportModal("column");
     });
 
     applyAiToEmptyBtn.addEventListener("click", () => {
@@ -2679,6 +3038,63 @@
     exportJsonBtn.addEventListener("click", () => {
       openExportModal("export");
     });
+
+    if (scenarioColumnOnlyBtn) {
+      scenarioColumnOnlyBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-only",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnHumanBtn) {
+      scenarioColumnHumanBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-human",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnAiBtn) {
+      scenarioColumnAiBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-ai",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+        });
+      });
+    }
+
+    if (scenarioColumnAiHumanBtn) {
+      scenarioColumnAiHumanBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "column-ai-human",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: MANUAL_DATA_JSON || SAMPLE_DATA_JSON,
+          ai: MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON
+        });
+      });
+    }
+
+    if (scenarioConflictBtn) {
+      scenarioConflictBtn.addEventListener("click", () => {
+        applyScenario({
+          name: "conflict",
+          column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
+          human: {
+            "Kusur Oranı": "40",
+            "Hasar Onarım Tutarı": "120000"
+          },
+          ai: {
+            "Kusur Oranı": "80",
+            "Hasar Onarım Tutarı": "145000"
+          }
+        });
+      });
+    }
 
     document.getElementById("loadSample").addEventListener("click", () => {
       schemaInput.value = JSON.stringify(defaultSchema, null, 2);
