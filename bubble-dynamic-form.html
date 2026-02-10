@@ -32,6 +32,46 @@
       VERSION: true
     };
   </script>
+  <script>
+    (function (){
+      const hostId = "form";
+
+      function findIframe(){
+        const host = document.getElementById(hostId);
+        if (!host) return null;
+        return host.querySelector("iframe");
+      }
+
+      function applyIframeBaseStyles(frame){
+        frame.style.width = "100%";
+        frame.style.display = "block";
+        frame.style.border = "0";
+      }
+
+      function setIframeHeight(h){
+        const iframe = findIframe();
+        if (!iframe) return;
+        applyIframeBaseStyles(iframe);
+        const height = Math.max(200, Number(h)||0);
+        iframe.style.height = height + "px";
+        iframe.style.minHeight = height + "px";
+      }
+
+      window.addEventListener("message", function(e){
+        if (e.data && e.data.height && !isNaN(Number(e.data.height))){
+          setIframeHeight(e.data.height);
+        }
+      });
+
+      const tryInit = setInterval(()=>{
+        const frame = findIframe();
+        if (frame){
+          applyIframeBaseStyles(frame);
+          clearInterval(tryInit);
+        }
+      }, 200);
+    })();
+  </script>
   <style data-bdf-style>
     #bdf-root {
       color-scheme: light;
