@@ -48,18 +48,16 @@
       --focus: rgba(37, 99, 235, 0.12);
       font-size: 14px;
       color: var(--text);
-      background: var(--bg);
     }
 
-    #bdf-root,
-    #bdf-root * {
+    :where(#bdf-root),
+    :where(#bdf-root) * {
       box-sizing: border-box;
     }
 
     #bdf-root .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
+      margin: 0;
+      padding: 0;
       display: grid;
       gap: 20px;
     }
@@ -1235,55 +1233,76 @@
     let taskStartTimestamp = null;
     let initialSnapshot = null;
 
-    const schemaInput = document.getElementById("schemaInput");
-    const columnJsonInput = document.getElementById("columnJsonInput");
-    const humanJsonInput = document.getElementById("humanJsonInput");
-    const predictedJsonInput = document.getElementById("predictedJsonInput");
-    const columnJsonError = document.getElementById("columnJsonError");
-    const humanJsonError = document.getElementById("humanJsonError");
-    const predictedJsonError = document.getElementById("predictedJsonError");
-    const versionInput = document.getElementById("versionInput");
-    const jsonInputsSection = document.getElementById("jsonInputsSection");
-    const debugPanels = document.getElementById("debugPanels");
-    const currentDateTimeInput = document.getElementById("currentDateTime");
-    const localeInput = document.getElementById("localeInput");
-    const timezoneInput = document.getElementById("timezoneInput");
-    const modeInput = document.getElementById("modeInput");
-    const requiredPolicyInput = document.getElementById("requiredPolicyInput");
-    const showInlineHelpInput = document.getElementById("showInlineHelp");
-    const autoFocusInvalidInput = document.getElementById("autoFocusInvalid");
-    const formEl = document.getElementById("dynamicForm");
-    const submitBtn = document.getElementById("submitBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const summaryBox = document.getElementById("summaryBox");
-    const formContainer = document.getElementById("formContainer");
-    const formActions = document.getElementById("formActions");
-    const consoleEl = document.getElementById("eventConsole");
-    const submitOutputsEl = document.getElementById("submitOutputs");
-    const eventConsoleSection = document.getElementById("eventConsoleSection");
-    const submitOutputsSection = document.getElementById("submitOutputsSection");
-    const lightboxEl = document.getElementById("lightbox");
-    const lightboxImage = document.getElementById("lightboxImage");
-    const exportModal = document.getElementById("exportModal");
-    const exportContent = document.getElementById("exportContent");
-    const exportTabs = document.querySelectorAll("[data-export-tab]");
-    const loadHumanJsonBtn = document.getElementById("loadHumanJson");
-    const loadPredictedJsonBtn = document.getElementById("loadPredictedJson");
-    const loadColumnJsonBtn = document.getElementById("loadColumnJson");
-    const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
-    const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
-    const resetStoresBtn = document.getElementById("resetStores");
-    const scenarioColumnOnlyBtn = document.getElementById("scenarioColumnOnly");
-    const scenarioColumnHumanBtn = document.getElementById("scenarioColumnHuman");
-    const scenarioColumnAiBtn = document.getElementById("scenarioColumnAi");
-    const scenarioColumnAiHumanBtn = document.getElementById("scenarioColumnAiHuman");
-    const scenarioConflictBtn = document.getElementById("scenarioConflict");
-    const exportJsonBtn = document.getElementById("exportJson");
-    const closeExportBtn = document.getElementById("closeExport");
-    const aiFieldCountEl = document.getElementById("aiFieldCount");
-    const humanFieldCountEl = document.getElementById("humanFieldCount");
-    const columnWarning = document.getElementById("columnWarning");
-    const debugToolbar = document.getElementById("debugToolbar");
+    const rootElement = document.getElementById("bdf-root");
+    const styleElement = document.querySelector("style[data-bdf-style]");
+    let rootScope = rootElement;
+
+    if (window.BDF_USE_SHADOW === true && rootElement && !rootElement.shadowRoot) {
+      const shadow = rootElement.attachShadow({ mode: "open" });
+      if (styleElement) {
+        const shadowStyle = document.createElement("style");
+        shadowStyle.textContent = styleElement.textContent.replace(/#bdf-root/g, ":host");
+        shadow.append(shadowStyle);
+      }
+      while (rootElement.firstChild) {
+        shadow.append(rootElement.firstChild);
+      }
+      rootScope = shadow;
+    }
+
+    const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : document.querySelector(selector));
+    const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : document.querySelectorAll(selector));
+    const byId = (id) => qs(`#${id}`);
+
+    const schemaInput = byId("schemaInput");
+    const columnJsonInput = byId("columnJsonInput");
+    const humanJsonInput = byId("humanJsonInput");
+    const predictedJsonInput = byId("predictedJsonInput");
+    const columnJsonError = byId("columnJsonError");
+    const humanJsonError = byId("humanJsonError");
+    const predictedJsonError = byId("predictedJsonError");
+    const versionInput = byId("versionInput");
+    const jsonInputsSection = byId("jsonInputsSection");
+    const debugPanels = byId("debugPanels");
+    const currentDateTimeInput = byId("currentDateTime");
+    const localeInput = byId("localeInput");
+    const timezoneInput = byId("timezoneInput");
+    const modeInput = byId("modeInput");
+    const requiredPolicyInput = byId("requiredPolicyInput");
+    const showInlineHelpInput = byId("showInlineHelp");
+    const autoFocusInvalidInput = byId("autoFocusInvalid");
+    const formEl = byId("dynamicForm");
+    const submitBtn = byId("submitBtn");
+    const clearBtn = byId("clearBtn");
+    const summaryBox = byId("summaryBox");
+    const formContainer = byId("formContainer");
+    const formActions = byId("formActions");
+    const consoleEl = byId("eventConsole");
+    const submitOutputsEl = byId("submitOutputs");
+    const eventConsoleSection = byId("eventConsoleSection");
+    const submitOutputsSection = byId("submitOutputsSection");
+    const lightboxEl = byId("lightbox");
+    const lightboxImage = byId("lightboxImage");
+    const exportModal = byId("exportModal");
+    const exportContent = byId("exportContent");
+    const exportTabs = qsa("[data-export-tab]");
+    const loadHumanJsonBtn = byId("loadHumanJson");
+    const loadPredictedJsonBtn = byId("loadPredictedJson");
+    const loadColumnJsonBtn = byId("loadColumnJson");
+    const applyAiToEmptyBtn = byId("applyAiToEmpty");
+    const overwriteAiToAllBtn = byId("overwriteAiToAll");
+    const resetStoresBtn = byId("resetStores");
+    const scenarioColumnOnlyBtn = byId("scenarioColumnOnly");
+    const scenarioColumnHumanBtn = byId("scenarioColumnHuman");
+    const scenarioColumnAiBtn = byId("scenarioColumnAi");
+    const scenarioColumnAiHumanBtn = byId("scenarioColumnAiHuman");
+    const scenarioConflictBtn = byId("scenarioConflict");
+    const exportJsonBtn = byId("exportJson");
+    const closeExportBtn = byId("closeExport");
+    const aiFieldCountEl = byId("aiFieldCount");
+    const humanFieldCountEl = byId("humanFieldCount");
+    const columnWarning = byId("columnWarning");
+    const debugToolbar = byId("debugToolbar");
 
     if (columnJsonInput && MANUAL_COLUMN_JSON) {
       columnJsonInput.value = JSON.stringify(MANUAL_COLUMN_JSON, null, 2);
@@ -3116,15 +3135,13 @@
           };
 
           const positionPopover = () => {
-            const rect = control.getBoundingClientRect();
-            const width = 270;
+            const rect = iconBtn.getBoundingClientRect();
+            const popoverWidth = calendar.element.offsetWidth || 270;
             const top = rect.bottom + 8;
-            let left = rect.right - width;
             const pad = 8;
-            if (left < pad) left = pad;
-            if (left + width > window.innerWidth - pad) {
-              left = window.innerWidth - pad - width;
-            }
+            const minLeft = pad;
+            const maxLeft = window.innerWidth - popoverWidth - pad;
+            const left = Math.min(Math.max(rect.left, minLeft), maxLeft);
             calendar.element.style.top = `${top}px`;
             calendar.element.style.left = `${left}px`;
           };
@@ -3323,15 +3340,13 @@
           };
 
           const positionPopover = () => {
-            const rect = control.getBoundingClientRect();
-            const width = 270;
+            const rect = iconBtn.getBoundingClientRect();
+            const popoverWidth = calendar.element.offsetWidth || 270;
             const top = rect.bottom + 8;
-            let left = rect.right - width;
             const pad = 8;
-            if (left < pad) left = pad;
-            if (left + width > window.innerWidth - pad) {
-              left = window.innerWidth - pad - width;
-            }
+            const minLeft = pad;
+            const maxLeft = window.innerWidth - popoverWidth - pad;
+            const left = Math.min(Math.max(rect.left, minLeft), maxLeft);
             calendar.element.style.top = `${top}px`;
             calendar.element.style.left = `${left}px`;
           };
@@ -3900,7 +3915,7 @@
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = document.querySelector(`#field-${CSS.escape(firstInvalid)}`) || document.querySelector(`[data-field='${firstInvalid}']`);
+      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field='${firstInvalid}']`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -3927,7 +3942,7 @@
         }
         state.errors[field.key] = validateField(field, validationValue);
         state.validMap[field.key] = !state.errors[field.key];
-        const control = document.querySelector(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
+        const control = qs(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
         if (control) updateError(control, field);
       });
     }
@@ -4176,7 +4191,7 @@
         });
       }
 
-      document.getElementById("loadSample").addEventListener("click", () => {
+      byId("loadSample").addEventListener("click", () => {
         schemaInput.value = JSON.stringify(defaultSchema, null, 2);
         currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
         localeInput.value = defaultSchema.locale;
@@ -4187,7 +4202,7 @@
         autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
       });
 
-      document.getElementById("renderForm").addEventListener("click", () => {
+      byId("renderForm").addEventListener("click", () => {
         const parsed = safeJsonParse(schemaInput.value);
         if (!parsed || !parsed.fields) {
           setConsole("Schema parse edilemedi", "");
@@ -4225,7 +4240,7 @@
         renderForm(state.config);
       });
 
-      document.getElementById("clearConsole").addEventListener("click", () => {
+      byId("clearConsole").addEventListener("click", () => {
         consoleEl.textContent = "";
       });
     }
