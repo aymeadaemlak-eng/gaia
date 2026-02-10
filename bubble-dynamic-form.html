@@ -50,8 +50,8 @@
       color: var(--text);
     }
 
-    :where(#bdf-root),
-    :where(#bdf-root) * {
+    #bdf-root,
+    #bdf-root * {
       box-sizing: border-box;
     }
 
@@ -902,7 +902,7 @@
   </script>
 </head>
 <body>
-  <div id="bdf-root">
+  <div id="bdf-root" data-bdf-root>
     <main class="page">
     <div id="debugPanels">
       <section class="card" id="jsonInputsSection">
@@ -4206,7 +4206,7 @@
       });
 
       if (scenarioColumnOnlyBtn) {
-        scenarioColumnOnlyBtn.addEventListener("click", () => {
+        safeOn(scenarioColumnOnlyBtn, "click", () => {
           applyScenario({
             name: "column-only",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
@@ -4215,7 +4215,7 @@
       }
 
       if (scenarioColumnHumanBtn) {
-        scenarioColumnHumanBtn.addEventListener("click", () => {
+        safeOn(scenarioColumnHumanBtn, "click", () => {
           applyScenario({
             name: "column-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4225,7 +4225,7 @@
       }
 
       if (scenarioColumnAiBtn) {
-        scenarioColumnAiBtn.addEventListener("click", () => {
+        safeOn(scenarioColumnAiBtn, "click", () => {
           applyScenario({
             name: "column-ai",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4235,7 +4235,7 @@
       }
 
       if (scenarioColumnAiHumanBtn) {
-        scenarioColumnAiHumanBtn.addEventListener("click", () => {
+        safeOn(scenarioColumnAiHumanBtn, "click", () => {
           applyScenario({
             name: "column-ai-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4246,7 +4246,7 @@
       }
 
       if (scenarioConflictBtn) {
-        scenarioConflictBtn.addEventListener("click", () => {
+        safeOn(scenarioConflictBtn, "click", () => {
           applyScenario({
             name: "conflict",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
