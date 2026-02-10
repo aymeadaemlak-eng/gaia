@@ -787,7 +787,8 @@
 </head>
 <body>
   <main class="page">
-    <section class="card" id="jsonInputsSection">
+    <div id="debugPanels">
+      <section class="card" id="jsonInputsSection">
       <h2>Bubble JSON Girişleri</h2>
       <p class="helper-text">
         Bubble’dan gelen JSON verilerini buraya yapıştırın. Hatalı JSON girildiğinde ilgili alan kırmızı uyarı verir.
@@ -813,9 +814,9 @@
         <input id="versionInput" type="checkbox" />
         <label for="versionInput">version (true ise sadece form görünsün)</label>
       </div>
-    </section>
+      </section>
 
-    <section class="card">
+      <section class="card">
       <h1>Bubble Dynamic Form Element</h1>
       <p class="helper-text">
         Bu demo tek HTML dosyasında çalışır. Bubble elementine alan şemasını JSON olarak girip “Render Et” diyebilirsiniz.
@@ -873,21 +874,21 @@
         <button class="secondary" id="renderForm">Render Et</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
       </div>
-    </section>
+      </section>
 
-    <section class="card" id="eventConsoleSection">
-      <h2>Event Console</h2>
-      <div id="eventConsole" class="console"></div>
-    </section>
+      <section class="card" id="eventConsoleSection">
+        <h2>Event Console</h2>
+        <div id="eventConsole" class="console"></div>
+      </section>
 
-    <section class="card" id="submitOutputsSection">
-      <h2>Submit Outputs</h2>
-      <div id="submitOutputs" class="console"></div>
-    </section>
+      <section class="card" id="submitOutputsSection">
+        <h2>Submit Outputs</h2>
+        <div id="submitOutputs" class="console"></div>
+      </section>
 
-    <section class="card">
-      <h2>Dynamic Form</h2>
-      <div class="debug-toolbar" id="debugToolbar">
+      <section class="card">
+        <h2>Dynamic Form</h2>
+        <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
           <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
           <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
@@ -906,14 +907,18 @@
           <span id="aiFieldCount">AI alan sayısı: 0</span>
           <span id="humanFieldCount">Human değiştirilen alan sayısı: 0</span>
         </div>
-      </div>
-      <div id="columnWarning" class="debug-warning" style="display:none;">
-        Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
-      </div>
+        </div>
+        <div id="columnWarning" class="debug-warning" style="display:none;">
+          Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
       <div id="formContainer">
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <form id="dynamicForm" class="grid"></form>
-        <div class="inline-row" style="margin-top: 12px;">
+        <div class="inline-row" id="formActions" style="margin-top: 12px;">
           <button id="submitBtn" type="submit">Submit</button>
           <button id="clearBtn" type="button" class="ghost">Temizle</button>
         </div>
@@ -945,8 +950,9 @@
   <script>
     (function () {
       const BDF = (window.__BDF__ = window.__BDF__ || {});
-      BDF.DEBUG_MODE = BDF.DEBUG_MODE ?? true;
       const IS_VERSION_MODE = Boolean(window.BUBBLE_INPUTS?.VERSION);
+      const IS_DEBUG_MODE = Boolean(window.BUBBLE_INPUTS?.DEBUG_MODE);
+      BDF.DEBUG_MODE = IS_DEBUG_MODE && !IS_VERSION_MODE;
 
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
 
@@ -1118,6 +1124,7 @@
     const predictedJsonError = document.getElementById("predictedJsonError");
     const versionInput = document.getElementById("versionInput");
     const jsonInputsSection = document.getElementById("jsonInputsSection");
+    const debugPanels = document.getElementById("debugPanels");
     const currentDateTimeInput = document.getElementById("currentDateTime");
     const localeInput = document.getElementById("localeInput");
     const timezoneInput = document.getElementById("timezoneInput");
@@ -1130,6 +1137,7 @@
     const clearBtn = document.getElementById("clearBtn");
     const summaryBox = document.getElementById("summaryBox");
     const formContainer = document.getElementById("formContainer");
+    const formActions = document.getElementById("formActions");
     const consoleEl = document.getElementById("eventConsole");
     const submitOutputsEl = document.getElementById("submitOutputs");
     const eventConsoleSection = document.getElementById("eventConsoleSection");
@@ -1366,21 +1374,27 @@
 
     function applyVersionVisibility() {
       const formOnly = IS_VERSION_MODE;
-      BDF.DEBUG_MODE = !formOnly;
+      const debugVisible = !formOnly && BDF.DEBUG_MODE;
+      if (debugPanels) {
+        debugPanels.style.display = debugVisible ? "block" : "none";
+      }
       if (jsonInputsSection) {
-        jsonInputsSection.style.display = formOnly ? "none" : "block";
+        jsonInputsSection.style.display = debugVisible ? "block" : "none";
       }
       if (eventConsoleSection) {
-        eventConsoleSection.style.display = formOnly ? "none" : "block";
+        eventConsoleSection.style.display = debugVisible ? "block" : "none";
       }
       if (submitOutputsSection) {
-        submitOutputsSection.style.display = formOnly ? "none" : "block";
+        submitOutputsSection.style.display = debugVisible ? "block" : "none";
       }
       if (debugToolbar) {
-        debugToolbar.style.display = BDF.DEBUG_MODE ? "grid" : "none";
+        debugToolbar.style.display = debugVisible ? "flex" : "none";
       }
       if (columnWarning) {
-        columnWarning.style.display = BDF.DEBUG_MODE && !columnJson ? "block" : "none";
+        columnWarning.style.display = debugVisible && !columnJson ? "block" : "none";
+      }
+      if (formActions) {
+        formActions.style.display = debugVisible ? "flex" : "none";
       }
       if (formContainer) {
         formContainer.style.display = "block";
@@ -1483,6 +1497,12 @@
     function normalizeDateInput(raw) {
       if (!raw) return "";
       const trimmed = raw.trim();
+      if (trimmed.includes("T")) {
+        return trimmed.slice(0, 10);
+      }
+      if (trimmed.includes(" ")) {
+        return trimmed.split(" ")[0];
+      }
       if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
       if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmed)) {
         const [d, m, y] = trimmed.split(".");
@@ -2779,15 +2799,22 @@
           datetimeInput.id = `field-${field.key}`;
           datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
 
-          const dateValue = effectiveInitial ? getDateFromIso(effectiveInitial) : "";
-          const timeValue = effectiveInitial ? getTimeFromIso(effectiveInitial) : "";
+          const normalizedInitial = effectiveInitial ? normalizeDateTimeInput(effectiveInitial, config) : "";
+          const dateValue = normalizedInitial ? getDateFromIso(normalizedInitial) : "";
+          const timeValue = normalizedInitial ? getTimeFromIso(normalizedInitial) : "";
           if (dateValue && timeValue) {
             datetimeInput.value = `${dateValue}T${timeValue}`;
           }
 
           setValue = (value) => {
-            const normalized = value ? String(value).slice(0, 16) : "";
-            datetimeInput.value = normalized;
+            if (!value) {
+              datetimeInput.value = "";
+              return;
+            }
+            const normalized = normalizeDateTimeInput(String(value), config);
+            const nextDate = getDateFromIso(normalized);
+            const nextTime = getTimeFromIso(normalized);
+            datetimeInput.value = nextDate && nextTime ? `${nextDate}T${nextTime}` : "";
           };
 
           const quickActions = document.createElement("div");
@@ -2825,7 +2852,8 @@
               updateError(control, field);
               return;
             }
-            setFieldValue(field.key, raw, field, raw);
+            const normalized = normalizeDateTimeInput(raw, config);
+            setFieldValue(field.key, normalized, field, raw);
             updateError(control, field);
           };
 
@@ -3353,6 +3381,15 @@
         formContainer.style.display = "none";
       }
     }
+
+    BDF.submit = () => {
+      if (!formEl) return;
+      formEl.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    };
+
+    BDF.reset = () => {
+      resetAllStores();
+    };
 
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
