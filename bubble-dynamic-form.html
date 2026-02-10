@@ -32,8 +32,8 @@
       VERSION: true
     };
   </script>
-  <style>
-    :root {
+  <style data-bdf-style>
+    #bdf-root {
       color-scheme: light;
       font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
       --bg: #f5f7fb;
@@ -46,20 +46,17 @@
       --success: #16a34a;
       --warning: #f59e0b;
       --focus: rgba(37, 99, 235, 0.12);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
     }
 
-    * {
+    #bdf-root,
+    #bdf-root * {
       box-sizing: border-box;
     }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    .page {
+    #bdf-root .page {
       max-width: 1200px;
       margin: 0 auto;
       padding: 24px;
@@ -67,7 +64,7 @@
       gap: 20px;
     }
 
-    .card {
+    #bdf-root .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -75,24 +72,26 @@
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
-    h1, h2, h3 {
+    #bdf-root h1,
+    #bdf-root h2,
+    #bdf-root h3 {
       margin: 0 0 12px;
     }
 
-    .grid {
+    #bdf-root .grid {
       display: grid;
       gap: 16px;
     }
 
-    .grid.two {
+    #bdf-root .grid.two {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 
-    .grid.three {
+    #bdf-root .grid.three {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
-    label {
+    #bdf-root label {
       font-size: 0.9rem;
       font-weight: 600;
       display: inline-flex;
@@ -100,70 +99,74 @@
       gap: 6px;
     }
 
-    .required-hint {
+    #bdf-root .required-hint {
       font-size: 0.75rem;
       color: var(--danger);
       font-weight: 600;
     }
 
-    .field-wrapper {
+    #bdf-root .field-wrapper {
       display: grid;
       gap: 8px;
       padding: 10px 0;
     }
 
-    .field-wrapper + .field-wrapper {
+    #bdf-root .field-wrapper + .field-wrapper {
       margin-top: 8px;
     }
 
-    .field-row {
+    #bdf-root .field-row {
       display: grid;
       grid-template-columns: minmax(180px, 35%) minmax(0, 65%);
       gap: 14px;
       align-items: start;
     }
 
-    .field-label {
+    #bdf-root .field-label {
       display: grid;
       gap: 4px;
     }
 
-    .label-top {
+    #bdf-root .label-top {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 6px;
     }
 
-    .label-text {
+    #bdf-root .label-text {
       font-weight: 650;
       font-size: 0.92rem;
       color: #111827;
     }
 
-    .label-meta {
+    #bdf-root .label-meta {
       display: flex;
       flex-wrap: wrap;
       align-items: flex-start;
       gap: 6px;
     }
 
-    .type-icon {
-      font-size: 13px;
-      line-height: 1;
+    #bdf-root .type-icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: #f3f4f6;
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background: #f6f7fb;
+      border: 1px solid #edf0f6;
       color: #6b7280;
-      border: 1px solid #e5e7eb;
       flex-shrink: 0;
     }
 
-    .stage-badge {
+    #bdf-root .type-icon svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+#bdf-root .stage-badge {
       display: inline-flex;
       align-items: center;
       padding: 2px 8px;
@@ -175,25 +178,25 @@
       letter-spacing: 0.01em;
     }
 
-    .stage-optional {
+#bdf-root .stage-optional {
       background: #f3f4f6;
       color: #6b7280;
       border-color: #e5e7eb;
     }
 
-    .stage-mandatory {
+#bdf-root .stage-mandatory {
       background: rgba(224, 90, 90, 0.12);
       color: #b63a3a;
       border-color: rgba(224, 90, 90, 0.4);
     }
 
-    .stage-control {
+#bdf-root .stage-control {
       background: rgba(100, 116, 139, 0.12);
       color: #475569;
       border-color: rgba(148, 163, 184, 0.6);
     }
 
-    .ai-badge {
+#bdf-root .ai-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -209,34 +212,34 @@
       overflow: hidden;
     }
 
-    .ai-badge img {
+#bdf-root .ai-badge img {
       width: 14px;
       height: 14px;
       display: inline-block;
       object-fit: contain;
     }
 
-    .ai-badge.is-active {
+#bdf-root .ai-badge.is-active {
       border-color: rgba(34, 197, 94, 0.4);
       background: rgba(34, 197, 94, 0.12);
       color: #15803d;
     }
 
-    .ai-badge.is-passive {
+#bdf-root .ai-badge.is-passive {
       opacity: 0.7;
       filter: grayscale(0.2);
     }
 
-    .ai-badge::after {
+#bdf-root .ai-badge::after {
       content: none;
     }
 
-    .control-stack {
+#bdf-root .control-stack {
       display: grid;
       gap: 6px;
     }
 
-    .field-control {
+#bdf-root .field-control {
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 6px 8px;
@@ -245,20 +248,20 @@
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .field-control::before {
+#bdf-root .field-control::before {
       content: none;
     }
 
-    .field-control.ai-active {
+#bdf-root .field-control.ai-active {
       background: rgba(37, 99, 235, 0.04);
     }
 
-    .field-control.ai-active .field-input {
+#bdf-root .field-control.ai-active .field-input {
       background: rgba(37, 99, 235, 0.02);
       padding-right: 56px;
     }
 
-    .ai-pill {
+#bdf-root .ai-pill {
       position: absolute;
       top: 6px;
       right: 36px;
@@ -271,19 +274,19 @@
       pointer-events: none;
     }
 
-    .field-control:focus-within {
+#bdf-root .field-control:focus-within {
       border-color: rgba(37, 99, 235, 0.55);
       box-shadow: 0 0 0 2px var(--focus);
     }
 
-    .field-control.invalid {
+#bdf-root .field-control.invalid {
       border-color: rgba(224, 90, 90, 0.7);
       box-shadow: 0 0 0 2px rgba(224, 90, 90, 0.18);
     }
 
-    .field-input,
-    select,
-    textarea {
+#bdf-root .field-input,
+#bdf-root select,
+#bdf-root textarea {
       width: 100%;
       border: none;
       padding: 8px 6px;
@@ -295,21 +298,21 @@
       min-height: 36px;
     }
 
-    .field-input::placeholder,
-    textarea::placeholder {
+#bdf-root .field-input::placeholder,
+#bdf-root textarea::placeholder {
       color: #9ca3af;
     }
 
-    .field-control.has-icon .field-input {
+#bdf-root .field-control.has-icon .field-input {
       padding-right: 42px;
     }
 
-    textarea.field-input {
+#bdf-root textarea.field-input {
       resize: vertical;
       min-height: 96px;
     }
 
-    .field-icon-button {
+#bdf-root .field-icon-button {
       position: absolute;
       right: 8px;
       top: 50%;
@@ -327,15 +330,13 @@
       color: #475569;
     }
 
-    .field-icon-button:hover {
+#bdf-root .field-icon-button:hover {
       border-color: #d1d5db;
       background: #f3f4f6;
     }
 
-    .picker-popover {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
+#bdf-root .picker-popover {
+      position: fixed;
       width: 270px;
       background: #fff;
       border: 1px solid #e2e8f0;
@@ -343,15 +344,15 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
       padding: 12px;
       display: none;
-      z-index: 20;
+      z-index: 999999;
     }
 
-    .picker-popover.open {
+#bdf-root .picker-popover.open {
       display: grid;
       gap: 10px;
     }
 
-    .picker-header {
+#bdf-root .picker-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -361,7 +362,7 @@
       color: #334155;
     }
 
-    .picker-nav {
+#bdf-root .picker-nav {
       border: 1px solid #e2e8f0;
       background: #f8fafc;
       border-radius: 8px;
@@ -375,7 +376,7 @@
       color: #475569;
     }
 
-    .picker-grid {
+#bdf-root .picker-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 4px;
@@ -383,13 +384,13 @@
       font-size: 0.72rem;
     }
 
-    .picker-weekday {
+#bdf-root .picker-weekday {
       color: #94a3b8;
       font-weight: 600;
       padding: 4px 0;
     }
 
-    .picker-day {
+#bdf-root .picker-day {
       border: 1px solid transparent;
       border-radius: 8px;
       padding: 6px 0;
@@ -398,61 +399,61 @@
       background: transparent;
     }
 
-    .picker-day.is-today {
+#bdf-root .picker-day.is-today {
       border-color: rgba(37, 99, 235, 0.4);
       color: #1d4ed8;
     }
 
-    .picker-day.is-selected {
+#bdf-root .picker-day.is-selected {
       background: rgba(37, 99, 235, 0.12);
       border-color: rgba(37, 99, 235, 0.3);
       color: #1d4ed8;
       font-weight: 700;
     }
 
-    .picker-time {
+#bdf-root .picker-time {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
-    .picker-actions {
+#bdf-root .picker-actions {
       display: flex;
       gap: 8px;
       justify-content: space-between;
       align-items: center;
     }
 
-    .picker-actions button {
+#bdf-root .picker-actions button {
       padding: 6px 10px;
       font-size: 0.72rem;
     }
 
-    .field-actions {
+#bdf-root .field-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
     }
 
-    .helper-text {
+#bdf-root .helper-text {
       font-size: 0.75rem;
       color: var(--muted);
     }
 
-    .error-text {
+#bdf-root .error-text {
       font-size: 0.75rem;
       color: var(--danger);
       min-height: 16px;
     }
 
-    .inline-row {
+#bdf-root .inline-row {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
     }
 
-    button {
+#bdf-root button {
       border: none;
       border-radius: 10px;
       padding: 10px 16px;
@@ -462,23 +463,23 @@
       color: #fff;
     }
 
-    button.secondary {
+#bdf-root button.secondary {
       background: #e5e7eb;
       color: var(--text);
     }
 
-    button.ghost {
+#bdf-root button.ghost {
       background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
     }
 
-    button:disabled {
+#bdf-root button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .console {
+#bdf-root .console {
       background: #0f172a;
       color: #e2e8f0;
       padding: 12px;
@@ -490,7 +491,7 @@
       white-space: pre-wrap;
     }
 
-    .pill {
+#bdf-root .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -502,13 +503,13 @@
       color: var(--primary);
     }
 
-    .chip-row {
+#bdf-root .chip-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
 
-    .chip {
+#bdf-root .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -520,14 +521,14 @@
       font-weight: 600;
     }
 
-    .chip button {
+#bdf-root .chip button {
       padding: 2px 6px;
       border-radius: 999px;
       font-size: 0.7rem;
       background: rgba(37, 99, 235, 0.2);
     }
 
-    .file-drop {
+#bdf-root .file-drop {
       border: 1px dashed var(--border);
       border-radius: 12px;
       padding: 12px;
@@ -536,20 +537,20 @@
       background: #fafafa;
     }
 
-    .file-list {
+#bdf-root .file-list {
       display: grid;
       gap: 8px;
       margin-top: 10px;
     }
 
-    .file-grid {
+#bdf-root .file-grid {
       display: grid;
       gap: 8px;
       margin-top: 10px;
       grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
 
-    .file-item {
+#bdf-root .file-item {
       display: flex;
       gap: 10px;
       align-items: center;
@@ -560,7 +561,7 @@
       background: #fff;
     }
 
-    .file-card {
+#bdf-root .file-card {
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px;
@@ -571,13 +572,13 @@
       overflow: hidden;
     }
 
-    .file-meta {
+#bdf-root .file-meta {
       display: grid;
       gap: 4px;
       font-size: 0.82rem;
     }
 
-    .file-thumb {
+#bdf-root .file-thumb {
       width: 52px;
       height: 52px;
       border-radius: 8px;
@@ -586,17 +587,17 @@
       background: #f3f4f6;
     }
 
-    .file-thumb.large {
+#bdf-root .file-thumb.large {
       width: 100%;
       height: 90px;
     }
 
-    .file-thumb-wrap {
+#bdf-root .file-thumb-wrap {
       position: relative;
       display: inline-block;
     }
 
-    .file-thumb-overlay {
+#bdf-root .file-thumb-overlay {
       position: absolute;
       inset: 0;
       background: rgba(15, 23, 42, 0.35);
@@ -610,11 +611,11 @@
       border-radius: 8px;
     }
 
-    .file-thumb-wrap:hover .file-thumb-overlay {
+#bdf-root .file-thumb-wrap:hover .file-thumb-overlay {
       opacity: 1;
     }
 
-    .preview-btn {
+#bdf-root .preview-btn {
       border: none;
       background: rgba(37, 99, 235, 0.1);
       color: var(--primary);
@@ -624,7 +625,7 @@
       cursor: pointer;
     }
 
-    .conflict-chip {
+#bdf-root .conflict-chip {
       background: rgba(239, 68, 68, 0.12);
       color: var(--danger);
       border-radius: 999px;
@@ -634,7 +635,7 @@
       cursor: pointer;
     }
 
-    .conflict-popover {
+#bdf-root .conflict-popover {
       position: absolute;
       top: 100%;
       right: 0;
@@ -651,12 +652,12 @@
       z-index: 20;
     }
 
-    .conflict-popover.open {
+#bdf-root .conflict-popover.open {
       display: grid;
       gap: 6px;
     }
 
-    .conflict-popover pre {
+#bdf-root .conflict-popover pre {
       margin: 0;
       padding: 6px 8px;
       background: #f8fafc;
@@ -668,29 +669,29 @@
       word-break: break-word;
     }
 
-    .conflict-popover small {
+#bdf-root .conflict-popover small {
       color: var(--muted);
       font-weight: 600;
     }
 
-    .conflict-actions {
+#bdf-root .conflict-actions {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
 
-    .conflict-actions button {
+#bdf-root .conflict-actions button {
       padding: 6px 10px;
       font-size: 0.72rem;
     }
 
-    .date-wrapper {
+#bdf-root .date-wrapper {
       position: relative;
       display: grid;
       gap: 6px;
     }
 
-    .date-overlay-input {
+#bdf-root .date-overlay-input {
       position: absolute;
       inset: 0;
       opacity: 0;
@@ -699,13 +700,13 @@
       cursor: pointer;
     }
 
-    .file-icon {
+#bdf-root .file-icon {
       font-size: 22px;
       width: 44px;
       text-align: center;
     }
 
-    .file-remove {
+#bdf-root .file-remove {
       border: none;
       background: transparent;
       color: var(--danger);
@@ -713,19 +714,19 @@
       cursor: pointer;
     }
 
-    .toggle {
+#bdf-root .toggle {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       cursor: pointer;
     }
 
-    .toggle input {
+#bdf-root .toggle input {
       width: 40px;
       height: 22px;
     }
 
-    .summary-box {
+#bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
       color: var(--danger);
@@ -734,7 +735,7 @@
       font-size: 0.85rem;
     }
 
-    .lightbox {
+#bdf-root .lightbox {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.6);
@@ -745,11 +746,11 @@
       z-index: 999;
     }
 
-    .lightbox.open {
+#bdf-root .lightbox.open {
       display: flex;
     }
 
-    .lightbox-content {
+#bdf-root .lightbox-content {
       max-width: min(720px, 90vw);
       max-height: 80vh;
       background: #fff;
@@ -759,13 +760,13 @@
       gap: 12px;
     }
 
-    .lightbox-content img {
+#bdf-root .lightbox-content img {
       width: 100%;
       height: auto;
       border-radius: 12px;
     }
 
-    .lightbox-close {
+#bdf-root .lightbox-close {
       justify-self: end;
       background: #111827;
       color: #fff;
@@ -774,7 +775,7 @@
       font-size: 0.75rem;
     }
 
-    .debug-toolbar {
+#bdf-root .debug-toolbar {
       position: sticky;
       top: 12px;
       z-index: 10;
@@ -787,19 +788,19 @@
       backdrop-filter: blur(6px);
     }
 
-    .toolbar-actions {
+#bdf-root .toolbar-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
 
-    .toolbar-actions button {
+#bdf-root .toolbar-actions button {
       padding: 8px 12px;
       font-size: 0.78rem;
     }
 
-    .toolbar-status {
+#bdf-root .toolbar-status {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
@@ -808,7 +809,7 @@
       font-weight: 600;
     }
 
-    .debug-warning {
+#bdf-root .debug-warning {
       border: 1px dashed var(--border);
       border-radius: 12px;
       padding: 12px;
@@ -818,7 +819,7 @@
       margin-bottom: 16px;
     }
 
-    .export-modal {
+#bdf-root .export-modal {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.5);
@@ -829,11 +830,11 @@
       z-index: 1000;
     }
 
-    .export-modal.open {
+#bdf-root .export-modal.open {
       display: flex;
     }
 
-    .export-panel {
+#bdf-root .export-panel {
       background: #fff;
       border-radius: 16px;
       padding: 16px;
@@ -843,30 +844,30 @@
       gap: 12px;
     }
 
-    .export-tabs {
+#bdf-root .export-tabs {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .export-tabs button {
+#bdf-root .export-tabs button {
       padding: 6px 10px;
       font-size: 0.75rem;
     }
 
-    .export-tabs button.active {
+#bdf-root .export-tabs button.active {
       background: var(--primary);
       color: #fff;
     }
 
-    .export-panel textarea {
+#bdf-root .export-panel textarea {
       width: 100%;
       min-height: 240px;
       font-family: "JetBrains Mono", "SFMono-Regular", monospace;
       font-size: 0.78rem;
     }
 
-    .input-error {
+#bdf-root .input-error {
       color: var(--danger);
       font-size: 0.75rem;
       font-weight: 600;
@@ -874,15 +875,37 @@
     }
 
     @media (max-width: 720px) {
-      .field-row {
+#bdf-root .field-row {
         grid-template-columns: 1fr;
         gap: 6px;
       }
     }
   </style>
+  <script>
+    (() => {
+      const styleEl = document.currentScript?.previousElementSibling;
+      const init = () => {
+        const root = document.getElementById("bdf-root");
+        if (!root) return;
+        const hasMultipleRoots = document.querySelectorAll("#bdf-root").length > 1;
+        if (!hasMultipleRoots) return;
+        const uniqueId = `bdf-root-${Math.random().toString(36).slice(2, 9)}`;
+        root.id = uniqueId;
+        if (styleEl && styleEl.tagName === "STYLE") {
+          styleEl.textContent = styleEl.textContent.replace(/#bdf-root/g, `#${uniqueId}`);
+        }
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </head>
 <body>
-  <main class="page">
+  <div id="bdf-root">
+    <main class="page">
     <div id="debugPanels">
       <section class="card" id="jsonInputsSection">
       <h2>Bubble JSON Girişleri</h2>
@@ -1020,7 +1043,8 @@
         </div>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
   <div id="lightbox" class="lightbox" aria-hidden="true">
     <div class="lightbox-content">
       <button type="button" class="lightbox-close">Kapat</button>
@@ -2017,41 +2041,104 @@
     }
 
     const typeMetaMap = {
-      text: { icon: "📝", label: "Text" },
-      textarea: { icon: "📝", label: "Textarea" },
-      email: { icon: "✉️", label: "Email" },
-      phone: { icon: "📞", label: "Phone" },
-      url: { icon: "🔗", label: "URL" },
-      integer: { icon: "🔢", label: "Integer" },
-      number: { icon: "🔢", label: "Number" },
-      decimal: { icon: "🔢", label: "Decimal" },
-      currency: { icon: "🔢", label: "Currency" },
-      percent: { icon: "🔢", label: "Percent" },
-      boolean: { icon: "✅", label: "Boolean" },
-      dropdown: { icon: "⬇️", label: "Dropdown" },
-      date: { icon: "📅", label: "Date" },
-      time: { icon: "⏱️", label: "Time" },
-      datetime: { icon: "🗓️⏱️", label: "Datetime" },
-      file: { icon: "📎", label: "File" },
-      image: { icon: "🖼️", label: "Image" },
-      multifile: { icon: "🗂️", label: "Multi file" }
+      text: { iconKey: "text", label: "Text" },
+      textarea: { iconKey: "text", label: "Textarea" },
+      email: { iconKey: "text", label: "Email" },
+      phone: { iconKey: "text", label: "Phone" },
+      url: { iconKey: "text", label: "URL" },
+      integer: { iconKey: "hash", label: "Integer" },
+      number: { iconKey: "hash", label: "Number" },
+      decimal: { iconKey: "hash", label: "Decimal" },
+      currency: { iconKey: "hash", label: "Currency" },
+      percent: { iconKey: "hash", label: "Percent" },
+      boolean: { iconKey: "check", label: "Boolean" },
+      dropdown: { iconKey: "chevron", label: "Dropdown" },
+      date: { iconKey: "calendar", label: "Date" },
+      time: { iconKey: "clock", label: "Time" },
+      datetime: { iconKey: "calendar", label: "Datetime" },
+      file: { iconKey: "paperclip", label: "File" },
+      image: { iconKey: "image", label: "Image" },
+      multifile: { iconKey: "paperclip", label: "Multi file" }
     };
 
     const displayTypeMetaMap = {
-      "text (long)": { icon: "📝", label: "Text (long)" },
-      "multiline text": { icon: "📝", label: "Multiline text" },
-      "e-mail": { icon: "✉️", label: "E-mail" },
-      "image&pdf": { icon: "📎", label: "Image&Pdf" },
-      reference: { icon: "🔗", label: "Reference" },
-      embed: { icon: "🔗", label: "Embed" },
-      user: { icon: "👤", label: "User" },
-      "sys.cf": { icon: "⚙️", label: "Sys.cf" },
-      "action.cf": { icon: "⚙️", label: "Action.cf" }
+      "text (long)": { iconKey: "text", label: "Text (long)" },
+      "multiline text": { iconKey: "text", label: "Multiline text" },
+      "e-mail": { iconKey: "text", label: "E-mail" },
+      "image&pdf": { iconKey: "paperclip", label: "Image&Pdf" },
+      reference: { iconKey: "text", label: "Reference" },
+      embed: { iconKey: "text", label: "Embed" },
+      user: { iconKey: "text", label: "User" },
+      "sys.cf": { iconKey: "text", label: "Sys.cf" },
+      "action.cf": { iconKey: "text", label: "Action.cf" }
     };
+
+    function renderIcon(iconKey) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.8");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+      const setPath = (d) => {
+        path.setAttribute("d", d);
+        svg.appendChild(path);
+      };
+
+      switch (iconKey) {
+        case "calendar":
+          setPath("M7 3v4M17 3v4M4 9h16M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z");
+          break;
+        case "chevron":
+          setPath("M6 9l6 6 6-6");
+          break;
+        case "hash":
+          setPath("M8 3L6 21M18 3l-2 18M4 8h16M3 16h16");
+          break;
+        case "paperclip":
+          setPath("M16 4l-7 7a4 4 0 0 0 6 6l6-6a3 3 0 1 0-4.5-4.5l-6.5 6.5");
+          break;
+        case "clock":
+          circle.setAttribute("cx", "12");
+          circle.setAttribute("cy", "12");
+          circle.setAttribute("r", "9");
+          svg.appendChild(circle);
+          setPath("M12 7v5l3 3");
+          break;
+        case "check":
+          setPath("M5 12l4 4 10-10");
+          break;
+        case "image":
+          setPath("M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z");
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("cx", "8");
+          dot.setAttribute("cy", "9");
+          dot.setAttribute("r", "1.5");
+          svg.appendChild(dot);
+          const mountain = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          mountain.setAttribute("d", "M4 17l5-5 3 3 4-4 4 4");
+          mountain.setAttribute("stroke", "currentColor");
+          mountain.setAttribute("stroke-width", "1.8");
+          mountain.setAttribute("stroke-linecap", "round");
+          mountain.setAttribute("stroke-linejoin", "round");
+          mountain.setAttribute("fill", "none");
+          svg.appendChild(mountain);
+          break;
+        case "text":
+        default:
+          setPath("M5 6h14M12 6v12");
+          break;
+      }
+      return svg;
+    }
 
     function getTypeMeta(field) {
       const displayKey = String(field.displayType || "").toLowerCase();
-      return displayTypeMetaMap[displayKey] || typeMetaMap[field.type] || { icon: "📝", label: field.type || "text" };
+      return displayTypeMetaMap[displayKey] || typeMetaMap[field.type] || { iconKey: "text", label: field.type || "text" };
     }
 
     function normalizeStageType(stageType) {
@@ -2626,7 +2713,7 @@
         const typeMeta = getTypeMeta(field);
         const typeIcon = document.createElement("span");
         typeIcon.className = "type-icon";
-        typeIcon.textContent = typeMeta.icon;
+        typeIcon.append(renderIcon(typeMeta.iconKey));
         typeIcon.title = typeMeta.label;
 
         const label = document.createElement("label");
@@ -3028,13 +3115,32 @@
             }
           };
 
+          const positionPopover = () => {
+            const rect = control.getBoundingClientRect();
+            const width = 270;
+            const top = rect.bottom + 8;
+            let left = rect.right - width;
+            const pad = 8;
+            if (left < pad) left = pad;
+            if (left + width > window.innerWidth - pad) {
+              left = window.innerWidth - pad - width;
+            }
+            calendar.element.style.top = `${top}px`;
+            calendar.element.style.left = `${left}px`;
+          };
+
           const openPopover = () => {
+            positionPopover();
             calendar.element.classList.add("open");
+            window.addEventListener("scroll", positionPopover, true);
+            window.addEventListener("resize", positionPopover);
             document.addEventListener("click", handleOutside);
           };
 
           const closePopover = () => {
             calendar.element.classList.remove("open");
+            window.removeEventListener("scroll", positionPopover, true);
+            window.removeEventListener("resize", positionPopover);
             document.removeEventListener("click", handleOutside);
           };
 
@@ -3216,13 +3322,32 @@
             }
           };
 
+          const positionPopover = () => {
+            const rect = control.getBoundingClientRect();
+            const width = 270;
+            const top = rect.bottom + 8;
+            let left = rect.right - width;
+            const pad = 8;
+            if (left < pad) left = pad;
+            if (left + width > window.innerWidth - pad) {
+              left = window.innerWidth - pad - width;
+            }
+            calendar.element.style.top = `${top}px`;
+            calendar.element.style.left = `${left}px`;
+          };
+
           const openPopover = () => {
+            positionPopover();
             calendar.element.classList.add("open");
+            window.addEventListener("scroll", positionPopover, true);
+            window.addEventListener("resize", positionPopover);
             document.addEventListener("click", handleOutside);
           };
 
           const closePopover = () => {
             calendar.element.classList.remove("open");
+            window.removeEventListener("scroll", positionPopover, true);
+            window.removeEventListener("resize", positionPopover);
             document.removeEventListener("click", handleOutside);
           };
 
