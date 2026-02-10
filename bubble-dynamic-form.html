@@ -1450,10 +1450,13 @@
     }
 
     function buildSubmitOutputsPayload() {
+      const endTimestamp = new Date().toISOString();
+      const startTimestamp = taskStartTimestamp || endTimestamp;
+      const durationSeconds = Math.round((new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime()) / 1000);
       return {
-        output1: taskStartTimestamp || "",
-        output2: new Date().toISOString(),
-        output3: getActivityType(),
+        output1: startTimestamp,
+        output2: endTimestamp,
+        output3: durationSeconds,
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
@@ -2102,6 +2105,11 @@
       };
     }
 
+    function captureInitialSnapshot() {
+      if (initialSnapshot || !state.config) return;
+      initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
+    }
+
     function applyColumnJson(columnData) {
       columnJson = columnData;
       if (!columnJson) {
@@ -2114,7 +2122,6 @@
       formContainer.style.display = "block";
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
-      initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
       renderForm(state.config);
     }
 
@@ -2162,7 +2169,7 @@
         const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
-        entries.push(`"${jsonKey}": ${JSON.stringify(isEmptyValue(currentValue) ? "" : currentValue)}`);
+        entries.push(JSON.stringify({ key: jsonKey, value: isEmptyValue(currentValue) ? "" : currentValue }));
       });
       return entries;
     }
@@ -3197,6 +3204,7 @@
       });
       updateToolbarStatus();
       updateSubmitState(config);
+      captureInitialSnapshot();
     }
 
     function varPrimary() {
@@ -3396,6 +3404,7 @@
 
       formEl.addEventListener("submit", (event) => {
       event.preventDefault();
+      ensureTaskStartTimestamp();
       validateAll();
       const firstInvalidKey = focusFirstInvalid();
       const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
