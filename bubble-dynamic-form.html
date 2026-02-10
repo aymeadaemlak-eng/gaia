@@ -1250,9 +1250,63 @@
       rootScope = shadow;
     }
 
-    const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : document.querySelector(selector));
-    const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : document.querySelectorAll(selector));
+    const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : null);
+    const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
     const byId = (id) => qs(`#${id}`);
+    const safeOn = (el, eventName, handler) => {
+      if (!el) return;
+      el.addEventListener(eventName, handler);
+    };
+
+    function loadSampleSchema() {
+      if (!schemaInput) return;
+      schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+      if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+      if (localeInput) localeInput.value = defaultSchema.locale;
+      if (timezoneInput) timezoneInput.value = defaultSchema.timezone;
+      if (modeInput) modeInput.value = defaultSchema.mode;
+      if (requiredPolicyInput) requiredPolicyInput.value = defaultSchema.requiredPolicy;
+      if (showInlineHelpInput) showInlineHelpInput.checked = defaultSchema.showInlineHelp;
+      if (autoFocusInvalidInput) autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
+    }
+
+    function renderFormFromInputs() {
+      const parsed = safeJsonParse(schemaInput?.value || "");
+      if (!parsed || !parsed.fields) {
+        setConsole("Schema parse edilemedi", "");
+        return;
+      }
+      state.config = {
+        ...parsed,
+        currentDateTimeISO: currentDateTimeInput?.value || parsed.currentDateTimeISO,
+        locale: localeInput?.value || parsed.locale || "tr-TR",
+        timezone: timezoneInput?.value || parsed.timezone || "Europe/Istanbul",
+        mode: modeInput?.value || parsed.mode || "create",
+        requiredPolicy: requiredPolicyInput?.value || parsed.requiredPolicy || "strict",
+        showInlineHelp: Boolean(showInlineHelpInput?.checked),
+        autoFocusFirstInvalid: Boolean(autoFocusInvalidInput?.checked)
+      };
+      columnJson = {
+        columns: (state.config.fields || []).map((field) => ({
+          fieldName: field.label || field.key,
+          label: field.label,
+          type: field.type,
+          required: field.required || normalizeStageType(field.stageType) === "mandatory",
+          stageType: field.stageType || "optional",
+          options: field.options || [],
+          default: field.default,
+          allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
+          ui: field.ui || {}
+        })),
+        currentDateTimeISO: state.config.currentDateTimeISO,
+        locale: state.config.locale,
+        timezone: state.config.timezone,
+        mode: state.config.mode
+      };
+      if (columnWarning) columnWarning.style.display = "none";
+      if (formContainer) formContainer.style.display = "block";
+      renderForm(state.config);
+    }
 
     const schemaInput = byId("schemaInput");
     const columnJsonInput = byId("columnJsonInput");
@@ -1303,6 +1357,25 @@
     const humanFieldCountEl = byId("humanFieldCount");
     const columnWarning = byId("columnWarning");
     const debugToolbar = byId("debugToolbar");
+
+    const initBdf = (root) => {
+      if (!root || root.__bdfInited) return;
+      root.__bdfInited = true;
+
+      safeOn(byId("loadSample"), "click", () => {
+        loadSampleSchema();
+      });
+
+      safeOn(byId("renderForm"), "click", () => {
+        renderFormFromInputs();
+      });
+
+      safeOn(byId("clearConsole"), "click", () => {
+        if (consoleEl) consoleEl.textContent = "";
+      });
+    };
+
+    initBdf(rootElement);
 
     if (columnJsonInput && MANUAL_COLUMN_JSON) {
       columnJsonInput.value = JSON.stringify(MANUAL_COLUMN_JSON, null, 2);
@@ -3848,21 +3921,21 @@
       exportContent.value = JSON.stringify(buildExportJson(), null, 2);
     }
 
-    lightboxEl.addEventListener("click", (event) => {
+    safeOn(lightboxEl, "click", (event) => {
       if (event.target === lightboxEl) {
         closeLightbox();
       }
     });
 
-    lightboxEl.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
-    closeExportBtn.addEventListener("click", closeExportModal);
-    exportModal.addEventListener("click", (event) => {
+    safeOn(lightboxEl?.querySelector(".lightbox-close"), "click", closeLightbox);
+    safeOn(closeExportBtn, "click", closeExportModal);
+    safeOn(exportModal, "click", (event) => {
       if (event.target === exportModal) {
         closeExportModal();
       }
     });
     exportTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
+      safeOn(tab, "click", () => {
         setExportTab(tab.dataset.exportTab);
       });
     });
@@ -4001,7 +4074,7 @@
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
 
-      formEl.addEventListener("submit", (event) => {
+      safeOn(formEl, "submit", (event) => {
       event.preventDefault();
       ensureTaskStartTimestamp();
       validateAll();
@@ -4036,15 +4109,13 @@
       }
       });
 
-      if (submitBtn) {
-        submitBtn.addEventListener("click", () => {
-          console.info("submit button clicked");
-          const submitOutputsPayload = buildSubmitOutputsPayload();
-          renderSubmitOutputs(submitOutputsPayload);
-        });
-      }
+      safeOn(submitBtn, "click", () => {
+        console.info("submit button clicked");
+        const submitOutputsPayload = buildSubmitOutputsPayload();
+        renderSubmitOutputs(submitOutputsPayload);
+      });
 
-      formEl.addEventListener("keydown", (event) => {
+      safeOn(formEl, "keydown", (event) => {
       if (event.key === "Escape") {
         if (event.target && event.target.blur) event.target.blur();
         return;
@@ -4063,19 +4134,19 @@
       }
       });
 
-      clearBtn.addEventListener("click", () => {
+      safeOn(clearBtn, "click", () => {
         emit("onClear", {});
         resetAllStores();
       });
 
       [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
         if (!input) return;
-        input.addEventListener("input", () => {
+        safeOn(input, "input", () => {
           syncManualJsonInputs();
         });
       });
 
-      loadHumanJsonBtn.addEventListener("click", () => {
+      safeOn(loadHumanJsonBtn, "click", () => {
         syncManualJsonInputs();
         initialSnapshot = null;
         if (state.config) {
@@ -4092,7 +4163,7 @@
         openExportModal("human");
       });
 
-      loadPredictedJsonBtn.addEventListener("click", () => {
+      safeOn(loadPredictedJsonBtn, "click", () => {
       syncManualJsonInputs();
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
@@ -4108,7 +4179,7 @@
       openExportModal("ai");
       });
 
-      loadColumnJsonBtn.addEventListener("click", () => {
+      safeOn(loadColumnJsonBtn, "click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
@@ -4116,21 +4187,21 @@
       openExportModal("column");
       });
 
-      applyAiToEmptyBtn.addEventListener("click", () => {
+      safeOn(applyAiToEmptyBtn, "click", () => {
         applyAiValuesToHuman({ overwrite: false });
       });
 
-      overwriteAiToAllBtn.addEventListener("click", () => {
+      safeOn(overwriteAiToAllBtn, "click", () => {
         const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
         if (!confirmed) return;
         applyAiValuesToHuman({ overwrite: true });
       });
 
-      resetStoresBtn.addEventListener("click", () => {
+      safeOn(resetStoresBtn, "click", () => {
         resetAllStores();
       });
 
-      exportJsonBtn.addEventListener("click", () => {
+      safeOn(exportJsonBtn, "click", () => {
         openExportModal("export");
       });
 
@@ -4191,58 +4262,6 @@
         });
       }
 
-      byId("loadSample").addEventListener("click", () => {
-        schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-        currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
-        localeInput.value = defaultSchema.locale;
-        timezoneInput.value = defaultSchema.timezone;
-        modeInput.value = defaultSchema.mode;
-        requiredPolicyInput.value = defaultSchema.requiredPolicy;
-        showInlineHelpInput.checked = defaultSchema.showInlineHelp;
-        autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
-      });
-
-      byId("renderForm").addEventListener("click", () => {
-        const parsed = safeJsonParse(schemaInput.value);
-        if (!parsed || !parsed.fields) {
-          setConsole("Schema parse edilemedi", "");
-          return;
-        }
-        state.config = {
-          ...parsed,
-          currentDateTimeISO: currentDateTimeInput.value || parsed.currentDateTimeISO,
-          locale: localeInput.value || parsed.locale || "tr-TR",
-          timezone: timezoneInput.value || parsed.timezone || "Europe/Istanbul",
-          mode: modeInput.value || parsed.mode || "create",
-          requiredPolicy: requiredPolicyInput.value || parsed.requiredPolicy || "strict",
-          showInlineHelp: showInlineHelpInput.checked,
-          autoFocusFirstInvalid: autoFocusInvalidInput.checked
-        };
-        columnJson = {
-          columns: (state.config.fields || []).map((field) => ({
-            fieldName: field.label || field.key,
-            label: field.label,
-            type: field.type,
-            required: field.required || normalizeStageType(field.stageType) === "mandatory",
-            stageType: field.stageType || "optional",
-            options: field.options || [],
-            default: field.default,
-            allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
-            ui: field.ui || {}
-          })),
-          currentDateTimeISO: state.config.currentDateTimeISO,
-          locale: state.config.locale,
-          timezone: state.config.timezone,
-          mode: state.config.mode
-        };
-        columnWarning.style.display = "none";
-        formContainer.style.display = "block";
-        renderForm(state.config);
-      });
-
-      byId("clearConsole").addEventListener("click", () => {
-        consoleEl.textContent = "";
-      });
     }
 
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
