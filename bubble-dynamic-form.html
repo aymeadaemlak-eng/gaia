@@ -55,6 +55,14 @@
       box-sizing: border-box;
     }
 
+
+    #bdf-root button,
+    #bdf-root input,
+    #bdf-root select,
+    #bdf-root textarea {
+      font: inherit;
+      color: inherit;
+    }
     #bdf-root .page {
       margin: 0;
       padding: 0;
@@ -1253,9 +1261,36 @@
     const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : null);
     const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
     const byId = (id) => qs(`#${id}`);
-    const safeOn = (el, eventName, handler) => {
-      if (!el) return;
-      el.addEventListener(eventName, handler);
+
+    function retryEvery(selector, cb, timeoutMs = 3000, intervalMs = 50) {
+      if (!rootScope || !rootScope.querySelector) return;
+      const startedAt = Date.now();
+      const tryRun = () => {
+        const el = rootScope.querySelector(selector);
+        if (el) {
+          cb(el);
+          return true;
+        }
+        return false;
+      };
+      if (tryRun()) return;
+      const timer = setInterval(() => {
+        if (tryRun() || Date.now() - startedAt >= timeoutMs) {
+          clearInterval(timer);
+        }
+      }, intervalMs);
+    }
+
+    const safeOn = (target, eventName, handler, options = {}) => {
+      const { timeoutMs = 3000, intervalMs = 50 } = options;
+      if (typeof target === "string") {
+        retryEvery(target, (el) => {
+          el.addEventListener(eventName, handler);
+        }, timeoutMs, intervalMs);
+        return;
+      }
+      if (!target) return;
+      target.addEventListener(eventName, handler);
     };
 
     function loadSampleSchema() {
@@ -1362,15 +1397,15 @@
       if (!root || root.__bdfInited) return;
       root.__bdfInited = true;
 
-      safeOn(byId("loadSample"), "click", () => {
+      safeOn("#loadSample", "click", () => {
         loadSampleSchema();
       });
 
-      safeOn(byId("renderForm"), "click", () => {
+      safeOn("#renderForm", "click", () => {
         renderFormFromInputs();
       });
 
-      safeOn(byId("clearConsole"), "click", () => {
+      safeOn("#clearConsole", "click", () => {
         if (consoleEl) consoleEl.textContent = "";
       });
     };
@@ -3921,16 +3956,16 @@
       exportContent.value = JSON.stringify(buildExportJson(), null, 2);
     }
 
-    safeOn(lightboxEl, "click", (event) => {
-      if (event.target === lightboxEl) {
+    safeOn("#lightbox", "click", (event) => {
+      if (event.target === qs("#lightbox")) {
         closeLightbox();
       }
     });
 
-    safeOn(lightboxEl?.querySelector(".lightbox-close"), "click", closeLightbox);
-    safeOn(closeExportBtn, "click", closeExportModal);
-    safeOn(exportModal, "click", (event) => {
-      if (event.target === exportModal) {
+    safeOn("#lightbox .lightbox-close", "click", closeLightbox);
+    safeOn("#closeExport", "click", closeExportModal);
+    safeOn("#exportModal", "click", (event) => {
+      if (event.target === qs("#exportModal")) {
         closeExportModal();
       }
     });
@@ -4074,7 +4109,7 @@
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
 
-      safeOn(formEl, "submit", (event) => {
+      safeOn("#dynamicForm", "submit", (event) => {
       event.preventDefault();
       ensureTaskStartTimestamp();
       validateAll();
@@ -4109,13 +4144,13 @@
       }
       });
 
-      safeOn(submitBtn, "click", () => {
+      safeOn("#submitBtn", "click", () => {
         console.info("submit button clicked");
         const submitOutputsPayload = buildSubmitOutputsPayload();
         renderSubmitOutputs(submitOutputsPayload);
       });
 
-      safeOn(formEl, "keydown", (event) => {
+      safeOn("#dynamicForm", "keydown", (event) => {
       if (event.key === "Escape") {
         if (event.target && event.target.blur) event.target.blur();
         return;
@@ -4134,19 +4169,18 @@
       }
       });
 
-      safeOn(clearBtn, "click", () => {
+      safeOn("#clearBtn", "click", () => {
         emit("onClear", {});
         resetAllStores();
       });
 
-      [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
-        if (!input) return;
-        safeOn(input, "input", () => {
+      ["#columnJsonInput", "#humanJsonInput", "#predictedJsonInput"].forEach((selector) => {
+        safeOn(selector, "input", () => {
           syncManualJsonInputs();
         });
       });
 
-      safeOn(loadHumanJsonBtn, "click", () => {
+      safeOn("#loadHumanJson", "click", () => {
         syncManualJsonInputs();
         initialSnapshot = null;
         if (state.config) {
@@ -4163,7 +4197,7 @@
         openExportModal("human");
       });
 
-      safeOn(loadPredictedJsonBtn, "click", () => {
+      safeOn("#loadPredictedJson", "click", () => {
       syncManualJsonInputs();
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
@@ -4179,7 +4213,7 @@
       openExportModal("ai");
       });
 
-      safeOn(loadColumnJsonBtn, "click", () => {
+      safeOn("#loadColumnJson", "click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
@@ -4187,26 +4221,26 @@
       openExportModal("column");
       });
 
-      safeOn(applyAiToEmptyBtn, "click", () => {
+      safeOn("#applyAiToEmpty", "click", () => {
         applyAiValuesToHuman({ overwrite: false });
       });
 
-      safeOn(overwriteAiToAllBtn, "click", () => {
+      safeOn("#overwriteAiToAll", "click", () => {
         const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
         if (!confirmed) return;
         applyAiValuesToHuman({ overwrite: true });
       });
 
-      safeOn(resetStoresBtn, "click", () => {
+      safeOn("#resetStores", "click", () => {
         resetAllStores();
       });
 
-      safeOn(exportJsonBtn, "click", () => {
+      safeOn("#exportJson", "click", () => {
         openExportModal("export");
       });
 
       if (scenarioColumnOnlyBtn) {
-        safeOn(scenarioColumnOnlyBtn, "click", () => {
+        safeOn("#scenarioColumnOnly", "click", () => {
           applyScenario({
             name: "column-only",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
@@ -4215,7 +4249,7 @@
       }
 
       if (scenarioColumnHumanBtn) {
-        safeOn(scenarioColumnHumanBtn, "click", () => {
+        safeOn("#scenarioColumnHuman", "click", () => {
           applyScenario({
             name: "column-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4225,7 +4259,7 @@
       }
 
       if (scenarioColumnAiBtn) {
-        safeOn(scenarioColumnAiBtn, "click", () => {
+        safeOn("#scenarioColumnAi", "click", () => {
           applyScenario({
             name: "column-ai",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4235,7 +4269,7 @@
       }
 
       if (scenarioColumnAiHumanBtn) {
-        safeOn(scenarioColumnAiHumanBtn, "click", () => {
+        safeOn("#scenarioColumnAiHuman", "click", () => {
           applyScenario({
             name: "column-ai-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4246,7 +4280,7 @@
       }
 
       if (scenarioConflictBtn) {
-        safeOn(scenarioConflictBtn, "click", () => {
+        safeOn("#scenarioConflict", "click", () => {
           applyScenario({
             name: "conflict",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -4264,8 +4298,8 @@
 
     }
 
-    currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
-    schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+    if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+    if (schemaInput) schemaInput.value = JSON.stringify(defaultSchema, null, 2);
     syncManualJsonInputs();
     if (MANUAL_COLUMN_JSON) {
       columnJson = MANUAL_COLUMN_JSON;
