@@ -3600,12 +3600,22 @@
     currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     schemaInput.value = JSON.stringify(defaultSchema, null, 2);
     syncManualJsonInputs();
-    if (IS_VERSION_MODE && MANUAL_COLUMN_JSON) {
+    if (MANUAL_COLUMN_JSON) {
       columnJson = MANUAL_COLUMN_JSON;
     }
     applyVersionVisibility();
     if (columnJson) {
       applyColumnJson(columnJson);
+      setTimeout(() => {
+        if (MANUAL_DATA_JSON) {
+          loadJsonSafeToForm("human", MANUAL_DATA_JSON);
+        }
+        if (MANUAL_PREDICTED_JSON) {
+          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON);
+          initializeSourceByFieldFromAi();
+          refreshAllFields();
+        }
+      }, 0);
     } else {
       formEl.innerHTML = "";
       formContainer.style.display = "none";
