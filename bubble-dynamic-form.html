@@ -342,7 +342,9 @@
     }
 
 #bdf-root .picker-popover {
-      position: fixed;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
       width: 270px;
       background: #fff;
       border: 1px solid #e2e8f0;
@@ -350,7 +352,7 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
       padding: 12px;
       display: none;
-      z-index: 999999;
+      z-index: 30;
     }
 
 #bdf-root .picker-popover.open {
@@ -2926,12 +2928,14 @@
         conflictChip.addEventListener("click", () => {
           conflictPopover.classList.toggle("open");
         });
-        conflictPopover.querySelector("[data-apply-human]").addEventListener("click", () => {
+        const applyHumanBtn = conflictPopover.querySelector("[data-apply-human]");
+        const applyAiBtnInPopover = conflictPopover.querySelector("[data-apply-ai]");
+        safeOn(applyHumanBtn, "click", () => {
           sourceByField[field.key] = "human";
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
-        conflictPopover.querySelector("[data-apply-ai]").addEventListener("click", () => {
+        safeOn(applyAiBtnInPopover, "click", () => {
           sourceByField[field.key] = "ai";
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
@@ -3242,30 +3246,13 @@
             }
           };
 
-          const positionPopover = () => {
-            const rect = iconBtn.getBoundingClientRect();
-            const popoverWidth = calendar.element.offsetWidth || 270;
-            const top = rect.bottom + 8;
-            const pad = 8;
-            const minLeft = pad;
-            const maxLeft = window.innerWidth - popoverWidth - pad;
-            const left = Math.min(Math.max(rect.left, minLeft), maxLeft);
-            calendar.element.style.top = `${top}px`;
-            calendar.element.style.left = `${left}px`;
-          };
-
           const openPopover = () => {
-            positionPopover();
             calendar.element.classList.add("open");
-            window.addEventListener("scroll", positionPopover, true);
-            window.addEventListener("resize", positionPopover);
             document.addEventListener("click", handleOutside);
           };
 
           const closePopover = () => {
             calendar.element.classList.remove("open");
-            window.removeEventListener("scroll", positionPopover, true);
-            window.removeEventListener("resize", positionPopover);
             document.removeEventListener("click", handleOutside);
           };
 
@@ -3447,30 +3434,13 @@
             }
           };
 
-          const positionPopover = () => {
-            const rect = iconBtn.getBoundingClientRect();
-            const popoverWidth = calendar.element.offsetWidth || 270;
-            const top = rect.bottom + 8;
-            const pad = 8;
-            const minLeft = pad;
-            const maxLeft = window.innerWidth - popoverWidth - pad;
-            const left = Math.min(Math.max(rect.left, minLeft), maxLeft);
-            calendar.element.style.top = `${top}px`;
-            calendar.element.style.left = `${left}px`;
-          };
-
           const openPopover = () => {
-            positionPopover();
             calendar.element.classList.add("open");
-            window.addEventListener("scroll", positionPopover, true);
-            window.addEventListener("resize", positionPopover);
             document.addEventListener("click", handleOutside);
           };
 
           const closePopover = () => {
             calendar.element.classList.remove("open");
-            window.removeEventListener("scroll", positionPopover, true);
-            window.removeEventListener("resize", positionPopover);
             document.removeEventListener("click", handleOutside);
           };
 
