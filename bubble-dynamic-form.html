@@ -41,11 +41,11 @@
       --text: #111827;
       --muted: #6b7280;
       --primary: #2563eb;
-      --border: #e5e7eb;
-      --danger: #ef4444;
+      --border: #e6eaf0;
+      --danger: #e05a5a;
       --success: #16a34a;
       --warning: #f59e0b;
-      --focus: rgba(37, 99, 235, 0.18);
+      --focus: rgba(37, 99, 235, 0.12);
     }
 
     * {
@@ -100,11 +100,6 @@
       gap: 6px;
     }
 
-    .required-star {
-      color: var(--danger);
-      font-weight: 700;
-    }
-
     .required-hint {
       font-size: 0.75rem;
       color: var(--danger);
@@ -113,20 +108,12 @@
 
     .field-wrapper {
       display: grid;
-      gap: 6px;
-      padding: 8px 0;
-      border-bottom: 1px solid #eef2f7;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      gap: 8px;
+      padding: 10px 0;
     }
 
-    .field-wrapper:last-child {
-      border-bottom: none;
-    }
-
-    .field-wrapper:hover {
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
-      transform: translateY(-1px);
-      border-radius: 12px;
+    .field-wrapper + .field-wrapper {
+      margin-top: 8px;
     }
 
     .field-row {
@@ -149,7 +136,9 @@
     }
 
     .label-text {
-      font-weight: 700;
+      font-weight: 650;
+      font-size: 0.92rem;
+      color: #111827;
     }
 
     .label-meta {
@@ -160,8 +149,18 @@
     }
 
     .type-icon {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #e5e7eb;
+      flex-shrink: 0;
     }
 
     .stage-badge {
@@ -169,24 +168,29 @@
       align-items: center;
       padding: 2px 8px;
       border-radius: 999px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
       text-transform: capitalize;
+      border: 1px solid transparent;
+      letter-spacing: 0.01em;
     }
 
     .stage-optional {
       background: #f3f4f6;
       color: #6b7280;
+      border-color: #e5e7eb;
     }
 
     .stage-mandatory {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--danger);
+      background: rgba(224, 90, 90, 0.12);
+      color: #b63a3a;
+      border-color: rgba(224, 90, 90, 0.4);
     }
 
     .stage-control {
-      background: rgba(37, 99, 235, 0.12);
-      color: var(--primary);
+      background: rgba(100, 116, 139, 0.12);
+      color: #475569;
+      border-color: rgba(148, 163, 184, 0.6);
     }
 
     .ai-badge {
@@ -194,7 +198,7 @@
       align-items: center;
       gap: 6px;
       border: 1px solid rgba(37, 99, 235, 0.25);
-      background: linear-gradient(120deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.2));
+      background: rgba(37, 99, 235, 0.08);
       border-radius: 999px;
       padding: 2px 10px;
       font-size: 0.7rem;
@@ -224,23 +228,7 @@
     }
 
     .ai-badge::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-      transform: translateX(-120%);
-      animation: sparkle 4s ease-in-out infinite;
-      opacity: 0.4;
-      pointer-events: none;
-    }
-
-    @keyframes sparkle {
-      0%, 70% {
-        transform: translateX(-120%);
-      }
-      100% {
-        transform: translateX(120%);
-      }
+      content: none;
     }
 
     .control-stack {
@@ -249,44 +237,24 @@
     }
 
     .field-control {
-      border: 1px solid var(--border);
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 2px;
+      padding: 6px 8px;
       background: #fff;
       position: relative;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .field-control::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 6px;
-      bottom: 6px;
-      width: 4px;
-      border-radius: 999px;
-      background: transparent;
-      opacity: 0.6;
-    }
-
-    .field-control.stage-optional::before {
-      background: #d1d5db;
-    }
-
-    .field-control.stage-mandatory::before {
-      background: var(--danger);
-    }
-
-    .field-control.stage-control::before {
-      background: var(--primary);
+      content: none;
     }
 
     .field-control.ai-active {
-      background: rgba(37, 99, 235, 0.06);
+      background: rgba(37, 99, 235, 0.04);
     }
 
     .field-control.ai-active .field-input {
-      background: rgba(37, 99, 235, 0.04);
+      background: rgba(37, 99, 235, 0.02);
       padding-right: 56px;
     }
 
@@ -304,13 +272,13 @@
     }
 
     .field-control:focus-within {
-      border-color: rgba(37, 99, 235, 0.75);
-      box-shadow: 0 0 0 3px var(--focus);
+      border-color: rgba(37, 99, 235, 0.55);
+      box-shadow: 0 0 0 2px var(--focus);
     }
 
     .field-control.invalid {
-      border-color: rgba(239, 68, 68, 0.75);
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+      border-color: rgba(224, 90, 90, 0.7);
+      box-shadow: 0 0 0 2px rgba(224, 90, 90, 0.18);
     }
 
     .field-input,
@@ -318,18 +286,146 @@
     textarea {
       width: 100%;
       border: none;
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-radius: 10px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       background: transparent;
       color: var(--text);
       outline: none;
-      min-height: 34px;
+      min-height: 36px;
+    }
+
+    .field-input::placeholder,
+    textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    .field-control.has-icon .field-input {
+      padding-right: 42px;
     }
 
     textarea.field-input {
       resize: vertical;
       min-height: 96px;
+    }
+
+    .field-icon-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    .field-icon-button:hover {
+      border-color: #d1d5db;
+      background: #f3f4f6;
+    }
+
+    .picker-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 270px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+      padding: 12px;
+      display: none;
+      z-index: 20;
+    }
+
+    .picker-popover.open {
+      display: grid;
+      gap: 10px;
+    }
+
+    .picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .picker-nav {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 0.72rem;
+    }
+
+    .picker-weekday {
+      color: #94a3b8;
+      font-weight: 600;
+      padding: 4px 0;
+    }
+
+    .picker-day {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 0;
+      cursor: pointer;
+      color: #334155;
+      background: transparent;
+    }
+
+    .picker-day.is-today {
+      border-color: rgba(37, 99, 235, 0.4);
+      color: #1d4ed8;
+    }
+
+    .picker-day.is-selected {
+      background: rgba(37, 99, 235, 0.12);
+      border-color: rgba(37, 99, 235, 0.3);
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    .picker-time {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .picker-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .picker-actions button {
+      padding: 6px 10px;
+      font-size: 0.72rem;
     }
 
     .field-actions {
@@ -1497,9 +1593,13 @@
       return String(iso).slice(11, 16);
     }
 
-    function normalizeDateInput(raw) {
+    function normalizeDateInput(raw, config = state.config || {}) {
       if (!raw) return "";
-      const trimmed = raw.trim();
+      const trimmed = String(raw).trim();
+      const now = getCurrentDateTime(config);
+      if (trimmed === "$TODAY" || trimmed === "$NOW") {
+        return getDateFromIso(now);
+      }
       if (trimmed.includes("T")) {
         return trimmed.slice(0, 10);
       }
@@ -1526,6 +1626,12 @@
       if (year < 1000 || year > 9999) return false;
       const date = new Date(year, month - 1, day);
       return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function isValidTimeString(value) {
+      if (!/^\d{2}:\d{2}$/.test(value)) return false;
+      const [hour, minute] = value.split(":").map((part) => Number(part));
+      return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
     }
 
     function areValuesDifferent(a, b) {
@@ -1555,8 +1661,24 @@
 
     function normalizeDateTimeInput(raw, config) {
       if (!raw) return "";
-      const trimmed = String(raw).trim().replace(" ", "T");
+      const trimmedRaw = String(raw).trim();
       const offset = getOffsetFromIso(getCurrentDateTime(config));
+      if (trimmedRaw === "$NOW") {
+        return normalizeDateTimeInput(getCurrentDateTime(config), config);
+      }
+      if (trimmedRaw === "$TODAY") {
+        return `${getDateFromIso(getCurrentDateTime(config))}T00:00:00${offset}`;
+      }
+      const trimmed = trimmedRaw.replace(" ", "T");
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmedRaw)) {
+        const [d, m, y] = trimmedRaw.split(".");
+        return `${y}-${m}-${d}T00:00:00${offset}`;
+      }
+      if (/^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}$/.test(trimmedRaw)) {
+        const [datePart, timePart] = trimmedRaw.split(" ");
+        const [d, m, y] = datePart.split(".");
+        return `${y}-${m}-${d}T${timePart}:00${offset}`;
+      }
       if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
         return `${trimmed}T00:00:00${offset}`;
       }
@@ -1568,6 +1690,200 @@
         return `${datePart}T${timePart}${seconds}${tz}`;
       }
       return trimmed;
+    }
+
+    function formatDateDisplay(value) {
+      if (!value) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split("-");
+        return `${d}.${m}.${y}`;
+      }
+      return value;
+    }
+
+    function formatDateTimeDisplay(value) {
+      if (!value) return "";
+      const normalized = value.includes("T") ? value : normalizeDateTimeInput(value, state.config || {});
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+        const datePart = normalized.slice(0, 10);
+        const timePart = normalized.slice(11, 16);
+        return `${formatDateDisplay(datePart)} ${timePart}`;
+      }
+      return value;
+    }
+
+    function createMandatoryBadge() {
+      const badge = document.createElement("span");
+      badge.className = "stage-badge stage-mandatory";
+      badge.textContent = "Mandatory";
+      return badge;
+    }
+
+    function buildCalendarPopover(config, { initialDate = "", onSelect, onClose, quickActionLabel = "Bugün", onQuickAction }) {
+      const popover = document.createElement("div");
+      popover.className = "picker-popover";
+      const header = document.createElement("div");
+      header.className = "picker-header";
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "picker-nav";
+      prevBtn.textContent = "‹";
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "picker-nav";
+      nextBtn.textContent = "›";
+      const title = document.createElement("span");
+      header.append(prevBtn, title, nextBtn);
+
+      const grid = document.createElement("div");
+      grid.className = "picker-grid";
+
+      const actions = document.createElement("div");
+      actions.className = "picker-actions";
+      const todayBtn = document.createElement("button");
+      todayBtn.type = "button";
+      todayBtn.className = "ghost";
+      todayBtn.textContent = quickActionLabel;
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "ghost";
+      closeBtn.textContent = "Kapat";
+      actions.append(todayBtn, closeBtn);
+
+      popover.append(header, grid, actions);
+
+      const weekdayLabels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+      let selectedDate = initialDate;
+      let viewDate = initialDate ? new Date(`${initialDate}T00:00:00`) : new Date(getCurrentDateTime(config));
+
+      const selectDate = (dateValue, emitChange = true) => {
+        selectedDate = dateValue;
+        if (dateValue) {
+          viewDate = new Date(`${dateValue}T00:00:00`);
+        }
+        render();
+        if (emitChange) onSelect(dateValue);
+      };
+
+      const render = () => {
+        grid.innerHTML = "";
+        weekdayLabels.forEach((label) => {
+          const weekday = document.createElement("div");
+          weekday.className = "picker-weekday";
+          weekday.textContent = label;
+          grid.append(weekday);
+        });
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        title.textContent = viewDate.toLocaleString("tr-TR", { month: "long", year: "numeric" });
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const startDay = (firstDay.getDay() + 6) % 7;
+        for (let i = 0; i < startDay; i += 1) {
+          const empty = document.createElement("div");
+          grid.append(empty);
+        }
+        const todayValue = getDateFromIso(getCurrentDateTime(config));
+        for (let day = 1; day <= daysInMonth; day += 1) {
+          const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "picker-day";
+          button.textContent = String(day);
+          if (dateValue === todayValue) button.classList.add("is-today");
+          if (dateValue === selectedDate) button.classList.add("is-selected");
+          button.addEventListener("click", () => {
+            selectDate(dateValue);
+          });
+          grid.append(button);
+        }
+      };
+
+      const updateView = (direction) => {
+        viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + direction, 1);
+        render();
+      };
+
+      prevBtn.addEventListener("click", () => updateView(-1));
+      nextBtn.addEventListener("click", () => updateView(1));
+      todayBtn.addEventListener("click", () => {
+        if (onQuickAction) {
+          onQuickAction({ selectDate });
+          return;
+        }
+        const todayValue = getDateFromIso(getCurrentDateTime(config));
+        selectDate(todayValue);
+      });
+      closeBtn.addEventListener("click", () => {
+        popover.classList.remove("open");
+        if (onClose) onClose();
+      });
+
+      render();
+
+      return {
+        element: popover,
+        setSelectedDate(dateValue) {
+          selectDate(dateValue, false);
+        }
+      };
+    }
+
+    function formatDateMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+      return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+    }
+
+    function formatTimeMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 4);
+      if (digits.length <= 2) return digits;
+      return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+    }
+
+    function formatDateTimeMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 12);
+      if (digits.length <= 8) {
+        return formatDateMask(digits);
+      }
+      const dateDigits = digits.slice(0, 8);
+      const timeDigits = digits.slice(8);
+      const datePart = formatDateMask(dateDigits);
+      const timePart = formatTimeMask(timeDigits);
+      return `${datePart} ${timePart}`.trim();
+    }
+
+    function parseDateDisplay(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+      if (digits.length !== 8) return "";
+      const day = digits.slice(0, 2);
+      const month = digits.slice(2, 4);
+      const year = digits.slice(4, 8);
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseTimeDisplay(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 4);
+      if (digits.length !== 4) return "";
+      const hour = digits.slice(0, 2);
+      const minute = digits.slice(2, 4);
+      return `${hour}:${minute}`;
+    }
+
+    function parseDateTimeDisplay(value, config) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 12);
+      if (digits.length !== 12) return "";
+      const day = digits.slice(0, 2);
+      const month = digits.slice(2, 4);
+      const year = digits.slice(4, 8);
+      const hour = digits.slice(8, 10);
+      const minute = digits.slice(10, 12);
+      const dateValue = `${year}-${month}-${day}`;
+      const timeValue = `${hour}:${minute}`;
+      if (!isValidDateString(dateValue) || !isValidTimeString(timeValue)) return "";
+      const offset = getOffsetFromIso(getCurrentDateTime(config));
+      return `${dateValue}T${timeValue}:00${offset}`;
     }
 
     function normalizeNumberInput(raw) {
@@ -1586,14 +1902,6 @@
       return formatter.format(numeric);
     }
 
-    function formatDateDisplay(value) {
-      if (!value) return "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const [y, m, d] = value.split("-");
-        return `${d}.${m}.${y}`;
-      }
-      return value;
-    }
 
     function getDefaultValue(field, config) {
       if (!field.default) return "";
@@ -1838,7 +2146,7 @@
       if (value === null || value === undefined) return "";
       let resolved = resolveTokenValue(value, field, config);
       if (field.type === "date") {
-        resolved = normalizeDateInput(String(resolved));
+        resolved = normalizeDateInput(String(resolved), config);
         return resolved;
       }
       if (field.type === "time") {
@@ -1887,7 +2195,7 @@
         return Number.isNaN(numeric) ? "" : numeric;
       }
       if (field.type === "date") {
-        return normalizeDateInput(String(value));
+        return normalizeDateInput(String(value), config);
       }
       if (field.type === "datetime") {
         return normalizeDateTimeInput(String(value), config);
@@ -2260,7 +2568,7 @@
       }
       if (["date", "datetime", "time"].includes(field.type) && value) {
         if (field.type === "date") {
-          const normalized = normalizeDateInput(String(value));
+          const normalized = normalizeDateInput(String(value), state.config || {});
           if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
             return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
           }
@@ -2268,7 +2576,7 @@
             return "Geçerli bir tarih girin.";
           }
         }
-        if (field.type === "time" && !/^\d{2}:\d{2}$/.test(String(value))) return "Saat formatı HH:mm olmalı.";
+        if (field.type === "time" && !isValidTimeString(String(value))) return "Saat formatı HH:mm olmalı.";
         if (field.type === "datetime" && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(value))) return "Tarih ve saat gerekli.";
       }
       return "";
@@ -2328,18 +2636,15 @@
 
         labelTop.append(typeIcon, label);
 
-        if (field.required) {
-          const star = document.createElement("span");
-          star.className = "required-star";
-          star.textContent = "*";
-          labelTop.append(star);
-        }
-
         const labelMeta = document.createElement("div");
         labelMeta.className = "label-meta";
 
         const stageBadge = getStageBadge(field.stageType);
-        if (stageBadge) labelMeta.append(stageBadge);
+        if (stageBadge) {
+          labelMeta.append(stageBadge);
+        } else if (field.required) {
+          labelMeta.append(createMandatoryBadge());
+        }
 
         const aiBadge = document.createElement("button");
         aiBadge.type = "button";
@@ -2456,7 +2761,7 @@
         state.values[field.key] = effectiveInitial;
         state.validMap[field.key] = !validateField(field, effectiveInitial);
 
-        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number", "time"].includes(field.type)) {
+        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
           inputEl = document.createElement("input");
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
@@ -2467,7 +2772,6 @@
           if (field.type === "url") inputEl.type = "url";
           if (field.type === "phone") inputEl.type = "tel";
           if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
-          if (field.type === "time") inputEl.type = "time";
 
           setValue = (value) => {
             if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
@@ -2475,10 +2779,6 @@
                 ? formatNumberDisplay(value, { maximumFractionDigits: 0 })
                 : formatNumberDisplay(value, { maximumFractionDigits: 2 });
               inputEl.value = formatted || (value ?? "");
-              return;
-            }
-            if (field.type === "time") {
-              inputEl.value = value ? normalizeTimeInput(String(value)) : "";
               return;
             }
             inputEl.value = value ?? "";
@@ -2497,10 +2797,6 @@
           inputEl.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             let value = event.target.value;
-            if (field.type === "time") {
-              value = normalizeTimeInput(value);
-              event.target.value = value;
-            }
             if (field.type === "email" && value) {
               value = value.toLowerCase();
               event.target.value = value;
@@ -2523,23 +2819,6 @@
             updateError(control, field);
           });
 
-          if (field.type === "time" && field.ui?.quickActions) {
-            const actions = document.createElement("div");
-            actions.className = "field-actions";
-            const nowBtn = document.createElement("button");
-            nowBtn.type = "button";
-            nowBtn.className = "ghost";
-            nowBtn.textContent = "Şu an";
-            nowBtn.addEventListener("click", () => {
-              const now = getCurrentDateTime(config);
-              const timeValue = getTimeFromIso(now);
-              inputEl.value = timeValue;
-              setFieldValue(field.key, timeValue, field);
-              updateError(control, field);
-            });
-            actions.append(nowBtn);
-            inlineActions = actions;
-          }
         } else if (field.type === "textarea" || field.type === "json") {
           inputEl = document.createElement("textarea");
           inputEl.className = "field-input";
@@ -2701,119 +2980,130 @@
           updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
           const dateInput = document.createElement("input");
-          dateInput.type = "date";
+          dateInput.type = "text";
           dateInput.className = "field-input";
           dateInput.id = `field-${field.key}`;
           dateInput.setAttribute("aria-describedby", `error-${field.key}`);
-          dateInput.placeholder = field.placeholder || "";
+          dateInput.placeholder = field.placeholder || "GG.AA.YYYY";
+          dateInput.inputMode = "numeric";
+          inputEl = dateInput;
 
-          const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
-          if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-            dateInput.value = initialDate;
-          }
+          const normalizedInitial = effectiveInitial ? normalizeDateInput(effectiveInitial, config) : "";
+          const initialDisplay = normalizedInitial && isValidDateString(normalizedInitial)
+            ? formatDateDisplay(normalizedInitial)
+            : (typeof effectiveInitial === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(effectiveInitial) ? effectiveInitial : "");
+          dateInput.value = initialDisplay;
 
           setValue = (value) => {
-            const normalized = value ? normalizeDateInput(String(value)) : "";
-            dateInput.value = normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
+            const normalized = value ? normalizeDateInput(String(value), config) : "";
+            dateInput.value = normalized && isValidDateString(normalized) ? formatDateDisplay(normalized) : "";
           };
 
+          const calendar = buildCalendarPopover(config, {
+            initialDate: normalizedInitial && isValidDateString(normalizedInitial) ? normalizedInitial : "",
+            onSelect: (dateValue) => {
+              const displayValue = formatDateDisplay(dateValue);
+              dateInput.value = displayValue;
+              setFieldValue(field.key, dateValue, field, displayValue);
+              updateError(control, field);
+              closePopover();
+            },
+            onClose: () => {
+              dateInput.focus();
+            }
+          });
+
+          const iconBtn = document.createElement("button");
+          iconBtn.type = "button";
+          iconBtn.className = "field-icon-button";
+          iconBtn.setAttribute("aria-label", "Takvim aç");
+          iconBtn.textContent = "📅";
+
+          control.classList.add("has-icon");
+          control.append(dateInput, iconBtn, calendar.element);
+
+          const handleOutside = (event) => {
+            if (!control.contains(event.target)) {
+              closePopover();
+            }
+          };
+
+          const openPopover = () => {
+            calendar.element.classList.add("open");
+            document.addEventListener("click", handleOutside);
+          };
+
+          const closePopover = () => {
+            calendar.element.classList.remove("open");
+            document.removeEventListener("click", handleOutside);
+          };
+
+          iconBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (calendar.element.classList.contains("open")) {
+              closePopover();
+            } else {
+              openPopover();
+            }
+          });
+
           const syncDate = (raw) => {
-            const normalized = normalizeDateInput(raw);
-            const yearPart = normalized ? normalized.split("-")[0] : "";
-            if (yearPart && yearPart.length > 4) {
-              const parts = normalized.split("-");
-              parts[0] = parts[0].slice(0, 4);
-              dateInput.value = parts.join("-");
-              setFieldValue(field.key, "", field, raw);
+            if (!raw) {
+              dateInput.value = "";
+              setFieldValue(field.key, "", field, "");
+              updateError(control, field);
+              calendar.setSelectedDate("");
+              return;
+            }
+            const normalized = normalizeDateInput(raw, config);
+            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+              const displayValue = formatDateDisplay(normalized);
+              dateInput.value = displayValue;
+              if (isValidDateString(normalized)) {
+                setFieldValue(field.key, normalized, field, displayValue);
+                calendar.setSelectedDate(normalized);
+              } else {
+                setFieldValue(field.key, "", field, displayValue);
+                calendar.setSelectedDate("");
+              }
               updateError(control, field);
               return;
             }
-            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) && isValidDateString(normalized)) {
-              setFieldValue(field.key, normalized, field, normalized);
+            const masked = formatDateMask(raw);
+            dateInput.value = masked;
+            const parsed = parseDateDisplay(masked);
+            if (parsed && isValidDateString(parsed)) {
+              setFieldValue(field.key, parsed, field, masked);
+              calendar.setSelectedDate(parsed);
             } else {
-              setFieldValue(field.key, "", field, raw);
+              setFieldValue(field.key, "", field, masked);
+              calendar.setSelectedDate("");
             }
             updateError(control, field);
           };
 
           dateInput.addEventListener("input", (event) => syncDate(event.target.value));
-          dateInput.addEventListener("change", (event) => syncDate(event.target.value));
-          dateInput.addEventListener("click", () => {
-            if (dateInput.showPicker) {
-              try {
-                dateInput.showPicker();
-              } catch (error) {
-                console.warn("showPicker blocked", error);
-              }
-            }
+          dateInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncDate(event.target.value);
           });
-
-          const actions = document.createElement("div");
-          actions.className = "field-actions";
-          if (field.ui?.showCalendar) {
-            const calendarBtn = document.createElement("button");
-            calendarBtn.type = "button";
-            calendarBtn.className = "ghost";
-            calendarBtn.setAttribute("aria-label", "Takvim aç");
-            calendarBtn.textContent = "📅";
-            calendarBtn.addEventListener("click", () => {
-              if (dateInput.showPicker) {
-                dateInput.showPicker();
-              } else {
-                dateInput.focus();
-              }
-            });
-            actions.append(calendarBtn);
-          }
-          if (field.ui?.quickActions) {
-            const todayBtn = document.createElement("button");
-            todayBtn.type = "button";
-            todayBtn.className = "ghost";
-            todayBtn.textContent = "Bugün";
-            todayBtn.addEventListener("click", () => syncDate(getDateFromIso(getCurrentDateTime(config))));
-            const tomorrowBtn = document.createElement("button");
-            tomorrowBtn.type = "button";
-            tomorrowBtn.className = "ghost";
-            tomorrowBtn.textContent = "Yarın";
-            tomorrowBtn.addEventListener("click", () => {
-              const base = new Date(getCurrentDateTime(config));
-              base.setDate(base.getDate() + 1);
-              syncDate(base.toISOString().slice(0, 10));
-            });
-            const yesterdayBtn = document.createElement("button");
-            yesterdayBtn.type = "button";
-            yesterdayBtn.className = "ghost";
-            yesterdayBtn.textContent = "Dün";
-            yesterdayBtn.addEventListener("click", () => {
-              const base = new Date(getCurrentDateTime(config));
-              base.setDate(base.getDate() - 1);
-              syncDate(base.toISOString().slice(0, 10));
-            });
-            const clearBtn = document.createElement("button");
-            clearBtn.type = "button";
-            clearBtn.className = "ghost";
-            clearBtn.textContent = "Temizle";
-            clearBtn.addEventListener("click", () => {
-              dateInput.value = "";
-              setFieldValue(field.key, "", field);
-              updateError(control, field);
-            });
-            actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
-          }
-          control.append(dateInput, actions);
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
-          datetimeInput.type = "datetime-local";
+          datetimeInput.type = "text";
           datetimeInput.className = "field-input";
           datetimeInput.id = `field-${field.key}`;
           datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          datetimeInput.placeholder = field.placeholder || "GG.AA.YYYY SS:DD";
+          datetimeInput.inputMode = "numeric";
+          inputEl = datetimeInput;
 
           const normalizedInitial = effectiveInitial ? normalizeDateTimeInput(effectiveInitial, config) : "";
           const dateValue = normalizedInitial ? getDateFromIso(normalizedInitial) : "";
           const timeValue = normalizedInitial ? getTimeFromIso(normalizedInitial) : "";
-          if (dateValue && timeValue) {
-            datetimeInput.value = `${dateValue}T${timeValue}`;
-          }
+          datetimeInput.value = dateValue && timeValue ? formatDateTimeDisplay(normalizedInitial) : "";
+
+          let selectedDate = dateValue;
+          let selectedTime = timeValue;
 
           setValue = (value) => {
             if (!value) {
@@ -2821,65 +3111,219 @@
               return;
             }
             const normalized = normalizeDateTimeInput(String(value), config);
-            const nextDate = getDateFromIso(normalized);
-            const nextTime = getTimeFromIso(normalized);
-            datetimeInput.value = nextDate && nextTime ? `${nextDate}T${nextTime}` : "";
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+              datetimeInput.value = formatDateTimeDisplay(normalized);
+              selectedDate = getDateFromIso(normalized);
+              selectedTime = getTimeFromIso(normalized);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+            } else {
+              datetimeInput.value = "";
+            }
           };
 
-          const quickActions = document.createElement("div");
-          quickActions.className = "field-actions";
-          if (field.ui?.quickActions) {
-            const nowBtn = document.createElement("button");
-            nowBtn.type = "button";
-            nowBtn.className = "ghost";
-            nowBtn.textContent = "Şimdi";
-            nowBtn.addEventListener("click", () => {
+          const calendar = buildCalendarPopover(config, {
+            initialDate: selectedDate,
+            quickActionLabel: "Şimdi",
+            onQuickAction: ({ selectDate }) => {
               const now = getCurrentDateTime(config);
-              const isoDate = getDateFromIso(now);
-              const isoTime = getTimeFromIso(now);
-              const nextValue = `${isoDate}T${isoTime}`;
-              datetimeInput.value = nextValue;
-              syncDatetime(nextValue);
-            });
-            quickActions.append(nowBtn);
+              const nowDate = getDateFromIso(now);
+              const nowTime = getTimeFromIso(now);
+              selectedDate = nowDate;
+              selectedTime = nowTime;
+              selectDate(nowDate);
+              setTimeSelects(nowTime);
+              const displayValue = `${formatDateDisplay(nowDate)} ${nowTime}`;
+              datetimeInput.value = displayValue;
+              const normalized = normalizeDateTimeInput(`${nowDate}T${nowTime}`, config);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+              closePopover();
+            },
+            onSelect: (dateValue) => {
+              selectedDate = dateValue;
+              const nextTime = selectedTime || getTimeFromIso(getCurrentDateTime(config));
+              const displayValue = `${formatDateDisplay(dateValue)} ${nextTime}`;
+              datetimeInput.value = displayValue;
+              const normalized = normalizeDateTimeInput(`${dateValue}T${nextTime}`, config);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+            },
+            onClose: () => {
+              datetimeInput.focus();
+            }
+          });
+
+          const timeRow = document.createElement("div");
+          timeRow.className = "picker-time";
+          const hourSelect = document.createElement("select");
+          hourSelect.className = "field-input";
+          const minuteSelect = document.createElement("select");
+          minuteSelect.className = "field-input";
+
+          const buildTimeOptions = (select, max) => {
+            select.innerHTML = "";
+            for (let i = 0; i <= max; i += 1) {
+              const option = document.createElement("option");
+              option.value = String(i).padStart(2, "0");
+              option.textContent = option.value;
+              select.append(option);
+            }
+          };
+
+          buildTimeOptions(hourSelect, 23);
+          buildTimeOptions(minuteSelect, 59);
+
+          const setTimeSelects = (timeValue) => {
+            if (!timeValue || !isValidTimeString(timeValue)) return;
+            const [hour, minute] = timeValue.split(":");
+            hourSelect.value = hour;
+            minuteSelect.value = minute;
+          };
+
+          if (selectedTime) {
+            setTimeSelects(selectedTime);
           }
+
+          const updateTime = () => {
+            selectedTime = `${hourSelect.value}:${minuteSelect.value}`;
+            if (!selectedDate) return;
+            const displayValue = `${formatDateDisplay(selectedDate)} ${selectedTime}`;
+            datetimeInput.value = displayValue;
+            const normalized = normalizeDateTimeInput(`${selectedDate}T${selectedTime}`, config);
+            setFieldValue(field.key, normalized, field, displayValue);
+            updateError(control, field);
+          };
+
+          hourSelect.addEventListener("change", updateTime);
+          minuteSelect.addEventListener("change", updateTime);
+
+          timeRow.append(hourSelect, minuteSelect);
+          calendar.element.insertBefore(timeRow, calendar.element.lastElementChild);
+
+          const iconBtn = document.createElement("button");
+          iconBtn.type = "button";
+          iconBtn.className = "field-icon-button";
+          iconBtn.setAttribute("aria-label", "Takvim ve saat seç");
+          iconBtn.textContent = "🗓️";
+
+          control.classList.add("has-icon");
+          control.append(datetimeInput, iconBtn, calendar.element);
+
+          const handleOutside = (event) => {
+            if (!control.contains(event.target)) {
+              closePopover();
+            }
+          };
+
+          const openPopover = () => {
+            calendar.element.classList.add("open");
+            document.addEventListener("click", handleOutside);
+          };
+
+          const closePopover = () => {
+            calendar.element.classList.remove("open");
+            document.removeEventListener("click", handleOutside);
+          };
+
+          iconBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (calendar.element.classList.contains("open")) {
+              closePopover();
+            } else {
+              openPopover();
+            }
+          });
 
           const syncDatetime = (raw) => {
             if (!raw) {
-              setFieldValue(field.key, "", field, raw);
-              updateError(control, field);
-              return;
-            }
-            const [datePart] = raw.split("T");
-            const yearPart = datePart ? datePart.split("-")[0] : "";
-            if (yearPart && yearPart.length > 4) {
-              const parts = datePart.split("-");
-              parts[0] = parts[0].slice(0, 4);
-              const nextValue = `${parts.join("-")}T${raw.split("T")[1] || ""}`;
-              datetimeInput.value = nextValue;
-              setFieldValue(field.key, "", field, raw);
+              datetimeInput.value = "";
+              setFieldValue(field.key, "", field, "");
               updateError(control, field);
               return;
             }
             const normalized = normalizeDateTimeInput(raw, config);
-            setFieldValue(field.key, normalized, field, raw);
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+              const displayValue = formatDateTimeDisplay(normalized);
+              datetimeInput.value = displayValue;
+              selectedDate = getDateFromIso(normalized);
+              selectedTime = getTimeFromIso(normalized);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+              return;
+            }
+            const masked = formatDateTimeMask(raw);
+            datetimeInput.value = masked;
+            const parsed = parseDateTimeDisplay(masked, config);
+            if (parsed) {
+              selectedDate = getDateFromIso(parsed);
+              selectedTime = getTimeFromIso(parsed);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+              setFieldValue(field.key, parsed, field, masked);
+            } else {
+              setFieldValue(field.key, "", field, masked);
+            }
             updateError(control, field);
           };
 
           datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
-          datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
-          datetimeInput.addEventListener("click", () => {
-            if (datetimeInput.showPicker) {
-              try {
-                datetimeInput.showPicker();
-              } catch (error) {
-                console.warn("showPicker blocked", error);
-              }
+          datetimeInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncDatetime(event.target.value);
+          });
+        } else if (field.type === "time") {
+          const timeInput = document.createElement("input");
+          timeInput.type = "text";
+          timeInput.className = "field-input";
+          timeInput.id = `field-${field.key}`;
+          timeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          timeInput.placeholder = field.placeholder || "SS:DD";
+          timeInput.inputMode = "numeric";
+          inputEl = timeInput;
+
+          setValue = (value) => {
+            timeInput.value = value ? formatTimeMask(String(value)) : "";
+          };
+          setValue(effectiveInitial);
+
+          const syncTime = (raw) => {
+            const masked = formatTimeMask(raw);
+            timeInput.value = masked;
+            const parsed = parseTimeDisplay(masked);
+            if (parsed && isValidTimeString(parsed)) {
+              setFieldValue(field.key, parsed, field, masked);
+            } else {
+              setFieldValue(field.key, "", field, masked);
             }
+            updateError(control, field);
+          };
+
+          timeInput.addEventListener("input", (event) => syncTime(event.target.value));
+          timeInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncTime(event.target.value);
           });
 
-          inputEl = datetimeInput;
-          inlineActions = quickActions;
+          if (field.ui?.quickActions) {
+            const actions = document.createElement("div");
+            actions.className = "field-actions";
+            const nowBtn = document.createElement("button");
+            nowBtn.type = "button";
+            nowBtn.className = "ghost";
+            nowBtn.textContent = "Şu an";
+            nowBtn.addEventListener("click", () => {
+              const now = getCurrentDateTime(config);
+              const timeValue = getTimeFromIso(now);
+              timeInput.value = timeValue;
+              setFieldValue(field.key, timeValue, field, timeValue);
+              updateError(control, field);
+            });
+            actions.append(nowBtn);
+            inlineActions = actions;
+          }
         } else if (field.type === "duration") {
           const durationInput = document.createElement("input");
           durationInput.className = "field-input";
@@ -3154,7 +3598,9 @@
         }
 
         if (inputEl) {
-          control.append(inputEl);
+          if (!control.contains(inputEl)) {
+            control.append(inputEl);
+          }
           if (inlineActions) {
             control.append(inlineActions);
           }
@@ -3341,10 +3787,10 @@
       state.config.fields.forEach((field) => {
         let value = getEffectiveValue(field.key);
         if (field.type === "date" && typeof value === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
-          value = normalizeDateInput(value);
+          value = normalizeDateInput(value, state.config || {});
         }
-        if (field.type === "time" && typeof value === "string") {
-          value = normalizeTimeInput(value);
+        if (field.type === "time" && typeof value === "string" && !/^\d{2}:\d{2}$/.test(value)) {
+          value = parseTimeDisplay(value) || value;
         }
         state.values[field.key] = value;
         let validationValue = value;
