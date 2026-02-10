@@ -1393,8 +1393,8 @@
       if (columnWarning) {
         columnWarning.style.display = debugVisible && !columnJson ? "block" : "none";
       }
-      if (formActions) {
-        formActions.style.display = debugVisible ? "flex" : "none";
+    if (formActions) {
+        formActions.style.display = "none";
       }
       if (formContainer) {
         formContainer.style.display = "block";
@@ -1452,11 +1452,11 @@
     function buildSubmitOutputsPayload() {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
-      const durationSeconds = Math.round((new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime()) / 1000);
+      const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       return {
         output1: startTimestamp,
         output2: endTimestamp,
-        output3: durationSeconds,
+        output3: durationMs,
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
@@ -1673,6 +1673,7 @@
     }
 
     function updateEffectiveState(fieldKey, field, displayValue) {
+      ensureTaskStartTimestamp();
       const effectiveValue = getEffectiveValue(fieldKey);
       state.values[fieldKey] = effectiveValue;
       let validationValue = effectiveValue;
@@ -2169,7 +2170,8 @@
         const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
-        entries.push(JSON.stringify({ key: jsonKey, value: isEmptyValue(currentValue) ? "" : currentValue }));
+        const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
+        entries.push(`"${jsonKey}": ${JSON.stringify(safeValue)}`);
       });
       return entries;
     }
@@ -3399,6 +3401,17 @@
       resetAllStores();
     };
 
+    window.BDF_submit = () => {
+      if (!formEl) return;
+      validateAll();
+      const payload = buildSubmitOutputsPayload();
+      if (typeof window.bubble_fn_submit === "function") {
+        window.bubble_fn_submit(payload);
+      } else {
+        console.warn("bubble_fn_submit not available");
+      }
+    };
+
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
 
@@ -3432,6 +3445,9 @@
         outputlist3: submitOutputsPayload.outputlist3,
         outputlist4: submitOutputsPayload.outputlist4
       });
+      if (typeof window.bubble_fn_submit === "function") {
+        window.bubble_fn_submit(submitOutputsPayload);
+      }
       });
 
       if (submitBtn) {
