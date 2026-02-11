@@ -95,6 +95,14 @@
       --success: #16a34a;
       --warning: #f59e0b;
       --focus: rgba(37, 99, 235, 0.12);
+      --form-row-gap: clamp(8px, 1.1vw, 12px);
+      --form-field-gap: clamp(6px, 0.8vw, 8px);
+      --form-vertical-padding: clamp(6px, 0.9vw, 10px);
+      --form-control-pad-y: clamp(5px, 0.7vw, 7px);
+      --form-control-pad-x: clamp(7px, 0.9vw, 10px);
+      --form-input-pad-y: clamp(6px, 0.8vw, 8px);
+      --form-input-pad-x: clamp(4px, 0.6vw, 6px);
+      --form-input-min-height: clamp(32px, 4vw, 36px);
       font-size: 14px;
       color: var(--text);
     }
@@ -162,18 +170,18 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: 8px;
-      padding: 10px 0;
+      gap: var(--form-field-gap);
+      padding: var(--form-vertical-padding) 0;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
-      margin-top: 8px;
+      margin-top: var(--form-field-gap);
     }
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-      gap: 14px;
+      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+      gap: var(--form-row-gap);
       align-items: start;
     }
 
@@ -291,13 +299,13 @@
 
 #bdf-root .control-stack {
       display: grid;
-      gap: 6px;
+      gap: var(--form-field-gap);
     }
 
 #bdf-root .field-control {
       border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 6px 8px;
+      padding: var(--form-control-pad-y) var(--form-control-pad-x);
       background: #fff;
       position: relative;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -344,13 +352,13 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 8px 6px;
+      padding: var(--form-input-pad-y) var(--form-input-pad-x);
       border-radius: 10px;
       font-size: 0.9rem;
       background: transparent;
       color: var(--text);
       outline: none;
-      min-height: 36px;
+      min-height: var(--form-input-min-height);
     }
 
 #bdf-root .field-input::placeholder,
@@ -932,9 +940,14 @@
     }
 
     @media (max-width: 900px) {
+#bdf-root {
+        --form-row-gap: 10px;
+        --form-field-gap: 6px;
+        --form-vertical-padding: 6px;
+      }
+
 #bdf-root .field-row {
-        grid-template-columns: minmax(160px, 210px) minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
       }
     }
 
