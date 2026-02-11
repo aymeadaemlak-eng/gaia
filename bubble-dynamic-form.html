@@ -2981,8 +2981,7 @@
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
 
-        const resolvedField = resolveFieldType(field);
-        const normalizedType = String(resolvedField?.type || field.type || "").toLowerCase();
+        const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
         const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
           || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
