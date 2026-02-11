@@ -113,15 +113,15 @@
       --focus: rgba(37, 99, 235, 0.12);
       --form-row-gap: clamp(8px, 1.1vw, 12px);
       --form-field-gap: clamp(6px, 0.8vw, 8px);
-      --form-vertical-padding: clamp(6px, 0.9vw, 10px);
+      --form-vertical-padding: clamp(2px, 0.4vw, 4px);
       --form-control-pad-y: clamp(5px, 0.7vw, 7px);
       --form-control-pad-x: clamp(7px, 0.9vw, 10px);
       --form-input-pad-y: clamp(6px, 0.8vw, 8px);
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
       --form-input-min-height: clamp(32px, 4vw, 36px);
       --field-gap-internal: clamp(4px, 0.6vw, 8px);
-      --field-gap-between: clamp(16px, 2vw, 24px);
-      --field-group-gap: clamp(32px, 4vw, 40px);
+      --field-gap-between: clamp(10px, 1.4vw, 16px);
+      --field-group-gap: clamp(18px, 2.2vw, 24px);
       --amount-input-max-width: 268px;
       font-size: 14px;
       color: var(--text);
@@ -200,19 +200,6 @@
 
     #bdf-root .field-wrapper.group-break-date {
       margin-top: var(--field-group-gap);
-      padding-top: 14px;
-      border-top: 1px solid #edf0f5;
-    }
-
-    #bdf-root .field-wrapper.group-break-date::before {
-      content: "Tarih Bilgileri";
-      display: block;
-      font-size: 0.72rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #64748b;
-      font-weight: 700;
-      margin-bottom: 8px;
     }
 
     #bdf-root .field-row {
@@ -997,7 +984,7 @@
         --form-row-gap: 10px;
         --form-field-gap: 6px;
         --form-vertical-padding: 6px;
-        --field-gap-between: 16px;
+        --field-gap-between: 10px;
       }
 
 #bdf-root .field-row {
