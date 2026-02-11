@@ -31,7 +31,8 @@
     // -----------------------
     // 0) Config
     // -----------------------
-    const envInput = (data?.env || "version-test").trim().toLowerCase();
+    const envInputRaw = (data?.env || "version-test").trim().toLowerCase();
+    const envInput = envInputRaw.replace(/^version-/, "");
     const ENVIRONMENT =
       envInput === "live" || envInput === "production" || envInput === "prod"
         ? "live"

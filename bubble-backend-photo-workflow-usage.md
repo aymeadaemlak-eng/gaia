@@ -42,7 +42,8 @@ Aşağıdaki key'leri Bubble'da gönder:
 - `env` için güvenli değerler:
   - Test ortamı: `version-test`
   - Canlı ortam: `live`
-- Script ayrıca `prod` / `production` yazılırsa bunu otomatik `live` olarak kabul eder.
+- Script ayrıca `prod` / `production` / `version-live` yazılırsa bunu otomatik `live` olarak kabul eder.
+- `version-test` yazarsan test ortamı olarak çalışır (desteklenir).
 - `domain` tam kök domain olmalı, örnek:
   - ✅ `https://gaiasphere.io`
   - ✅ `https://gaiasphere.io/` (sondaki `/` script tarafından temizlenir)
