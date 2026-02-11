@@ -1108,7 +1108,6 @@
       </div>
     </section>
     </main>
-  </div>
   <div id="lightbox" class="lightbox" aria-hidden="true">
     <div class="lightbox-content">
       <button type="button" class="lightbox-close">Kapat</button>
@@ -1129,6 +1128,7 @@
       </div>
       <textarea id="exportContent" readonly></textarea>
     </div>
+  </div>
   </div>
 
   <script>
@@ -1745,6 +1745,10 @@
             child.style.display = formOnly ? "none" : "";
           });
         }
+      }
+      if (formOnly) {
+        closeLightbox();
+        closeExportModal();
       }
     }
 
@@ -3969,7 +3973,7 @@
     }
 
     function openLightbox(src) {
-      if (!src) return;
+      if (IS_VERSION_MODE || !src || !lightboxEl || !lightboxImage) return;
       lightboxImage.src = src;
       lightboxEl.classList.add("open");
       lightboxEl.setAttribute("aria-hidden", "false");
@@ -3981,18 +3985,21 @@
     }
 
     function closeLightbox() {
+      if (!lightboxEl || !lightboxImage) return;
       lightboxEl.classList.remove("open");
       lightboxEl.setAttribute("aria-hidden", "true");
       lightboxImage.src = "";
     }
 
     function openExportModal(kind = "export") {
+      if (IS_VERSION_MODE || !exportModal) return;
       exportModal.classList.add("open");
       exportModal.setAttribute("aria-hidden", "false");
       setExportTab(kind);
     }
 
     function closeExportModal() {
+      if (!exportModal || !exportContent) return;
       exportModal.classList.remove("open");
       exportModal.setAttribute("aria-hidden", "true");
       exportContent.value = "";
