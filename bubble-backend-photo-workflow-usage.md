@@ -38,6 +38,17 @@ Aşağıdaki key'leri Bubble'da gönder:
 - `domain`: ör. `https://gaiasphere.io`
 - `customFieldMapJson`: `{"Evrakları Yükle Toplu":"1763...x..."}`
 
+### `env` ve `domain` nasıl yazılmalı?
+- `env` için güvenli değerler:
+  - Test ortamı: `version-test`
+  - Canlı ortam: `live`
+- Script ayrıca `prod` / `production` yazılırsa bunu otomatik `live` olarak kabul eder.
+- `domain` tam kök domain olmalı, örnek:
+  - ✅ `https://gaiasphere.io`
+  - ✅ `https://gaiasphere.io/` (sondaki `/` script tarafından temizlenir)
+  - ❌ `gaiasphere.io` (protokolsüz yazma)
+  - ❌ `https://gaiasphere.io/version-test` (path ekleme, script zaten ekliyor)
+
 ### Mevcut photo kayıtlarını update etmek için
 Eğer elinde düzenlenecek photo id'leri varsa iki yöntem var:
 

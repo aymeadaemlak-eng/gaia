@@ -31,8 +31,12 @@
     // -----------------------
     // 0) Config
     // -----------------------
-    const ENVIRONMENT = (data?.env || "version-test").trim();
-    const APP_DOMAIN = (data?.domain || "https://gaiasphere.io").trim();
+    const envInput = (data?.env || "version-test").trim().toLowerCase();
+    const ENVIRONMENT =
+      envInput === "live" || envInput === "production" || envInput === "prod"
+        ? "live"
+        : "version-test";
+    const APP_DOMAIN = (data?.domain || "https://gaiasphere.io").trim().replace(/\/+$/, "");
     const BUBBLE_API_TOKEN = (data?.token || "").trim();
 
     const PHOTO_TYPE = (data?.photoType || "Photos").trim();
@@ -45,9 +49,7 @@
     }
 
     const BUBBLE_BASE_URL =
-      ENVIRONMENT === "version-test"
-        ? `${APP_DOMAIN}/version-test/api/1.1`
-        : `${APP_DOMAIN}/api/1.1`;
+      ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/api/1.1` : `${APP_DOMAIN}/api/1.1`;
 
     const BUBBLE_FILEUPLOAD_URL =
       ENVIRONMENT === "version-test"
