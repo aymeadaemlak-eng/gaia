@@ -32,8 +32,57 @@
       VERSION: true
     };
   </script>
-  <style>
-    :root {
+  <script>
+    (function (){
+      const hostId = "form";
+      const iframeId = "bdf-iframe";
+      const defaultHeight = 600;
+
+      function findIframe(){
+        const host = document.getElementById(hostId);
+        if (!host) return null;
+        return host.querySelector("iframe");
+      }
+
+      function applyIframeBaseStyles(frame){
+        frame.id = iframeId;
+        frame.style.width = "100%";
+        frame.style.display = "block";
+        frame.style.border = "0";
+        frame.style.minHeight = defaultHeight + "px";
+        frame.style.height = defaultHeight + "px";
+        frame.style.overflow = "hidden";
+      }
+
+      function setIframeHeight(h){
+        const iframe = findIframe();
+        if (!iframe) return;
+        applyIframeBaseStyles(iframe);
+        const height = Math.max(200, Number(h)||0);
+        iframe.style.height = height + "px";
+        iframe.style.minHeight = height + "px";
+      }
+
+      window.addEventListener("message", function(e){
+        if (!e.data || e.data.type !== "BDF_HEIGHT") return;
+        if (e.data.height && !isNaN(Number(e.data.height))){
+          setIframeHeight(e.data.height);
+        }
+      });
+
+      const tryInit = setInterval(()=>{
+        const frame = findIframe();
+        if (frame){
+          applyIframeBaseStyles(frame);
+          clearInterval(tryInit);
+        }
+      }, 200);
+
+      setTimeout(() => clearInterval(tryInit), 5000);
+    })();
+  </script>
+  <style data-bdf-style>
+    #bdf-root {
       color-scheme: light;
       font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
       --bg: #f5f7fb;
@@ -41,33 +90,36 @@
       --text: #111827;
       --muted: #6b7280;
       --primary: #2563eb;
-      --border: #e5e7eb;
-      --danger: #ef4444;
+      --border: #e6eaf0;
+      --danger: #e05a5a;
       --success: #16a34a;
       --warning: #f59e0b;
-      --focus: rgba(37, 99, 235, 0.18);
+      --focus: rgba(37, 99, 235, 0.12);
+      font-size: 14px;
+      color: var(--text);
     }
 
-    * {
+    #bdf-root,
+    #bdf-root * {
       box-sizing: border-box;
     }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-    }
 
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
+    #bdf-root button,
+    #bdf-root input,
+    #bdf-root select,
+    #bdf-root textarea {
+      font: inherit;
+      color: inherit;
+    }
+    #bdf-root .page {
+      margin: 0;
+      padding: 0;
       display: grid;
       gap: 20px;
     }
 
-    .card {
+    #bdf-root .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -75,24 +127,26 @@
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
-    h1, h2, h3 {
+    #bdf-root h1,
+    #bdf-root h2,
+    #bdf-root h3 {
       margin: 0 0 12px;
     }
 
-    .grid {
+    #bdf-root .grid {
       display: grid;
       gap: 16px;
     }
 
-    .grid.two {
+    #bdf-root .grid.two {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 
-    .grid.three {
+    #bdf-root .grid.three {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
-    label {
+    #bdf-root label {
       font-size: 0.9rem;
       font-weight: 600;
       display: inline-flex;
@@ -100,101 +154,109 @@
       gap: 6px;
     }
 
-    .required-star {
-      color: var(--danger);
-      font-weight: 700;
-    }
-
-    .required-hint {
+    #bdf-root .required-hint {
       font-size: 0.75rem;
       color: var(--danger);
       font-weight: 600;
     }
 
-    .field-wrapper {
+    #bdf-root .field-wrapper {
       display: grid;
-      gap: 6px;
-      padding: 8px 0;
-      border-bottom: 1px solid #eef2f7;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      gap: 8px;
+      padding: 10px 0;
     }
 
-    .field-wrapper:last-child {
-      border-bottom: none;
+    #bdf-root .field-wrapper + .field-wrapper {
+      margin-top: 8px;
     }
 
-    .field-wrapper:hover {
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
-      transform: translateY(-1px);
-      border-radius: 12px;
-    }
-
-    .field-row {
+    #bdf-root .field-row {
       display: grid;
-      grid-template-columns: minmax(180px, 35%) minmax(0, 65%);
+      grid-template-columns: 220px 1fr;
       gap: 14px;
       align-items: start;
     }
 
-    .field-label {
+    #bdf-root .field-label {
       display: grid;
       gap: 4px;
     }
 
-    .label-top {
+    #bdf-root .label-top {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 6px;
     }
 
-    .label-text {
-      font-weight: 700;
+    #bdf-root .label-text {
+      font-weight: 650;
+      font-size: 0.92rem;
+      color: #111827;
     }
 
-    .label-meta {
+    #bdf-root .label-meta {
       display: flex;
       flex-wrap: wrap;
       align-items: flex-start;
       gap: 6px;
     }
 
-    .type-icon {
-      font-size: 14px;
-      line-height: 1;
+    #bdf-root .type-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background: #f6f7fb;
+      border: 1px solid #edf0f6;
+      color: #6b7280;
+      flex-shrink: 0;
     }
 
-    .stage-badge {
+    #bdf-root .type-icon svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+#bdf-root .stage-badge {
       display: inline-flex;
       align-items: center;
       padding: 2px 8px;
       border-radius: 999px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
       text-transform: capitalize;
+      border: 1px solid transparent;
+      letter-spacing: 0.01em;
     }
 
-    .stage-optional {
+#bdf-root .stage-optional {
       background: #f3f4f6;
       color: #6b7280;
+      border-color: #e5e7eb;
     }
 
-    .stage-mandatory {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--danger);
+#bdf-root .stage-mandatory {
+      background: rgba(224, 90, 90, 0.12);
+      color: #b63a3a;
+      border-color: rgba(224, 90, 90, 0.4);
     }
 
-    .stage-control {
-      background: rgba(37, 99, 235, 0.12);
-      color: var(--primary);
+#bdf-root .stage-control {
+      background: rgba(100, 116, 139, 0.12);
+      color: #475569;
+      border-color: rgba(148, 163, 184, 0.6);
     }
 
-    .ai-badge {
+#bdf-root .ai-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       border: 1px solid rgba(37, 99, 235, 0.25);
-      background: linear-gradient(120deg, rgba(37, 99, 235, 0.12), rgba(99, 102, 241, 0.2));
+      background: rgba(37, 99, 235, 0.08);
       border-radius: 999px;
       padding: 2px 10px;
       font-size: 0.7rem;
@@ -205,92 +267,56 @@
       overflow: hidden;
     }
 
-    .ai-badge img {
+#bdf-root .ai-badge img {
       width: 14px;
       height: 14px;
       display: inline-block;
       object-fit: contain;
     }
 
-    .ai-badge.is-active {
+#bdf-root .ai-badge.is-active {
       border-color: rgba(34, 197, 94, 0.4);
       background: rgba(34, 197, 94, 0.12);
       color: #15803d;
     }
 
-    .ai-badge.is-passive {
+#bdf-root .ai-badge.is-passive {
       opacity: 0.7;
       filter: grayscale(0.2);
     }
 
-    .ai-badge::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-      transform: translateX(-120%);
-      animation: sparkle 4s ease-in-out infinite;
-      opacity: 0.4;
-      pointer-events: none;
+#bdf-root .ai-badge::after {
+      content: none;
     }
 
-    @keyframes sparkle {
-      0%, 70% {
-        transform: translateX(-120%);
-      }
-      100% {
-        transform: translateX(120%);
-      }
-    }
-
-    .control-stack {
+#bdf-root .control-stack {
       display: grid;
       gap: 6px;
     }
 
-    .field-control {
-      border: 1px solid var(--border);
+#bdf-root .field-control {
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 2px;
+      padding: 6px 8px;
       background: #fff;
       position: relative;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .field-control::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 6px;
-      bottom: 6px;
-      width: 4px;
-      border-radius: 999px;
-      background: transparent;
-      opacity: 0.6;
+#bdf-root .field-control::before {
+      content: none;
     }
 
-    .field-control.stage-optional::before {
-      background: #d1d5db;
-    }
-
-    .field-control.stage-mandatory::before {
-      background: var(--danger);
-    }
-
-    .field-control.stage-control::before {
-      background: var(--primary);
-    }
-
-    .field-control.ai-active {
-      background: rgba(37, 99, 235, 0.06);
-    }
-
-    .field-control.ai-active .field-input {
+#bdf-root .field-control.ai-active {
       background: rgba(37, 99, 235, 0.04);
+    }
+
+#bdf-root .field-control.ai-active .field-input {
+      background: rgba(37, 99, 235, 0.02);
       padding-right: 56px;
     }
 
-    .ai-pill {
+#bdf-root .ai-pill {
       position: absolute;
       top: 6px;
       right: 36px;
@@ -303,60 +329,188 @@
       pointer-events: none;
     }
 
-    .field-control:focus-within {
-      border-color: rgba(37, 99, 235, 0.75);
-      box-shadow: 0 0 0 3px var(--focus);
+#bdf-root .field-control:focus-within {
+      border-color: rgba(37, 99, 235, 0.55);
+      box-shadow: 0 0 0 2px var(--focus);
     }
 
-    .field-control.invalid {
-      border-color: rgba(239, 68, 68, 0.75);
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+#bdf-root .field-control.invalid {
+      border-color: rgba(224, 90, 90, 0.7);
+      box-shadow: 0 0 0 2px rgba(224, 90, 90, 0.18);
     }
 
-    .field-input,
-    select,
-    textarea {
+#bdf-root .field-input,
+#bdf-root select,
+#bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-radius: 10px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       background: transparent;
       color: var(--text);
       outline: none;
-      min-height: 34px;
+      min-height: 36px;
     }
 
-    textarea.field-input {
+#bdf-root .field-input::placeholder,
+#bdf-root textarea::placeholder {
+      color: #9ca3af;
+    }
+
+#bdf-root .field-control.has-icon .field-input {
+      padding-right: 42px;
+    }
+
+#bdf-root textarea.field-input {
       resize: vertical;
       min-height: 96px;
     }
 
-    .field-actions {
+#bdf-root .field-icon-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #475569;
+    }
+
+#bdf-root .field-icon-button:hover {
+      border-color: #d1d5db;
+      background: #f3f4f6;
+    }
+
+#bdf-root .picker-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 270px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+      padding: 12px;
+      display: none;
+      z-index: 30;
+    }
+
+#bdf-root .picker-popover.open {
+      display: grid;
+      gap: 10px;
+    }
+
+#bdf-root .picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+#bdf-root .picker-nav {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: #475569;
+    }
+
+#bdf-root .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 0.72rem;
+    }
+
+#bdf-root .picker-weekday {
+      color: #94a3b8;
+      font-weight: 600;
+      padding: 4px 0;
+    }
+
+#bdf-root .picker-day {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 0;
+      cursor: pointer;
+      color: #334155;
+      background: transparent;
+    }
+
+#bdf-root .picker-day.is-today {
+      border-color: rgba(37, 99, 235, 0.4);
+      color: #1d4ed8;
+    }
+
+#bdf-root .picker-day.is-selected {
+      background: rgba(37, 99, 235, 0.12);
+      border-color: rgba(37, 99, 235, 0.3);
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+#bdf-root .picker-time {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+#bdf-root .picker-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+#bdf-root .picker-actions button {
+      padding: 6px 10px;
+      font-size: 0.72rem;
+    }
+
+#bdf-root .field-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
     }
 
-    .helper-text {
+#bdf-root .helper-text {
       font-size: 0.75rem;
       color: var(--muted);
     }
 
-    .error-text {
+#bdf-root .error-text {
       font-size: 0.75rem;
       color: var(--danger);
       min-height: 16px;
     }
 
-    .inline-row {
+#bdf-root .inline-row {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
     }
 
-    button {
+#bdf-root button {
       border: none;
       border-radius: 10px;
       padding: 10px 16px;
@@ -366,23 +520,23 @@
       color: #fff;
     }
 
-    button.secondary {
+#bdf-root button.secondary {
       background: #e5e7eb;
       color: var(--text);
     }
 
-    button.ghost {
+#bdf-root button.ghost {
       background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
     }
 
-    button:disabled {
+#bdf-root button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .console {
+#bdf-root .console {
       background: #0f172a;
       color: #e2e8f0;
       padding: 12px;
@@ -394,7 +548,7 @@
       white-space: pre-wrap;
     }
 
-    .pill {
+#bdf-root .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -406,13 +560,13 @@
       color: var(--primary);
     }
 
-    .chip-row {
+#bdf-root .chip-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
 
-    .chip {
+#bdf-root .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -424,14 +578,14 @@
       font-weight: 600;
     }
 
-    .chip button {
+#bdf-root .chip button {
       padding: 2px 6px;
       border-radius: 999px;
       font-size: 0.7rem;
       background: rgba(37, 99, 235, 0.2);
     }
 
-    .file-drop {
+#bdf-root .file-drop {
       border: 1px dashed var(--border);
       border-radius: 12px;
       padding: 12px;
@@ -440,20 +594,20 @@
       background: #fafafa;
     }
 
-    .file-list {
+#bdf-root .file-list {
       display: grid;
       gap: 8px;
       margin-top: 10px;
     }
 
-    .file-grid {
+#bdf-root .file-grid {
       display: grid;
       gap: 8px;
       margin-top: 10px;
       grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
 
-    .file-item {
+#bdf-root .file-item {
       display: flex;
       gap: 10px;
       align-items: center;
@@ -464,7 +618,7 @@
       background: #fff;
     }
 
-    .file-card {
+#bdf-root .file-card {
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px;
@@ -475,13 +629,13 @@
       overflow: hidden;
     }
 
-    .file-meta {
+#bdf-root .file-meta {
       display: grid;
       gap: 4px;
       font-size: 0.82rem;
     }
 
-    .file-thumb {
+#bdf-root .file-thumb {
       width: 52px;
       height: 52px;
       border-radius: 8px;
@@ -490,17 +644,17 @@
       background: #f3f4f6;
     }
 
-    .file-thumb.large {
+#bdf-root .file-thumb.large {
       width: 100%;
       height: 90px;
     }
 
-    .file-thumb-wrap {
+#bdf-root .file-thumb-wrap {
       position: relative;
       display: inline-block;
     }
 
-    .file-thumb-overlay {
+#bdf-root .file-thumb-overlay {
       position: absolute;
       inset: 0;
       background: rgba(15, 23, 42, 0.35);
@@ -514,11 +668,11 @@
       border-radius: 8px;
     }
 
-    .file-thumb-wrap:hover .file-thumb-overlay {
+#bdf-root .file-thumb-wrap:hover .file-thumb-overlay {
       opacity: 1;
     }
 
-    .preview-btn {
+#bdf-root .preview-btn {
       border: none;
       background: rgba(37, 99, 235, 0.1);
       color: var(--primary);
@@ -528,7 +682,7 @@
       cursor: pointer;
     }
 
-    .conflict-chip {
+#bdf-root .conflict-chip {
       background: rgba(239, 68, 68, 0.12);
       color: var(--danger);
       border-radius: 999px;
@@ -538,7 +692,7 @@
       cursor: pointer;
     }
 
-    .conflict-popover {
+#bdf-root .conflict-popover {
       position: absolute;
       top: 100%;
       right: 0;
@@ -555,12 +709,12 @@
       z-index: 20;
     }
 
-    .conflict-popover.open {
+#bdf-root .conflict-popover.open {
       display: grid;
       gap: 6px;
     }
 
-    .conflict-popover pre {
+#bdf-root .conflict-popover pre {
       margin: 0;
       padding: 6px 8px;
       background: #f8fafc;
@@ -572,29 +726,29 @@
       word-break: break-word;
     }
 
-    .conflict-popover small {
+#bdf-root .conflict-popover small {
       color: var(--muted);
       font-weight: 600;
     }
 
-    .conflict-actions {
+#bdf-root .conflict-actions {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
 
-    .conflict-actions button {
+#bdf-root .conflict-actions button {
       padding: 6px 10px;
       font-size: 0.72rem;
     }
 
-    .date-wrapper {
+#bdf-root .date-wrapper {
       position: relative;
       display: grid;
       gap: 6px;
     }
 
-    .date-overlay-input {
+#bdf-root .date-overlay-input {
       position: absolute;
       inset: 0;
       opacity: 0;
@@ -603,13 +757,13 @@
       cursor: pointer;
     }
 
-    .file-icon {
+#bdf-root .file-icon {
       font-size: 22px;
       width: 44px;
       text-align: center;
     }
 
-    .file-remove {
+#bdf-root .file-remove {
       border: none;
       background: transparent;
       color: var(--danger);
@@ -617,19 +771,19 @@
       cursor: pointer;
     }
 
-    .toggle {
+#bdf-root .toggle {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       cursor: pointer;
     }
 
-    .toggle input {
+#bdf-root .toggle input {
       width: 40px;
       height: 22px;
     }
 
-    .summary-box {
+#bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
       color: var(--danger);
@@ -638,7 +792,7 @@
       font-size: 0.85rem;
     }
 
-    .lightbox {
+#bdf-root .lightbox {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.6);
@@ -649,11 +803,11 @@
       z-index: 999;
     }
 
-    .lightbox.open {
+#bdf-root .lightbox.open {
       display: flex;
     }
 
-    .lightbox-content {
+#bdf-root .lightbox-content {
       max-width: min(720px, 90vw);
       max-height: 80vh;
       background: #fff;
@@ -663,13 +817,13 @@
       gap: 12px;
     }
 
-    .lightbox-content img {
+#bdf-root .lightbox-content img {
       width: 100%;
       height: auto;
       border-radius: 12px;
     }
 
-    .lightbox-close {
+#bdf-root .lightbox-close {
       justify-self: end;
       background: #111827;
       color: #fff;
@@ -678,7 +832,7 @@
       font-size: 0.75rem;
     }
 
-    .debug-toolbar {
+#bdf-root .debug-toolbar {
       position: sticky;
       top: 12px;
       z-index: 10;
@@ -691,19 +845,19 @@
       backdrop-filter: blur(6px);
     }
 
-    .toolbar-actions {
+#bdf-root .toolbar-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
 
-    .toolbar-actions button {
+#bdf-root .toolbar-actions button {
       padding: 8px 12px;
       font-size: 0.78rem;
     }
 
-    .toolbar-status {
+#bdf-root .toolbar-status {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
@@ -712,7 +866,7 @@
       font-weight: 600;
     }
 
-    .debug-warning {
+#bdf-root .debug-warning {
       border: 1px dashed var(--border);
       border-radius: 12px;
       padding: 12px;
@@ -722,7 +876,7 @@
       margin-bottom: 16px;
     }
 
-    .export-modal {
+#bdf-root .export-modal {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.5);
@@ -733,11 +887,11 @@
       z-index: 1000;
     }
 
-    .export-modal.open {
+#bdf-root .export-modal.open {
       display: flex;
     }
 
-    .export-panel {
+#bdf-root .export-panel {
       background: #fff;
       border-radius: 16px;
       padding: 16px;
@@ -747,30 +901,30 @@
       gap: 12px;
     }
 
-    .export-tabs {
+#bdf-root .export-tabs {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .export-tabs button {
+#bdf-root .export-tabs button {
       padding: 6px 10px;
       font-size: 0.75rem;
     }
 
-    .export-tabs button.active {
+#bdf-root .export-tabs button.active {
       background: var(--primary);
       color: #fff;
     }
 
-    .export-panel textarea {
+#bdf-root .export-panel textarea {
       width: 100%;
       min-height: 240px;
       font-family: "JetBrains Mono", "SFMono-Regular", monospace;
       font-size: 0.78rem;
     }
 
-    .input-error {
+#bdf-root .input-error {
       color: var(--danger);
       font-size: 0.75rem;
       font-weight: 600;
@@ -778,15 +932,37 @@
     }
 
     @media (max-width: 720px) {
-      .field-row {
+#bdf-root .field-row {
         grid-template-columns: 1fr;
         gap: 6px;
       }
     }
   </style>
+  <script>
+    (() => {
+      const styleEl = document.currentScript?.previousElementSibling;
+      const init = () => {
+        const root = document.getElementById("bdf-root");
+        if (!root) return;
+        const hasMultipleRoots = document.querySelectorAll("#bdf-root").length > 1;
+        if (!hasMultipleRoots) return;
+        const uniqueId = `bdf-root-${Math.random().toString(36).slice(2, 9)}`;
+        root.id = uniqueId;
+        if (styleEl && styleEl.tagName === "STYLE") {
+          styleEl.textContent = styleEl.textContent.replace(/#bdf-root/g, `#${uniqueId}`);
+        }
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </head>
 <body>
-  <main class="page">
+  <div id="bdf-root" data-bdf-root>
+    <main class="page">
     <div id="debugPanels">
       <section class="card" id="jsonInputsSection">
       <h2>Bubble JSON Girişleri</h2>
@@ -924,7 +1100,8 @@
         </div>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
   <div id="lightbox" class="lightbox" aria-hidden="true">
     <div class="lightbox-content">
       <button type="button" class="lightbox-close">Kapat</button>
@@ -1115,55 +1292,211 @@
     let taskStartTimestamp = null;
     let initialSnapshot = null;
 
-    const schemaInput = document.getElementById("schemaInput");
-    const columnJsonInput = document.getElementById("columnJsonInput");
-    const humanJsonInput = document.getElementById("humanJsonInput");
-    const predictedJsonInput = document.getElementById("predictedJsonInput");
-    const columnJsonError = document.getElementById("columnJsonError");
-    const humanJsonError = document.getElementById("humanJsonError");
-    const predictedJsonError = document.getElementById("predictedJsonError");
-    const versionInput = document.getElementById("versionInput");
-    const jsonInputsSection = document.getElementById("jsonInputsSection");
-    const debugPanels = document.getElementById("debugPanels");
-    const currentDateTimeInput = document.getElementById("currentDateTime");
-    const localeInput = document.getElementById("localeInput");
-    const timezoneInput = document.getElementById("timezoneInput");
-    const modeInput = document.getElementById("modeInput");
-    const requiredPolicyInput = document.getElementById("requiredPolicyInput");
-    const showInlineHelpInput = document.getElementById("showInlineHelp");
-    const autoFocusInvalidInput = document.getElementById("autoFocusInvalid");
-    const formEl = document.getElementById("dynamicForm");
-    const submitBtn = document.getElementById("submitBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const summaryBox = document.getElementById("summaryBox");
-    const formContainer = document.getElementById("formContainer");
-    const formActions = document.getElementById("formActions");
-    const consoleEl = document.getElementById("eventConsole");
-    const submitOutputsEl = document.getElementById("submitOutputs");
-    const eventConsoleSection = document.getElementById("eventConsoleSection");
-    const submitOutputsSection = document.getElementById("submitOutputsSection");
-    const lightboxEl = document.getElementById("lightbox");
-    const lightboxImage = document.getElementById("lightboxImage");
-    const exportModal = document.getElementById("exportModal");
-    const exportContent = document.getElementById("exportContent");
-    const exportTabs = document.querySelectorAll("[data-export-tab]");
-    const loadHumanJsonBtn = document.getElementById("loadHumanJson");
-    const loadPredictedJsonBtn = document.getElementById("loadPredictedJson");
-    const loadColumnJsonBtn = document.getElementById("loadColumnJson");
-    const applyAiToEmptyBtn = document.getElementById("applyAiToEmpty");
-    const overwriteAiToAllBtn = document.getElementById("overwriteAiToAll");
-    const resetStoresBtn = document.getElementById("resetStores");
-    const scenarioColumnOnlyBtn = document.getElementById("scenarioColumnOnly");
-    const scenarioColumnHumanBtn = document.getElementById("scenarioColumnHuman");
-    const scenarioColumnAiBtn = document.getElementById("scenarioColumnAi");
-    const scenarioColumnAiHumanBtn = document.getElementById("scenarioColumnAiHuman");
-    const scenarioConflictBtn = document.getElementById("scenarioConflict");
-    const exportJsonBtn = document.getElementById("exportJson");
-    const closeExportBtn = document.getElementById("closeExport");
-    const aiFieldCountEl = document.getElementById("aiFieldCount");
-    const humanFieldCountEl = document.getElementById("humanFieldCount");
-    const columnWarning = document.getElementById("columnWarning");
-    const debugToolbar = document.getElementById("debugToolbar");
+    const rootElement = document.getElementById("bdf-root");
+    const styleElement = document.querySelector("style[data-bdf-style]");
+    let rootScope = rootElement;
+
+    if (window.BDF_USE_SHADOW === true && rootElement && !rootElement.shadowRoot) {
+      const shadow = rootElement.attachShadow({ mode: "open" });
+      if (styleElement) {
+        const shadowStyle = document.createElement("style");
+        shadowStyle.textContent = styleElement.textContent.replace(/#bdf-root/g, ":host");
+        shadow.append(shadowStyle);
+      }
+      while (rootElement.firstChild) {
+        shadow.append(rootElement.firstChild);
+      }
+      rootScope = shadow;
+    }
+
+    const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : null);
+    const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
+    const byId = (id) => qs(`#${id}`);
+
+    function notifyParentHeight() {
+      if (window.parent === window) return;
+      requestAnimationFrame(() => {
+        const first = Math.max(
+          document.documentElement ? document.documentElement.scrollHeight : 0,
+          document.body ? document.body.scrollHeight : 0
+        );
+        requestAnimationFrame(() => {
+          const second = Math.max(
+            document.documentElement ? document.documentElement.scrollHeight : 0,
+            document.body ? document.body.scrollHeight : 0
+          );
+          const height = Math.max(first, second, 200);
+          window.parent.postMessage({ type: "BDF_HEIGHT", height }, "*");
+        });
+      });
+    }
+
+    function initParentHeightSync() {
+      notifyParentHeight();
+      window.addEventListener("resize", notifyParentHeight);
+      if (rootElement && "MutationObserver" in window) {
+        const mo = new MutationObserver(() => notifyParentHeight());
+        mo.observe(rootElement, { childList: true, subtree: true, attributes: true, characterData: true });
+      }
+      setTimeout(notifyParentHeight, 60);
+      setTimeout(notifyParentHeight, 320);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initParentHeightSync);
+    } else {
+      initParentHeightSync();
+    }
+
+    function retryEvery(selector, cb, timeoutMs = 3000, intervalMs = 50) {
+      if (!rootScope || !rootScope.querySelector) return;
+      const startedAt = Date.now();
+      const tryRun = () => {
+        const el = rootScope.querySelector(selector);
+        if (el) {
+          cb(el);
+          return true;
+        }
+        return false;
+      };
+      if (tryRun()) return;
+      const timer = setInterval(() => {
+        if (tryRun() || Date.now() - startedAt >= timeoutMs) {
+          clearInterval(timer);
+        }
+      }, intervalMs);
+    }
+
+    const safeOn = (target, eventName, handler, options = {}) => {
+      const { timeoutMs = 3000, intervalMs = 50 } = options;
+      if (typeof target === "string") {
+        retryEvery(target, (el) => {
+          el.addEventListener(eventName, handler);
+        }, timeoutMs, intervalMs);
+        return;
+      }
+      if (!target) return;
+      target.addEventListener(eventName, handler);
+    };
+
+    function loadSampleSchema() {
+      if (!schemaInput) return;
+      schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+      if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+      if (localeInput) localeInput.value = defaultSchema.locale;
+      if (timezoneInput) timezoneInput.value = defaultSchema.timezone;
+      if (modeInput) modeInput.value = defaultSchema.mode;
+      if (requiredPolicyInput) requiredPolicyInput.value = defaultSchema.requiredPolicy;
+      if (showInlineHelpInput) showInlineHelpInput.checked = defaultSchema.showInlineHelp;
+      if (autoFocusInvalidInput) autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
+    }
+
+    function renderFormFromInputs() {
+      const parsed = safeJsonParse(schemaInput?.value || "");
+      if (!parsed || !parsed.fields) {
+        setConsole("Schema parse edilemedi", "");
+        return;
+      }
+      state.config = {
+        ...parsed,
+        currentDateTimeISO: currentDateTimeInput?.value || parsed.currentDateTimeISO,
+        locale: localeInput?.value || parsed.locale || "tr-TR",
+        timezone: timezoneInput?.value || parsed.timezone || "Europe/Istanbul",
+        mode: modeInput?.value || parsed.mode || "create",
+        requiredPolicy: requiredPolicyInput?.value || parsed.requiredPolicy || "strict",
+        showInlineHelp: Boolean(showInlineHelpInput?.checked),
+        autoFocusFirstInvalid: Boolean(autoFocusInvalidInput?.checked)
+      };
+      columnJson = {
+        columns: (state.config.fields || []).map((field) => ({
+          fieldName: field.label || field.key,
+          label: field.label,
+          type: field.type,
+          required: field.required || normalizeStageType(field.stageType) === "mandatory",
+          stageType: field.stageType || "optional",
+          options: field.options || [],
+          default: field.default,
+          allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
+          ui: field.ui || {}
+        })),
+        currentDateTimeISO: state.config.currentDateTimeISO,
+        locale: state.config.locale,
+        timezone: state.config.timezone,
+        mode: state.config.mode
+      };
+      if (columnWarning) columnWarning.style.display = "none";
+      if (formContainer) formContainer.style.display = "block";
+      renderForm(state.config);
+    }
+
+    const schemaInput = byId("schemaInput");
+    const columnJsonInput = byId("columnJsonInput");
+    const humanJsonInput = byId("humanJsonInput");
+    const predictedJsonInput = byId("predictedJsonInput");
+    const columnJsonError = byId("columnJsonError");
+    const humanJsonError = byId("humanJsonError");
+    const predictedJsonError = byId("predictedJsonError");
+    const versionInput = byId("versionInput");
+    const jsonInputsSection = byId("jsonInputsSection");
+    const debugPanels = byId("debugPanels");
+    const currentDateTimeInput = byId("currentDateTime");
+    const localeInput = byId("localeInput");
+    const timezoneInput = byId("timezoneInput");
+    const modeInput = byId("modeInput");
+    const requiredPolicyInput = byId("requiredPolicyInput");
+    const showInlineHelpInput = byId("showInlineHelp");
+    const autoFocusInvalidInput = byId("autoFocusInvalid");
+    const formEl = byId("dynamicForm");
+    const submitBtn = byId("submitBtn");
+    const clearBtn = byId("clearBtn");
+    const summaryBox = byId("summaryBox");
+    const formContainer = byId("formContainer");
+    const formActions = byId("formActions");
+    const consoleEl = byId("eventConsole");
+    const submitOutputsEl = byId("submitOutputs");
+    const eventConsoleSection = byId("eventConsoleSection");
+    const submitOutputsSection = byId("submitOutputsSection");
+    const lightboxEl = byId("lightbox");
+    const lightboxImage = byId("lightboxImage");
+    const exportModal = byId("exportModal");
+    const exportContent = byId("exportContent");
+    const exportTabs = qsa("[data-export-tab]");
+    const loadHumanJsonBtn = byId("loadHumanJson");
+    const loadPredictedJsonBtn = byId("loadPredictedJson");
+    const loadColumnJsonBtn = byId("loadColumnJson");
+    const applyAiToEmptyBtn = byId("applyAiToEmpty");
+    const overwriteAiToAllBtn = byId("overwriteAiToAll");
+    const resetStoresBtn = byId("resetStores");
+    const scenarioColumnOnlyBtn = byId("scenarioColumnOnly");
+    const scenarioColumnHumanBtn = byId("scenarioColumnHuman");
+    const scenarioColumnAiBtn = byId("scenarioColumnAi");
+    const scenarioColumnAiHumanBtn = byId("scenarioColumnAiHuman");
+    const scenarioConflictBtn = byId("scenarioConflict");
+    const exportJsonBtn = byId("exportJson");
+    const closeExportBtn = byId("closeExport");
+    const aiFieldCountEl = byId("aiFieldCount");
+    const humanFieldCountEl = byId("humanFieldCount");
+    const columnWarning = byId("columnWarning");
+    const debugToolbar = byId("debugToolbar");
+
+    const initBdf = (root) => {
+      if (!root || root.__bdfInited) return;
+      root.__bdfInited = true;
+
+      safeOn("#loadSample", "click", () => {
+        loadSampleSchema();
+      });
+
+      safeOn("#renderForm", "click", () => {
+        renderFormFromInputs();
+      });
+
+      safeOn("#clearConsole", "click", () => {
+        if (consoleEl) consoleEl.textContent = "";
+      });
+    };
+
+    initBdf(rootElement);
 
     if (columnJsonInput && MANUAL_COLUMN_JSON) {
       columnJsonInput.value = JSON.stringify(MANUAL_COLUMN_JSON, null, 2);
@@ -1497,9 +1830,13 @@
       return String(iso).slice(11, 16);
     }
 
-    function normalizeDateInput(raw) {
+    function normalizeDateInput(raw, config = state.config || {}) {
       if (!raw) return "";
-      const trimmed = raw.trim();
+      const trimmed = String(raw).trim();
+      const now = getCurrentDateTime(config);
+      if (trimmed === "$TODAY" || trimmed === "$NOW") {
+        return getDateFromIso(now);
+      }
       if (trimmed.includes("T")) {
         return trimmed.slice(0, 10);
       }
@@ -1526,6 +1863,12 @@
       if (year < 1000 || year > 9999) return false;
       const date = new Date(year, month - 1, day);
       return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function isValidTimeString(value) {
+      if (!/^\d{2}:\d{2}$/.test(value)) return false;
+      const [hour, minute] = value.split(":").map((part) => Number(part));
+      return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
     }
 
     function areValuesDifferent(a, b) {
@@ -1555,8 +1898,24 @@
 
     function normalizeDateTimeInput(raw, config) {
       if (!raw) return "";
-      const trimmed = String(raw).trim().replace(" ", "T");
+      const trimmedRaw = String(raw).trim();
       const offset = getOffsetFromIso(getCurrentDateTime(config));
+      if (trimmedRaw === "$NOW") {
+        return normalizeDateTimeInput(getCurrentDateTime(config), config);
+      }
+      if (trimmedRaw === "$TODAY") {
+        return `${getDateFromIso(getCurrentDateTime(config))}T00:00:00${offset}`;
+      }
+      const trimmed = trimmedRaw.replace(" ", "T");
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmedRaw)) {
+        const [d, m, y] = trimmedRaw.split(".");
+        return `${y}-${m}-${d}T00:00:00${offset}`;
+      }
+      if (/^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}$/.test(trimmedRaw)) {
+        const [datePart, timePart] = trimmedRaw.split(" ");
+        const [d, m, y] = datePart.split(".");
+        return `${y}-${m}-${d}T${timePart}:00${offset}`;
+      }
       if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
         return `${trimmed}T00:00:00${offset}`;
       }
@@ -1568,6 +1927,200 @@
         return `${datePart}T${timePart}${seconds}${tz}`;
       }
       return trimmed;
+    }
+
+    function formatDateDisplay(value) {
+      if (!value) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split("-");
+        return `${d}.${m}.${y}`;
+      }
+      return value;
+    }
+
+    function formatDateTimeDisplay(value) {
+      if (!value) return "";
+      const normalized = value.includes("T") ? value : normalizeDateTimeInput(value, state.config || {});
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+        const datePart = normalized.slice(0, 10);
+        const timePart = normalized.slice(11, 16);
+        return `${formatDateDisplay(datePart)} ${timePart}`;
+      }
+      return value;
+    }
+
+    function createMandatoryBadge() {
+      const badge = document.createElement("span");
+      badge.className = "stage-badge stage-mandatory";
+      badge.textContent = "Mandatory";
+      return badge;
+    }
+
+    function buildCalendarPopover(config, { initialDate = "", onSelect, onClose, quickActionLabel = "Bugün", onQuickAction }) {
+      const popover = document.createElement("div");
+      popover.className = "picker-popover";
+      const header = document.createElement("div");
+      header.className = "picker-header";
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "picker-nav";
+      prevBtn.textContent = "‹";
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "picker-nav";
+      nextBtn.textContent = "›";
+      const title = document.createElement("span");
+      header.append(prevBtn, title, nextBtn);
+
+      const grid = document.createElement("div");
+      grid.className = "picker-grid";
+
+      const actions = document.createElement("div");
+      actions.className = "picker-actions";
+      const todayBtn = document.createElement("button");
+      todayBtn.type = "button";
+      todayBtn.className = "ghost";
+      todayBtn.textContent = quickActionLabel;
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "ghost";
+      closeBtn.textContent = "Kapat";
+      actions.append(todayBtn, closeBtn);
+
+      popover.append(header, grid, actions);
+
+      const weekdayLabels = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+      let selectedDate = initialDate;
+      let viewDate = initialDate ? new Date(`${initialDate}T00:00:00`) : new Date(getCurrentDateTime(config));
+
+      const selectDate = (dateValue, emitChange = true) => {
+        selectedDate = dateValue;
+        if (dateValue) {
+          viewDate = new Date(`${dateValue}T00:00:00`);
+        }
+        render();
+        if (emitChange) onSelect(dateValue);
+      };
+
+      const render = () => {
+        grid.innerHTML = "";
+        weekdayLabels.forEach((label) => {
+          const weekday = document.createElement("div");
+          weekday.className = "picker-weekday";
+          weekday.textContent = label;
+          grid.append(weekday);
+        });
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        title.textContent = viewDate.toLocaleString("tr-TR", { month: "long", year: "numeric" });
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const startDay = (firstDay.getDay() + 6) % 7;
+        for (let i = 0; i < startDay; i += 1) {
+          const empty = document.createElement("div");
+          grid.append(empty);
+        }
+        const todayValue = getDateFromIso(getCurrentDateTime(config));
+        for (let day = 1; day <= daysInMonth; day += 1) {
+          const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "picker-day";
+          button.textContent = String(day);
+          if (dateValue === todayValue) button.classList.add("is-today");
+          if (dateValue === selectedDate) button.classList.add("is-selected");
+          button.addEventListener("click", () => {
+            selectDate(dateValue);
+          });
+          grid.append(button);
+        }
+      };
+
+      const updateView = (direction) => {
+        viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + direction, 1);
+        render();
+      };
+
+      prevBtn.addEventListener("click", () => updateView(-1));
+      nextBtn.addEventListener("click", () => updateView(1));
+      todayBtn.addEventListener("click", () => {
+        if (onQuickAction) {
+          onQuickAction({ selectDate });
+          return;
+        }
+        const todayValue = getDateFromIso(getCurrentDateTime(config));
+        selectDate(todayValue);
+      });
+      closeBtn.addEventListener("click", () => {
+        popover.classList.remove("open");
+        if (onClose) onClose();
+      });
+
+      render();
+
+      return {
+        element: popover,
+        setSelectedDate(dateValue) {
+          selectDate(dateValue, false);
+        }
+      };
+    }
+
+    function formatDateMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+      return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+    }
+
+    function formatTimeMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 4);
+      if (digits.length <= 2) return digits;
+      return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+    }
+
+    function formatDateTimeMask(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 12);
+      if (digits.length <= 8) {
+        return formatDateMask(digits);
+      }
+      const dateDigits = digits.slice(0, 8);
+      const timeDigits = digits.slice(8);
+      const datePart = formatDateMask(dateDigits);
+      const timePart = formatTimeMask(timeDigits);
+      return `${datePart} ${timePart}`.trim();
+    }
+
+    function parseDateDisplay(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+      if (digits.length !== 8) return "";
+      const day = digits.slice(0, 2);
+      const month = digits.slice(2, 4);
+      const year = digits.slice(4, 8);
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseTimeDisplay(value) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 4);
+      if (digits.length !== 4) return "";
+      const hour = digits.slice(0, 2);
+      const minute = digits.slice(2, 4);
+      return `${hour}:${minute}`;
+    }
+
+    function parseDateTimeDisplay(value, config) {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 12);
+      if (digits.length !== 12) return "";
+      const day = digits.slice(0, 2);
+      const month = digits.slice(2, 4);
+      const year = digits.slice(4, 8);
+      const hour = digits.slice(8, 10);
+      const minute = digits.slice(10, 12);
+      const dateValue = `${year}-${month}-${day}`;
+      const timeValue = `${hour}:${minute}`;
+      if (!isValidDateString(dateValue) || !isValidTimeString(timeValue)) return "";
+      const offset = getOffsetFromIso(getCurrentDateTime(config));
+      return `${dateValue}T${timeValue}:00${offset}`;
     }
 
     function normalizeNumberInput(raw) {
@@ -1586,14 +2139,6 @@
       return formatter.format(numeric);
     }
 
-    function formatDateDisplay(value) {
-      if (!value) return "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const [y, m, d] = value.split("-");
-        return `${d}.${m}.${y}`;
-      }
-      return value;
-    }
 
     function getDefaultValue(field, config) {
       if (!field.default) return "";
@@ -1709,41 +2254,104 @@
     }
 
     const typeMetaMap = {
-      text: { icon: "📝", label: "Text" },
-      textarea: { icon: "📝", label: "Textarea" },
-      email: { icon: "✉️", label: "Email" },
-      phone: { icon: "📞", label: "Phone" },
-      url: { icon: "🔗", label: "URL" },
-      integer: { icon: "🔢", label: "Integer" },
-      number: { icon: "🔢", label: "Number" },
-      decimal: { icon: "🔢", label: "Decimal" },
-      currency: { icon: "🔢", label: "Currency" },
-      percent: { icon: "🔢", label: "Percent" },
-      boolean: { icon: "✅", label: "Boolean" },
-      dropdown: { icon: "⬇️", label: "Dropdown" },
-      date: { icon: "📅", label: "Date" },
-      time: { icon: "⏱️", label: "Time" },
-      datetime: { icon: "🗓️⏱️", label: "Datetime" },
-      file: { icon: "📎", label: "File" },
-      image: { icon: "🖼️", label: "Image" },
-      multifile: { icon: "🗂️", label: "Multi file" }
+      text: { iconKey: "text", label: "Text" },
+      textarea: { iconKey: "text", label: "Textarea" },
+      email: { iconKey: "text", label: "Email" },
+      phone: { iconKey: "text", label: "Phone" },
+      url: { iconKey: "text", label: "URL" },
+      integer: { iconKey: "hash", label: "Integer" },
+      number: { iconKey: "hash", label: "Number" },
+      decimal: { iconKey: "hash", label: "Decimal" },
+      currency: { iconKey: "hash", label: "Currency" },
+      percent: { iconKey: "hash", label: "Percent" },
+      boolean: { iconKey: "check", label: "Boolean" },
+      dropdown: { iconKey: "chevron", label: "Dropdown" },
+      date: { iconKey: "calendar", label: "Date" },
+      time: { iconKey: "clock", label: "Time" },
+      datetime: { iconKey: "calendar", label: "Datetime" },
+      file: { iconKey: "paperclip", label: "File" },
+      image: { iconKey: "image", label: "Image" },
+      multifile: { iconKey: "paperclip", label: "Multi file" }
     };
 
     const displayTypeMetaMap = {
-      "text (long)": { icon: "📝", label: "Text (long)" },
-      "multiline text": { icon: "📝", label: "Multiline text" },
-      "e-mail": { icon: "✉️", label: "E-mail" },
-      "image&pdf": { icon: "📎", label: "Image&Pdf" },
-      reference: { icon: "🔗", label: "Reference" },
-      embed: { icon: "🔗", label: "Embed" },
-      user: { icon: "👤", label: "User" },
-      "sys.cf": { icon: "⚙️", label: "Sys.cf" },
-      "action.cf": { icon: "⚙️", label: "Action.cf" }
+      "text (long)": { iconKey: "text", label: "Text (long)" },
+      "multiline text": { iconKey: "text", label: "Multiline text" },
+      "e-mail": { iconKey: "text", label: "E-mail" },
+      "image&pdf": { iconKey: "paperclip", label: "Image&Pdf" },
+      reference: { iconKey: "text", label: "Reference" },
+      embed: { iconKey: "text", label: "Embed" },
+      user: { iconKey: "text", label: "User" },
+      "sys.cf": { iconKey: "text", label: "Sys.cf" },
+      "action.cf": { iconKey: "text", label: "Action.cf" }
     };
+
+    function renderIcon(iconKey) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.8");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+      const setPath = (d) => {
+        path.setAttribute("d", d);
+        svg.appendChild(path);
+      };
+
+      switch (iconKey) {
+        case "calendar":
+          setPath("M7 3v4M17 3v4M4 9h16M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z");
+          break;
+        case "chevron":
+          setPath("M6 9l6 6 6-6");
+          break;
+        case "hash":
+          setPath("M8 3L6 21M18 3l-2 18M4 8h16M3 16h16");
+          break;
+        case "paperclip":
+          setPath("M16 4l-7 7a4 4 0 0 0 6 6l6-6a3 3 0 1 0-4.5-4.5l-6.5 6.5");
+          break;
+        case "clock":
+          circle.setAttribute("cx", "12");
+          circle.setAttribute("cy", "12");
+          circle.setAttribute("r", "9");
+          svg.appendChild(circle);
+          setPath("M12 7v5l3 3");
+          break;
+        case "check":
+          setPath("M5 12l4 4 10-10");
+          break;
+        case "image":
+          setPath("M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z");
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("cx", "8");
+          dot.setAttribute("cy", "9");
+          dot.setAttribute("r", "1.5");
+          svg.appendChild(dot);
+          const mountain = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          mountain.setAttribute("d", "M4 17l5-5 3 3 4-4 4 4");
+          mountain.setAttribute("stroke", "currentColor");
+          mountain.setAttribute("stroke-width", "1.8");
+          mountain.setAttribute("stroke-linecap", "round");
+          mountain.setAttribute("stroke-linejoin", "round");
+          mountain.setAttribute("fill", "none");
+          svg.appendChild(mountain);
+          break;
+        case "text":
+        default:
+          setPath("M5 6h14M12 6v12");
+          break;
+      }
+      return svg;
+    }
 
     function getTypeMeta(field) {
       const displayKey = String(field.displayType || "").toLowerCase();
-      return displayTypeMetaMap[displayKey] || typeMetaMap[field.type] || { icon: "📝", label: field.type || "text" };
+      return displayTypeMetaMap[displayKey] || typeMetaMap[field.type] || { iconKey: "text", label: field.type || "text" };
     }
 
     function normalizeStageType(stageType) {
@@ -1838,7 +2446,7 @@
       if (value === null || value === undefined) return "";
       let resolved = resolveTokenValue(value, field, config);
       if (field.type === "date") {
-        resolved = normalizeDateInput(String(resolved));
+        resolved = normalizeDateInput(String(resolved), config);
         return resolved;
       }
       if (field.type === "time") {
@@ -1887,7 +2495,7 @@
         return Number.isNaN(numeric) ? "" : numeric;
       }
       if (field.type === "date") {
-        return normalizeDateInput(String(value));
+        return normalizeDateInput(String(value), config);
       }
       if (field.type === "datetime") {
         return normalizeDateTimeInput(String(value), config);
@@ -2260,7 +2868,7 @@
       }
       if (["date", "datetime", "time"].includes(field.type) && value) {
         if (field.type === "date") {
-          const normalized = normalizeDateInput(String(value));
+          const normalized = normalizeDateInput(String(value), state.config || {});
           if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
             return "Tarih formatı gg.aa.yyyy veya yyyy-mm-dd olmalı.";
           }
@@ -2268,7 +2876,7 @@
             return "Geçerli bir tarih girin.";
           }
         }
-        if (field.type === "time" && !/^\d{2}:\d{2}$/.test(String(value))) return "Saat formatı HH:mm olmalı.";
+        if (field.type === "time" && !isValidTimeString(String(value))) return "Saat formatı HH:mm olmalı.";
         if (field.type === "datetime" && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(value))) return "Tarih ve saat gerekli.";
       }
       return "";
@@ -2318,7 +2926,7 @@
         const typeMeta = getTypeMeta(field);
         const typeIcon = document.createElement("span");
         typeIcon.className = "type-icon";
-        typeIcon.textContent = typeMeta.icon;
+        typeIcon.append(renderIcon(typeMeta.iconKey));
         typeIcon.title = typeMeta.label;
 
         const label = document.createElement("label");
@@ -2328,18 +2936,15 @@
 
         labelTop.append(typeIcon, label);
 
-        if (field.required) {
-          const star = document.createElement("span");
-          star.className = "required-star";
-          star.textContent = "*";
-          labelTop.append(star);
-        }
-
         const labelMeta = document.createElement("div");
         labelMeta.className = "label-meta";
 
         const stageBadge = getStageBadge(field.stageType);
-        if (stageBadge) labelMeta.append(stageBadge);
+        if (stageBadge) {
+          labelMeta.append(stageBadge);
+        } else if (field.required) {
+          labelMeta.append(createMandatoryBadge());
+        }
 
         const aiBadge = document.createElement("button");
         aiBadge.type = "button";
@@ -2407,12 +3012,14 @@
         conflictChip.addEventListener("click", () => {
           conflictPopover.classList.toggle("open");
         });
-        conflictPopover.querySelector("[data-apply-human]").addEventListener("click", () => {
+        const applyHumanBtn = conflictPopover.querySelector("[data-apply-human]");
+        const applyAiBtnInPopover = conflictPopover.querySelector("[data-apply-ai]");
+        safeOn(applyHumanBtn, "click", () => {
           sourceByField[field.key] = "human";
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
-        conflictPopover.querySelector("[data-apply-ai]").addEventListener("click", () => {
+        safeOn(applyAiBtnInPopover, "click", () => {
           sourceByField[field.key] = "ai";
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
@@ -2456,7 +3063,7 @@
         state.values[field.key] = effectiveInitial;
         state.validMap[field.key] = !validateField(field, effectiveInitial);
 
-        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number", "time"].includes(field.type)) {
+        if (["text", "email", "phone", "url", "password", "integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
           inputEl = document.createElement("input");
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
@@ -2467,7 +3074,6 @@
           if (field.type === "url") inputEl.type = "url";
           if (field.type === "phone") inputEl.type = "tel";
           if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) inputEl.inputMode = field.type === "integer" ? "numeric" : "decimal";
-          if (field.type === "time") inputEl.type = "time";
 
           setValue = (value) => {
             if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
@@ -2475,10 +3081,6 @@
                 ? formatNumberDisplay(value, { maximumFractionDigits: 0 })
                 : formatNumberDisplay(value, { maximumFractionDigits: 2 });
               inputEl.value = formatted || (value ?? "");
-              return;
-            }
-            if (field.type === "time") {
-              inputEl.value = value ? normalizeTimeInput(String(value)) : "";
               return;
             }
             inputEl.value = value ?? "";
@@ -2497,10 +3099,6 @@
           inputEl.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             let value = event.target.value;
-            if (field.type === "time") {
-              value = normalizeTimeInput(value);
-              event.target.value = value;
-            }
             if (field.type === "email" && value) {
               value = value.toLowerCase();
               event.target.value = value;
@@ -2523,23 +3121,6 @@
             updateError(control, field);
           });
 
-          if (field.type === "time" && field.ui?.quickActions) {
-            const actions = document.createElement("div");
-            actions.className = "field-actions";
-            const nowBtn = document.createElement("button");
-            nowBtn.type = "button";
-            nowBtn.className = "ghost";
-            nowBtn.textContent = "Şu an";
-            nowBtn.addEventListener("click", () => {
-              const now = getCurrentDateTime(config);
-              const timeValue = getTimeFromIso(now);
-              inputEl.value = timeValue;
-              setFieldValue(field.key, timeValue, field);
-              updateError(control, field);
-            });
-            actions.append(nowBtn);
-            inlineActions = actions;
-          }
         } else if (field.type === "textarea" || field.type === "json") {
           inputEl = document.createElement("textarea");
           inputEl.className = "field-input";
@@ -2701,119 +3282,130 @@
           updateEffectiveState(field.key, field);
         } else if (field.type === "date") {
           const dateInput = document.createElement("input");
-          dateInput.type = "date";
+          dateInput.type = "text";
           dateInput.className = "field-input";
           dateInput.id = `field-${field.key}`;
           dateInput.setAttribute("aria-describedby", `error-${field.key}`);
-          dateInput.placeholder = field.placeholder || "";
+          dateInput.placeholder = field.placeholder || "GG.AA.YYYY";
+          dateInput.inputMode = "numeric";
+          inputEl = dateInput;
 
-          const initialDate = effectiveInitial ? normalizeDateInput(effectiveInitial) : "";
-          if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-            dateInput.value = initialDate;
-          }
+          const normalizedInitial = effectiveInitial ? normalizeDateInput(effectiveInitial, config) : "";
+          const initialDisplay = normalizedInitial && isValidDateString(normalizedInitial)
+            ? formatDateDisplay(normalizedInitial)
+            : (typeof effectiveInitial === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(effectiveInitial) ? effectiveInitial : "");
+          dateInput.value = initialDisplay;
 
           setValue = (value) => {
-            const normalized = value ? normalizeDateInput(String(value)) : "";
-            dateInput.value = normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
+            const normalized = value ? normalizeDateInput(String(value), config) : "";
+            dateInput.value = normalized && isValidDateString(normalized) ? formatDateDisplay(normalized) : "";
           };
 
+          const calendar = buildCalendarPopover(config, {
+            initialDate: normalizedInitial && isValidDateString(normalizedInitial) ? normalizedInitial : "",
+            onSelect: (dateValue) => {
+              const displayValue = formatDateDisplay(dateValue);
+              dateInput.value = displayValue;
+              setFieldValue(field.key, dateValue, field, displayValue);
+              updateError(control, field);
+              closePopover();
+            },
+            onClose: () => {
+              dateInput.focus();
+            }
+          });
+
+          const iconBtn = document.createElement("button");
+          iconBtn.type = "button";
+          iconBtn.className = "field-icon-button";
+          iconBtn.setAttribute("aria-label", "Takvim aç");
+          iconBtn.textContent = "📅";
+
+          control.classList.add("has-icon");
+          control.append(dateInput, iconBtn, calendar.element);
+
+          const handleOutside = (event) => {
+            if (!control.contains(event.target)) {
+              closePopover();
+            }
+          };
+
+          const openPopover = () => {
+            calendar.element.classList.add("open");
+            document.addEventListener("click", handleOutside);
+          };
+
+          const closePopover = () => {
+            calendar.element.classList.remove("open");
+            document.removeEventListener("click", handleOutside);
+          };
+
+          iconBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (calendar.element.classList.contains("open")) {
+              closePopover();
+            } else {
+              openPopover();
+            }
+          });
+
           const syncDate = (raw) => {
-            const normalized = normalizeDateInput(raw);
-            const yearPart = normalized ? normalized.split("-")[0] : "";
-            if (yearPart && yearPart.length > 4) {
-              const parts = normalized.split("-");
-              parts[0] = parts[0].slice(0, 4);
-              dateInput.value = parts.join("-");
-              setFieldValue(field.key, "", field, raw);
+            if (!raw) {
+              dateInput.value = "";
+              setFieldValue(field.key, "", field, "");
+              updateError(control, field);
+              calendar.setSelectedDate("");
+              return;
+            }
+            const normalized = normalizeDateInput(raw, config);
+            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+              const displayValue = formatDateDisplay(normalized);
+              dateInput.value = displayValue;
+              if (isValidDateString(normalized)) {
+                setFieldValue(field.key, normalized, field, displayValue);
+                calendar.setSelectedDate(normalized);
+              } else {
+                setFieldValue(field.key, "", field, displayValue);
+                calendar.setSelectedDate("");
+              }
               updateError(control, field);
               return;
             }
-            if (normalized && /^\d{4}-\d{2}-\d{2}$/.test(normalized) && isValidDateString(normalized)) {
-              setFieldValue(field.key, normalized, field, normalized);
+            const masked = formatDateMask(raw);
+            dateInput.value = masked;
+            const parsed = parseDateDisplay(masked);
+            if (parsed && isValidDateString(parsed)) {
+              setFieldValue(field.key, parsed, field, masked);
+              calendar.setSelectedDate(parsed);
             } else {
-              setFieldValue(field.key, "", field, raw);
+              setFieldValue(field.key, "", field, masked);
+              calendar.setSelectedDate("");
             }
             updateError(control, field);
           };
 
           dateInput.addEventListener("input", (event) => syncDate(event.target.value));
-          dateInput.addEventListener("change", (event) => syncDate(event.target.value));
-          dateInput.addEventListener("click", () => {
-            if (dateInput.showPicker) {
-              try {
-                dateInput.showPicker();
-              } catch (error) {
-                console.warn("showPicker blocked", error);
-              }
-            }
+          dateInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncDate(event.target.value);
           });
-
-          const actions = document.createElement("div");
-          actions.className = "field-actions";
-          if (field.ui?.showCalendar) {
-            const calendarBtn = document.createElement("button");
-            calendarBtn.type = "button";
-            calendarBtn.className = "ghost";
-            calendarBtn.setAttribute("aria-label", "Takvim aç");
-            calendarBtn.textContent = "📅";
-            calendarBtn.addEventListener("click", () => {
-              if (dateInput.showPicker) {
-                dateInput.showPicker();
-              } else {
-                dateInput.focus();
-              }
-            });
-            actions.append(calendarBtn);
-          }
-          if (field.ui?.quickActions) {
-            const todayBtn = document.createElement("button");
-            todayBtn.type = "button";
-            todayBtn.className = "ghost";
-            todayBtn.textContent = "Bugün";
-            todayBtn.addEventListener("click", () => syncDate(getDateFromIso(getCurrentDateTime(config))));
-            const tomorrowBtn = document.createElement("button");
-            tomorrowBtn.type = "button";
-            tomorrowBtn.className = "ghost";
-            tomorrowBtn.textContent = "Yarın";
-            tomorrowBtn.addEventListener("click", () => {
-              const base = new Date(getCurrentDateTime(config));
-              base.setDate(base.getDate() + 1);
-              syncDate(base.toISOString().slice(0, 10));
-            });
-            const yesterdayBtn = document.createElement("button");
-            yesterdayBtn.type = "button";
-            yesterdayBtn.className = "ghost";
-            yesterdayBtn.textContent = "Dün";
-            yesterdayBtn.addEventListener("click", () => {
-              const base = new Date(getCurrentDateTime(config));
-              base.setDate(base.getDate() - 1);
-              syncDate(base.toISOString().slice(0, 10));
-            });
-            const clearBtn = document.createElement("button");
-            clearBtn.type = "button";
-            clearBtn.className = "ghost";
-            clearBtn.textContent = "Temizle";
-            clearBtn.addEventListener("click", () => {
-              dateInput.value = "";
-              setFieldValue(field.key, "", field);
-              updateError(control, field);
-            });
-            actions.append(todayBtn, tomorrowBtn, yesterdayBtn, clearBtn);
-          }
-          control.append(dateInput, actions);
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
-          datetimeInput.type = "datetime-local";
+          datetimeInput.type = "text";
           datetimeInput.className = "field-input";
           datetimeInput.id = `field-${field.key}`;
           datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          datetimeInput.placeholder = field.placeholder || "GG.AA.YYYY SS:DD";
+          datetimeInput.inputMode = "numeric";
+          inputEl = datetimeInput;
 
           const normalizedInitial = effectiveInitial ? normalizeDateTimeInput(effectiveInitial, config) : "";
           const dateValue = normalizedInitial ? getDateFromIso(normalizedInitial) : "";
           const timeValue = normalizedInitial ? getTimeFromIso(normalizedInitial) : "";
-          if (dateValue && timeValue) {
-            datetimeInput.value = `${dateValue}T${timeValue}`;
-          }
+          datetimeInput.value = dateValue && timeValue ? formatDateTimeDisplay(normalizedInitial) : "";
+
+          let selectedDate = dateValue;
+          let selectedTime = timeValue;
 
           setValue = (value) => {
             if (!value) {
@@ -2821,65 +3413,219 @@
               return;
             }
             const normalized = normalizeDateTimeInput(String(value), config);
-            const nextDate = getDateFromIso(normalized);
-            const nextTime = getTimeFromIso(normalized);
-            datetimeInput.value = nextDate && nextTime ? `${nextDate}T${nextTime}` : "";
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+              datetimeInput.value = formatDateTimeDisplay(normalized);
+              selectedDate = getDateFromIso(normalized);
+              selectedTime = getTimeFromIso(normalized);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+            } else {
+              datetimeInput.value = "";
+            }
           };
 
-          const quickActions = document.createElement("div");
-          quickActions.className = "field-actions";
-          if (field.ui?.quickActions) {
-            const nowBtn = document.createElement("button");
-            nowBtn.type = "button";
-            nowBtn.className = "ghost";
-            nowBtn.textContent = "Şimdi";
-            nowBtn.addEventListener("click", () => {
+          const calendar = buildCalendarPopover(config, {
+            initialDate: selectedDate,
+            quickActionLabel: "Şimdi",
+            onQuickAction: ({ selectDate }) => {
               const now = getCurrentDateTime(config);
-              const isoDate = getDateFromIso(now);
-              const isoTime = getTimeFromIso(now);
-              const nextValue = `${isoDate}T${isoTime}`;
-              datetimeInput.value = nextValue;
-              syncDatetime(nextValue);
-            });
-            quickActions.append(nowBtn);
+              const nowDate = getDateFromIso(now);
+              const nowTime = getTimeFromIso(now);
+              selectedDate = nowDate;
+              selectedTime = nowTime;
+              selectDate(nowDate);
+              setTimeSelects(nowTime);
+              const displayValue = `${formatDateDisplay(nowDate)} ${nowTime}`;
+              datetimeInput.value = displayValue;
+              const normalized = normalizeDateTimeInput(`${nowDate}T${nowTime}`, config);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+              closePopover();
+            },
+            onSelect: (dateValue) => {
+              selectedDate = dateValue;
+              const nextTime = selectedTime || getTimeFromIso(getCurrentDateTime(config));
+              const displayValue = `${formatDateDisplay(dateValue)} ${nextTime}`;
+              datetimeInput.value = displayValue;
+              const normalized = normalizeDateTimeInput(`${dateValue}T${nextTime}`, config);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+            },
+            onClose: () => {
+              datetimeInput.focus();
+            }
+          });
+
+          const timeRow = document.createElement("div");
+          timeRow.className = "picker-time";
+          const hourSelect = document.createElement("select");
+          hourSelect.className = "field-input";
+          const minuteSelect = document.createElement("select");
+          minuteSelect.className = "field-input";
+
+          const buildTimeOptions = (select, max) => {
+            select.innerHTML = "";
+            for (let i = 0; i <= max; i += 1) {
+              const option = document.createElement("option");
+              option.value = String(i).padStart(2, "0");
+              option.textContent = option.value;
+              select.append(option);
+            }
+          };
+
+          buildTimeOptions(hourSelect, 23);
+          buildTimeOptions(minuteSelect, 59);
+
+          const setTimeSelects = (timeValue) => {
+            if (!timeValue || !isValidTimeString(timeValue)) return;
+            const [hour, minute] = timeValue.split(":");
+            hourSelect.value = hour;
+            minuteSelect.value = minute;
+          };
+
+          if (selectedTime) {
+            setTimeSelects(selectedTime);
           }
+
+          const updateTime = () => {
+            selectedTime = `${hourSelect.value}:${minuteSelect.value}`;
+            if (!selectedDate) return;
+            const displayValue = `${formatDateDisplay(selectedDate)} ${selectedTime}`;
+            datetimeInput.value = displayValue;
+            const normalized = normalizeDateTimeInput(`${selectedDate}T${selectedTime}`, config);
+            setFieldValue(field.key, normalized, field, displayValue);
+            updateError(control, field);
+          };
+
+          hourSelect.addEventListener("change", updateTime);
+          minuteSelect.addEventListener("change", updateTime);
+
+          timeRow.append(hourSelect, minuteSelect);
+          calendar.element.insertBefore(timeRow, calendar.element.lastElementChild);
+
+          const iconBtn = document.createElement("button");
+          iconBtn.type = "button";
+          iconBtn.className = "field-icon-button";
+          iconBtn.setAttribute("aria-label", "Takvim ve saat seç");
+          iconBtn.textContent = "🗓️";
+
+          control.classList.add("has-icon");
+          control.append(datetimeInput, iconBtn, calendar.element);
+
+          const handleOutside = (event) => {
+            if (!control.contains(event.target)) {
+              closePopover();
+            }
+          };
+
+          const openPopover = () => {
+            calendar.element.classList.add("open");
+            document.addEventListener("click", handleOutside);
+          };
+
+          const closePopover = () => {
+            calendar.element.classList.remove("open");
+            document.removeEventListener("click", handleOutside);
+          };
+
+          iconBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (calendar.element.classList.contains("open")) {
+              closePopover();
+            } else {
+              openPopover();
+            }
+          });
 
           const syncDatetime = (raw) => {
             if (!raw) {
-              setFieldValue(field.key, "", field, raw);
-              updateError(control, field);
-              return;
-            }
-            const [datePart] = raw.split("T");
-            const yearPart = datePart ? datePart.split("-")[0] : "";
-            if (yearPart && yearPart.length > 4) {
-              const parts = datePart.split("-");
-              parts[0] = parts[0].slice(0, 4);
-              const nextValue = `${parts.join("-")}T${raw.split("T")[1] || ""}`;
-              datetimeInput.value = nextValue;
-              setFieldValue(field.key, "", field, raw);
+              datetimeInput.value = "";
+              setFieldValue(field.key, "", field, "");
               updateError(control, field);
               return;
             }
             const normalized = normalizeDateTimeInput(raw, config);
-            setFieldValue(field.key, normalized, field, raw);
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+              const displayValue = formatDateTimeDisplay(normalized);
+              datetimeInput.value = displayValue;
+              selectedDate = getDateFromIso(normalized);
+              selectedTime = getTimeFromIso(normalized);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+              setFieldValue(field.key, normalized, field, displayValue);
+              updateError(control, field);
+              return;
+            }
+            const masked = formatDateTimeMask(raw);
+            datetimeInput.value = masked;
+            const parsed = parseDateTimeDisplay(masked, config);
+            if (parsed) {
+              selectedDate = getDateFromIso(parsed);
+              selectedTime = getTimeFromIso(parsed);
+              calendar.setSelectedDate(selectedDate);
+              setTimeSelects(selectedTime);
+              setFieldValue(field.key, parsed, field, masked);
+            } else {
+              setFieldValue(field.key, "", field, masked);
+            }
             updateError(control, field);
           };
 
           datetimeInput.addEventListener("input", (event) => syncDatetime(event.target.value));
-          datetimeInput.addEventListener("change", (event) => syncDatetime(event.target.value));
-          datetimeInput.addEventListener("click", () => {
-            if (datetimeInput.showPicker) {
-              try {
-                datetimeInput.showPicker();
-              } catch (error) {
-                console.warn("showPicker blocked", error);
-              }
+          datetimeInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncDatetime(event.target.value);
+          });
+        } else if (field.type === "time") {
+          const timeInput = document.createElement("input");
+          timeInput.type = "text";
+          timeInput.className = "field-input";
+          timeInput.id = `field-${field.key}`;
+          timeInput.setAttribute("aria-describedby", `error-${field.key}`);
+          timeInput.placeholder = field.placeholder || "SS:DD";
+          timeInput.inputMode = "numeric";
+          inputEl = timeInput;
+
+          setValue = (value) => {
+            timeInput.value = value ? formatTimeMask(String(value)) : "";
+          };
+          setValue(effectiveInitial);
+
+          const syncTime = (raw) => {
+            const masked = formatTimeMask(raw);
+            timeInput.value = masked;
+            const parsed = parseTimeDisplay(masked);
+            if (parsed && isValidTimeString(parsed)) {
+              setFieldValue(field.key, parsed, field, masked);
+            } else {
+              setFieldValue(field.key, "", field, masked);
             }
+            updateError(control, field);
+          };
+
+          timeInput.addEventListener("input", (event) => syncTime(event.target.value));
+          timeInput.addEventListener("blur", (event) => {
+            state.touched[field.key] = true;
+            syncTime(event.target.value);
           });
 
-          inputEl = datetimeInput;
-          inlineActions = quickActions;
+          if (field.ui?.quickActions) {
+            const actions = document.createElement("div");
+            actions.className = "field-actions";
+            const nowBtn = document.createElement("button");
+            nowBtn.type = "button";
+            nowBtn.className = "ghost";
+            nowBtn.textContent = "Şu an";
+            nowBtn.addEventListener("click", () => {
+              const now = getCurrentDateTime(config);
+              const timeValue = getTimeFromIso(now);
+              timeInput.value = timeValue;
+              setFieldValue(field.key, timeValue, field, timeValue);
+              updateError(control, field);
+            });
+            actions.append(nowBtn);
+            inlineActions = actions;
+          }
         } else if (field.type === "duration") {
           const durationInput = document.createElement("input");
           durationInput.className = "field-input";
@@ -3154,7 +3900,9 @@
         }
 
         if (inputEl) {
-          control.append(inputEl);
+          if (!control.contains(inputEl)) {
+            control.append(inputEl);
+          }
           if (inlineActions) {
             control.append(inlineActions);
           }
@@ -3262,21 +4010,21 @@
       exportContent.value = JSON.stringify(buildExportJson(), null, 2);
     }
 
-    lightboxEl.addEventListener("click", (event) => {
-      if (event.target === lightboxEl) {
+    safeOn("#lightbox", "click", (event) => {
+      if (event.target === qs("#lightbox")) {
         closeLightbox();
       }
     });
 
-    lightboxEl.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
-    closeExportBtn.addEventListener("click", closeExportModal);
-    exportModal.addEventListener("click", (event) => {
-      if (event.target === exportModal) {
+    safeOn("#lightbox .lightbox-close", "click", closeLightbox);
+    safeOn("#closeExport", "click", closeExportModal);
+    safeOn("#exportModal", "click", (event) => {
+      if (event.target === qs("#exportModal")) {
         closeExportModal();
       }
     });
     exportTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
+      safeOn(tab, "click", () => {
         setExportTab(tab.dataset.exportTab);
       });
     });
@@ -3329,7 +4077,7 @@
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = document.querySelector(`#field-${CSS.escape(firstInvalid)}`) || document.querySelector(`[data-field='${firstInvalid}']`);
+      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field='${firstInvalid}']`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -3341,10 +4089,10 @@
       state.config.fields.forEach((field) => {
         let value = getEffectiveValue(field.key);
         if (field.type === "date" && typeof value === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(value)) {
-          value = normalizeDateInput(value);
+          value = normalizeDateInput(value, state.config || {});
         }
-        if (field.type === "time" && typeof value === "string") {
-          value = normalizeTimeInput(value);
+        if (field.type === "time" && typeof value === "string" && !/^\d{2}:\d{2}$/.test(value)) {
+          value = parseTimeDisplay(value) || value;
         }
         state.values[field.key] = value;
         let validationValue = value;
@@ -3356,7 +4104,7 @@
         }
         state.errors[field.key] = validateField(field, validationValue);
         state.validMap[field.key] = !state.errors[field.key];
-        const control = document.querySelector(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
+        const control = qs(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
         if (control) updateError(control, field);
       });
     }
@@ -3415,7 +4163,7 @@
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
 
-      formEl.addEventListener("submit", (event) => {
+      safeOn("#dynamicForm", "submit", (event) => {
       event.preventDefault();
       ensureTaskStartTimestamp();
       validateAll();
@@ -3450,15 +4198,13 @@
       }
       });
 
-      if (submitBtn) {
-        submitBtn.addEventListener("click", () => {
-          console.info("submit button clicked");
-          const submitOutputsPayload = buildSubmitOutputsPayload();
-          renderSubmitOutputs(submitOutputsPayload);
-        });
-      }
+      safeOn("#submitBtn", "click", () => {
+        console.info("submit button clicked");
+        const submitOutputsPayload = buildSubmitOutputsPayload();
+        renderSubmitOutputs(submitOutputsPayload);
+      });
 
-      formEl.addEventListener("keydown", (event) => {
+      safeOn("#dynamicForm", "keydown", (event) => {
       if (event.key === "Escape") {
         if (event.target && event.target.blur) event.target.blur();
         return;
@@ -3477,19 +4223,18 @@
       }
       });
 
-      clearBtn.addEventListener("click", () => {
+      safeOn("#clearBtn", "click", () => {
         emit("onClear", {});
         resetAllStores();
       });
 
-      [columnJsonInput, humanJsonInput, predictedJsonInput].forEach((input) => {
-        if (!input) return;
-        input.addEventListener("input", () => {
+      ["#columnJsonInput", "#humanJsonInput", "#predictedJsonInput"].forEach((selector) => {
+        safeOn(selector, "input", () => {
           syncManualJsonInputs();
         });
       });
 
-      loadHumanJsonBtn.addEventListener("click", () => {
+      safeOn("#loadHumanJson", "click", () => {
         syncManualJsonInputs();
         initialSnapshot = null;
         if (state.config) {
@@ -3506,7 +4251,7 @@
         openExportModal("human");
       });
 
-      loadPredictedJsonBtn.addEventListener("click", () => {
+      safeOn("#loadPredictedJson", "click", () => {
       syncManualJsonInputs();
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
@@ -3522,7 +4267,7 @@
       openExportModal("ai");
       });
 
-      loadColumnJsonBtn.addEventListener("click", () => {
+      safeOn("#loadColumnJson", "click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson);
@@ -3530,26 +4275,26 @@
       openExportModal("column");
       });
 
-      applyAiToEmptyBtn.addEventListener("click", () => {
+      safeOn("#applyAiToEmpty", "click", () => {
         applyAiValuesToHuman({ overwrite: false });
       });
 
-      overwriteAiToAllBtn.addEventListener("click", () => {
+      safeOn("#overwriteAiToAll", "click", () => {
         const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
         if (!confirmed) return;
         applyAiValuesToHuman({ overwrite: true });
       });
 
-      resetStoresBtn.addEventListener("click", () => {
+      safeOn("#resetStores", "click", () => {
         resetAllStores();
       });
 
-      exportJsonBtn.addEventListener("click", () => {
+      safeOn("#exportJson", "click", () => {
         openExportModal("export");
       });
 
       if (scenarioColumnOnlyBtn) {
-        scenarioColumnOnlyBtn.addEventListener("click", () => {
+        safeOn("#scenarioColumnOnly", "click", () => {
           applyScenario({
             name: "column-only",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON
@@ -3558,7 +4303,7 @@
       }
 
       if (scenarioColumnHumanBtn) {
-        scenarioColumnHumanBtn.addEventListener("click", () => {
+        safeOn("#scenarioColumnHuman", "click", () => {
           applyScenario({
             name: "column-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -3568,7 +4313,7 @@
       }
 
       if (scenarioColumnAiBtn) {
-        scenarioColumnAiBtn.addEventListener("click", () => {
+        safeOn("#scenarioColumnAi", "click", () => {
           applyScenario({
             name: "column-ai",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -3578,7 +4323,7 @@
       }
 
       if (scenarioColumnAiHumanBtn) {
-        scenarioColumnAiHumanBtn.addEventListener("click", () => {
+        safeOn("#scenarioColumnAiHuman", "click", () => {
           applyScenario({
             name: "column-ai-human",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -3589,7 +4334,7 @@
       }
 
       if (scenarioConflictBtn) {
-        scenarioConflictBtn.addEventListener("click", () => {
+        safeOn("#scenarioConflict", "click", () => {
           applyScenario({
             name: "conflict",
             column: MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON,
@@ -3605,62 +4350,10 @@
         });
       }
 
-      document.getElementById("loadSample").addEventListener("click", () => {
-        schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-        currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
-        localeInput.value = defaultSchema.locale;
-        timezoneInput.value = defaultSchema.timezone;
-        modeInput.value = defaultSchema.mode;
-        requiredPolicyInput.value = defaultSchema.requiredPolicy;
-        showInlineHelpInput.checked = defaultSchema.showInlineHelp;
-        autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
-      });
-
-      document.getElementById("renderForm").addEventListener("click", () => {
-        const parsed = safeJsonParse(schemaInput.value);
-        if (!parsed || !parsed.fields) {
-          setConsole("Schema parse edilemedi", "");
-          return;
-        }
-        state.config = {
-          ...parsed,
-          currentDateTimeISO: currentDateTimeInput.value || parsed.currentDateTimeISO,
-          locale: localeInput.value || parsed.locale || "tr-TR",
-          timezone: timezoneInput.value || parsed.timezone || "Europe/Istanbul",
-          mode: modeInput.value || parsed.mode || "create",
-          requiredPolicy: requiredPolicyInput.value || parsed.requiredPolicy || "strict",
-          showInlineHelp: showInlineHelpInput.checked,
-          autoFocusFirstInvalid: autoFocusInvalidInput.checked
-        };
-        columnJson = {
-          columns: (state.config.fields || []).map((field) => ({
-            fieldName: field.label || field.key,
-            label: field.label,
-            type: field.type,
-            required: field.required || normalizeStageType(field.stageType) === "mandatory",
-            stageType: field.stageType || "optional",
-            options: field.options || [],
-            default: field.default,
-            allowMultiple: field.allowMultiple || field.ui?.allowMultiple || false,
-            ui: field.ui || {}
-          })),
-          currentDateTimeISO: state.config.currentDateTimeISO,
-          locale: state.config.locale,
-          timezone: state.config.timezone,
-          mode: state.config.mode
-        };
-        columnWarning.style.display = "none";
-        formContainer.style.display = "block";
-        renderForm(state.config);
-      });
-
-      document.getElementById("clearConsole").addEventListener("click", () => {
-        consoleEl.textContent = "";
-      });
     }
 
-    currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
-    schemaInput.value = JSON.stringify(defaultSchema, null, 2);
+    if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
+    if (schemaInput) schemaInput.value = JSON.stringify(defaultSchema, null, 2);
     syncManualJsonInputs();
     if (MANUAL_COLUMN_JSON) {
       columnJson = MANUAL_COLUMN_JSON;
