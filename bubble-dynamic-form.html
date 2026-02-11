@@ -36,49 +36,65 @@
     (function (){
       const hostId = "form";
       const iframeId = "bdf-iframe";
-      const defaultHeight = 600;
+      const defaultHeight = 650;
 
-      function findIframe(){
+      function getFrame(){
         const host = document.getElementById(hostId);
         if (!host) return null;
-        return host.querySelector("iframe");
+        const frame = host.querySelector("iframe");
+        if (!frame) return null;
+        return { host, frame };
       }
 
-      function applyIframeBaseStyles(frame){
+      function applyFrameBaseStyles(host, frame){
         frame.id = iframeId;
         frame.style.width = "100%";
         frame.style.display = "block";
         frame.style.border = "0";
-        frame.style.minHeight = defaultHeight + "px";
-        frame.style.height = defaultHeight + "px";
         frame.style.overflow = "hidden";
+        host.style.width = "100%";
       }
 
-      function setIframeHeight(h){
-        const iframe = findIframe();
-        if (!iframe) return;
-        applyIframeBaseStyles(iframe);
-        const height = Math.max(200, Number(h)||0);
-        iframe.style.height = height + "px";
-        iframe.style.minHeight = height + "px";
+      function applyHeight(nextHeight){
+        const obj = getFrame();
+        if (!obj) return;
+        const height = Math.max(80, Number(nextHeight) || 0);
+        applyFrameBaseStyles(obj.host, obj.frame);
+        obj.frame.style.height = height + "px";
+        obj.frame.style.minHeight = height + "px";
+        obj.host.style.height = height + "px";
+        obj.host.style.minHeight = height + "px";
+      }
+
+      function readIncomingHeight(payload){
+        if (!payload) return null;
+        if (payload.type === "BDF_HEIGHT") {
+          return Number(payload.height);
+        }
+        if (payload.bdf === "resize") {
+          return Number(payload.height);
+        }
+        return null;
       }
 
       window.addEventListener("message", function(e){
-        if (!e.data || e.data.type !== "BDF_HEIGHT") return;
-        if (e.data.height && !isNaN(Number(e.data.height))){
-          setIframeHeight(e.data.height);
-        }
+        const incomingHeight = readIncomingHeight(e.data);
+        if (!Number.isFinite(incomingHeight) || incomingHeight < 80) return;
+        applyHeight(incomingHeight);
       });
 
-      const tryInit = setInterval(()=>{
-        const frame = findIframe();
-        if (frame){
-          applyIframeBaseStyles(frame);
+      let tries = 0;
+      const tryInit = setInterval(() => {
+        tries += 1;
+        const obj = getFrame();
+        if (obj) {
+          applyHeight(defaultHeight);
           clearInterval(tryInit);
         }
-      }, 200);
-
-      setTimeout(() => clearInterval(tryInit), 5000);
+        if (tries > 40) {
+          clearInterval(tryInit);
+        }
+      }, 250);
     })();
   </script>
   <style data-bdf-style>
