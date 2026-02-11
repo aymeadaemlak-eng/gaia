@@ -209,6 +209,22 @@
       align-items: start;
     }
 
+    #bdf-root .field-row.is-file-field {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    #bdf-root .field-row.is-file-field .field-label {
+      padding: 8px 10px;
+      border: 1px solid #edf1f6;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+    }
+
+    #bdf-root .field-row.is-file-field .control-stack {
+      justify-items: stretch;
+    }
+
     #bdf-root .field-label {
       display: grid;
       gap: 4px;
@@ -634,12 +650,12 @@
     }
 
 #bdf-root .file-drop {
-      border: 1px dashed var(--border);
+      border: 1px dashed #cfd8e3;
       border-radius: 12px;
-      padding: 12px;
+      padding: 14px;
       text-align: center;
-      color: var(--muted);
-      background: #fafafa;
+      color: #566173;
+      background: linear-gradient(180deg, #fbfdff 0%, #f7fafe 100%);
     }
 
 #bdf-root .file-list {
@@ -989,6 +1005,10 @@
 
 #bdf-root .field-row {
         grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+      }
+
+#bdf-root .field-row.is-file-field .field-label {
+        padding: 7px 9px;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -2990,6 +3010,7 @@
           || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
+        const isFileField = ["file", "multifile", "image"].includes(normalizedType);
         const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
         if (currentGroup === "date" && previousGroup === "amount") {
           wrapper.classList.add("group-break-date");
@@ -3000,6 +3021,7 @@
         row.className = "field-row";
         if (isAmountField) row.classList.add("is-amount-field");
         if (isDateField) row.classList.add("is-date-field");
+        if (isFileField) row.classList.add("is-file-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
