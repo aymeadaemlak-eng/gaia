@@ -2976,14 +2976,23 @@
             base64: stripDataUrlPrefix(file.base64)
           }));
 
+        const keptUrls = Array.from(keptSet);
+        const removedUrls = Array.from(removedSet);
+        const initialSorted = Array.from(new Set(initialUrls)).sort();
+        const keptSorted = Array.from(new Set(keptUrls)).sort();
+        const hasUrlChange = JSON.stringify(initialSorted) !== JSON.stringify(keptSorted);
+        const hasFileOperation = hasUrlChange || removedUrls.length > 0 || newFiles.length > 0;
+        if (!hasFileOperation) return;
+
         items.push({
           customFieldName,
-          keptUrls: Array.from(keptSet),
-          removedUrls: Array.from(removedSet),
+          keptUrls,
+          removedUrls,
           newFiles
         });
       });
 
+      if (!items.length) return null;
       return JSON.stringify({
         version: 1,
         items
