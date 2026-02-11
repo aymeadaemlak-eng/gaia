@@ -103,6 +103,10 @@
       --form-input-pad-y: clamp(6px, 0.8vw, 8px);
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
       --form-input-min-height: clamp(32px, 4vw, 36px);
+      --field-gap-internal: clamp(4px, 0.6vw, 8px);
+      --field-gap-between: clamp(16px, 2vw, 24px);
+      --field-group-gap: clamp(32px, 4vw, 40px);
+      --amount-input-max-width: 268px;
       font-size: 14px;
       color: var(--text);
     }
@@ -170,12 +174,29 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: var(--form-field-gap);
+      gap: var(--field-gap-internal);
       padding: var(--form-vertical-padding) 0;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
-      margin-top: var(--form-field-gap);
+      margin-top: var(--field-gap-between);
+    }
+
+    #bdf-root .field-wrapper.group-break-date {
+      margin-top: var(--field-group-gap);
+      padding-top: 14px;
+      border-top: 1px solid #edf0f5;
+    }
+
+    #bdf-root .field-wrapper.group-break-date::before {
+      content: "Tarih Bilgileri";
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 700;
+      margin-bottom: 8px;
     }
 
     #bdf-root .field-row {
@@ -254,9 +275,11 @@
     }
 
 #bdf-root .stage-control {
-      background: rgba(100, 116, 139, 0.12);
-      color: #475569;
-      border-color: rgba(148, 163, 184, 0.6);
+      background: rgba(148, 163, 184, 0.08);
+      color: #7c8798;
+      border-color: rgba(148, 163, 184, 0.4);
+      font-size: 0.62rem;
+      margin-top: 4px;
     }
 
 #bdf-root .ai-badge {
@@ -299,7 +322,13 @@
 
 #bdf-root .control-stack {
       display: grid;
-      gap: var(--form-field-gap);
+      gap: var(--field-gap-internal);
+      width: 100%;
+      justify-items: start;
+    }
+
+#bdf-root .field-row.is-amount-field .control-stack {
+      max-width: min(100%, var(--amount-input-max-width));
     }
 
 #bdf-root .field-control {
@@ -366,8 +395,16 @@
       color: #9ca3af;
     }
 
+#bdf-root .field-input.is-date-input::placeholder {
+      color: #c2c9d4;
+    }
+
 #bdf-root .field-control.has-icon .field-input {
       padding-right: 42px;
+    }
+
+#bdf-root .field-control.has-icon .field-input.is-date-input {
+      padding-right: 44px;
     }
 
 #bdf-root textarea.field-input {
@@ -944,10 +981,15 @@
         --form-row-gap: 10px;
         --form-field-gap: 6px;
         --form-vertical-padding: 6px;
+        --field-gap-between: 16px;
       }
 
 #bdf-root .field-row {
         grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+      }
+
+#bdf-root .field-row.is-amount-field .control-stack {
+        max-width: min(100%, 248px);
       }
     }
 
@@ -2934,12 +2976,28 @@
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
+      let previousGroup = null;
       config.fields.forEach((field, index) => {
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
 
+        const resolvedField = resolveFieldType(field);
+        const normalizedType = String(resolvedField?.type || field.type || "").toLowerCase();
+        const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
+        const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
+          || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
+        const isDateField = ["date", "datetime", "time"].includes(normalizedType)
+          || /(tarih|date|saat|time)/i.test(fieldLabelLower);
+        const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
+        if (currentGroup === "date" && previousGroup === "amount") {
+          wrapper.classList.add("group-break-date");
+        }
+        previousGroup = currentGroup;
+
         const row = document.createElement("div");
         row.className = "field-row";
+        if (isAmountField) row.classList.add("is-amount-field");
+        if (isDateField) row.classList.add("is-date-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
@@ -3307,7 +3365,7 @@
         } else if (field.type === "date") {
           const dateInput = document.createElement("input");
           dateInput.type = "text";
-          dateInput.className = "field-input";
+          dateInput.className = "field-input is-date-input";
           dateInput.id = `field-${field.key}`;
           dateInput.setAttribute("aria-describedby", `error-${field.key}`);
           dateInput.placeholder = field.placeholder || "GG.AA.YYYY";
@@ -3416,7 +3474,7 @@
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
           datetimeInput.type = "text";
-          datetimeInput.className = "field-input";
+          datetimeInput.className = "field-input is-date-input";
           datetimeInput.id = `field-${field.key}`;
           datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
           datetimeInput.placeholder = field.placeholder || "GG.AA.YYYY SS:DD";
