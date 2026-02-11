@@ -2,9 +2,14 @@
 
 Bu doküman `bubble-backend-photo-workflow.js` için Bubble tarafında hangi key/value alanlarını girmen gerektiğini açıklar.
 
+## ⚠️ Kritik: Script alanına ne yapıştırılacak?
+- **Server script** alanına yalnızca `bubble-backend-photo-workflow.js` dosyasının JavaScript kodunu yapıştır.
+- `bubble-backend-photo-workflow-usage.md` içeriğini script alanına yapıştırma (başındaki `#` nedeniyle **SyntaxError: Invalid or unexpected token** alırsın).
+- Log'da `Running actionNode script:# Bubble Toolbox Plugin Ayarları ...` görüyorsan yanlış dosya yapıştırılmış demektir.
+
 ## 1) Çalıştırma tipi
 - Plugin: **Toolbox -> Run javascript** (backend workflow'da).
-- Script alanına: `bubble-backend-photo-workflow.js` içeriğini koy.
+- Script alanına: **sadece JS kodu** (`bubble-backend-photo-workflow.js`) koy.
 
 ## 2) Gerekli key/value alanları
 Aşağıdaki key'leri Bubble'da gönder:
