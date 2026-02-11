@@ -36,49 +36,65 @@
     (function (){
       const hostId = "form";
       const iframeId = "bdf-iframe";
-      const defaultHeight = 600;
+      const defaultHeight = 650;
 
-      function findIframe(){
+      function getFrame(){
         const host = document.getElementById(hostId);
         if (!host) return null;
-        return host.querySelector("iframe");
+        const frame = host.querySelector("iframe");
+        if (!frame) return null;
+        return { host, frame };
       }
 
-      function applyIframeBaseStyles(frame){
+      function applyFrameBaseStyles(host, frame){
         frame.id = iframeId;
         frame.style.width = "100%";
         frame.style.display = "block";
         frame.style.border = "0";
-        frame.style.minHeight = defaultHeight + "px";
-        frame.style.height = defaultHeight + "px";
         frame.style.overflow = "hidden";
+        host.style.width = "100%";
       }
 
-      function setIframeHeight(h){
-        const iframe = findIframe();
-        if (!iframe) return;
-        applyIframeBaseStyles(iframe);
-        const height = Math.max(200, Number(h)||0);
-        iframe.style.height = height + "px";
-        iframe.style.minHeight = height + "px";
+      function applyHeight(nextHeight){
+        const obj = getFrame();
+        if (!obj) return;
+        const height = Math.max(80, Number(nextHeight) || 0);
+        applyFrameBaseStyles(obj.host, obj.frame);
+        obj.frame.style.height = height + "px";
+        obj.frame.style.minHeight = height + "px";
+        obj.host.style.height = height + "px";
+        obj.host.style.minHeight = height + "px";
+      }
+
+      function readIncomingHeight(payload){
+        if (!payload) return null;
+        if (payload.type === "BDF_HEIGHT") {
+          return Number(payload.height);
+        }
+        if (payload.bdf === "resize") {
+          return Number(payload.height);
+        }
+        return null;
       }
 
       window.addEventListener("message", function(e){
-        if (!e.data || e.data.type !== "BDF_HEIGHT") return;
-        if (e.data.height && !isNaN(Number(e.data.height))){
-          setIframeHeight(e.data.height);
-        }
+        const incomingHeight = readIncomingHeight(e.data);
+        if (!Number.isFinite(incomingHeight) || incomingHeight < 80) return;
+        applyHeight(incomingHeight);
       });
 
-      const tryInit = setInterval(()=>{
-        const frame = findIframe();
-        if (frame){
-          applyIframeBaseStyles(frame);
+      let tries = 0;
+      const tryInit = setInterval(() => {
+        tries += 1;
+        const obj = getFrame();
+        if (obj) {
+          applyHeight(defaultHeight);
           clearInterval(tryInit);
         }
-      }, 200);
-
-      setTimeout(() => clearInterval(tryInit), 5000);
+        if (tries > 40) {
+          clearInterval(tryInit);
+        }
+      }, 250);
     })();
   </script>
   <style data-bdf-style>
@@ -95,6 +111,18 @@
       --success: #16a34a;
       --warning: #f59e0b;
       --focus: rgba(37, 99, 235, 0.12);
+      --form-row-gap: clamp(8px, 1.1vw, 12px);
+      --form-field-gap: clamp(6px, 0.8vw, 8px);
+      --form-vertical-padding: clamp(2px, 0.4vw, 4px);
+      --form-control-pad-y: clamp(5px, 0.7vw, 7px);
+      --form-control-pad-x: clamp(7px, 0.9vw, 10px);
+      --form-input-pad-y: clamp(6px, 0.8vw, 8px);
+      --form-input-pad-x: clamp(4px, 0.6vw, 6px);
+      --form-input-min-height: clamp(32px, 4vw, 36px);
+      --field-gap-internal: clamp(4px, 0.6vw, 8px);
+      --field-gap-between: clamp(10px, 1.4vw, 16px);
+      --field-group-gap: clamp(18px, 2.2vw, 24px);
+      --amount-input-max-width: 268px;
       font-size: 14px;
       color: var(--text);
     }
@@ -162,18 +190,22 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: 8px;
-      padding: 10px 0;
+      gap: var(--field-gap-internal);
+      padding: var(--form-vertical-padding) 0;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
-      margin-top: 8px;
+      margin-top: var(--field-gap-between);
+    }
+
+    #bdf-root .field-wrapper.group-break-date {
+      margin-top: var(--field-group-gap);
     }
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 14px;
+      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+      gap: var(--form-row-gap);
       align-items: start;
     }
 
@@ -246,9 +278,11 @@
     }
 
 #bdf-root .stage-control {
-      background: rgba(100, 116, 139, 0.12);
-      color: #475569;
-      border-color: rgba(148, 163, 184, 0.6);
+      background: rgba(148, 163, 184, 0.08);
+      color: #7c8798;
+      border-color: rgba(148, 163, 184, 0.4);
+      font-size: 0.62rem;
+      margin-top: 4px;
     }
 
 #bdf-root .ai-badge {
@@ -291,13 +325,19 @@
 
 #bdf-root .control-stack {
       display: grid;
-      gap: 6px;
+      gap: var(--field-gap-internal);
+      width: 100%;
+      justify-items: start;
+    }
+
+#bdf-root .field-row.is-amount-field .control-stack {
+      max-width: min(100%, var(--amount-input-max-width));
     }
 
 #bdf-root .field-control {
       border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 6px 8px;
+      padding: var(--form-control-pad-y) var(--form-control-pad-x);
       background: #fff;
       position: relative;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -344,13 +384,13 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 8px 6px;
+      padding: var(--form-input-pad-y) var(--form-input-pad-x);
       border-radius: 10px;
       font-size: 0.9rem;
       background: transparent;
       color: var(--text);
       outline: none;
-      min-height: 36px;
+      min-height: var(--form-input-min-height);
     }
 
 #bdf-root .field-input::placeholder,
@@ -358,8 +398,16 @@
       color: #9ca3af;
     }
 
+#bdf-root .field-input.is-date-input::placeholder {
+      color: #c2c9d4;
+    }
+
 #bdf-root .field-control.has-icon .field-input {
       padding-right: 42px;
+    }
+
+#bdf-root .field-control.has-icon .field-input.is-date-input {
+      padding-right: 44px;
     }
 
 #bdf-root textarea.field-input {
@@ -931,7 +979,24 @@
       min-height: 16px;
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 900px) {
+#bdf-root {
+        --form-row-gap: 10px;
+        --form-field-gap: 6px;
+        --form-vertical-padding: 6px;
+        --field-gap-between: 10px;
+      }
+
+#bdf-root .field-row {
+        grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+      }
+
+#bdf-root .field-row.is-amount-field .control-stack {
+        max-width: min(100%, 248px);
+      }
+    }
+
+    @media (max-width: 330px) {
 #bdf-root .field-row {
         grid-template-columns: 1fr;
         gap: 6px;
@@ -1101,7 +1166,6 @@
       </div>
     </section>
     </main>
-  </div>
   <div id="lightbox" class="lightbox" aria-hidden="true">
     <div class="lightbox-content">
       <button type="button" class="lightbox-close">Kapat</button>
@@ -1122,6 +1186,7 @@
       </div>
       <textarea id="exportContent" readonly></textarea>
     </div>
+  </div>
   </div>
 
   <script>
@@ -1738,6 +1803,10 @@
             child.style.display = formOnly ? "none" : "";
           });
         }
+      }
+      if (formOnly) {
+        closeLightbox();
+        closeExportModal();
       }
     }
 
@@ -2910,12 +2979,27 @@
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
+      let previousGroup = null;
       config.fields.forEach((field, index) => {
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
 
+        const normalizedType = String(field.type || "").toLowerCase();
+        const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
+        const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
+          || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
+        const isDateField = ["date", "datetime", "time"].includes(normalizedType)
+          || /(tarih|date|saat|time)/i.test(fieldLabelLower);
+        const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
+        if (currentGroup === "date" && previousGroup === "amount") {
+          wrapper.classList.add("group-break-date");
+        }
+        previousGroup = currentGroup;
+
         const row = document.createElement("div");
         row.className = "field-row";
+        if (isAmountField) row.classList.add("is-amount-field");
+        if (isDateField) row.classList.add("is-date-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
@@ -3283,7 +3367,7 @@
         } else if (field.type === "date") {
           const dateInput = document.createElement("input");
           dateInput.type = "text";
-          dateInput.className = "field-input";
+          dateInput.className = "field-input is-date-input";
           dateInput.id = `field-${field.key}`;
           dateInput.setAttribute("aria-describedby", `error-${field.key}`);
           dateInput.placeholder = field.placeholder || "GG.AA.YYYY";
@@ -3392,7 +3476,7 @@
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
           datetimeInput.type = "text";
-          datetimeInput.className = "field-input";
+          datetimeInput.className = "field-input is-date-input";
           datetimeInput.id = `field-${field.key}`;
           datetimeInput.setAttribute("aria-describedby", `error-${field.key}`);
           datetimeInput.placeholder = field.placeholder || "GG.AA.YYYY SS:DD";
@@ -3962,7 +4046,7 @@
     }
 
     function openLightbox(src) {
-      if (!src) return;
+      if (IS_VERSION_MODE || !src || !lightboxEl || !lightboxImage) return;
       lightboxImage.src = src;
       lightboxEl.classList.add("open");
       lightboxEl.setAttribute("aria-hidden", "false");
@@ -3974,18 +4058,21 @@
     }
 
     function closeLightbox() {
+      if (!lightboxEl || !lightboxImage) return;
       lightboxEl.classList.remove("open");
       lightboxEl.setAttribute("aria-hidden", "true");
       lightboxImage.src = "";
     }
 
     function openExportModal(kind = "export") {
+      if (IS_VERSION_MODE || !exportModal) return;
       exportModal.classList.add("open");
       exportModal.setAttribute("aria-hidden", "false");
       setExportTab(kind);
     }
 
     function closeExportModal() {
+      if (!exportModal || !exportContent) return;
       exportModal.classList.remove("open");
       exportModal.setAttribute("aria-hidden", "true");
       exportContent.value = "";
