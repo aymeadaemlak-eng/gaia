@@ -1859,6 +1859,7 @@
         `output1: ${safePayload.output1 ?? ""}`,
         `output2: ${safePayload.output2 ?? ""}`,
         `output3: ${safePayload.output3 ?? ""}`,
+        `output4: ${safePayload.output4 ?? ""}`,
         "outputlist1:",
         listToText(safePayload.outputlist1),
         "outputlist2:",
@@ -1879,6 +1880,7 @@
         output1: startTimestamp,
         output2: endTimestamp,
         output3: durationMs,
+        output4: buildOutput4String(),
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
@@ -2483,6 +2485,19 @@
       return typeof value === "string" && value.startsWith("data:application/pdf");
     }
 
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve("");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(reader.error || new Error("file read error"));
+        reader.readAsDataURL(file);
+      });
+    }
+
     function isLikelyBase64(value) {
       if (typeof value !== "string") return false;
       if (value.length < 60) return false;
@@ -2914,6 +2929,65 @@
         }
       });
       return entries;
+    }
+
+    function toStringArray(value) {
+      if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
+      if (typeof value === "string" && value) return [value];
+      return [];
+    }
+
+    function getFileFieldUrlsFromValue(value) {
+      return toStringArray(value).filter((entry) => typeof entry === "string" && /^(https?:\/\/|\/|data:)/i.test(entry));
+    }
+
+    function stripDataUrlPrefix(value) {
+      if (typeof value !== "string") return "";
+      const marker = ";base64,";
+      const idx = value.indexOf(marker);
+      if (idx >= 0) return value.slice(idx + marker.length);
+      return value;
+    }
+
+    function buildOutput4String() {
+      const items = [];
+      const base = initialSnapshot || {};
+      (state.config?.fields || []).forEach((field) => {
+        if (!["file", "multifile", "image"].includes(String(field.type || "").toLowerCase())) return;
+        const customFieldName = String(field.label || field.fieldName || field.key || "").trim();
+        if (!customFieldName) return;
+
+        const initialUrls = getFileFieldUrlsFromValue(base[field.key]);
+        const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+        const keptFromCurrent = currentFiles
+          .map((file) => (file && typeof file.url === "string" ? file.url : ""))
+          .filter(Boolean);
+        const keptSet = new Set(keptFromCurrent);
+        const removedSet = new Set(initialUrls.filter((url) => !keptSet.has(url)));
+        removedSet.forEach((url) => {
+          if (keptSet.has(url)) removedSet.delete(url);
+        });
+
+        const newFiles = currentFiles
+          .filter((file) => file && file.raw && typeof file.base64 === "string" && file.base64)
+          .map((file) => ({
+            filename: String(file.name || file.raw?.name || "dosya"),
+            contentType: String(file.type || file.raw?.type || "application/octet-stream"),
+            base64: stripDataUrlPrefix(file.base64)
+          }));
+
+        items.push({
+          customFieldName,
+          keptUrls: Array.from(keptSet),
+          removedUrls: Array.from(removedSet),
+          newFiles
+        });
+      });
+
+      return JSON.stringify({
+        version: 1,
+        items
+      });
     }
 
     function getActivityType() {
@@ -3916,33 +3990,40 @@
             });
           };
 
-          const handleFiles = (fileList) => {
+          const handleFiles = async (fileList) => {
             const files = Array.from(fileList);
             const maxFiles = field.ui?.maxFiles || (allowMultiple ? 10 : 1);
             const maxSizeMB = field.ui?.maxSizeMB || 25;
             const errors = [];
             const accepted = [];
 
-            files.forEach((file) => {
-              if (accepted.length >= maxFiles) return;
+            for (const file of files) {
+              if (accepted.length >= maxFiles) continue;
               if (file.size > maxSizeMB * 1024 * 1024) {
                 errors.push(`${file.name}: Dosya çok büyük.`);
-                return;
+                continue;
               }
               if (accept && !file.type.match(accept.replace("*", ".*"))) {
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
-                return;
+                continue;
               }
               const shouldPreview = field.type === "image" || file.type.startsWith("image/");
+              let base64Data = "";
+              try {
+                base64Data = stripDataUrlPrefix(await readFileAsDataUrl(file));
+              } catch (error) {
+                console.warn("base64 read failed", error);
+              }
               accepted.push({
                 raw: file,
                 name: file.name,
                 size: file.size,
                 type: file.type,
                 lastModified: file.lastModified,
+                base64: base64Data,
                 preview: shouldPreview ? URL.createObjectURL(file) : ""
               });
-            });
+            }
 
             if (errors.length) {
               setFieldValue(field.key, "", field);
@@ -4297,6 +4378,7 @@
         output1: submitOutputsPayload.output1,
         output2: submitOutputsPayload.output2,
         output3: submitOutputsPayload.output3,
+        output4: submitOutputsPayload.output4,
         outputlist1: submitOutputsPayload.outputlist1,
         outputlist2: submitOutputsPayload.outputlist2,
         outputlist3: submitOutputsPayload.outputlist3,
