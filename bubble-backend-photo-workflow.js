@@ -2,22 +2,28 @@
   // =======================================================
   // INPUT (Bubble Toolbox key/value)
   // =======================================================
-  // data.output4: text (JSON string) -> { version: 1, items: [...] }
+  // Required:
+  // - data.output4: text(JSON) -> { version: 1, items: [...] }
+  // - data.token  : Bubble API token
   //
-  // Optional key/value:
-  // data.env                 : "version-test" | "live"
-  // data.domain              : "https://gaiasphere.io"
-  // data.token               : Bubble API token
-  // data.customFieldMapJson  : text(JSON) -> {"customFieldName":"customFieldId"}
+  // Optional:
+  // - data.env                 : "version-test" | "live" (default: version-test)
+  // - data.domain              : app domain (default: https://gaiasphere.io)
+  // - data.customFieldMapJson  : text(JSON) customFieldName->customFieldId map
+  // - data.createdPhotoMapJson : text(JSON) customFieldName->photoId map (for update)
   //
   // Optional override for Photos schema:
-  // data.photoType
-  // data.photoFieldCustomField
-  // data.photoFieldUrls
-  // data.photoFieldSize
+  // - data.photoType (default: Photos)
+  // - data.photoFieldCustomField (default: CustomField)
+  // - data.photoFieldUrls (default: Urls)
+  // - data.photoFieldSize (default: Size)
+  //
+  // Per-item optional override:
+  // - item.photoId : if present, this photo will be PATCH updated instead of POST create
   // =======================================================
 
   const createdPhotoIds = [];
+  const updatedPhotoIds = [];
   const logs = [];
   const startedAt = Date.now();
 
@@ -62,7 +68,19 @@
         throw new Error(`customFieldMapJson parse edilemedi: ${error?.message || error}`);
       }
     }
+
+    // customFieldName -> existing photoId map (update mode)
+    let CREATED_PHOTO_MAP = {};
+    if (data?.createdPhotoMapJson) {
+      try {
+        CREATED_PHOTO_MAP = JSON.parse(String(data.createdPhotoMapJson));
+      } catch (error) {
+        throw new Error(`createdPhotoMapJson parse edilemedi: ${error?.message || error}`);
+      }
+    }
+
     logs.push(`[config] customFieldMap keys=${Object.keys(CUSTOM_FIELD_MAP).length}`);
+    logs.push(`[config] createdPhotoMap keys=${Object.keys(CREATED_PHOTO_MAP).length}`);
 
     // -----------------------
     // 1) Helpers
@@ -151,13 +169,15 @@
       }
     }
 
-    async function createPhoto(customFieldId, urls, sizeNumber) {
-      const body = {
+    function buildPhotoPayload(customFieldId, urls, sizeNumber) {
+      return {
         [PHOTO_FIELD_CUSTOMFIELD]: customFieldId,
         [PHOTO_FIELD_URLS]: urls,
         [PHOTO_FIELD_SIZE]: sizeNumber,
       };
+    }
 
+    async function createPhoto(body) {
       const response = await bubbleFetch(`/obj/${PHOTO_TYPE}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,12 +187,22 @@
       return response?.id || response?.response?.id || response?.response?.result?.id || null;
     }
 
+    async function updatePhoto(photoId, body) {
+      const response = await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      return response?.id || response?.response?.id || response?.response?.result?.id || photoId;
+    }
+
     // -----------------------
     // 2) Parse output4
     // -----------------------
     if (!data?.output4 || typeof data.output4 !== "string") {
       logs.push("[input] output4 yok/boş");
-      return { createdPhotoIds, log: logs.join("\n") };
+      return { createdPhotoIds, updatedPhotoIds, photoIds: [], log: logs.join("\n") };
     }
 
     let payload;
@@ -240,16 +270,29 @@
       const sizeNumber = Array.isArray(finalUrls) ? finalUrls.length : 0;
       logs.push(`[item ${i}] finalUrls=${sizeNumber}`);
 
-      const newPhotoId = await createPhoto(customFieldId, finalUrls, sizeNumber);
-      logs.push(`[item ${i}] createdPhotoId=${newPhotoId}`);
+      const body = buildPhotoPayload(customFieldId, finalUrls, sizeNumber);
+      const itemPhotoId = (item?.photoId || "").trim();
+      const mappedPhotoId = (CREATED_PHOTO_MAP[customFieldName] || "").trim();
+      const targetPhotoId = itemPhotoId || mappedPhotoId;
 
-      if (newPhotoId) createdPhotoIds.push(newPhotoId);
+      if (targetPhotoId) {
+        const updatedPhotoId = await updatePhoto(targetPhotoId, body);
+        logs.push(`[item ${i}] updatedPhotoId=${updatedPhotoId}`);
+        if (updatedPhotoId) updatedPhotoIds.push(updatedPhotoId);
+      } else {
+        const newPhotoId = await createPhoto(body);
+        logs.push(`[item ${i}] createdPhotoId=${newPhotoId}`);
+        if (newPhotoId) createdPhotoIds.push(newPhotoId);
+      }
     }
 
-    logs.push(`\n[done] createdPhotoIds=${createdPhotoIds.length} elapsedMs=${Date.now() - startedAt}`);
+    const photoIds = uniqueStrings([...updatedPhotoIds, ...createdPhotoIds]);
+    logs.push(`\n[done] created=${createdPhotoIds.length} updated=${updatedPhotoIds.length} total=${photoIds.length} elapsedMs=${Date.now() - startedAt}`);
 
     return {
       createdPhotoIds,
+      updatedPhotoIds,
+      photoIds,
       log: logs.join("\n"),
     };
   } catch (error) {
@@ -258,6 +301,8 @@
 
     return {
       createdPhotoIds,
+      updatedPhotoIds,
+      photoIds: [...updatedPhotoIds, ...createdPhotoIds],
       log: logs.join("\n"),
     };
   }
