@@ -35,6 +35,8 @@
   <script>
     (function (){
       const hostId = "form";
+      const iframeId = "bdf-iframe";
+      const defaultHeight = 600;
 
       function findIframe(){
         const host = document.getElementById(hostId);
@@ -43,9 +45,13 @@
       }
 
       function applyIframeBaseStyles(frame){
+        frame.id = iframeId;
         frame.style.width = "100%";
         frame.style.display = "block";
         frame.style.border = "0";
+        frame.style.minHeight = defaultHeight + "px";
+        frame.style.height = defaultHeight + "px";
+        frame.style.overflow = "hidden";
       }
 
       function setIframeHeight(h){
@@ -58,7 +64,8 @@
       }
 
       window.addEventListener("message", function(e){
-        if (e.data && e.data.height && !isNaN(Number(e.data.height))){
+        if (!e.data || e.data.type !== "BDF_HEIGHT") return;
+        if (e.data.height && !isNaN(Number(e.data.height))){
           setIframeHeight(e.data.height);
         }
       });
@@ -70,6 +77,8 @@
           clearInterval(tryInit);
         }
       }, 200);
+
+      setTimeout(() => clearInterval(tryInit), 5000);
     })();
   </script>
   <style data-bdf-style>
@@ -163,7 +172,7 @@
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: minmax(180px, 35%) minmax(0, 65%);
+      grid-template-columns: 220px 1fr;
       gap: 14px;
       align-items: start;
     }
@@ -1303,6 +1312,41 @@
     const qs = (selector) => (rootScope && rootScope.querySelector ? rootScope.querySelector(selector) : null);
     const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
     const byId = (id) => qs(`#${id}`);
+
+    function notifyParentHeight() {
+      if (window.parent === window) return;
+      requestAnimationFrame(() => {
+        const first = Math.max(
+          document.documentElement ? document.documentElement.scrollHeight : 0,
+          document.body ? document.body.scrollHeight : 0
+        );
+        requestAnimationFrame(() => {
+          const second = Math.max(
+            document.documentElement ? document.documentElement.scrollHeight : 0,
+            document.body ? document.body.scrollHeight : 0
+          );
+          const height = Math.max(first, second, 200);
+          window.parent.postMessage({ type: "BDF_HEIGHT", height }, "*");
+        });
+      });
+    }
+
+    function initParentHeightSync() {
+      notifyParentHeight();
+      window.addEventListener("resize", notifyParentHeight);
+      if (rootElement && "MutationObserver" in window) {
+        const mo = new MutationObserver(() => notifyParentHeight());
+        mo.observe(rootElement, { childList: true, subtree: true, attributes: true, characterData: true });
+      }
+      setTimeout(notifyParentHeight, 60);
+      setTimeout(notifyParentHeight, 320);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initParentHeightSync);
+    } else {
+      initParentHeightSync();
+    }
 
     function retryEvery(selector, cb, timeoutMs = 3000, intervalMs = 50) {
       if (!rootScope || !rootScope.querySelector) return;
