@@ -3023,6 +3023,24 @@
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
+        const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
+
+        if (isFileField) {
+          const initialUrls = Array.from(new Set(getFileFieldUrlsFromValue(initialValue))).sort();
+          const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+          const currentUrls = Array.from(new Set(
+            currentFiles
+              .map((file) => (file && typeof file.url === "string" ? file.url : ""))
+              .filter(Boolean)
+          )).sort();
+          const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
+          const hasUrlChange = JSON.stringify(initialUrls) !== JSON.stringify(currentUrls);
+          if (hasUrlChange || hasNewFiles) {
+            entries.push(jsonKey);
+          }
+          return;
+        }
+
         if (isEmptyValue(initialValue) || isEmptyValue(currentValue)) return;
         if (areValuesDifferent(initialValue, currentValue)) {
           entries.push(jsonKey);
@@ -4147,7 +4165,12 @@
               state.errors[field.key] = errors.join(" ");
             }
 
-            state.fileBuffers[field.key] = field.type === "multifile" || fileInput.multiple ? accepted : accepted.slice(0, 1);
+            const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+            if (field.type === "multifile" || fileInput.multiple) {
+              state.fileBuffers[field.key] = [...currentFiles, ...accepted].slice(0, maxFiles);
+            } else {
+              state.fileBuffers[field.key] = accepted.slice(0, 1);
+            }
             renderFiles();
 
             const filePayload = (state.fileBuffers[field.key] || []).map((file) => ({
@@ -4187,6 +4210,7 @@
 
           fileInput.addEventListener("change", (event) => {
             handleFiles(event.target.files);
+            event.target.value = "";
           });
 
           control.append(drop, fileInput, list);
