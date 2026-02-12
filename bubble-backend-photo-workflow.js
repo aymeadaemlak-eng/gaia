@@ -83,17 +83,8 @@
     const errorText = errors.length ? errors.join("\n") : "";
 
     return {
-      // İstenen asıl çıktılar:
       output1: errorText,
       outputlist1: createdPhotoIds,
-
-      // Geriye uyumluluk / debug:
-      log: logs.join("\n"),
-      createdPhotoIds,
-      updatedPhotoIds,
-      photoIds,
-      errors,
-      summary,
     };
   }
 

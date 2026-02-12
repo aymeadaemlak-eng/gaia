@@ -86,7 +86,7 @@ Bu script özellikle şu iki alanı döndürür:
 - `output1` (text): hatalar tek bir metin olarak (satır satır). Hata yoksa boş string.
 - `outputlist1` (list of text): oluşturulan `createdPhotoIds` listesi.
 
-Ek olarak debug/uyumluluk için `log`, `createdPhotoIds`, `updatedPhotoIds`, `photoIds`, `errors`, `summary` alanları da dönmeye devam eder.
+Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 
 ## 6) Bubble'da hızlı örnek key/value seti
 - key: `env` value: `version-test`
