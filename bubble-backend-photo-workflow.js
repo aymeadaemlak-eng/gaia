@@ -65,20 +65,63 @@
     }
   }
 
-  function readInput(key) {
-    if (data && data[key] !== undefined && data[key] !== null) return data[key];
-    if (typeof properties !== "undefined" && properties && properties[key] !== undefined && properties[key] !== null) return properties[key];
-    if (typeof context !== "undefined" && context && context[key] !== undefined && context[key] !== null) return context[key];
-    if (typeof globalThis !== "undefined" && globalThis && globalThis[key] !== undefined && globalThis[key] !== null) return globalThis[key];
+  function getContainerValue(container, key) {
+    if (!container || typeof container !== "object") return undefined;
+    if (container[key] !== undefined && container[key] !== null) return container[key];
 
-    if (key === "token" && typeof token !== "undefined") return token;
-    if (key === "output4" && typeof output4 !== "undefined") return output4;
-    if (key === "customFieldMapJson" && typeof customFieldMapJson !== "undefined") return customFieldMapJson;
-    if (key === "createdPhotoMapJson" && typeof createdPhotoMapJson !== "undefined") return createdPhotoMapJson;
-    if (key === "env" && typeof env !== "undefined") return env;
-    if (key === "domain" && typeof domain !== "undefined") return domain;
+    const target = String(key).toLowerCase();
+    const keys = Object.keys(container);
+    const foundKey = keys.find((k) => String(k).toLowerCase() === target);
+    if (foundKey) return container[foundKey];
 
     return undefined;
+  }
+
+  function firstNonEmpty(...values) {
+    for (const value of values) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      return value;
+    }
+    return undefined;
+  }
+
+  function readInput(key, aliases = []) {
+    const names = [key, ...aliases];
+
+    for (const name of names) {
+      const value = firstNonEmpty(
+        getContainerValue(typeof data !== "undefined" ? data : undefined, name),
+        getContainerValue(typeof properties !== "undefined" ? properties : undefined, name),
+        getContainerValue(typeof context !== "undefined" ? context : undefined, name),
+        getContainerValue(typeof globalThis !== "undefined" ? globalThis : undefined, name),
+      );
+      if (value !== undefined) return value;
+    }
+
+    // direct globals fallback
+    if (names.includes("token") && typeof token !== "undefined") return token;
+    if (names.includes("output4") && typeof output4 !== "undefined") return output4;
+    if (names.includes("customFieldMapJson") && typeof customFieldMapJson !== "undefined") return customFieldMapJson;
+    if (names.includes("createdPhotoMapJson") && typeof createdPhotoMapJson !== "undefined") return createdPhotoMapJson;
+    if (names.includes("env") && typeof env !== "undefined") return env;
+    if (names.includes("domain") && typeof domain !== "undefined") return domain;
+
+    return undefined;
+  }
+
+  function debugScopesSnapshot() {
+    function preview(obj) {
+      if (!obj || typeof obj !== "object") return [];
+      return Object.keys(obj).slice(0, 25);
+    }
+
+    return {
+      dataKeys: preview(typeof data !== "undefined" ? data : undefined),
+      propertiesKeys: preview(typeof properties !== "undefined" ? properties : undefined),
+      contextKeys: preview(typeof context !== "undefined" ? context : undefined),
+      globalKeys: preview(typeof globalThis !== "undefined" ? globalThis : undefined),
+    };
   }
 
   function buildReturn(extra = {}) {
@@ -105,16 +148,16 @@
   }
 
   try {
-    const envInputRaw = String(readInput("env") || "version-test").trim().toLowerCase();
+    const envInputRaw = String(readInput("env", ["environment", "app_env"]) || "version-test").trim().toLowerCase();
     const envInput = envInputRaw.replace(/^version-/, "");
     const ENVIRONMENT = envInput === "live" || envInput === "production" || envInput === "prod" ? "live" : "version-test";
-    const APP_DOMAIN = String(readInput("domain") || "https://gaiasphere.io").trim().replace(/\/+$/, "");
-    const BUBBLE_API_TOKEN = String(readInput("token") || "").trim();
+    const APP_DOMAIN = String(readInput("domain", ["app_domain", "base_domain"]) || "https://gaiasphere.io").trim().replace(/\/+$/, "");
+    const BUBBLE_API_TOKEN = String(readInput("token", ["apiToken", "api_token", "bubbleToken", "bubble_api_token", "BUBBLE_API_TOKEN"]) || "").trim();
 
-    const PHOTO_TYPE = String(readInput("photoType") || "Photos").trim();
-    const PHOTO_FIELD_CUSTOMFIELD = String(readInput("photoFieldCustomField") || "CustomField").trim();
-    const PHOTO_FIELD_URLS = String(readInput("photoFieldUrls") || "Urls").trim();
-    const PHOTO_FIELD_SIZE = String(readInput("photoFieldSize") || "Size").trim();
+    const PHOTO_TYPE = String(readInput("photoType", ["photo_type"]) || "Photos").trim();
+    const PHOTO_FIELD_CUSTOMFIELD = String(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField").trim();
+    const PHOTO_FIELD_URLS = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls").trim();
+    const PHOTO_FIELD_SIZE = String(readInput("photoFieldSize", ["photo_field_size"]) || "Size").trim();
 
     const BUBBLE_BASE_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/api/1.1` : `${APP_DOMAIN}/api/1.1`;
     const BUBBLE_FILEUPLOAD_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/fileupload` : `${APP_DOMAIN}/fileupload`;
@@ -127,12 +170,13 @@
     pushLog(`[config] photoType=${PHOTO_TYPE} fields={${PHOTO_FIELD_CUSTOMFIELD}, ${PHOTO_FIELD_URLS}, ${PHOTO_FIELD_SIZE}}`);
 
     if (!BUBBLE_API_TOKEN) {
-      pushError("token boş", "Key/value içinde token olduğundan emin ol. (data/properties/global scope kontrol edildi)");
+      const snap = debugScopesSnapshot();
+      pushError("token boş", `token bulunamadı. dataKeys=${snap.dataKeys.join(",")} | propertiesKeys=${snap.propertiesKeys.join(",")} | contextKeys=${snap.contextKeys.join(",")}`);
       return buildReturn({ stoppedAt: "config.token" });
     }
 
-    const CUSTOM_FIELD_MAP = toObject(readInput("customFieldMapJson"), "customFieldMapJson");
-    const CREATED_PHOTO_MAP = toObject(readInput("createdPhotoMapJson"), "createdPhotoMapJson");
+    const CUSTOM_FIELD_MAP = toObject(readInput("customFieldMapJson", ["customFieldMap", "custom_field_map_json"]), "customFieldMapJson");
+    const CREATED_PHOTO_MAP = toObject(readInput("createdPhotoMapJson", ["createdPhotoMap", "created_photo_map_json"]), "createdPhotoMapJson");
     pushLog(`[config] customFieldMap keys=${Object.keys(CUSTOM_FIELD_MAP).length}`);
     pushLog(`[config] createdPhotoMap keys=${Object.keys(CREATED_PHOTO_MAP).length}`);
 
@@ -226,7 +270,7 @@
       return response?.id || response?.response?.id || response?.response?.result?.id || photoId;
     }
 
-    const output4Raw = readInput("output4");
+    const output4Raw = readInput("output4", ["photopayload", "photoPayload", "payload", "output"]);
     if (output4Raw === undefined || output4Raw === null || typeof output4Raw !== "string" || !String(output4Raw).trim()) {
       pushError("output4 yok/boş", "string JSON bekleniyor");
       return buildReturn({ stoppedAt: "input.output4" });

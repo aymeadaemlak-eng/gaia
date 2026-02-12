@@ -15,6 +15,7 @@ Bu doküman `bubble-backend-photo-workflow.js` için Bubble tarafında hangi key
 Aşağıdaki key'leri Bubble'da gönder:
 
 - `output4` (text)
+  - Not: `photopayload` key adı da otomatik desteklenir.
 - `token` (text)
 
 ### `output4` örnek JSON
@@ -98,7 +99,7 @@ Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 
 ## 7) Sık hata nedenleri
 - `token boş` görürsen:
-  - key adı tam `token` olmalı (boşluk/harf hatası olmasın)
+  - key adı tercihen `token` olmalı (alternatif destek: `apiToken`, `api_token`, `bubbleToken`, `bubble_api_token`)
   - value gerçekten text olmalı (dynamic expression boş dönmüyor olmalı)
   - script hem `data.token` hem alternatif scope'ları (`properties/global`) okumayı dener.
 - `customFieldMapJson` içinde `customFieldName` yok -> item bazında hata verir.
