@@ -442,5 +442,5 @@
     pushLog(`[stack] ${error?.stack || ""}`);
     return buildReturn({ stoppedAt: "fatal.catch" });
   }
-})();const lines = text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
-    
+})();
+
