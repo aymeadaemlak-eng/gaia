@@ -2498,6 +2498,90 @@
       });
     }
 
+    function isCompressibleImageType(contentType) {
+      const type = String(contentType || "").toLowerCase();
+      return ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(type);
+    }
+
+    function loadImageBitmapOrElement(file) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          if (typeof createImageBitmap === "function") {
+            try {
+              const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+              resolve({ image: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close?.() });
+              return;
+            } catch (_) {
+              const bmp = await createImageBitmap(file);
+              resolve({ image: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close?.() });
+              return;
+            }
+          }
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve({ image: img, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height, close: () => {} });
+          };
+          img.onerror = (err) => {
+            URL.revokeObjectURL(url);
+            reject(err || new Error("image load failed"));
+          };
+          img.src = url;
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob || null), type, quality);
+      });
+    }
+
+    async function maybeCompressImageFile(file) {
+      if (!file || !isCompressibleImageType(file.type)) return file;
+      if (file.size < 400 * 1024) return file;
+
+      const loaded = await loadImageBitmapOrElement(file);
+      const originalWidth = loaded.width || 0;
+      const originalHeight = loaded.height || 0;
+      if (originalWidth <= 1200 && originalHeight <= 1200) {
+        loaded.close?.();
+        return file;
+      }
+
+      const maxWidth = 1800;
+      const maxHeight = 1800;
+      const scale = Math.min(1, maxWidth / originalWidth, maxHeight / originalHeight);
+      const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+      const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext("2d", { alpha: file.type === "image/png" });
+      if (!ctx) {
+        loaded.close?.();
+        return file;
+      }
+      ctx.drawImage(loaded.image, 0, 0, targetWidth, targetHeight);
+      loaded.close?.();
+
+      const type = String(file.type || "").toLowerCase();
+      const outputType = type === "image/jpg" ? "image/jpeg" : type;
+      const quality = outputType === "image/jpeg" || outputType === "image/webp" ? 0.82 : undefined;
+      const compressedBlob = await canvasToBlob(canvas, outputType, quality);
+      if (!compressedBlob || !compressedBlob.size) return file;
+      if (compressedBlob.size >= file.size) return file;
+
+      return new File([compressedBlob], file.name, {
+        type: outputType,
+        lastModified: file.lastModified || Date.now()
+      });
+    }
+
     function isLikelyBase64(value) {
       if (typeof value !== "string") return false;
       if (value.length < 60) return false;
@@ -4032,21 +4116,29 @@
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
                 continue;
               }
-              const shouldPreview = field.type === "image" || file.type.startsWith("image/");
+
+              let processedFile = file;
+              try {
+                processedFile = await maybeCompressImageFile(file);
+              } catch (error) {
+                console.warn("image compression skipped", error);
+              }
+
+              const shouldPreview = field.type === "image" || processedFile.type.startsWith("image/");
               let base64Data = "";
               try {
-                base64Data = stripDataUrlPrefix(await readFileAsDataUrl(file));
+                base64Data = stripDataUrlPrefix(await readFileAsDataUrl(processedFile));
               } catch (error) {
                 console.warn("base64 read failed", error);
               }
               accepted.push({
-                raw: file,
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: file.lastModified,
+                raw: processedFile,
+                name: processedFile.name || file.name,
+                size: processedFile.size,
+                type: processedFile.type || file.type,
+                lastModified: processedFile.lastModified || file.lastModified,
                 base64: base64Data,
-                preview: shouldPreview ? URL.createObjectURL(file) : ""
+                preview: shouldPreview ? URL.createObjectURL(processedFile) : ""
               });
             }
 
