@@ -35,6 +35,7 @@
           { id: "1770577890579x349136294770973501", name: "İhtar Dilekçesi Hazırla" }
         ]
       },
+      start: false,
       VERSION: true
     };
   </script>
@@ -3516,7 +3517,21 @@ function renderSubmitOutputs(payload) {
       isFormDirty = computeDirtyState();
     }
 
-    function readStartParamIsTrue() {
+    function readStartSignalIsTrue() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const directValue =
+        inputs.start
+        ?? inputs.START
+        ?? inputs.startParam
+        ?? inputs.start_flag
+        ?? inputs.startFlag;
+
+      if (directValue !== undefined && directValue !== null) {
+        if (typeof directValue === "boolean") return directValue;
+        if (typeof directValue === "number") return directValue === 1;
+        return String(directValue).trim().toLowerCase() === "true";
+      }
+
       try {
         const value = new URLSearchParams(window.location.search).get("start");
         return String(value || "").toLowerCase() === "true";
@@ -3637,7 +3652,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function evaluateStartTransition() {
-      const isStartTrue = readStartParamIsTrue();
+      const isStartTrue = readStartSignalIsTrue();
       if (lastStartParamWasTrue && !isStartTrue) {
         maybeRunAutosaveOnStartClose();
       }
@@ -3645,7 +3660,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function initAutosaveStartWatcher() {
-      lastStartParamWasTrue = readStartParamIsTrue();
+      lastStartParamWasTrue = readStartSignalIsTrue();
 
       if (window.history && typeof window.history.pushState === "function") {
         const originalPushState = window.history.pushState.bind(window.history);
