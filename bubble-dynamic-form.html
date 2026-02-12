@@ -2207,13 +2207,13 @@ function renderSubmitOutputs(payload) {
       console.info("submitOutputs rendered", safePayload);
     }
 
-    function buildSubmitOutputsPayload() {
+    function buildSubmitOutputsPayload({ autosave = false } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = hasBubbleData ? "Process" : "Create";
+      const actionType = autosave ? "Create" : (hasBubbleData ? "Process" : "Create");
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -3512,8 +3512,8 @@ function renderSubmitOutputs(payload) {
     }
 
     function setFieldValue(key, value, field, displayValue) {
-      isFormDirty = true;
       setHumanValue(key, value, field, displayValue);
+      isFormDirty = computeDirtyState();
     }
 
     function readStartParamIsTrue() {
@@ -3531,6 +3531,24 @@ function renderSubmitOutputs(payload) {
         (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
         (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit)
       );
+    }
+
+    function computeDirtyState() {
+      if (!state.config) return false;
+      return (
+        buildKeyValueListFromSources().length > 0
+        || buildAddedCustomFields().length > 0
+        || buildDeletedFields().length > 0
+        || buildModifiedFields().length > 0
+      );
+    }
+
+    function handleBeforeUnload(event) {
+      if (!isFormDirty) return undefined;
+      const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
+      event.preventDefault();
+      event.returnValue = warningMessage;
+      return warningMessage;
     }
 
     function runSubmitFlow({ autosave = false } = {}) {
@@ -3556,7 +3574,7 @@ function renderSubmitOutputs(payload) {
       }
 
       const exportPayload = buildExportJson();
-      const submitOutputsPayload = buildSubmitOutputsPayload();
+      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
       console.info("submitOutputs payload", submitOutputsPayload);
       console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
@@ -3649,6 +3667,7 @@ function renderSubmitOutputs(payload) {
 
       window.addEventListener("popstate", evaluateStartTransition);
       window.addEventListener("hashchange", evaluateStartTransition);
+      window.addEventListener("beforeunload", handleBeforeUnload);
       setInterval(evaluateStartTransition, 300);
     }
 
@@ -5066,6 +5085,7 @@ function renderSubmitOutputs(payload) {
         }
         emit("debug:human-json", payload);
         loadJsonSafeToForm("human", payload);
+        isFormDirty = computeDirtyState();
         updateActionBarUi();
         openExportModal("human");
       });
