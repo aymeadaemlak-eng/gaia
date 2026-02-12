@@ -1499,16 +1499,22 @@
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
 
     function hasExistingBubbleData() {
-      const candidate = window.BUBBLE_INPUTS?.BUBBLE_DATA_JSON ?? MANUAL_DATA_JSON;
-      if (!candidate) return false;
+      const inputs = window.BUBBLE_INPUTS || {};
+      const hasExplicitBubbleData = Object.prototype.hasOwnProperty.call(inputs, "BUBBLE_DATA_JSON");
+      const candidate = hasExplicitBubbleData ? inputs.BUBBLE_DATA_JSON : MANUAL_DATA_JSON;
+      if (candidate === null || candidate === undefined) return false;
       if (typeof candidate === "string") {
         const trimmed = candidate.trim();
         if (!trimmed) return false;
+        if (["null", "undefined", "{}", "[]"].includes(trimmed.toLowerCase())) return false;
         try {
           const parsed = JSON.parse(trimmed);
-          return parsed && typeof parsed === "object" && Object.keys(parsed).length > 0;
+          if (parsed === null || parsed === undefined) return false;
+          if (Array.isArray(parsed)) return parsed.length > 0;
+          if (typeof parsed === "object") return Object.keys(parsed).length > 0;
+          return Boolean(parsed);
         } catch (error) {
-          return true;
+          return false;
         }
       }
       if (Array.isArray(candidate)) return candidate.length > 0;
