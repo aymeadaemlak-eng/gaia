@@ -89,7 +89,7 @@ Varsayılanlar:
 - Type: `Photos`
 - Field(custom field ref): `CustomField`
 - Field(url list): `urls`
-- Field(size): `Size`
+- Field(size): `size`
 
 Bunlar farklıysa şu key'lerle override et:
 - `photoType`

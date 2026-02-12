@@ -309,7 +309,7 @@
     const low = n.toLowerCase();
     if (low === "urls") return "urls";
     if (low === "customfield") return "CustomField";
-    if (low === "size") return "Size";
+    if (low === "size") return "size";
     return n;
   }
 
@@ -416,7 +416,7 @@
     const PHOTO_TYPE = String(readInput("photoType", ["photo_type"]) || "Photos").trim();
     const PHOTO_FIELD_CUSTOMFIELD_RAW = String(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField").trim();
     const PHOTO_FIELD_URLS_RAW = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "urls").trim();
-    const PHOTO_FIELD_SIZE_RAW = String(readInput("photoFieldSize", ["photo_field_size"]) || "Size").trim();
+    const PHOTO_FIELD_SIZE_RAW = String(readInput("photoFieldSize", ["photo_field_size"]) || "size").trim();
 
     const PHOTO_FIELD_CUSTOMFIELD = normalizeFieldName(PHOTO_FIELD_CUSTOMFIELD_RAW);
     const PHOTO_FIELD_URLS = normalizeFieldName(PHOTO_FIELD_URLS_RAW);
