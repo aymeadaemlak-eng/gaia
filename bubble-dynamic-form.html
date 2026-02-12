@@ -2201,8 +2201,8 @@ function renderSubmitOutputs(payload) {
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
-      const hasObjectJson = Boolean(baseOutput4 && String(baseOutput4).trim());
-      const actionType = hasObjectJson ? "Process" : "Create";
+      const hasBubbleData = hasExistingBubbleData();
+      const actionType = hasBubbleData ? "Process" : "Create";
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
