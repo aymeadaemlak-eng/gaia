@@ -6,84 +6,21 @@
   const updatedPhotoIds = [];
   const uploadedUrlsAll = [];
 
+  function maskValue(value) {
+    const s = String(value || "").trim();
+    if (!s) return "<empty>";
+    if (s.length <= 8) return `${s.slice(0, 2)}***`;
+    return `${s.slice(0, 4)}...${s.slice(-4)}`;
+  }
+
   function pushLog(message) {
-    logs.push(message);
+    logs.push(String(message));
   }
 
   function pushError(message, extra) {
     const line = extra ? `${message} :: ${extra}` : message;
     errors.push(line);
     logs.push(`[error] ${line}`);
-  }
-
-  function safeMaskToken(token) {
-    if (!token) return "<empty>";
-    if (token.length <= 8) return `${token.slice(0, 2)}***`;
-    return `${token.slice(0, 4)}...${token.slice(-4)}`;
-  }
-
-  function uniqueStrings(list) {
-    const output = [];
-    const seen = new Set();
-    for (const item of list || []) {
-      if (!item) continue;
-      const value = String(item);
-      if (!seen.has(value)) {
-        seen.add(value);
-        output.push(value);
-      }
-    }
-    return output;
-  }
-
-  function stripDataUrlPrefix(base64) {
-    if (!base64) return "";
-    const value = String(base64);
-    const marker = "base64,";
-    const idx = value.indexOf(marker);
-    return idx >= 0 ? value.slice(idx + marker.length) : value;
-  }
-
-  function computeFinalUrls({ keptUrls, removedUrls, uploadedUrls }) {
-    const kept = uniqueStrings(keptUrls || []);
-    const removed = new Set(uniqueStrings(removedUrls || []));
-    const cleanedKept = kept.filter((url) => !removed.has(url));
-    return uniqueStrings([...cleanedKept, ...(uploadedUrls || [])]);
-  }
-
-  function toObject(value, label) {
-    if (!value) return {};
-    if (typeof value === "object") return value;
-    try {
-      const parsed = JSON.parse(String(value));
-      if (parsed && typeof parsed === "object") return parsed;
-      pushError(`${label} object değil`, String(value).slice(0, 200));
-      return {};
-    } catch (error) {
-      pushError(`${label} parse edilemedi`, error?.message || String(error));
-      return {};
-    }
-  }
-
-  function getContainerValue(container, key) {
-    if (!container || typeof container !== "object") return undefined;
-    if (container[key] !== undefined && container[key] !== null) return unwrapListWrapper(container[key]);
-
-    const target = String(key).trim().toLowerCase();
-    const keys = Object.keys(container);
-    const foundKey = keys.find((k) => String(k).trim().toLowerCase() === target);
-    if (foundKey) return unwrapListWrapper(container[foundKey]);
-
-    return undefined;
-  }
-
-  function firstNonEmpty(...values) {
-    for (const value of values) {
-      if (value === undefined || value === null) continue;
-      if (typeof value === "string" && !value.trim()) continue;
-      return value;
-    }
-    return undefined;
   }
 
   function safeJsonParse(value) {
@@ -95,16 +32,25 @@
     }
   }
 
+  function getContainerValue(container, key) {
+    if (!container || typeof container !== "object") return undefined;
+    if (container[key] !== undefined && container[key] !== null) return container[key];
+
+    const target = String(key).trim().toLowerCase();
+    const keys = Object.keys(container);
+    const foundKey = keys.find((k) => String(k).trim().toLowerCase() === target);
+    if (foundKey) return container[foundKey];
+
+    return undefined;
+  }
+
   function unwrapListWrapper(value) {
     if (value === undefined || value === null) return value;
 
     if (typeof value === "object") {
       const q = getContainerValue(value, "query");
       const qData = getContainerValue(q, "data");
-      if (Array.isArray(qData)) {
-        if (qData.length === 1) return qData[0];
-        return qData;
-      }
+      if (Array.isArray(qData)) return qData.length === 1 ? qData[0] : qData;
       return value;
     }
 
@@ -113,14 +59,20 @@
       if (parsed && typeof parsed === "object") {
         const q = getContainerValue(parsed, "query");
         const qData = getContainerValue(q, "data");
-        if (Array.isArray(qData)) {
-          if (qData.length === 1) return qData[0];
-          return qData;
-        }
+        if (Array.isArray(qData)) return qData.length === 1 ? qData[0] : qData;
       }
     }
 
     return value;
+  }
+
+  function firstNonEmpty(...values) {
+    for (const value of values) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      return value;
+    }
+    return undefined;
   }
 
   function normalizeMapFromEntries(entries) {
@@ -139,13 +91,11 @@
     if (raw === undefined || raw === null) return {};
 
     if (typeof raw === "object") {
-      // Bubble ListWrapper support: { _class: "ListWrapper", query: { data: [...] } }
-      const wrapperData = getContainerValue(getContainerValue(raw, "query"), "data");
-      if (Array.isArray(wrapperData)) {
-        if (wrapperData.length > 0 && typeof wrapperData[0] === "object") return normalizeMapFromEntries(wrapperData);
-        return { __list: wrapperData };
+      const qData = getContainerValue(getContainerValue(raw, "query"), "data");
+      if (Array.isArray(qData)) {
+        if (qData.length > 0 && typeof qData[0] === "object") return normalizeMapFromEntries(qData);
+        return { __list: qData };
       }
-
       if (Array.isArray(raw)) return normalizeMapFromEntries(raw);
       return raw;
     }
@@ -153,14 +103,12 @@
     const text = String(raw).trim();
     if (!text) return {};
 
-    // 1) JSON object / array
     const parsed = safeJsonParse(text);
     if (parsed && typeof parsed === "object") {
       if (Array.isArray(parsed)) return normalizeMapFromEntries(parsed);
       return parsed;
     }
 
-    // 2) newline format: key=value or key: value
     const out = {};
     const lines = text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
     for (const line of lines) {
@@ -175,32 +123,19 @@
     return out;
   }
 
-  function toolboxKeyValuesObject() {
-    function asList(value) {
-      if (value === undefined || value === null) return [];
-      if (Array.isArray(value)) return value;
-      if (typeof value === "object") {
-        const q = getContainerValue(value, "query");
-        const qData = getContainerValue(q, "data");
-        if (Array.isArray(qData)) return qData;
-      }
-
-      const text = String(value || "").trim();
-      if (!text) return [];
-      const parsed = safeJsonParse(text);
+  function listFromAny(value) {
+    const unwrapped = unwrapListWrapper(value);
+    if (Array.isArray(unwrapped)) return unwrapped;
+    if (unwrapped === undefined || unwrapped === null) return [];
+    if (typeof unwrapped === "string") {
+      const parsed = safeJsonParse(unwrapped);
       if (Array.isArray(parsed)) return parsed;
-      if (parsed && typeof parsed === "object") {
-        const q2 = getContainerValue(parsed, "query");
-        const qData2 = getContainerValue(q2, "data");
-        if (Array.isArray(qData2)) return qData2;
-      }
-
-      return text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
     }
+    return [unwrapped];
+  }
 
+  function toolboxKeyValuesObject() {
     const props = typeof properties !== "undefined" ? properties : undefined;
-
-    // 1) Direct key-values object from Toolbox
     const candidates = [
       getContainerValue(props, "keyvaluesobj"),
       getContainerValue(props, "keyvalues"),
@@ -214,13 +149,12 @@
       }
     }
 
-    // 2) Toolbox often sends keys and data as two list wrappers; zip them.
-    const keyList = asList(getContainerValue(props, "keys"));
-    const valueList = asList(getContainerValue(props, "data"));
+    const keyList = listFromAny(getContainerValue(props, "keys"));
+    const valueList = listFromAny(getContainerValue(props, "data"));
     if (keyList.length > 0 && valueList.length > 0) {
       const out = {};
-      const length = Math.min(keyList.length, valueList.length);
-      for (let i = 0; i < length; i += 1) {
+      const len = Math.min(keyList.length, valueList.length);
+      for (let i = 0; i < len; i += 1) {
         const k = String(keyList[i] ?? "").trim();
         if (!k) continue;
         out[k] = valueList[i];
@@ -231,31 +165,23 @@
     return {};
   }
 
-  function readInputFromToolboxDataHeuristic(key, aliases = []) {
+  function readInputFromDataHeuristic(key, aliases = []) {
     const names = [key, ...aliases].map((x) => String(x).toLowerCase());
     const props = typeof properties !== "undefined" ? properties : undefined;
-
-    function listFrom(v) {
-      const u = unwrapListWrapper(v);
-      if (Array.isArray(u)) return u;
-      if (u === undefined || u === null) return [];
-      return [u];
-    }
-
-    const rawData = getContainerValue(props, "data");
-    const values = listFrom(rawData);
+    const values = listFromAny(getContainerValue(props, "data"));
     if (values.length === 0) return undefined;
 
     const isEnvName = (v) => ["version-test", "test", "live", "production", "prod", "version-live"].includes(String(v || "").trim().toLowerCase());
     const isDomainLike = (v) => /^https?:\/\//i.test(String(v || "").trim());
-    const parseableOutput = (v) => parseOutput4Payload(v).payload;
     const isTokenLike = (v) => {
       const t = String(v || "").trim();
       return t.length >= 20 && !/[\s{}\[\]"]/.test(t);
     };
 
     if (names.includes("output4") || names.includes("photopayload") || names.includes("payload")) {
-      for (const v of values) if (parseableOutput(v)) return v;
+      for (const v of values) {
+        if (parseOutput4Payload(v).payload) return v;
+      }
     }
 
     if (names.includes("token") || names.includes("apitoken") || names.includes("api_token")) {
@@ -292,13 +218,12 @@
         getContainerValue(typeof context !== "undefined" ? context : undefined, name),
         getContainerValue(typeof globalThis !== "undefined" ? globalThis : undefined, name),
       );
-      if (value !== undefined) return value;
+      if (value !== undefined) return unwrapListWrapper(value);
     }
 
-    const toolboxHeuristic = readInputFromToolboxDataHeuristic(key, aliases);
-    if (toolboxHeuristic !== undefined) return toolboxHeuristic;
+    const heuristic = readInputFromDataHeuristic(key, aliases);
+    if (heuristic !== undefined) return unwrapListWrapper(heuristic);
 
-    // direct globals fallback
     if (names.includes("token") && typeof token !== "undefined") return token;
     if (names.includes("output4") && typeof output4 !== "undefined") return output4;
     if ((names.includes("output4") || names.includes("photopayload")) && typeof photopayload !== "undefined") return photopayload;
@@ -306,6 +231,7 @@
     if (names.includes("createdPhotoMapJson") && typeof createdPhotoMapJson !== "undefined") return createdPhotoMapJson;
     if (names.includes("env") && typeof env !== "undefined") return env;
     if (names.includes("domain") && typeof domain !== "undefined") return domain;
+    if (names.includes("sirket") && typeof sirket !== "undefined") return sirket;
 
     return undefined;
   }
@@ -313,26 +239,17 @@
   function parseOutput4Payload(raw) {
     if (raw === undefined || raw === null) return { payload: null, reason: "empty" };
 
-    // direct object payload: {version, items}
     if (typeof raw === "object" && !Array.isArray(raw)) {
       if (Array.isArray(raw.items)) return { payload: raw, reason: "object.items" };
-
-      // value container formats
       if (raw.value !== undefined) return parseOutput4Payload(raw.value);
       if (raw.payload !== undefined) return parseOutput4Payload(raw.payload);
       if (raw.photopayload !== undefined) return parseOutput4Payload(raw.photopayload);
       if (raw.output4 !== undefined) return parseOutput4Payload(raw.output4);
-
-      // Bubble list wrapper-like structure
       const q = raw.query;
-      if (q && Array.isArray(q.data) && q.data.length > 0) {
-        return parseOutput4Payload(q.data[0]);
-      }
-
+      if (q && Array.isArray(q.data) && q.data.length > 0) return parseOutput4Payload(q.data[0]);
       return { payload: null, reason: "object-unrecognized" };
     }
 
-    // arrays: try first non-empty
     if (Array.isArray(raw)) {
       for (const item of raw) {
         const parsed = parseOutput4Payload(item);
@@ -356,22 +273,28 @@
     }
   }
 
-  function debugScopesSnapshot() {
-    function preview(obj) {
-      if (!obj || typeof obj !== "object") return [];
-      return Object.keys(obj).slice(0, 25);
+  function uniqueStrings(list) {
+    const output = [];
+    const seen = new Set();
+    for (const item of list || []) {
+      if (!item) continue;
+      const value = String(item).trim();
+      if (!value) continue;
+      if (!seen.has(value)) {
+        seen.add(value);
+        output.push(value);
+      }
     }
-
-    const kvObj = toolboxKeyValuesObject();
-    return {
-      dataKeys: preview(typeof data !== "undefined" ? data : undefined),
-      propertiesKeys: preview(typeof properties !== "undefined" ? properties : undefined),
-      contextKeys: preview(typeof context !== "undefined" ? context : undefined),
-      globalKeys: preview(typeof globalThis !== "undefined" ? globalThis : undefined),
-      keyvaluesKeys: preview(kvObj),
-    };
+    return output;
   }
 
+  function stripDataUrlPrefix(base64) {
+    if (!base64) return "";
+    const value = String(base64);
+    const marker = "base64,";
+    const idx = value.indexOf(marker);
+    return idx >= 0 ? value.slice(idx + marker.length) : value;
+  }
 
   function normalizeBubbleUrl(u) {
     const s = String(u || "").trim().replace(/^"+|"+$/g, "");
@@ -383,31 +306,101 @@
   function normalizeFieldName(name) {
     const n = String(name || "").trim();
     if (!n) return n;
-    if (n.toLowerCase() === "urls") return "Urls";
-    if (n.toLowerCase() === "customfield") return "CustomField";
-    if (n.toLowerCase() === "size") return "Size";
+    const low = n.toLowerCase();
+    if (low === "urls") return "Urls";
+    if (low === "customfield") return "CustomField";
+    if (low === "size") return "Size";
     return n;
   }
 
-  function buildReturn(extra = {}) {
-    const photoIds = uniqueStrings([...updatedPhotoIds, ...createdPhotoIds]);
-    const elapsedMs = Date.now() - startedAt;
-    const hasError = errors.length > 0;
+  function toObject(value, label) {
+    if (!value) return {};
+    if (typeof value === "object") return value;
+    try {
+      const parsed = JSON.parse(String(value));
+      if (parsed && typeof parsed === "object") return parsed;
+      pushError(`${label} object değil`, String(value).slice(0, 200));
+      return {};
+    } catch (error) {
+      pushError(`${label} parse edilemedi`, error?.message || String(error));
+      return {};
+    }
+  }
+
+  function computeFinalUrls({ keptUrls, removedUrls, uploadedUrls }) {
+    const kept = uniqueStrings(keptUrls || []);
+    const removed = new Set(uniqueStrings(removedUrls || []));
+    const cleanedKept = kept.filter((url) => !removed.has(url));
+    return uniqueStrings([...cleanedKept, ...(uploadedUrls || [])]);
+  }
+
+  function buildOutputLog({ summary, config }) {
+    const lines = [];
+    lines.push("=== SUMMARY ===");
+    lines.push(`elapsedMs=${summary.elapsedMs}`);
+    lines.push(`itemsCount=${summary.itemsCount}`);
+    lines.push(`uploadedCount=${summary.uploadedCount}`);
+    lines.push(`createdCount=${summary.createdCount}`);
+    lines.push(`updatedCount=${summary.updatedCount}`);
+    lines.push(`errorCount=${summary.errorCount}`);
+    lines.push("");
+    lines.push("=== CONFIG ===");
+    lines.push(`env=${config.env}`);
+    lines.push(`domain=${config.domain}`);
+    lines.push(`baseUrl=${config.baseUrl}`);
+    lines.push(`fileuploadUrl=${config.fileuploadUrl}`);
+    lines.push(`photoType=${config.photoType}`);
+    lines.push(`fieldCustomFieldRaw=${config.fieldCustomFieldRaw} fieldCustomFieldFinal=${config.fieldCustomFieldFinal}`);
+    lines.push(`fieldUrlsRaw=${config.fieldUrlsRaw} fieldUrlsFinal=${config.fieldUrlsFinal}`);
+    lines.push(`fieldSizeRaw=${config.fieldSizeRaw} fieldSizeFinal=${config.fieldSizeFinal}`);
+    lines.push(`sirketMasked=${config.sirketMasked}`);
+    lines.push("");
+    lines.push("=== ITEM TRACE ===");
+    lines.push(...logs);
+    lines.push("");
+    lines.push("=== ERRORS ===");
+    lines.push(...(errors.length ? errors : ["<none>"]));
+
+    const all = lines.join("\n");
+    const MAX_CHARS = 16000;
+    if (all.length <= MAX_CHARS) return all;
+
+    const errorBlock = ["=== ERRORS ===", ...(errors.length ? errors : ["<none>"])].join("\n");
+    const errorKeep = errorBlock.slice(-5000);
+    const prefix = `=== SUMMARY ===\n${summary.elapsedMs ? `elapsedMs=${summary.elapsedMs}` : ""}\n[truncated logs]\n`;
+    const room = Math.max(1000, MAX_CHARS - prefix.length - errorKeep.length - 2);
+    const keptTrace = logs.join("\n").slice(-room);
+    return `${prefix}${keptTrace}\n\n${errorKeep}`;
+  }
+
+  let itemsCount = 0;
+  let configSnapshot = {
+    env: "",
+    domain: "",
+    baseUrl: "",
+    fileuploadUrl: "",
+    photoType: "",
+    fieldCustomFieldRaw: "",
+    fieldCustomFieldFinal: "",
+    fieldUrlsRaw: "",
+    fieldUrlsFinal: "",
+    fieldSizeRaw: "",
+    fieldSizeFinal: "",
+    sirketMasked: "",
+  };
+
+  function buildReturn() {
     const summary = {
+      elapsedMs: Date.now() - startedAt,
+      itemsCount,
+      uploadedCount: uploadedUrlsAll.length,
       createdCount: createdPhotoIds.length,
       updatedCount: updatedPhotoIds.length,
-      totalPhotoCount: photoIds.length,
-      uploadedUrlCount: uploadedUrlsAll.length,
       errorCount: errors.length,
-      elapsedMs,
-      hasError,
-      ...extra,
     };
 
-    const allLogText = logs.join("\n");
-
     return {
-      output1: allLogText,
+      output1: buildOutputLog({ summary, config: configSnapshot }),
       outputlist1: createdPhotoIds,
     };
   }
@@ -418,99 +411,136 @@
     const ENVIRONMENT = envInput === "live" || envInput === "production" || envInput === "prod" ? "live" : "version-test";
     const APP_DOMAIN = String(readInput("domain", ["app_domain", "base_domain"]) || "https://gaiasphere.io").trim().replace(/\/+$/, "");
     const BUBBLE_API_TOKEN = String(readInput("token", ["apiToken", "api_token", "bubbleToken", "bubble_api_token", "BUBBLE_API_TOKEN"]) || "").trim();
+    const SIRKET_ID = String(readInput("sirket", ["company", "companyId", "sirketId"]) || "").trim();
 
     const PHOTO_TYPE = String(readInput("photoType", ["photo_type"]) || "Photos").trim();
-    const PHOTO_FIELD_CUSTOMFIELD = normalizeFieldName(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField");
-    const PHOTO_FIELD_URLS = normalizeFieldName(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls");
-    const PHOTO_FIELD_SIZE = normalizeFieldName(readInput("photoFieldSize", ["photo_field_size"]) || "Size");
+    const PHOTO_FIELD_CUSTOMFIELD_RAW = String(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField").trim();
+    const PHOTO_FIELD_URLS_RAW = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls").trim();
+    const PHOTO_FIELD_SIZE_RAW = String(readInput("photoFieldSize", ["photo_field_size"]) || "Size").trim();
+
+    const PHOTO_FIELD_CUSTOMFIELD = normalizeFieldName(PHOTO_FIELD_CUSTOMFIELD_RAW);
+    const PHOTO_FIELD_URLS = normalizeFieldName(PHOTO_FIELD_URLS_RAW);
+    const PHOTO_FIELD_SIZE = normalizeFieldName(PHOTO_FIELD_SIZE_RAW);
 
     const BUBBLE_BASE_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/api/1.1` : `${APP_DOMAIN}/api/1.1`;
     const BUBBLE_FILEUPLOAD_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/fileupload` : `${APP_DOMAIN}/fileupload`;
 
+    configSnapshot = {
+      env: ENVIRONMENT,
+      domain: APP_DOMAIN,
+      baseUrl: BUBBLE_BASE_URL,
+      fileuploadUrl: BUBBLE_FILEUPLOAD_URL,
+      photoType: PHOTO_TYPE,
+      fieldCustomFieldRaw: PHOTO_FIELD_CUSTOMFIELD_RAW,
+      fieldCustomFieldFinal: PHOTO_FIELD_CUSTOMFIELD,
+      fieldUrlsRaw: PHOTO_FIELD_URLS_RAW,
+      fieldUrlsFinal: PHOTO_FIELD_URLS,
+      fieldSizeRaw: PHOTO_FIELD_SIZE_RAW,
+      fieldSizeFinal: PHOTO_FIELD_SIZE,
+      sirketMasked: maskValue(SIRKET_ID),
+    };
+
     pushLog(`[config] envRaw=${envInputRaw} envFinal=${ENVIRONMENT}`);
     pushLog(`[config] domain=${APP_DOMAIN}`);
-    pushLog(`[config] token=${safeMaskToken(BUBBLE_API_TOKEN)}`);
+    pushLog(`[config] token=${maskValue(BUBBLE_API_TOKEN)}`);
+    pushLog(`[config] sirket=${maskValue(SIRKET_ID)}`);
     pushLog(`[config] base=${BUBBLE_BASE_URL}`);
     pushLog(`[config] fileupload=${BUBBLE_FILEUPLOAD_URL}`);
-    pushLog(`[config] photoType=${PHOTO_TYPE} fields={${PHOTO_FIELD_CUSTOMFIELD}, ${PHOTO_FIELD_URLS}, ${PHOTO_FIELD_SIZE}}`);
+    pushLog(`[config] photoType=${PHOTO_TYPE}`);
+    pushLog(`[config] fields raw={${PHOTO_FIELD_CUSTOMFIELD_RAW},${PHOTO_FIELD_URLS_RAW},${PHOTO_FIELD_SIZE_RAW}} final={${PHOTO_FIELD_CUSTOMFIELD},${PHOTO_FIELD_URLS},${PHOTO_FIELD_SIZE}}`);
 
     if (!BUBBLE_API_TOKEN) {
-      const snap = debugScopesSnapshot();
-      pushError("token boş", `token bulunamadı. keyvaluesKeys=${snap.keyvaluesKeys.join(",")} | dataKeys=${snap.dataKeys.join(",")} | propertiesKeys=${snap.propertiesKeys.join(",")} | contextKeys=${snap.contextKeys.join(",")}`);
-      return buildReturn({ stoppedAt: "config.token" });
+      pushError("token boş", "Bubble API token zorunlu");
+      return buildReturn();
     }
 
     const CUSTOM_FIELD_MAP = toObject(readInput("customFieldMapJson", ["customFieldMap", "custom_field_map_json"]), "customFieldMapJson");
     const CREATED_PHOTO_MAP = toObject(readInput("createdPhotoMapJson", ["createdPhotoMap", "created_photo_map_json"]), "createdPhotoMapJson");
-    pushLog(`[config] customFieldMap keys=${Object.keys(CUSTOM_FIELD_MAP).length}`);
-    pushLog(`[config] createdPhotoMap keys=${Object.keys(CREATED_PHOTO_MAP).length}`);
 
     async function bubbleFetch(path, options = {}) {
       const url = `${BUBBLE_BASE_URL}${path}`;
       const headers = { Authorization: `Bearer ${BUBBLE_API_TOKEN}`, ...(options.headers || {}) };
-
-      pushLog(`[http] ${options.method || "GET"} ${url}`);
+      const t0 = Date.now();
       const response = await fetch(url, { ...options, headers });
       const text = await response.text();
-      pushLog(`[http] ${response.status} ${response.statusText} ${url} bodyLen=${text.length}`);
+      const dt = Date.now() - t0;
+      pushLog(`[http] ${options.method || "GET"} ${url} status=${response.status} durationMs=${dt} bodyLen=${text.length}`);
 
       let parsed = text;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        // text response
-      }
+      try { parsed = JSON.parse(text); } catch {}
 
-      if (!response.ok) {
-        throw new Error(`Bubble API ${response.status} ${response.statusText} ${url} :: ${text.slice(0, 500)}`);
-      }
-      return parsed;
+      if (!response.ok) throw new Error(`Bubble API ${response.status} ${response.statusText} ${url} :: ${text.slice(0, 500)}`);
+      return { data: parsed, status: response.status, text };
     }
 
     async function uploadBase64ToBubbleFileupload({ base64, filename, contentType, itemIndex, fileIndex }) {
-      pushLog(`[item ${itemIndex}] file ${fileIndex} base64Head=${String(base64 || "").slice(0, 80)}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} filename=${filename || "upload.bin"} contentType=${contentType || "application/octet-stream"}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} base64Len=${String(base64 || "").length}`);
+
       const cleanB64 = stripDataUrlPrefix(base64);
-      pushLog(`[item ${itemIndex}] file ${fileIndex} cleanB64Len=${String(cleanB64 || "").length}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} bytesCandidateLen=${cleanB64.length}`);
       if (!cleanB64) {
         pushLog(`[item ${itemIndex}] file ${fileIndex} base64 boş -> skip`);
         return "";
       }
 
-      let bytes;
+      let bytesLen = 0;
       try {
-        bytes = Buffer.from(cleanB64, "base64");
-      } catch (error) {
-        pushError(`[item ${itemIndex}] file ${fileIndex} base64 decode hata`, error?.message || String(error));
-        return "";
+        bytesLen = Buffer.from(cleanB64, "base64").length;
+      } catch {
+        bytesLen = 0;
       }
-      pushLog(`[item ${itemIndex}] file ${fileIndex} byteLen=${bytes.length}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} bytesLen=${bytesLen}`);
 
-      const blob = new Blob([bytes], { type: contentType || "application/octet-stream" });
-      const form = new FormData();
-      form.append("file", blob, filename || "upload.bin");
+      const params = new URLSearchParams({
+        api_token: BUBBLE_API_TOKEN,
+        private: "true",
+        attach_to: SIRKET_ID,
+      });
+      const uploadUrl = `${BUBBLE_FILEUPLOAD_URL}?${params.toString()}`;
+      const maskedUploadUrl = `${BUBBLE_FILEUPLOAD_URL}?api_token=${maskValue(BUBBLE_API_TOKEN)}&private=true&attach_to=${maskValue(SIRKET_ID)}`;
 
-      pushLog(`[item ${itemIndex}] file ${fileIndex} upload başlıyor filename=${filename || "upload.bin"} type=${contentType || "application/octet-stream"} byteLen=${bytes.length}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} upload-request url=${maskedUploadUrl} private=true attach_to=${maskValue(SIRKET_ID)}`);
 
-      const uploadUrl = `${BUBBLE_FILEUPLOAD_URL}?api_token=${encodeURIComponent(BUBBLE_API_TOKEN)}`;
+      const bodyPayload = {
+        name: filename || "upload.bin",
+        contents: cleanB64,
+      };
+
+      const t0 = Date.now();
       const response = await fetch(uploadUrl, {
         method: "POST",
-        body: form,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/plain",
+        },
+        body: JSON.stringify(bodyPayload),
       });
-
       const text = await response.text();
-      pushLog(`[item ${itemIndex}] file ${fileIndex} upload status=${response.status} bodyLen=${text.length}`);
-      pushLog(`[item ${itemIndex}] file ${fileIndex} upload bodyFirst=${text.slice(0, 300)}`);
+      const dt = Date.now() - t0;
+
+      pushLog(`[item ${itemIndex}] file ${fileIndex} upload-response status=${response.status} durationMs=${dt} bodyFirst=${text.slice(0, 300)}`);
 
       if (!response.ok) {
-        throw new Error(`Fileupload ${response.status} ${response.statusText} :: ${text.slice(0, 500)}`);
+        pushError(`[item ${itemIndex}] file ${fileIndex} upload http fail`, `${response.status} ${response.statusText}`);
+        return "";
       }
 
-      try {
-        const body = JSON.parse(text);
-        return normalizeBubbleUrl(body.url || body.file_url || body.fileUrl || body.response?.url || text);
-      } catch {
-        return normalizeBubbleUrl(text);
+      let candidate = text;
+      const parsed = safeJsonParse(text);
+      if (parsed && typeof parsed === "object") {
+        candidate = parsed.url || parsed.file_url || parsed.fileUrl || parsed.response?.url || text;
       }
+
+      const normalized = normalizeBubbleUrl(candidate);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} normalizedUrl=${normalized.slice(0, 200)}`);
+
+      if (!/^https?:\/\//i.test(normalized)) {
+        pushError(`[item ${itemIndex}] file ${fileIndex} unexpected upload response`, normalized.slice(0, 300));
+        return "";
+      }
+
+      return normalized;
     }
 
     function buildPhotoPayload(customFieldId, urls, sizeNumber) {
@@ -522,45 +552,49 @@
       };
     }
 
-    async function createPhoto(body) {
-      const response = await bubbleFetch(`/obj/${PHOTO_TYPE}`, {
+    async function createPhoto(body, itemIndex) {
+      const res = await bubbleFetch(`/obj/${PHOTO_TYPE}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      return response?.id || response?.response?.id || response?.response?.result?.id || null;
+      pushLog(`[item ${itemIndex}] create status=${res.status}`);
+      return res.data?.id || res.data?.response?.id || res.data?.response?.result?.id || null;
     }
 
-    async function updatePhoto(photoId, body) {
-      const response = await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, {
+    async function updatePhoto(photoId, body, itemIndex) {
+      const res = await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      return response?.id || response?.response?.id || response?.response?.result?.id || photoId;
+      pushLog(`[item ${itemIndex}] update status=${res.status}`);
+      return res.data?.id || res.data?.response?.id || res.data?.response?.result?.id || photoId;
     }
 
-    async function getPhoto(photoId) {
-      return await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, { method: "GET" });
+    async function getPhoto(photoId, itemIndex) {
+      const res = await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, { method: "GET" });
+      pushLog(`[item ${itemIndex}] verify-get status=${res.status}`);
+      return res.data;
     }
 
     const output4Raw = readInput("output4", ["photopayload", "photoPayload", "payload", "output"]);
     const output4Parsed = parseOutput4Payload(output4Raw);
     if (!output4Parsed.payload) {
       pushError("output4 yok/boş", `geçerli payload bulunamadı (${output4Parsed.reason}) | rawType=${typeof output4Raw} | first200=${String(output4Raw || "").slice(0, 200)}`);
-      return buildReturn({ stoppedAt: "input.output4" });
+      return buildReturn();
     }
 
     const payload = output4Parsed.payload;
-    pushLog(`[input] output4 parse mode=${output4Parsed.reason}`);
-
     const items = Array.isArray(payload?.items) ? payload.items : [];
+    itemsCount = items.length;
+    pushLog(`[input] output4 parse mode=${output4Parsed.reason}`);
     pushLog(`[input] items=${items.length}`);
 
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i] || {};
-      const customFieldName = (item?.customFieldName || "").trim();
-      pushLog(`\n[item ${i}] customFieldName="${customFieldName}"`);
+      const customFieldName = String(item?.customFieldName || "").trim();
+      pushLog(`[item ${i}] customFieldName=${customFieldName}`);
 
       if (!customFieldName) {
         pushError(`[item ${i}] customFieldName boş`, "item atlandı");
@@ -568,81 +602,87 @@
       }
 
       const customFieldId = CUSTOM_FIELD_MAP[customFieldName];
+      pushLog(`[item ${i}] customFieldId=${customFieldId || "<missing>"}`);
       if (!customFieldId) {
         pushError(`[item ${i}] customField map bulunamadı`, `customFieldName=${customFieldName}`);
         continue;
       }
-      pushLog(`[item ${i}] customFieldId=${customFieldId}`);
 
       const newFiles = Array.isArray(item?.newFiles) ? item.newFiles : [];
       const keptUrls = Array.isArray(item?.keptUrls) ? item.keptUrls : [];
       const removedUrls = Array.isArray(item?.removedUrls) ? item.removedUrls : [];
       pushLog(`[item ${i}] kept=${keptUrls.length} removed=${removedUrls.length} newFiles=${newFiles.length}`);
 
+      if (newFiles.length > 0 && !SIRKET_ID) {
+        pushError(`[item ${i}] sirket boş`, "newFiles var ama attach_to için sirket zorunlu; item atlandı");
+        continue;
+      }
+
       const uploadedUrls = [];
       for (let fileIdx = 0; fileIdx < newFiles.length; fileIdx += 1) {
         const file = newFiles[fileIdx] || {};
-        try {
-          const uploadedUrl = await uploadBase64ToBubbleFileupload({
-            base64: file.base64,
-            filename: file.filename,
-            contentType: file.contentType,
-            itemIndex: i,
-            fileIndex: fileIdx,
-          });
-          if (uploadedUrl) {
-            uploadedUrls.push(uploadedUrl);
-            uploadedUrlsAll.push(uploadedUrl);
-            pushLog(`[item ${i}] file ${fileIdx} uploadedUrl=${uploadedUrl}`);
-          }
-        } catch (error) {
-          pushError(`[item ${i}] file ${fileIdx} upload hatası`, error?.message || String(error));
+        const url = await uploadBase64ToBubbleFileupload({
+          base64: file.base64,
+          filename: file.filename,
+          contentType: file.contentType,
+          itemIndex: i,
+          fileIndex: fileIdx,
+        });
+        if (url) {
+          uploadedUrls.push(url);
+          uploadedUrlsAll.push(url);
         }
       }
 
       const finalUrls = computeFinalUrls({ keptUrls, removedUrls, uploadedUrls });
       const sizeNumber = finalUrls.length;
-      pushLog(`[item ${i}] finalUrls=${sizeNumber}`);
+      pushLog(`[item ${i}] finalUrlsCount=${finalUrls.length} sample=${finalUrls.slice(0, 2).join(" | ")}`);
 
       const body = buildPhotoPayload(customFieldId, finalUrls, sizeNumber);
-      const itemPhotoId = (item?.photoId || "").trim();
+      const itemPhotoId = String(item?.photoId || "").trim();
       const mappedPhotoId = String(CREATED_PHOTO_MAP[customFieldName] || "").trim();
       const targetPhotoId = itemPhotoId || mappedPhotoId;
 
       try {
         if (targetPhotoId) {
-          const updatedPhotoId = await updatePhoto(targetPhotoId, body);
-          if (updatedPhotoId) {
-            updatedPhotoIds.push(updatedPhotoId);
-            pushLog(`[item ${i}] updatedPhotoId=${updatedPhotoId}`);
-            const check = await getPhoto(updatedPhotoId);
-            const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
-            pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 200)}`);
-          } else {
+          const updatedPhotoId = await updatePhoto(targetPhotoId, body, i);
+          if (!updatedPhotoId) {
             pushError(`[item ${i}] update başarılı ama id dönmedi`, `target=${targetPhotoId}`);
+            continue;
           }
+          updatedPhotoIds.push(updatedPhotoId);
+          pushLog(`[item ${i}] updatedPhotoId=${updatedPhotoId}`);
+          const check = await getPhoto(updatedPhotoId, i);
+          const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
+          pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
+          const expected = JSON.stringify(finalUrls);
+          const actual = JSON.stringify(Array.isArray(urlsValue) ? urlsValue : []);
+          if (expected !== actual) pushError(`[item ${i}] write verification failed`, `expected=${expected.slice(0, 300)} actual=${actual.slice(0, 300)}`);
         } else {
-          const newPhotoId = await createPhoto(body);
-          if (newPhotoId) {
-            createdPhotoIds.push(newPhotoId);
-            pushLog(`[item ${i}] createdPhotoId=${newPhotoId}`);
-            const check = await getPhoto(newPhotoId);
-            const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
-            pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 200)}`);
-          } else {
+          const newPhotoId = await createPhoto(body, i);
+          if (!newPhotoId) {
             pushError(`[item ${i}] create başarılı ama id dönmedi`, JSON.stringify(body).slice(0, 300));
+            continue;
           }
+          createdPhotoIds.push(newPhotoId);
+          pushLog(`[item ${i}] createdPhotoId=${newPhotoId}`);
+          const check = await getPhoto(newPhotoId, i);
+          const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
+          pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
+          const expected = JSON.stringify(finalUrls);
+          const actual = JSON.stringify(Array.isArray(urlsValue) ? urlsValue : []);
+          if (expected !== actual) pushError(`[item ${i}] write verification failed`, `expected=${expected.slice(0, 300)} actual=${actual.slice(0, 300)}`);
         }
       } catch (error) {
         pushError(`[item ${i}] photo create/update hatası`, error?.message || String(error));
       }
     }
 
-    pushLog(`\n[done] created=${createdPhotoIds.length} updated=${updatedPhotoIds.length} uploaded=${uploadedUrlsAll.length} errors=${errors.length} elapsedMs=${Date.now() - startedAt}`);
+    pushLog(`[done] created=${createdPhotoIds.length} updated=${updatedPhotoIds.length} uploaded=${uploadedUrlsAll.length} errors=${errors.length}`);
     return buildReturn();
   } catch (error) {
     pushError("fatal", `${error?.message || error}`);
-    pushLog(`[stack] ${error?.stack || ""}`);
-    return buildReturn({ stoppedAt: "fatal.catch" });
+    pushLog(`[stack] ${(error?.stack || "").slice(0, 1000)}`);
+    return buildReturn();
   }
 })();

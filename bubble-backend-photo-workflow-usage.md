@@ -18,6 +18,7 @@ Aşağıdaki key'leri Bubble'da gönder:
   - Not: `photopayload` key adı da otomatik desteklenir.
 - `output4` string JSON olabileceği gibi, object olarak da gelebilir; script her iki formatı da parse eder.
 - `token` (text)
+- `sirket` (text, Bubble unique id; alias: `company`, `companyId`, `sirketId`)
 
 ## 2.1) Server Script (Toolbox) için önemli not
 Toolbox Server Script action'da key/value verileri şu formatlardan birinde gelebilir:
@@ -28,7 +29,7 @@ Toolbox Server Script action'da key/value verileri şu formatlardan birinde gele
 
 Bu script artık bu formatların hepsini otomatik parse eder.
 
-Not: File upload çağrısı Bubble `fileupload` endpoint’ine `?api_token=` query param ile yapılır ve upload response body (ilk 300 char) loglanır.
+Not: File upload çağrısı Bubble `fileupload` endpoint’ine `?api_token=` query param ile yapılır ve her upload için `private=true` + `attach_to=<sirket>` zorunlu eklenir. Upload response body (ilk 300 char) loglanır.
 
 Örnek key/value:
 - token = `...`
@@ -117,6 +118,11 @@ Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 ## 6.1) Yazım/doğrulama logları
 - Her upload sonrası response body ilk kısmı loglanır (`upload bodyFirst=...`).
 - Her create/update sonrası ilgili Photo tekrar GET edilip `verify Urls=...` logu yazılır.
+
+## 6.2) sirket (attach_to) kuralı
+- `newFiles` içinde dosya varsa `sirket` zorunludur.
+- `newFiles=[]` ise `sirket` boş olabilir.
+- Server `sirket` değerini sadece fileupload query param `attach_to` için kullanır (Photo objesine yazmaz).
 
 ## 7) Sık hata nedenleri
 - `token boş` görürsen:
