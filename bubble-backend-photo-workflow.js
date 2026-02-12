@@ -372,6 +372,23 @@
     };
   }
 
+
+  function normalizeBubbleUrl(u) {
+    const s = String(u || "").trim().replace(/^"+|"+$/g, "");
+    if (!s) return "";
+    if (s.startsWith("//")) return `https:${s}`;
+    return s;
+  }
+
+  function normalizeFieldName(name) {
+    const n = String(name || "").trim();
+    if (!n) return n;
+    if (n.toLowerCase() === "urls") return "Urls";
+    if (n.toLowerCase() === "customfield") return "CustomField";
+    if (n.toLowerCase() === "size") return "Size";
+    return n;
+  }
+
   function buildReturn(extra = {}) {
     const photoIds = uniqueStrings([...updatedPhotoIds, ...createdPhotoIds]);
     const elapsedMs = Date.now() - startedAt;
@@ -403,9 +420,9 @@
     const BUBBLE_API_TOKEN = String(readInput("token", ["apiToken", "api_token", "bubbleToken", "bubble_api_token", "BUBBLE_API_TOKEN"]) || "").trim();
 
     const PHOTO_TYPE = String(readInput("photoType", ["photo_type"]) || "Photos").trim();
-    const PHOTO_FIELD_CUSTOMFIELD = String(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField").trim();
-    const PHOTO_FIELD_URLS = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls").trim();
-    const PHOTO_FIELD_SIZE = String(readInput("photoFieldSize", ["photo_field_size"]) || "Size").trim();
+    const PHOTO_FIELD_CUSTOMFIELD = normalizeFieldName(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField");
+    const PHOTO_FIELD_URLS = normalizeFieldName(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls");
+    const PHOTO_FIELD_SIZE = normalizeFieldName(readInput("photoFieldSize", ["photo_field_size"]) || "Size");
 
     const BUBBLE_BASE_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/api/1.1` : `${APP_DOMAIN}/api/1.1`;
     const BUBBLE_FILEUPLOAD_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/fileupload` : `${APP_DOMAIN}/fileupload`;
@@ -451,7 +468,9 @@
     }
 
     async function uploadBase64ToBubbleFileupload({ base64, filename, contentType, itemIndex, fileIndex }) {
+      pushLog(`[item ${itemIndex}] file ${fileIndex} base64Head=${String(base64 || "").slice(0, 80)}`);
       const cleanB64 = stripDataUrlPrefix(base64);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} cleanB64Len=${String(cleanB64 || "").length}`);
       if (!cleanB64) {
         pushLog(`[item ${itemIndex}] file ${fileIndex} base64 boş -> skip`);
         return "";
@@ -464,6 +483,7 @@
         pushError(`[item ${itemIndex}] file ${fileIndex} base64 decode hata`, error?.message || String(error));
         return "";
       }
+      pushLog(`[item ${itemIndex}] file ${fileIndex} byteLen=${bytes.length}`);
 
       const blob = new Blob([bytes], { type: contentType || "application/octet-stream" });
       const form = new FormData();
@@ -471,14 +491,15 @@
 
       pushLog(`[item ${itemIndex}] file ${fileIndex} upload başlıyor filename=${filename || "upload.bin"} type=${contentType || "application/octet-stream"} byteLen=${bytes.length}`);
 
-      const response = await fetch(BUBBLE_FILEUPLOAD_URL, {
+      const uploadUrl = `${BUBBLE_FILEUPLOAD_URL}?api_token=${encodeURIComponent(BUBBLE_API_TOKEN)}`;
+      const response = await fetch(uploadUrl, {
         method: "POST",
-        headers: { Authorization: `Bearer ${BUBBLE_API_TOKEN}` },
         body: form,
       });
 
       const text = await response.text();
       pushLog(`[item ${itemIndex}] file ${fileIndex} upload status=${response.status} bodyLen=${text.length}`);
+      pushLog(`[item ${itemIndex}] file ${fileIndex} upload bodyFirst=${text.slice(0, 300)}`);
 
       if (!response.ok) {
         throw new Error(`Fileupload ${response.status} ${response.statusText} :: ${text.slice(0, 500)}`);
@@ -486,17 +507,18 @@
 
       try {
         const body = JSON.parse(text);
-        return body.url || body.file_url || body.fileUrl || body.response?.url || text;
+        return normalizeBubbleUrl(body.url || body.file_url || body.fileUrl || body.response?.url || text);
       } catch {
-        return text.trim().replace(/^"+|"+$/g, "");
+        return normalizeBubbleUrl(text);
       }
     }
 
     function buildPhotoPayload(customFieldId, urls, sizeNumber) {
+      const urlList = Array.isArray(urls) ? urls : (urls ? [String(urls)] : []);
       return {
         [PHOTO_FIELD_CUSTOMFIELD]: customFieldId,
-        [PHOTO_FIELD_URLS]: urls,
-        [PHOTO_FIELD_SIZE]: sizeNumber,
+        [PHOTO_FIELD_URLS]: urlList,
+        [PHOTO_FIELD_SIZE]: Number(sizeNumber) || urlList.length,
       };
     }
 
@@ -516,6 +538,10 @@
         body: JSON.stringify(body),
       });
       return response?.id || response?.response?.id || response?.response?.result?.id || photoId;
+    }
+
+    async function getPhoto(photoId) {
+      return await bubbleFetch(`/obj/${PHOTO_TYPE}/${photoId}`, { method: "GET" });
     }
 
     const output4Raw = readInput("output4", ["photopayload", "photoPayload", "payload", "output"]);
@@ -589,6 +615,9 @@
           if (updatedPhotoId) {
             updatedPhotoIds.push(updatedPhotoId);
             pushLog(`[item ${i}] updatedPhotoId=${updatedPhotoId}`);
+            const check = await getPhoto(updatedPhotoId);
+            const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
+            pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 200)}`);
           } else {
             pushError(`[item ${i}] update başarılı ama id dönmedi`, `target=${targetPhotoId}`);
           }
@@ -597,6 +626,9 @@
           if (newPhotoId) {
             createdPhotoIds.push(newPhotoId);
             pushLog(`[item ${i}] createdPhotoId=${newPhotoId}`);
+            const check = await getPhoto(newPhotoId);
+            const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
+            pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 200)}`);
           } else {
             pushError(`[item ${i}] create başarılı ama id dönmedi`, JSON.stringify(body).slice(0, 300));
           }

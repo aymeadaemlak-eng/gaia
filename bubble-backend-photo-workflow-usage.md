@@ -28,6 +28,8 @@ Toolbox Server Script action'da key/value verileri şu formatlardan birinde gele
 
 Bu script artık bu formatların hepsini otomatik parse eder.
 
+Not: File upload çağrısı Bubble `fileupload` endpoint’ine `?api_token=` query param ile yapılır ve upload response body (ilk 300 char) loglanır.
+
 Örnek key/value:
 - token = `...`
 - output4 = `...` (veya photopayload)
@@ -111,6 +113,10 @@ Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 - key: `customFieldMapJson` value: `{"Evrakları Yükle Toplu":"1763...x..."}`
 - key: `createdPhotoMapJson` value: `{"Evrakları Yükle Toplu":"1739...x..."}`
 - key: `output4` value: (yukarıdaki JSON string)
+
+## 6.1) Yazım/doğrulama logları
+- Her upload sonrası response body ilk kısmı loglanır (`upload bodyFirst=...`).
+- Her create/update sonrası ilgili Photo tekrar GET edilip `verify Urls=...` logu yazılır.
 
 ## 7) Sık hata nedenleri
 - `token boş` görürsen:
