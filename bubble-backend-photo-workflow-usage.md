@@ -24,6 +24,7 @@ Toolbox Server Script action'da key/value verileri şu formatlardan birinde gele
 - `properties.keyvaluesobj`
 - `properties.keyvalues`
 - `properties.keys` + `properties.data` (iki ayrı ListWrapper liste)
+- `properties.data` (tek listede değerler; script token/output4/env/domain için heuristik çıkarım yapar)
 
 Bu script artık bu formatların hepsini otomatik parse eder.
 

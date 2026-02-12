@@ -67,12 +67,12 @@
 
   function getContainerValue(container, key) {
     if (!container || typeof container !== "object") return undefined;
-    if (container[key] !== undefined && container[key] !== null) return container[key];
+    if (container[key] !== undefined && container[key] !== null) return unwrapListWrapper(container[key]);
 
-    const target = String(key).toLowerCase();
+    const target = String(key).trim().toLowerCase();
     const keys = Object.keys(container);
-    const foundKey = keys.find((k) => String(k).toLowerCase() === target);
-    if (foundKey) return container[foundKey];
+    const foundKey = keys.find((k) => String(k).trim().toLowerCase() === target);
+    if (foundKey) return unwrapListWrapper(container[foundKey]);
 
     return undefined;
   }
@@ -95,6 +95,34 @@
     }
   }
 
+  function unwrapListWrapper(value) {
+    if (value === undefined || value === null) return value;
+
+    if (typeof value === "object") {
+      const q = getContainerValue(value, "query");
+      const qData = getContainerValue(q, "data");
+      if (Array.isArray(qData)) {
+        if (qData.length === 1) return qData[0];
+        return qData;
+      }
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const parsed = safeJsonParse(value);
+      if (parsed && typeof parsed === "object") {
+        const q = getContainerValue(parsed, "query");
+        const qData = getContainerValue(q, "data");
+        if (Array.isArray(qData)) {
+          if (qData.length === 1) return qData[0];
+          return qData;
+        }
+      }
+    }
+
+    return value;
+  }
+
   function normalizeMapFromEntries(entries) {
     const out = {};
     for (const item of entries || []) {
@@ -102,7 +130,7 @@
       const key = firstNonEmpty(item.key, item.name, item.k, item.field, item.label);
       const value = firstNonEmpty(item.value, item.val, item.v, item.text, item.content);
       if (key === undefined) continue;
-      out[String(key).trim()] = value;
+      out[String(key).trim()] = unwrapListWrapper(value);
     }
     return out;
   }
@@ -203,6 +231,55 @@
     return {};
   }
 
+  function readInputFromToolboxDataHeuristic(key, aliases = []) {
+    const names = [key, ...aliases].map((x) => String(x).toLowerCase());
+    const props = typeof properties !== "undefined" ? properties : undefined;
+
+    function listFrom(v) {
+      const u = unwrapListWrapper(v);
+      if (Array.isArray(u)) return u;
+      if (u === undefined || u === null) return [];
+      return [u];
+    }
+
+    const rawData = getContainerValue(props, "data");
+    const values = listFrom(rawData);
+    if (values.length === 0) return undefined;
+
+    const isEnvName = (v) => ["version-test", "test", "live", "production", "prod", "version-live"].includes(String(v || "").trim().toLowerCase());
+    const isDomainLike = (v) => /^https?:\/\//i.test(String(v || "").trim());
+    const parseableOutput = (v) => parseOutput4Payload(v).payload;
+    const isTokenLike = (v) => {
+      const t = String(v || "").trim();
+      return t.length >= 20 && !/[\s{}\[\]"]/.test(t);
+    };
+
+    if (names.includes("output4") || names.includes("photopayload") || names.includes("payload")) {
+      for (const v of values) if (parseableOutput(v)) return v;
+    }
+
+    if (names.includes("token") || names.includes("apitoken") || names.includes("api_token")) {
+      for (const v of values) if (isTokenLike(v)) return String(v).trim();
+    }
+
+    if (names.includes("env") || names.includes("environment")) {
+      for (const v of values) if (isEnvName(v)) return String(v).trim();
+    }
+
+    if (names.includes("domain") || names.includes("app_domain")) {
+      for (const v of values) if (isDomainLike(v)) return String(v).trim();
+    }
+
+    if (names.includes("customfieldmapjson") || names.includes("createdphotomapjson")) {
+      for (const v of values) {
+        const parsed = safeJsonParse(String(v));
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && !Array.isArray(parsed.items)) return v;
+      }
+    }
+
+    return undefined;
+  }
+
   function readInput(key, aliases = []) {
     const names = [key, ...aliases];
     const kvObj = toolboxKeyValuesObject();
@@ -217,6 +294,9 @@
       );
       if (value !== undefined) return value;
     }
+
+    const toolboxHeuristic = readInputFromToolboxDataHeuristic(key, aliases);
+    if (toolboxHeuristic !== undefined) return toolboxHeuristic;
 
     // direct globals fallback
     if (names.includes("token") && typeof token !== "undefined") return token;
