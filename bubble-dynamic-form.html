@@ -1496,6 +1496,37 @@
     let actionOptions = [];
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
+    const DEFAULT_PROCESS_ACTION_LABEL = "Process";
+
+    function hasExistingBubbleData() {
+      const candidate = window.BUBBLE_INPUTS?.BUBBLE_DATA_JSON ?? MANUAL_DATA_JSON;
+      if (!candidate) return false;
+      if (typeof candidate === "string") {
+        const trimmed = candidate.trim();
+        if (!trimmed) return false;
+        try {
+          const parsed = JSON.parse(trimmed);
+          return parsed && typeof parsed === "object" && Object.keys(parsed).length > 0;
+        } catch (error) {
+          return true;
+        }
+      }
+      if (Array.isArray(candidate)) return candidate.length > 0;
+      if (typeof candidate === "object") return Object.keys(candidate).length > 0;
+      return Boolean(candidate);
+    }
+
+    function getDefaultActionLabel() {
+      return hasExistingBubbleData() ? DEFAULT_PROCESS_ACTION_LABEL : DEFAULT_CREATE_ACTION_LABEL;
+    }
+
+    function syncDefaultActionLabelFromData() {
+      if (selectedActionId) return;
+      const knownDefaults = ["", DEFAULT_CREATE_ACTION_LABEL, DEFAULT_PROCESS_ACTION_LABEL];
+      if (!knownDefaults.includes(String(selectedActionName || ""))) return;
+      selectedActionName = getDefaultActionLabel();
+    }
+
 
     function parseActionOptionsFromInput(rawValue) {
       if (!rawValue) return [];
@@ -1533,7 +1564,7 @@
       actionOptions = nextOptions;
       if (!actionOptions.some((opt) => opt.id === selectedActionId)) {
         selectedActionId = "";
-        selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
+        selectedActionName = getDefaultActionLabel();
       }
       renderActionOptions();
       updateActionBarUi();
@@ -1636,6 +1667,24 @@
       if (requiredPolicyInput) requiredPolicyInput.value = defaultSchema.requiredPolicy;
       if (showInlineHelpInput) showInlineHelpInput.checked = defaultSchema.showInlineHelp;
       if (autoFocusInvalidInput) autoFocusInvalidInput.checked = defaultSchema.autoFocusFirstInvalid;
+    }
+
+    function initLateIncomingDataSync() {
+      let lastDataFlag = hasExistingBubbleData() ? "1" : "0";
+      let lastOptionsJson = JSON.stringify(parseActionOptionsFromInput(getRawActionOptionsSource()));
+      setInterval(() => {
+        const nextDataFlag = hasExistingBubbleData() ? "1" : "0";
+        const nextOptionsJson = JSON.stringify(parseActionOptionsFromInput(getRawActionOptionsSource()));
+        if (nextDataFlag !== lastDataFlag) {
+          lastDataFlag = nextDataFlag;
+          syncDefaultActionLabelFromData();
+          updateActionBarUi();
+        }
+        if (nextOptionsJson !== lastOptionsJson) {
+          lastOptionsJson = nextOptionsJson;
+          syncActionOptions();
+        }
+      }, 700);
     }
 
     function renderFormFromInputs() {
@@ -2033,7 +2082,8 @@
 
     function updateActionBarUi() {
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
-      const safeSelectedName = String(selectedActionName || DEFAULT_CREATE_ACTION_LABEL).trim() || DEFAULT_CREATE_ACTION_LABEL;
+      syncDefaultActionLabelFromData();
+      const safeSelectedName = String(selectedActionName || getDefaultActionLabel()).trim() || getDefaultActionLabel();
       if (actionTriggerBtn) {
         actionTriggerBtn.disabled = false;
         actionTriggerBtn.textContent = safeSelectedName;
@@ -2080,7 +2130,7 @@
     function selectActionAndTrigger(option) {
       if (!option) return;
       selectedActionId = String(option.id || "").trim();
-      selectedActionName = String(option.name || DEFAULT_CREATE_ACTION_LABEL).trim() || DEFAULT_CREATE_ACTION_LABEL;
+      selectedActionName = String(option.name || getDefaultActionLabel()).trim() || getDefaultActionLabel();
       updateActionBarUi();
       closeActionMenu();
       triggerSelectedAction();
@@ -2097,7 +2147,7 @@
       if (!hasOptions) {
         closeActionMenu();
         selectedActionId = "";
-        selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
+        selectedActionName = getDefaultActionLabel();
         updateActionBarUi();
         return;
       }
@@ -2149,7 +2199,7 @@ function renderSubmitOutputs(payload) {
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasObjectJson = Boolean(baseOutput4 && String(baseOutput4).trim());
-      const actionType = hasObjectJson ? "Process" : "Create";
+      const actionType = (hasObjectJson || hasExistingBubbleData()) ? "Process" : "Create";
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -4738,7 +4788,7 @@ function renderSubmitOutputs(payload) {
       state.errors = {};
       taskStartTimestamp = null;
       selectedActionId = "";
-      selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
+      selectedActionName = getDefaultActionLabel();
       triggeredActionUniqueId = "";
       updateActionBarUi();
       if (columnJson) {
@@ -4791,7 +4841,7 @@ function renderSubmitOutputs(payload) {
           event.preventDefault();
           if (!actionOptions.length) {
             selectedActionId = "";
-            selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
+            selectedActionName = getDefaultActionLabel();
             triggerSelectedAction();
             return;
           }
@@ -5025,6 +5075,7 @@ function renderSubmitOutputs(payload) {
     }
     applyVersionVisibility();
     syncActionOptions();
+    initLateIncomingDataSync();
     if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
