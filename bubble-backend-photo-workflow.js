@@ -505,6 +505,8 @@
       const bodyPayload = {
         name: filename || "upload.bin",
         contents: cleanB64,
+        private: true,
+        attach_to: SIRKET_ID,
       };
 
       const t0 = Date.now();
