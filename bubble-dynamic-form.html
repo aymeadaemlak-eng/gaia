@@ -1283,7 +1283,7 @@
       <div id="formContainer">
         <div id="actionBar" class="action-bar">
           <div class="action-split" id="actionSplit">
-            <button id="actionTriggerBtn" type="button" class="action-trigger-btn" disabled>Aksiyon seç ▾</button>
+            <button id="actionTriggerBtn" type="button" class="action-trigger-btn">Create</button>
             <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
             <div id="actionMenu" class="action-menu"></div>
           </div>
@@ -1491,9 +1491,16 @@
     let initialSnapshot = null;
     const ACTION_OUTPUT_SPLITTER = "_-@SPLİTTER@-_";
     let selectedActionId = "";
-    let selectedActionName = "";
+    let selectedActionName = "Create";
     let triggeredActionUniqueId = "";
     let actionOptions = [];
+
+    const DEFAULT_CREATE_ACTION_LABEL = "Create";
+
+    function isCreateMode() {
+      const rawMode = state?.config?.mode || columnJson?.mode || INITIAL_INPUTS?.COLUMN_JSON?.mode || "";
+      return String(rawMode).trim().toLowerCase() === "create";
+    }
 
     function parseActionOptionsFromInput(rawValue) {
       if (!rawValue) return [];
@@ -1531,7 +1538,7 @@
       actionOptions = nextOptions;
       if (!actionOptions.some((opt) => opt.id === selectedActionId)) {
         selectedActionId = "";
-        selectedActionName = "";
+        selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
       }
       renderActionOptions();
       updateActionBarUi();
@@ -2031,16 +2038,17 @@
 
     function updateActionBarUi() {
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
-      const hasSelected = Boolean(selectedActionId);
+      const safeSelectedName = String(selectedActionName || DEFAULT_CREATE_ACTION_LABEL).trim() || DEFAULT_CREATE_ACTION_LABEL;
       if (actionTriggerBtn) {
-        actionTriggerBtn.disabled = !hasOptions;
-        actionTriggerBtn.textContent = hasSelected ? `${selectedActionName} ▾` : "Aksiyon seç ▾";
+        actionTriggerBtn.disabled = false;
+        actionTriggerBtn.textContent = safeSelectedName;
       }
       if (actionChevronBtn) {
         actionChevronBtn.disabled = !hasOptions;
+        actionChevronBtn.style.display = hasOptions ? "inline-flex" : "none";
       }
       if (actionEmptyMsg) {
-        actionEmptyMsg.style.display = hasOptions ? "none" : "inline";
+        actionEmptyMsg.style.display = "none";
       }
 
       const predictedActionName = getPredictedActionName();
@@ -2048,7 +2056,7 @@
         ? actionOptions.find((opt) => String(opt?.name || "").trim() === predictedActionName)
         : null;
       if (predictedActionBtn) {
-        if (!predictedActionName) {
+        if (!predictedActionName || !hasOptions) {
           predictedActionBtn.style.display = "none";
         } else {
           predictedActionBtn.style.display = "inline-flex";
@@ -2063,8 +2071,7 @@
     }
 
     function triggerSelectedAction() {
-      if (!selectedActionId) return;
-      triggeredActionUniqueId = selectedActionId;
+      triggeredActionUniqueId = selectedActionId || "";
       emit("onActionTrigger", {
         selectedActionId,
         selectedActionName,
@@ -2076,9 +2083,9 @@
     }
 
     function selectActionAndTrigger(option) {
-      if (!option || !option.id) return;
-      selectedActionId = String(option.id);
-      selectedActionName = String(option.name || "").trim() || selectedActionId;
+      if (!option) return;
+      selectedActionId = String(option.id || "").trim();
+      selectedActionName = String(option.name || DEFAULT_CREATE_ACTION_LABEL).trim() || DEFAULT_CREATE_ACTION_LABEL;
       updateActionBarUi();
       closeActionMenu();
       triggerSelectedAction();
@@ -2088,19 +2095,27 @@
       if (!actionMenu) return;
       actionMenu.innerHTML = "";
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
+      const optionsToRender = hasOptions
+        ? [{ id: "", name: DEFAULT_CREATE_ACTION_LABEL, description: "Aksiyonsuz oluşturma" }, ...actionOptions]
+        : [];
+
       if (!hasOptions) {
         closeActionMenu();
         selectedActionId = "";
-        selectedActionName = "";
+        selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
         updateActionBarUi();
         return;
       }
 
-      actionOptions.forEach((option) => {
+      optionsToRender.forEach((option) => {
         const item = document.createElement("button");
         item.type = "button";
         item.className = "action-menu-item";
-        item.textContent = String(option.name || option.id || "Aksiyon");
+        if (!option.id) {
+          item.textContent = `${option.name} (Aksiyonsuz oluşturma)`;
+        } else {
+          item.textContent = String(option.name || option.id || "Aksiyon");
+        }
         item.addEventListener("click", () => {
           selectActionAndTrigger(option);
         });
@@ -2138,7 +2153,9 @@ function renderSubmitOutputs(payload) {
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
-      const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}`;
+      const hasObjectJson = Boolean(baseOutput4 && String(baseOutput4).trim());
+      const actionType = isCreateMode() ? "Create" : (hasObjectJson ? "Process" : "Create");
+      const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
         output2: endTimestamp,
@@ -4726,7 +4743,7 @@ function renderSubmitOutputs(payload) {
       state.errors = {};
       taskStartTimestamp = null;
       selectedActionId = "";
-      selectedActionName = "";
+      selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
       triggeredActionUniqueId = "";
       updateActionBarUi();
       if (columnJson) {
@@ -4777,9 +4794,10 @@ function renderSubmitOutputs(payload) {
       if (actionTriggerBtn) {
         actionTriggerBtn.addEventListener("click", (event) => {
           event.preventDefault();
-          if (!actionOptions.length) return;
-          if (!selectedActionId) {
-            actionMenu.classList.toggle("open");
+          if (!actionOptions.length) {
+            selectedActionId = "";
+            selectedActionName = DEFAULT_CREATE_ACTION_LABEL;
+            triggerSelectedAction();
             return;
           }
           triggerSelectedAction();
