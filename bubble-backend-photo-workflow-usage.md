@@ -88,7 +88,7 @@ Eğer elinde düzenlenecek photo id'leri varsa iki yöntem var:
 Varsayılanlar:
 - Type: `Photos`
 - Field(custom field ref): `CustomField`
-- Field(url list): `Urls`
+- Field(url list): `urls`
 - Field(size): `Size`
 
 Bunlar farklıysa şu key'lerle override et:
@@ -117,7 +117,7 @@ Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 
 ## 6.1) Yazım/doğrulama logları
 - Her upload sonrası response body ilk kısmı loglanır (`upload bodyFirst=...`).
-- Her create/update sonrası ilgili Photo tekrar GET edilip `verify Urls=...` logu yazılır.
+- Her create/update sonrası ilgili Photo tekrar GET edilip `verify urls=...` logu yazılır.
 
 ## 6.2) sirket (attach_to) kuralı
 - `newFiles` içinde dosya varsa `sirket` zorunludur.

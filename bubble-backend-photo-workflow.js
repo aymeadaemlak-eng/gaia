@@ -307,7 +307,7 @@
     const n = String(name || "").trim();
     if (!n) return n;
     const low = n.toLowerCase();
-    if (low === "urls") return "Urls";
+    if (low === "urls") return "urls";
     if (low === "customfield") return "CustomField";
     if (low === "size") return "Size";
     return n;
@@ -415,7 +415,7 @@
 
     const PHOTO_TYPE = String(readInput("photoType", ["photo_type"]) || "Photos").trim();
     const PHOTO_FIELD_CUSTOMFIELD_RAW = String(readInput("photoFieldCustomField", ["photo_field_customfield"]) || "CustomField").trim();
-    const PHOTO_FIELD_URLS_RAW = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "Urls").trim();
+    const PHOTO_FIELD_URLS_RAW = String(readInput("photoFieldUrls", ["photo_field_urls"]) || "urls").trim();
     const PHOTO_FIELD_SIZE_RAW = String(readInput("photoFieldSize", ["photo_field_size"]) || "Size").trim();
 
     const PHOTO_FIELD_CUSTOMFIELD = normalizeFieldName(PHOTO_FIELD_CUSTOMFIELD_RAW);
@@ -654,7 +654,7 @@
           pushLog(`[item ${i}] updatedPhotoId=${updatedPhotoId}`);
           const check = await getPhoto(updatedPhotoId, i);
           const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
-          pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
+          pushLog(`[item ${i}] verify urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
           const expected = JSON.stringify(finalUrls);
           const actual = JSON.stringify(Array.isArray(urlsValue) ? urlsValue : []);
           if (expected !== actual) pushError(`[item ${i}] write verification failed`, `expected=${expected.slice(0, 300)} actual=${actual.slice(0, 300)}`);
@@ -668,7 +668,7 @@
           pushLog(`[item ${i}] createdPhotoId=${newPhotoId}`);
           const check = await getPhoto(newPhotoId, i);
           const urlsValue = check?.response?.[PHOTO_FIELD_URLS] ?? check?.[PHOTO_FIELD_URLS];
-          pushLog(`[item ${i}] verify Urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
+          pushLog(`[item ${i}] verify urls=${JSON.stringify(urlsValue).slice(0, 300)}`);
           const expected = JSON.stringify(finalUrls);
           const actual = JSON.stringify(Array.isArray(urlsValue) ? urlsValue : []);
           if (expected !== actual) pushError(`[item ${i}] write verification failed`, `expected=${expected.slice(0, 300)} actual=${actual.slice(0, 300)}`);
