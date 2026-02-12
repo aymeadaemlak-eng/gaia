@@ -29,6 +29,12 @@
         "Telefon": "0532 123 45 67",
         "E-posta": "ayse@example.com"
       },
+      actionoptions: {
+        options: [
+          { id: "1770577890579x349136294770973500", name: "DK Hesaba Taşı" },
+          { id: "1770577890579x349136294770973501", name: "İhtar Dilekçesi Hazırla" }
+        ]
+      },
       VERSION: true
     };
   </script>
@@ -847,6 +853,104 @@
       height: 22px;
     }
 
+
+#bdf-root .action-bar {
+      position: sticky;
+      top: 10px;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(4px);
+      margin-bottom: 10px;
+    }
+
+#bdf-root .action-split {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+#bdf-root .action-split button {
+      border-radius: 0;
+      border: none;
+    }
+
+#bdf-root .action-trigger-btn {
+      background: #f8fafc;
+      color: var(--text);
+      min-width: 150px;
+      text-align: left;
+    }
+
+#bdf-root .action-chevron-btn {
+      background: #e2e8f0;
+      color: #0f172a;
+      min-width: 40px;
+      padding: 8px 10px;
+    }
+
+#bdf-root .action-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 220px;
+      max-height: 240px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+      display: none;
+      padding: 4px;
+      z-index: 20;
+    }
+
+#bdf-root .action-menu.open {
+      display: grid;
+      gap: 2px;
+    }
+
+#bdf-root .action-menu-item {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+    }
+
+#bdf-root .action-menu-item:hover {
+      background: #f1f5f9;
+    }
+
+#bdf-root .predicted-action-btn {
+      background: rgba(37, 99, 235, 0.08);
+      color: #1d4ed8;
+      border: 1px dashed rgba(37, 99, 235, 0.25);
+      font-size: 0.78rem;
+      padding: 7px 10px;
+    }
+
+#bdf-root .predicted-action-btn:disabled {
+      opacity: 0.55;
+    }
+
+#bdf-root .action-empty-msg {
+      color: var(--warning);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
 #bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
@@ -1177,6 +1281,15 @@
 
     <section class="card">
       <div id="formContainer">
+        <div id="actionBar" class="action-bar">
+          <div class="action-split" id="actionSplit">
+            <button id="actionTriggerBtn" type="button" class="action-trigger-btn" disabled>Aksiyon seç ▾</button>
+            <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
+            <div id="actionMenu" class="action-menu"></div>
+          </div>
+          <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
+          <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
+        </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <form id="dynamicForm" class="grid"></form>
         <div class="inline-row" id="formActions" style="margin-top: 12px;">
@@ -1376,6 +1489,11 @@
     let sourceByField = {};
     let taskStartTimestamp = null;
     let initialSnapshot = null;
+    const ACTION_OUTPUT_SPLITTER = "_-@SPLİTTER@-_";
+    let selectedActionId = "";
+    let selectedActionName = "";
+    let triggeredActionUniqueId = "";
+    let actionOptions = Array.isArray(INITIAL_INPUTS?.actionoptions?.options) ? INITIAL_INPUTS.actionoptions.options : [];
 
     const rootElement = document.getElementById("bdf-root");
     const styleElement = document.querySelector("style[data-bdf-style]");
@@ -1537,6 +1655,13 @@
     const summaryBox = byId("summaryBox");
     const formContainer = byId("formContainer");
     const formActions = byId("formActions");
+    const actionBar = byId("actionBar");
+    const actionSplit = byId("actionSplit");
+    const actionTriggerBtn = byId("actionTriggerBtn");
+    const actionChevronBtn = byId("actionChevronBtn");
+    const actionMenu = byId("actionMenu");
+    const predictedActionBtn = byId("predictedActionBtn");
+    const actionEmptyMsg = byId("actionEmptyMsg");
     const consoleEl = byId("eventConsole");
     const submitOutputsEl = byId("submitOutputs");
     const eventConsoleSection = byId("eventConsoleSection");
@@ -1847,7 +1972,100 @@
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
-    function renderSubmitOutputs(payload) {
+    
+    function getPredictedActionName() {
+      const candidate =
+        MANUAL_PREDICTED_JSON?.predictedAction
+        || MANUAL_DATA_JSON?.predictedAction
+        || INITIAL_INPUTS?.PREDICTED_JSON?.predictedAction
+        || "";
+      return typeof candidate === "string" ? candidate.trim() : "";
+    }
+
+    function closeActionMenu() {
+      if (actionMenu) actionMenu.classList.remove("open");
+    }
+
+    function updateActionBarUi() {
+      const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
+      const hasSelected = Boolean(selectedActionId);
+      if (actionTriggerBtn) {
+        actionTriggerBtn.disabled = !hasSelected || !hasOptions;
+        actionTriggerBtn.textContent = hasSelected ? `${selectedActionName} ▾` : "Aksiyon seç ▾";
+      }
+      if (actionChevronBtn) {
+        actionChevronBtn.disabled = !hasOptions;
+      }
+      if (actionEmptyMsg) {
+        actionEmptyMsg.style.display = hasOptions ? "none" : "inline";
+      }
+
+      const predictedActionName = getPredictedActionName();
+      const matched = hasOptions
+        ? actionOptions.find((opt) => String(opt?.name || "").trim() === predictedActionName)
+        : null;
+      if (predictedActionBtn) {
+        if (!predictedActionName) {
+          predictedActionBtn.style.display = "none";
+        } else {
+          predictedActionBtn.style.display = "inline-flex";
+          predictedActionBtn.textContent = matched
+            ? `✨ Önerilen: ${predictedActionName}`
+            : `✨ Önerilen: ${predictedActionName} (eşleşme yok)`;
+          predictedActionBtn.disabled = !matched;
+          predictedActionBtn.dataset.actionId = matched?.id || "";
+          predictedActionBtn.dataset.actionName = matched?.name || predictedActionName;
+        }
+      }
+    }
+
+    function triggerSelectedAction() {
+      if (!selectedActionId) return;
+      triggeredActionUniqueId = selectedActionId;
+      emit("onActionTrigger", {
+        selectedActionId,
+        selectedActionName,
+        triggeredActionUniqueId
+      });
+      if (formEl) {
+        formEl.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      }
+    }
+
+    function selectActionAndTrigger(option) {
+      if (!option || !option.id) return;
+      selectedActionId = String(option.id);
+      selectedActionName = String(option.name || "").trim() || selectedActionId;
+      updateActionBarUi();
+      closeActionMenu();
+      triggerSelectedAction();
+    }
+
+    function renderActionOptions() {
+      if (!actionMenu) return;
+      actionMenu.innerHTML = "";
+      const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
+      if (!hasOptions) {
+        closeActionMenu();
+        selectedActionId = "";
+        selectedActionName = "";
+        updateActionBarUi();
+        return;
+      }
+
+      actionOptions.forEach((option) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "action-menu-item";
+        item.textContent = String(option.name || option.id || "Aksiyon");
+        item.addEventListener("click", () => {
+          selectActionAndTrigger(option);
+        });
+        actionMenu.appendChild(item);
+      });
+      updateActionBarUi();
+    }
+function renderSubmitOutputs(payload) {
       if (IS_VERSION_MODE) return;
       if (!submitOutputsEl) {
         console.warn("submitOutputs panel not found");
@@ -1876,11 +2094,13 @@
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
+      const baseOutput4 = buildOutput4String() || "";
+      const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}`;
       return {
         output1: startTimestamp,
         output2: endTimestamp,
         output3: durationMs,
-        output4: buildOutput4String(),
+        output4: output4,
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
@@ -4462,6 +4682,10 @@
       state.validMap = {};
       state.errors = {};
       taskStartTimestamp = null;
+      selectedActionId = "";
+      selectedActionName = "";
+      triggeredActionUniqueId = "";
+      updateActionBarUi();
       if (columnJson) {
         applyColumnJson(columnJson);
       } else {
@@ -4498,6 +4722,39 @@
 
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
+
+      if (actionChevronBtn) {
+        actionChevronBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (!actionOptions.length) return;
+          actionMenu.classList.toggle("open");
+        });
+      }
+
+      if (actionTriggerBtn) {
+        actionTriggerBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (!selectedActionId) return;
+          triggerSelectedAction();
+        });
+      }
+
+      if (predictedActionBtn) {
+        predictedActionBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          const actionId = predictedActionBtn.dataset.actionId || "";
+          const actionName = predictedActionBtn.dataset.actionName || "";
+          if (!actionId) return;
+          selectActionAndTrigger({ id: actionId, name: actionName });
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        if (!actionSplit || !actionMenu) return;
+        if (actionSplit.contains(event.target)) return;
+        closeActionMenu();
+      });
+
 
       safeOn("#dynamicForm", "submit", (event) => {
       event.preventDefault();
@@ -4589,10 +4846,12 @@
         if (!payload) {
           humanData = {};
           refreshAllFields();
+          updateActionBarUi();
           return;
         }
         emit("debug:human-json", payload);
         loadJsonSafeToForm("human", payload);
+        updateActionBarUi();
         openExportModal("human");
       });
 
@@ -4607,6 +4866,7 @@
       }
       emit("debug:predicted-json", payload);
       loadJsonSafeToForm("ai", payload);
+      updateActionBarUi();
       initializeSourceByFieldFromAi();
       refreshAllFields();
       openExportModal("ai");
@@ -4704,6 +4964,8 @@
       columnJson = MANUAL_COLUMN_JSON;
     }
     applyVersionVisibility();
+    renderActionOptions();
+    updateActionBarUi();
     if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
