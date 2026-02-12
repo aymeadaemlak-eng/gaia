@@ -404,10 +404,10 @@
       ...extra,
     };
 
-    const errorText = errors.length ? errors.join("\n") : "";
+    const allLogText = logs.join("\n");
 
     return {
-      output1: errorText,
+      output1: allLogText,
       outputlist1: createdPhotoIds,
     };
   }

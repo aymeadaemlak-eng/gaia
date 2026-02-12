@@ -101,7 +101,7 @@ Bubble Toolbox'ta **Multiple Outputs = ON** yap.
 
 Bu script özellikle şu iki alanı döndürür:
 
-- `output1` (text): hatalar tek bir metin olarak (satır satır). Hata yoksa boş string.
+- `output1` (text): tüm loglar tek bir metin olarak (debug + hata + doğrulama).
 - `outputlist1` (list of text): oluşturulan `createdPhotoIds` listesi.
 
 Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
