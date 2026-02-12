@@ -1497,11 +1497,6 @@
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
 
-    function isCreateMode() {
-      const rawMode = state?.config?.mode || columnJson?.mode || INITIAL_INPUTS?.COLUMN_JSON?.mode || "";
-      return String(rawMode).trim().toLowerCase() === "create";
-    }
-
     function parseActionOptionsFromInput(rawValue) {
       if (!rawValue) return [];
       let candidate = rawValue;
@@ -2154,7 +2149,7 @@ function renderSubmitOutputs(payload) {
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasObjectJson = Boolean(baseOutput4 && String(baseOutput4).trim());
-      const actionType = isCreateMode() ? "Create" : (hasObjectJson ? "Process" : "Create");
+      const actionType = hasObjectJson ? "Process" : "Create";
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
