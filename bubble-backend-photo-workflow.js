@@ -65,6 +65,22 @@
     }
   }
 
+  function readInput(key) {
+    if (data && data[key] !== undefined && data[key] !== null) return data[key];
+    if (typeof properties !== "undefined" && properties && properties[key] !== undefined && properties[key] !== null) return properties[key];
+    if (typeof context !== "undefined" && context && context[key] !== undefined && context[key] !== null) return context[key];
+    if (typeof globalThis !== "undefined" && globalThis && globalThis[key] !== undefined && globalThis[key] !== null) return globalThis[key];
+
+    if (key === "token" && typeof token !== "undefined") return token;
+    if (key === "output4" && typeof output4 !== "undefined") return output4;
+    if (key === "customFieldMapJson" && typeof customFieldMapJson !== "undefined") return customFieldMapJson;
+    if (key === "createdPhotoMapJson" && typeof createdPhotoMapJson !== "undefined") return createdPhotoMapJson;
+    if (key === "env" && typeof env !== "undefined") return env;
+    if (key === "domain" && typeof domain !== "undefined") return domain;
+
+    return undefined;
+  }
+
   function buildReturn(extra = {}) {
     const photoIds = uniqueStrings([...updatedPhotoIds, ...createdPhotoIds]);
     const elapsedMs = Date.now() - startedAt;
@@ -89,16 +105,16 @@
   }
 
   try {
-    const envInputRaw = (data?.env || "version-test").trim().toLowerCase();
+    const envInputRaw = String(readInput("env") || "version-test").trim().toLowerCase();
     const envInput = envInputRaw.replace(/^version-/, "");
     const ENVIRONMENT = envInput === "live" || envInput === "production" || envInput === "prod" ? "live" : "version-test";
-    const APP_DOMAIN = (data?.domain || "https://gaiasphere.io").trim().replace(/\/+$/, "");
-    const BUBBLE_API_TOKEN = (data?.token || "").trim();
+    const APP_DOMAIN = String(readInput("domain") || "https://gaiasphere.io").trim().replace(/\/+$/, "");
+    const BUBBLE_API_TOKEN = String(readInput("token") || "").trim();
 
-    const PHOTO_TYPE = (data?.photoType || "Photos").trim();
-    const PHOTO_FIELD_CUSTOMFIELD = (data?.photoFieldCustomField || "CustomField").trim();
-    const PHOTO_FIELD_URLS = (data?.photoFieldUrls || "Urls").trim();
-    const PHOTO_FIELD_SIZE = (data?.photoFieldSize || "Size").trim();
+    const PHOTO_TYPE = String(readInput("photoType") || "Photos").trim();
+    const PHOTO_FIELD_CUSTOMFIELD = String(readInput("photoFieldCustomField") || "CustomField").trim();
+    const PHOTO_FIELD_URLS = String(readInput("photoFieldUrls") || "Urls").trim();
+    const PHOTO_FIELD_SIZE = String(readInput("photoFieldSize") || "Size").trim();
 
     const BUBBLE_BASE_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/api/1.1` : `${APP_DOMAIN}/api/1.1`;
     const BUBBLE_FILEUPLOAD_URL = ENVIRONMENT === "version-test" ? `${APP_DOMAIN}/version-test/fileupload` : `${APP_DOMAIN}/fileupload`;
@@ -111,12 +127,12 @@
     pushLog(`[config] photoType=${PHOTO_TYPE} fields={${PHOTO_FIELD_CUSTOMFIELD}, ${PHOTO_FIELD_URLS}, ${PHOTO_FIELD_SIZE}}`);
 
     if (!BUBBLE_API_TOKEN) {
-      pushError("data.token boş", "Bubble API token zorunlu");
+      pushError("token boş", "Key/value içinde token olduğundan emin ol. (data/properties/global scope kontrol edildi)");
       return buildReturn({ stoppedAt: "config.token" });
     }
 
-    const CUSTOM_FIELD_MAP = toObject(data?.customFieldMapJson, "customFieldMapJson");
-    const CREATED_PHOTO_MAP = toObject(data?.createdPhotoMapJson, "createdPhotoMapJson");
+    const CUSTOM_FIELD_MAP = toObject(readInput("customFieldMapJson"), "customFieldMapJson");
+    const CREATED_PHOTO_MAP = toObject(readInput("createdPhotoMapJson"), "createdPhotoMapJson");
     pushLog(`[config] customFieldMap keys=${Object.keys(CUSTOM_FIELD_MAP).length}`);
     pushLog(`[config] createdPhotoMap keys=${Object.keys(CREATED_PHOTO_MAP).length}`);
 
@@ -210,16 +226,17 @@
       return response?.id || response?.response?.id || response?.response?.result?.id || photoId;
     }
 
-    if (!data?.output4 || typeof data.output4 !== "string") {
+    const output4Raw = readInput("output4");
+    if (output4Raw === undefined || output4Raw === null || typeof output4Raw !== "string" || !String(output4Raw).trim()) {
       pushError("output4 yok/boş", "string JSON bekleniyor");
       return buildReturn({ stoppedAt: "input.output4" });
     }
 
     let payload;
     try {
-      payload = JSON.parse(data.output4);
+      payload = JSON.parse(output4Raw);
     } catch (error) {
-      pushError("output4 JSON parse edilemedi", `${error?.message || error} | first200=${String(data.output4).slice(0, 200)}`);
+      pushError("output4 JSON parse edilemedi", `${error?.message || error} | first200=${String(output4Raw).slice(0, 200)}`);
       return buildReturn({ stoppedAt: "input.output4.parse" });
     }
 

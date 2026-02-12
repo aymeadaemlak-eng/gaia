@@ -97,7 +97,10 @@ Not: Response objesinde sadece bu iki key döner (`output1`, `outputlist1`).
 - key: `output4` value: (yukarıdaki JSON string)
 
 ## 7) Sık hata nedenleri
-- `token` boş -> API çağrısı başlamadan hata verir.
+- `token boş` görürsen:
+  - key adı tam `token` olmalı (boşluk/harf hatası olmasın)
+  - value gerçekten text olmalı (dynamic expression boş dönmüyor olmalı)
+  - script hem `data.token` hem alternatif scope'ları (`properties/global`) okumayı dener.
 - `customFieldMapJson` içinde `customFieldName` yok -> item bazında hata verir.
 - `output4` JSON değil -> parse hatası verir.
 - `newFiles[].base64` boş -> ilgili dosyayı skip eder.
