@@ -1493,7 +1493,49 @@
     let selectedActionId = "";
     let selectedActionName = "";
     let triggeredActionUniqueId = "";
-    let actionOptions = Array.isArray(INITIAL_INPUTS?.actionoptions?.options) ? INITIAL_INPUTS.actionoptions.options : [];
+    let actionOptions = [];
+
+    function parseActionOptionsFromInput(rawValue) {
+      if (!rawValue) return [];
+      let candidate = rawValue;
+      if (typeof candidate === "string") {
+        const trimmed = candidate.trim();
+        if (!trimmed) return [];
+        try {
+          candidate = JSON.parse(trimmed);
+        } catch (error) {
+          return [];
+        }
+      }
+      const list = Array.isArray(candidate?.options) ? candidate.options : [];
+      return list
+        .map((opt) => ({
+          id: String(opt?.id || "").trim(),
+          name: String(opt?.name || "").trim()
+        }))
+        .filter((opt) => opt.id && opt.name);
+    }
+
+    function getRawActionOptionsSource() {
+      return (
+        INITIAL_INPUTS?.actionoptions
+        || INITIAL_INPUTS?.ACTIONOPTIONS
+        || INITIAL_INPUTS?.COLUMN_JSON?.actionoptions
+        || INITIAL_INPUTS?.column_json?.actionoptions
+        || null
+      );
+    }
+
+    function syncActionOptions() {
+      const nextOptions = parseActionOptionsFromInput(getRawActionOptionsSource());
+      actionOptions = nextOptions;
+      if (!actionOptions.some((opt) => opt.id === selectedActionId)) {
+        selectedActionId = "";
+        selectedActionName = "";
+      }
+      renderActionOptions();
+      updateActionBarUi();
+    }
 
     const rootElement = document.getElementById("bdf-root");
     const styleElement = document.querySelector("style[data-bdf-style]");
@@ -1913,6 +1955,7 @@
       MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
       MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
       MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
+      syncActionOptions();
     }
 
     function applyVersionVisibility() {
@@ -1990,7 +2033,7 @@
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
       const hasSelected = Boolean(selectedActionId);
       if (actionTriggerBtn) {
-        actionTriggerBtn.disabled = !hasSelected || !hasOptions;
+        actionTriggerBtn.disabled = !hasOptions;
         actionTriggerBtn.textContent = hasSelected ? `${selectedActionName} ▾` : "Aksiyon seç ▾";
       }
       if (actionChevronBtn) {
@@ -4734,7 +4777,11 @@ function renderSubmitOutputs(payload) {
       if (actionTriggerBtn) {
         actionTriggerBtn.addEventListener("click", (event) => {
           event.preventDefault();
-          if (!selectedActionId) return;
+          if (!actionOptions.length) return;
+          if (!selectedActionId) {
+            actionMenu.classList.toggle("open");
+            return;
+          }
           triggerSelectedAction();
         });
       }
@@ -4964,8 +5011,7 @@ function renderSubmitOutputs(payload) {
       columnJson = MANUAL_COLUMN_JSON;
     }
     applyVersionVisibility();
-    renderActionOptions();
-    updateActionBarUi();
+    syncActionOptions();
     if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
