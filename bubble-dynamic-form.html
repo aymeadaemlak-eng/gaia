@@ -4147,7 +4147,12 @@
               state.errors[field.key] = errors.join(" ");
             }
 
-            state.fileBuffers[field.key] = field.type === "multifile" || fileInput.multiple ? accepted : accepted.slice(0, 1);
+            const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+            if (field.type === "multifile" || fileInput.multiple) {
+              state.fileBuffers[field.key] = [...currentFiles, ...accepted].slice(0, maxFiles);
+            } else {
+              state.fileBuffers[field.key] = accepted.slice(0, 1);
+            }
             renderFiles();
 
             const filePayload = (state.fileBuffers[field.key] || []).map((file) => ({
@@ -4187,6 +4192,7 @@
 
           fileInput.addEventListener("change", (event) => {
             handleFiles(event.target.files);
+            event.target.value = "";
           });
 
           control.append(drop, fileInput, list);
