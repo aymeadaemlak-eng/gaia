@@ -181,6 +181,52 @@
     return undefined;
   }
 
+  function parseOutput4Payload(raw) {
+    if (raw === undefined || raw === null) return { payload: null, reason: "empty" };
+
+    // direct object payload: {version, items}
+    if (typeof raw === "object" && !Array.isArray(raw)) {
+      if (Array.isArray(raw.items)) return { payload: raw, reason: "object.items" };
+
+      // value container formats
+      if (raw.value !== undefined) return parseOutput4Payload(raw.value);
+      if (raw.payload !== undefined) return parseOutput4Payload(raw.payload);
+      if (raw.photopayload !== undefined) return parseOutput4Payload(raw.photopayload);
+      if (raw.output4 !== undefined) return parseOutput4Payload(raw.output4);
+
+      // Bubble list wrapper-like structure
+      const q = raw.query;
+      if (q && Array.isArray(q.data) && q.data.length > 0) {
+        return parseOutput4Payload(q.data[0]);
+      }
+
+      return { payload: null, reason: "object-unrecognized" };
+    }
+
+    // arrays: try first non-empty
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        const parsed = parseOutput4Payload(item);
+        if (parsed.payload) return parsed;
+      }
+      return { payload: null, reason: "array-empty" };
+    }
+
+    const text = String(raw).trim();
+    if (!text) return { payload: null, reason: "blank-string" };
+
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.items)) return { payload: parsed, reason: "json-string" };
+        return parseOutput4Payload(parsed);
+      }
+      return { payload: null, reason: "json-not-object" };
+    } catch (error) {
+      return { payload: null, reason: `json-parse-failed:${error?.message || error}` };
+    }
+  }
+
   function debugScopesSnapshot() {
     function preview(obj) {
       if (!obj || typeof obj !== "object") return [];
@@ -344,18 +390,14 @@
     }
 
     const output4Raw = readInput("output4", ["photopayload", "photoPayload", "payload", "output"]);
-    if (output4Raw === undefined || output4Raw === null || typeof output4Raw !== "string" || !String(output4Raw).trim()) {
-      pushError("output4 yok/boş", "string JSON bekleniyor");
+    const output4Parsed = parseOutput4Payload(output4Raw);
+    if (!output4Parsed.payload) {
+      pushError("output4 yok/boş", `geçerli payload bulunamadı (${output4Parsed.reason}) | rawType=${typeof output4Raw} | first200=${String(output4Raw || "").slice(0, 200)}`);
       return buildReturn({ stoppedAt: "input.output4" });
     }
 
-    let payload;
-    try {
-      payload = JSON.parse(output4Raw);
-    } catch (error) {
-      pushError("output4 JSON parse edilemedi", `${error?.message || error} | first200=${String(output4Raw).slice(0, 200)}`);
-      return buildReturn({ stoppedAt: "input.output4.parse" });
-    }
+    const payload = output4Parsed.payload;
+    pushLog(`[input] output4 parse mode=${output4Parsed.reason}`);
 
     const items = Array.isArray(payload?.items) ? payload.items : [];
     pushLog(`[input] items=${items.length}`);

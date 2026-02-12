@@ -16,6 +16,7 @@ Aşağıdaki key'leri Bubble'da gönder:
 
 - `output4` (text)
   - Not: `photopayload` key adı da otomatik desteklenir.
+- `output4` string JSON olabileceği gibi, object olarak da gelebilir; script her iki formatı da parse eder.
 - `token` (text)
 
 ## 2.1) Server Script (Toolbox) için önemli not
