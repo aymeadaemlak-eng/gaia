@@ -1496,7 +1496,7 @@
     let actionOptions = [];
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
-    const DEFAULT_PROCESS_ACTION_LABEL = "Process";
+    const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
 
     function hasExistingBubbleData() {
       const candidate = window.BUBBLE_INPUTS?.BUBBLE_DATA_JSON ?? MANUAL_DATA_JSON;
@@ -1517,12 +1517,12 @@
     }
 
     function getDefaultActionLabel() {
-      return hasExistingBubbleData() ? DEFAULT_PROCESS_ACTION_LABEL : DEFAULT_CREATE_ACTION_LABEL;
+      return hasExistingBubbleData() ? DEFAULT_ACTION_PLACEHOLDER_LABEL : DEFAULT_CREATE_ACTION_LABEL;
     }
 
     function syncDefaultActionLabelFromData() {
       if (selectedActionId) return;
-      const knownDefaults = ["", DEFAULT_CREATE_ACTION_LABEL, DEFAULT_PROCESS_ACTION_LABEL];
+      const knownDefaults = ["", DEFAULT_CREATE_ACTION_LABEL, DEFAULT_ACTION_PLACEHOLDER_LABEL];
       if (!knownDefaults.includes(String(selectedActionName || ""))) return;
       selectedActionName = getDefaultActionLabel();
     }
@@ -2140,8 +2140,11 @@
       if (!actionMenu) return;
       actionMenu.innerHTML = "";
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
+      const shouldShowCreateOption = !hasExistingBubbleData();
       const optionsToRender = hasOptions
-        ? [{ id: "", name: DEFAULT_CREATE_ACTION_LABEL, description: "Aksiyonsuz oluşturma" }, ...actionOptions]
+        ? (shouldShowCreateOption
+          ? [{ id: "", name: DEFAULT_CREATE_ACTION_LABEL, description: "Aksiyonsuz oluşturma" }, ...actionOptions]
+          : [...actionOptions])
         : [];
 
       if (!hasOptions) {
