@@ -86,11 +86,82 @@
     return undefined;
   }
 
+  function safeJsonParse(value) {
+    if (typeof value !== "string") return undefined;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return undefined;
+    }
+  }
+
+  function normalizeMapFromEntries(entries) {
+    const out = {};
+    for (const item of entries || []) {
+      if (!item || typeof item !== "object") continue;
+      const key = firstNonEmpty(item.key, item.name, item.k, item.field, item.label);
+      const value = firstNonEmpty(item.value, item.val, item.v, item.text, item.content);
+      if (key === undefined) continue;
+      out[String(key).trim()] = value;
+    }
+    return out;
+  }
+
+  function parseToolboxKeyValuesRaw(raw) {
+    if (raw === undefined || raw === null) return {};
+
+    if (typeof raw === "object") {
+      if (Array.isArray(raw)) return normalizeMapFromEntries(raw);
+      return raw;
+    }
+
+    const text = String(raw).trim();
+    if (!text) return {};
+
+    // 1) JSON object / array
+    const parsed = safeJsonParse(text);
+    if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed)) return normalizeMapFromEntries(parsed);
+      return parsed;
+    }
+
+    // 2) newline format: key=value or key: value
+    const out = {};
+    const lines = text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+    for (const line of lines) {
+      const idxEq = line.indexOf("=");
+      const idxColon = line.indexOf(":");
+      const idx = idxEq >= 0 ? idxEq : idxColon;
+      if (idx <= 0) continue;
+      const k = line.slice(0, idx).trim();
+      const v = line.slice(idx + 1).trim();
+      if (k) out[k] = v;
+    }
+    return out;
+  }
+
+  function toolboxKeyValuesObject() {
+    const candidates = [
+      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keyvaluesobj"),
+      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keyvalues"),
+      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keys"),
+    ];
+
+    for (const candidate of candidates) {
+      const mapped = parseToolboxKeyValuesRaw(candidate);
+      if (mapped && typeof mapped === "object" && Object.keys(mapped).length > 0) return mapped;
+    }
+
+    return {};
+  }
+
   function readInput(key, aliases = []) {
     const names = [key, ...aliases];
+    const kvObj = toolboxKeyValuesObject();
 
     for (const name of names) {
       const value = firstNonEmpty(
+        getContainerValue(kvObj, name),
         getContainerValue(typeof data !== "undefined" ? data : undefined, name),
         getContainerValue(typeof properties !== "undefined" ? properties : undefined, name),
         getContainerValue(typeof context !== "undefined" ? context : undefined, name),
@@ -116,11 +187,13 @@
       return Object.keys(obj).slice(0, 25);
     }
 
+    const kvObj = toolboxKeyValuesObject();
     return {
       dataKeys: preview(typeof data !== "undefined" ? data : undefined),
       propertiesKeys: preview(typeof properties !== "undefined" ? properties : undefined),
       contextKeys: preview(typeof context !== "undefined" ? context : undefined),
       globalKeys: preview(typeof globalThis !== "undefined" ? globalThis : undefined),
+      keyvaluesKeys: preview(kvObj),
     };
   }
 
@@ -171,7 +244,7 @@
 
     if (!BUBBLE_API_TOKEN) {
       const snap = debugScopesSnapshot();
-      pushError("token boş", `token bulunamadı. dataKeys=${snap.dataKeys.join(",")} | propertiesKeys=${snap.propertiesKeys.join(",")} | contextKeys=${snap.contextKeys.join(",")}`);
+      pushError("token boş", `token bulunamadı. keyvaluesKeys=${snap.keyvaluesKeys.join(",")} | dataKeys=${snap.dataKeys.join(",")} | propertiesKeys=${snap.propertiesKeys.join(",")} | contextKeys=${snap.contextKeys.join(",")}`);
       return buildReturn({ stoppedAt: "config.token" });
     }
 
@@ -369,4 +442,5 @@
     pushLog(`[stack] ${error?.stack || ""}`);
     return buildReturn({ stoppedAt: "fatal.catch" });
   }
-})();
+})();const lines = text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+    

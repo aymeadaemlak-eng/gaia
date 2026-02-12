@@ -18,6 +18,15 @@ Aşağıdaki key'leri Bubble'da gönder:
   - Not: `photopayload` key adı da otomatik desteklenir.
 - `token` (text)
 
+## 2.1) Server Script (Toolbox) için önemli not
+Toolbox Server Script action'da key/value verileri çoğu zaman `properties.keyvaluesobj` veya `properties.keyvalues` içinde gelir.
+Bu script artık bu alanları da otomatik parse eder.
+
+Örnek key/value:
+- token = `...`
+- output4 = `...` (veya photopayload)
+- customFieldMapJson = `{"Evrakları Yükle Toplu":"1763..."}`
+
 ### `output4` örnek JSON
 ```json
 {
