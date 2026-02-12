@@ -80,16 +80,14 @@
       ...extra,
     };
 
-    return {
-      // Bubble multiple outputs için:
-      output1: logs.join("\n"),
-      output2: createdPhotoIds,
-      output3: updatedPhotoIds,
-      output4: photoIds,
-      output5: errors,
-      output6: JSON.stringify(summary),
+    const errorText = errors.length ? errors.join("\n") : "";
 
-      // Geriye uyumluluk:
+    return {
+      // İstenen asıl çıktılar:
+      output1: errorText,
+      outputlist1: createdPhotoIds,
+
+      // Geriye uyumluluk / debug:
       log: logs.join("\n"),
       createdPhotoIds,
       updatedPhotoIds,
