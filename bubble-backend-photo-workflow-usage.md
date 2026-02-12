@@ -78,13 +78,19 @@ Bunlar farklıysa şu key'lerle override et:
 - `photoFieldUrls`
 - `photoFieldSize`
 
-## 5) Script çıktıları
-Script şu çıktıları döndürür:
+## 5) Script çıktıları (Multiple Outputs açık olmalı)
+Bubble Toolbox'ta **Multiple Outputs = ON** yap.
 
-- `createdPhotoIds` (list)
-- `updatedPhotoIds` (list)
-- `photoIds` (created + updated birleşik list)
-- `log` (debug text)
+Bu script özellikle aşağıdaki output alanlarını döndürür:
+
+- `output1` (text): tüm detay log (ilk bakılacak yer)
+- `output2` (list of text): `createdPhotoIds`
+- `output3` (list of text): `updatedPhotoIds`
+- `output4` (list of text): birleşik `photoIds`
+- `output5` (list of text): hata listesi
+- `output6` (text): summary JSON (`createdCount`, `updatedCount`, `errorCount`, vb.)
+
+Geriye uyumluluk için ayrıca `log`, `createdPhotoIds`, `updatedPhotoIds`, `photoIds`, `errors`, `summary` alanları da döner.
 
 ## 6) Bubble'da hızlı örnek key/value seti
 - key: `env` value: `version-test`
