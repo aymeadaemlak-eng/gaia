@@ -120,8 +120,8 @@
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
       --form-input-min-height: clamp(32px, 4vw, 36px);
       --field-gap-internal: clamp(4px, 0.6vw, 8px);
-      --field-gap-between: clamp(10px, 1.4vw, 16px);
-      --field-group-gap: clamp(18px, 2.2vw, 24px);
+      --field-gap-between: clamp(6px, 1vw, 10px);
+      --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       font-size: 14px;
       color: var(--text);
@@ -207,6 +207,22 @@
       grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
       gap: var(--form-row-gap);
       align-items: start;
+    }
+
+    #bdf-root .field-row.is-file-field {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    #bdf-root .field-row.is-file-field .field-label {
+      padding: 8px 10px;
+      border: 1px solid #edf1f6;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+    }
+
+    #bdf-root .field-row.is-file-field .control-stack {
+      justify-items: stretch;
     }
 
     #bdf-root .field-label {
@@ -634,12 +650,12 @@
     }
 
 #bdf-root .file-drop {
-      border: 1px dashed var(--border);
+      border: 1px dashed #cfd8e3;
       border-radius: 12px;
-      padding: 12px;
+      padding: 14px;
       text-align: center;
-      color: var(--muted);
-      background: #fafafa;
+      color: #566173;
+      background: linear-gradient(180deg, #fbfdff 0%, #f7fafe 100%);
     }
 
 #bdf-root .file-list {
@@ -984,11 +1000,15 @@
         --form-row-gap: 10px;
         --form-field-gap: 6px;
         --form-vertical-padding: 6px;
-        --field-gap-between: 10px;
+        --field-gap-between: 8px;
       }
 
 #bdf-root .field-row {
         grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+      }
+
+#bdf-root .field-row.is-file-field .field-label {
+        padding: 7px 9px;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -1839,6 +1859,7 @@
         `output1: ${safePayload.output1 ?? ""}`,
         `output2: ${safePayload.output2 ?? ""}`,
         `output3: ${safePayload.output3 ?? ""}`,
+        `output4: ${safePayload.output4 ?? ""}`,
         "outputlist1:",
         listToText(safePayload.outputlist1),
         "outputlist2:",
@@ -1859,6 +1880,7 @@
         output1: startTimestamp,
         output2: endTimestamp,
         output3: durationMs,
+        output4: buildOutput4String(),
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
@@ -2463,6 +2485,103 @@
       return typeof value === "string" && value.startsWith("data:application/pdf");
     }
 
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve("");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(reader.error || new Error("file read error"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function isCompressibleImageType(contentType) {
+      const type = String(contentType || "").toLowerCase();
+      return ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(type);
+    }
+
+    function loadImageBitmapOrElement(file) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          if (typeof createImageBitmap === "function") {
+            try {
+              const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+              resolve({ image: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close?.() });
+              return;
+            } catch (_) {
+              const bmp = await createImageBitmap(file);
+              resolve({ image: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close?.() });
+              return;
+            }
+          }
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve({ image: img, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height, close: () => {} });
+          };
+          img.onerror = (err) => {
+            URL.revokeObjectURL(url);
+            reject(err || new Error("image load failed"));
+          };
+          img.src = url;
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob || null), type, quality);
+      });
+    }
+
+    async function maybeCompressImageFile(file) {
+      if (!file || !isCompressibleImageType(file.type)) return file;
+      if (file.size < 400 * 1024) return file;
+
+      const loaded = await loadImageBitmapOrElement(file);
+      const originalWidth = loaded.width || 0;
+      const originalHeight = loaded.height || 0;
+      if (originalWidth <= 1200 && originalHeight <= 1200) {
+        loaded.close?.();
+        return file;
+      }
+
+      const maxWidth = 1800;
+      const maxHeight = 1800;
+      const scale = Math.min(1, maxWidth / originalWidth, maxHeight / originalHeight);
+      const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+      const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext("2d", { alpha: file.type === "image/png" });
+      if (!ctx) {
+        loaded.close?.();
+        return file;
+      }
+      ctx.drawImage(loaded.image, 0, 0, targetWidth, targetHeight);
+      loaded.close?.();
+
+      const type = String(file.type || "").toLowerCase();
+      const outputType = type === "image/jpg" ? "image/jpeg" : type;
+      const quality = outputType === "image/jpeg" || outputType === "image/webp" ? 0.82 : undefined;
+      const compressedBlob = await canvasToBlob(canvas, outputType, quality);
+      if (!compressedBlob || !compressedBlob.size) return file;
+      if (compressedBlob.size >= file.size) return file;
+
+      return new File([compressedBlob], file.name, {
+        type: outputType,
+        lastModified: file.lastModified || Date.now()
+      });
+    }
+
     function isLikelyBase64(value) {
       if (typeof value !== "string") return false;
       if (value.length < 60) return false;
@@ -2860,8 +2979,24 @@
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
+        const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
+
+        if (isFileField) {
+          const initialUrls = getFileFieldUrlsFromValue(initialValue);
+          const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+          const currentUrls = currentFiles
+            .map((file) => (file && typeof file.url === "string" ? file.url : ""))
+            .filter(Boolean);
+          const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
+          const hasAnyCurrentFileAction = currentUrls.length > 0 || hasNewFiles;
+          if (initialUrls.length === 0 && hasAnyCurrentFileAction) {
+            entries.push(field.label || jsonKey);
+          }
+          return;
+        }
+
         if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
-          entries.push(jsonKey);
+          entries.push(field.label || jsonKey);
         }
       });
       return entries;
@@ -2894,6 +3029,74 @@
         }
       });
       return entries;
+    }
+
+    function toStringArray(value) {
+      if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
+      if (typeof value === "string" && value) return [value];
+      return [];
+    }
+
+    function getFileFieldUrlsFromValue(value) {
+      return toStringArray(value).filter((entry) => typeof entry === "string" && /^(https?:\/\/|\/|data:)/i.test(entry));
+    }
+
+    function stripDataUrlPrefix(value) {
+      if (typeof value !== "string") return "";
+      const marker = ";base64,";
+      const idx = value.indexOf(marker);
+      if (idx >= 0) return value.slice(idx + marker.length);
+      return value;
+    }
+
+    function buildOutput4String() {
+      const items = [];
+      const base = initialSnapshot || {};
+      (state.config?.fields || []).forEach((field) => {
+        if (!["file", "multifile", "image"].includes(String(field.type || "").toLowerCase())) return;
+        const customFieldName = String(field.label || field.fieldName || field.key || "").trim();
+        if (!customFieldName) return;
+
+        const initialUrls = getFileFieldUrlsFromValue(base[field.key]);
+        const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+        const keptFromCurrent = currentFiles
+          .map((file) => (file && typeof file.url === "string" ? file.url : ""))
+          .filter(Boolean);
+        const keptSet = new Set(keptFromCurrent);
+        const removedSet = new Set(initialUrls.filter((url) => !keptSet.has(url)));
+        removedSet.forEach((url) => {
+          if (keptSet.has(url)) removedSet.delete(url);
+        });
+
+        const newFiles = currentFiles
+          .filter((file) => file && file.raw && typeof file.base64 === "string" && file.base64)
+          .map((file) => ({
+            filename: String(file.name || file.raw?.name || "dosya"),
+            contentType: String(file.type || file.raw?.type || "application/octet-stream"),
+            base64: stripDataUrlPrefix(file.base64)
+          }));
+
+        const keptUrls = Array.from(keptSet);
+        const removedUrls = Array.from(removedSet);
+        const initialSorted = Array.from(new Set(initialUrls)).sort();
+        const keptSorted = Array.from(new Set(keptUrls)).sort();
+        const hasUrlChange = JSON.stringify(initialSorted) !== JSON.stringify(keptSorted);
+        const hasFileOperation = hasUrlChange || removedUrls.length > 0 || newFiles.length > 0;
+        if (!hasFileOperation) return;
+
+        items.push({
+          customFieldName,
+          keptUrls,
+          removedUrls,
+          newFiles
+        });
+      });
+
+      if (!items.length) return null;
+      return JSON.stringify({
+        version: 1,
+        items
+      });
     }
 
     function getActivityType() {
@@ -2990,6 +3193,7 @@
           || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
+        const isFileField = ["file", "multifile", "image"].includes(normalizedType);
         const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
         if (currentGroup === "date" && previousGroup === "amount") {
           wrapper.classList.add("group-break-date");
@@ -3000,6 +3204,7 @@
         row.className = "field-row";
         if (isAmountField) row.classList.add("is-amount-field");
         if (isDateField) row.classList.add("is-date-field");
+        if (isFileField) row.classList.add("is-file-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
@@ -3894,33 +4099,48 @@
             });
           };
 
-          const handleFiles = (fileList) => {
+          const handleFiles = async (fileList) => {
             const files = Array.from(fileList);
             const maxFiles = field.ui?.maxFiles || (allowMultiple ? 10 : 1);
             const maxSizeMB = field.ui?.maxSizeMB || 25;
             const errors = [];
             const accepted = [];
 
-            files.forEach((file) => {
-              if (accepted.length >= maxFiles) return;
+            for (const file of files) {
+              if (accepted.length >= maxFiles) continue;
               if (file.size > maxSizeMB * 1024 * 1024) {
                 errors.push(`${file.name}: Dosya çok büyük.`);
-                return;
+                continue;
               }
               if (accept && !file.type.match(accept.replace("*", ".*"))) {
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
-                return;
+                continue;
               }
-              const shouldPreview = field.type === "image" || file.type.startsWith("image/");
+
+              let processedFile = file;
+              try {
+                processedFile = await maybeCompressImageFile(file);
+              } catch (error) {
+                console.warn("image compression skipped", error);
+              }
+
+              const shouldPreview = field.type === "image" || processedFile.type.startsWith("image/");
+              let base64Data = "";
+              try {
+                base64Data = stripDataUrlPrefix(await readFileAsDataUrl(processedFile));
+              } catch (error) {
+                console.warn("base64 read failed", error);
+              }
               accepted.push({
-                raw: file,
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: file.lastModified,
-                preview: shouldPreview ? URL.createObjectURL(file) : ""
+                raw: processedFile,
+                name: processedFile.name || file.name,
+                size: processedFile.size,
+                type: processedFile.type || file.type,
+                lastModified: processedFile.lastModified || file.lastModified,
+                base64: base64Data,
+                preview: shouldPreview ? URL.createObjectURL(processedFile) : ""
               });
-            });
+            }
 
             if (errors.length) {
               setFieldValue(field.key, "", field);
@@ -4240,10 +4460,15 @@
       if (!formEl) return;
       validateAll();
       const payload = buildSubmitOutputsPayload();
-      if (typeof window.bubble_fn_submit === "function") {
-        window.bubble_fn_submit(payload);
+      const fn =
+        (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
+        (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
+        (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit);
+
+      if (fn) {
+        fn(payload);
       } else {
-        console.warn("bubble_fn_submit not available");
+        console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
       }
     };
 
@@ -4275,13 +4500,22 @@
         output1: submitOutputsPayload.output1,
         output2: submitOutputsPayload.output2,
         output3: submitOutputsPayload.output3,
+        output4: submitOutputsPayload.output4,
         outputlist1: submitOutputsPayload.outputlist1,
         outputlist2: submitOutputsPayload.outputlist2,
         outputlist3: submitOutputsPayload.outputlist3,
         outputlist4: submitOutputsPayload.outputlist4
       });
-      if (typeof window.bubble_fn_submit === "function") {
-        window.bubble_fn_submit(submitOutputsPayload);
+      const payload = submitOutputsPayload;
+      const fn =
+        (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
+        (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
+        (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit);
+
+      if (fn) {
+        fn(payload);
+      } else {
+        console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
       }
       });
 
