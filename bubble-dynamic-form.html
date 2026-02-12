@@ -2895,8 +2895,24 @@
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
+        const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
+
+        if (isFileField) {
+          const initialUrls = getFileFieldUrlsFromValue(initialValue);
+          const currentFiles = Array.isArray(state.fileBuffers[field.key]) ? state.fileBuffers[field.key] : [];
+          const currentUrls = currentFiles
+            .map((file) => (file && typeof file.url === "string" ? file.url : ""))
+            .filter(Boolean);
+          const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
+          const hasAnyCurrentFileAction = currentUrls.length > 0 || hasNewFiles;
+          if (initialUrls.length === 0 && hasAnyCurrentFileAction) {
+            entries.push(field.label || jsonKey);
+          }
+          return;
+        }
+
         if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
-          entries.push(jsonKey);
+          entries.push(field.label || jsonKey);
         }
       });
       return entries;
