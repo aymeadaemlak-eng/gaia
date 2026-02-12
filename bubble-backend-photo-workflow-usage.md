@@ -20,8 +20,12 @@ Aşağıdaki key'leri Bubble'da gönder:
 - `token` (text)
 
 ## 2.1) Server Script (Toolbox) için önemli not
-Toolbox Server Script action'da key/value verileri çoğu zaman `properties.keyvaluesobj` veya `properties.keyvalues` içinde gelir.
-Bu script artık bu alanları da otomatik parse eder.
+Toolbox Server Script action'da key/value verileri şu formatlardan birinde gelebilir:
+- `properties.keyvaluesobj`
+- `properties.keyvalues`
+- `properties.keys` + `properties.data` (iki ayrı ListWrapper liste)
+
+Bu script artık bu formatların hepsini otomatik parse eder.
 
 Örnek key/value:
 - token = `...`

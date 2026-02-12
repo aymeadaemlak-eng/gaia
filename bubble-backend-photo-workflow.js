@@ -111,6 +111,13 @@
     if (raw === undefined || raw === null) return {};
 
     if (typeof raw === "object") {
+      // Bubble ListWrapper support: { _class: "ListWrapper", query: { data: [...] } }
+      const wrapperData = getContainerValue(getContainerValue(raw, "query"), "data");
+      if (Array.isArray(wrapperData)) {
+        if (wrapperData.length > 0 && typeof wrapperData[0] === "object") return normalizeMapFromEntries(wrapperData);
+        return { __list: wrapperData };
+      }
+
       if (Array.isArray(raw)) return normalizeMapFromEntries(raw);
       return raw;
     }
@@ -141,15 +148,56 @@
   }
 
   function toolboxKeyValuesObject() {
+    function asList(value) {
+      if (value === undefined || value === null) return [];
+      if (Array.isArray(value)) return value;
+      if (typeof value === "object") {
+        const q = getContainerValue(value, "query");
+        const qData = getContainerValue(q, "data");
+        if (Array.isArray(qData)) return qData;
+      }
+
+      const text = String(value || "").trim();
+      if (!text) return [];
+      const parsed = safeJsonParse(text);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === "object") {
+        const q2 = getContainerValue(parsed, "query");
+        const qData2 = getContainerValue(q2, "data");
+        if (Array.isArray(qData2)) return qData2;
+      }
+
+      return text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+    }
+
+    const props = typeof properties !== "undefined" ? properties : undefined;
+
+    // 1) Direct key-values object from Toolbox
     const candidates = [
-      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keyvaluesobj"),
-      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keyvalues"),
-      getContainerValue(typeof properties !== "undefined" ? properties : undefined, "keys"),
+      getContainerValue(props, "keyvaluesobj"),
+      getContainerValue(props, "keyvalues"),
     ];
 
     for (const candidate of candidates) {
       const mapped = parseToolboxKeyValuesRaw(candidate);
-      if (mapped && typeof mapped === "object" && Object.keys(mapped).length > 0) return mapped;
+      if (mapped && typeof mapped === "object") {
+        const keys = Object.keys(mapped);
+        if (keys.length > 0 && !(keys.length === 1 && keys[0] === "__list")) return mapped;
+      }
+    }
+
+    // 2) Toolbox often sends keys and data as two list wrappers; zip them.
+    const keyList = asList(getContainerValue(props, "keys"));
+    const valueList = asList(getContainerValue(props, "data"));
+    if (keyList.length > 0 && valueList.length > 0) {
+      const out = {};
+      const length = Math.min(keyList.length, valueList.length);
+      for (let i = 0; i < length; i += 1) {
+        const k = String(keyList[i] ?? "").trim();
+        if (!k) continue;
+        out[k] = valueList[i];
+      }
+      if (Object.keys(out).length > 0) return out;
     }
 
     return {};
@@ -173,6 +221,7 @@
     // direct globals fallback
     if (names.includes("token") && typeof token !== "undefined") return token;
     if (names.includes("output4") && typeof output4 !== "undefined") return output4;
+    if ((names.includes("output4") || names.includes("photopayload")) && typeof photopayload !== "undefined") return photopayload;
     if (names.includes("customFieldMapJson") && typeof customFieldMapJson !== "undefined") return customFieldMapJson;
     if (names.includes("createdPhotoMapJson") && typeof createdPhotoMapJson !== "undefined") return createdPhotoMapJson;
     if (names.includes("env") && typeof env !== "undefined") return env;
@@ -485,4 +534,3 @@
     return buildReturn({ stoppedAt: "fatal.catch" });
   }
 })();
-
