@@ -228,9 +228,13 @@
     }
 
     #bdf-root .field-row.is-file-field {
-      grid-template-columns: 30px minmax(0, 1fr);
-      gap: 12px;
+      grid-template-columns: 1fr;
+      gap: 6px;
       align-items: start;
+    }
+
+    #bdf-root .field-row.is-file-field .field-icon-col {
+      display: none;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
@@ -244,10 +248,16 @@
       justify-items: stretch;
     }
 
+    #bdf-root .field-row.is-file-field .field-content {
+      grid-template-columns: 1fr;
+      row-gap: 6px;
+      align-items: start;
+    }
+
 #bdf-root #formContainer {
-      min-height: 700px;
-      max-height: 700px;
-      overflow: auto;
+      height: 680px;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding-right: 4px;
     }
 
@@ -1202,7 +1212,7 @@
       }
 
 #bdf-root #formContainer {
-        min-height: 620px;
+        height: 680px;
         max-height: 85vh;
       }
 
@@ -4570,7 +4580,7 @@ function renderSubmitOutputs(payload) {
         labelMeta.className = "label-meta";
 
         if (field.required) {
-          labelMeta.append(createMandatoryBadge());
+          labelTop.append(createMandatoryBadge());
         }
 
         const aiBadge = document.createElement("button");
