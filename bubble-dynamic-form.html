@@ -1514,6 +1514,7 @@
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
+    const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -2653,6 +2654,7 @@ function renderSubmitOutputs(payload) {
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
+      persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
           logStartState("edit-detected", { fieldKey, changedKeyCount: changedFieldKeys.size, startOpenSequence });
@@ -2670,6 +2672,7 @@ function renderSubmitOutputs(payload) {
     function rememberChangedFieldValue(fieldKey, value) {
       if (!fieldKey) return;
       changedFieldValuesByKey.set(fieldKey, value);
+      persistStartChangedTracking();
     }
 
     function clearChangedFieldValues() {
@@ -2679,6 +2682,7 @@ function renderSubmitOutputs(payload) {
     function clearChangedTracking() {
       clearChangedFieldKeys();
       clearChangedFieldValues();
+      clearPersistedStartChangedTracking();
       persistStartFlowState();
     }
 
@@ -3825,6 +3829,40 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function persistStartChangedTracking() {
+      try {
+        window.sessionStorage.setItem(START_CHANGED_TRACKING_STORAGE_KEY, JSON.stringify({
+          changedKeys: Array.from(changedFieldKeys || []),
+          changedValues: Array.from((changedFieldValuesByKey || new Map()).entries()),
+          time: new Date().toISOString()
+        }));
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function clearPersistedStartChangedTracking() {
+      try {
+        window.sessionStorage.removeItem(START_CHANGED_TRACKING_STORAGE_KEY);
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function readPersistedStartChangedTracking() {
+      try {
+        const raw = window.sessionStorage.getItem(START_CHANGED_TRACKING_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        const keys = Array.isArray(parsed.changedKeys) ? parsed.changedKeys.filter(Boolean) : [];
+        const changedValues = new Map(Array.isArray(parsed.changedValues) ? parsed.changedValues : []);
+        return { keys, changedValues, time: parsed.time || "" };
+      } catch (error) {
+        return null;
+      }
+    }
+
     function readCurrentUniqueId() {
       const inputs = window.BUBBLE_INPUTS || {};
       const candidates = [
@@ -4259,8 +4297,19 @@ function renderSubmitOutputs(payload) {
 
     function initAutosaveStartWatcher() {
       const persistedStartFlowState = readPersistedStartFlowState();
+      const persistedChangedTracking = readPersistedStartChangedTracking();
       const currentDataSignature = readCurrentBubbleDataSignature();
       const startSignal = readStartSignalValue();
+      if (persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
+        changedFieldKeys = new Set(persistedChangedTracking.keys);
+        changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
+          ? persistedChangedTracking.changedValues
+          : new Map();
+        logStartState("hydrate-persisted-changed-tracking", {
+          changedKeyCount: changedFieldKeys.size,
+          persistedAt: persistedChangedTracking.time || ""
+        });
+      }
       if (persistedStartFlowState) {
         startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
       }
@@ -4279,8 +4328,12 @@ function renderSubmitOutputs(payload) {
           hasChangesSinceStartOpen = false;
           lastStartParamWasTrue = false;
           persistStartFlowState();
+          if (changedFieldKeys.size === 0 && persistedChangedTracking?.keys?.length) {
+            changedFieldKeys = new Set(persistedChangedTracking.keys);
+          }
           logStartState("remount-close-trigger-submit", {
             persistedStartFlowState,
+            changedKeyCount: changedFieldKeys.size,
             trigger: "start-close-remount"
           });
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount" });
