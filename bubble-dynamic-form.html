@@ -3595,6 +3595,31 @@ function renderSubmitOutputs(payload) {
       return extractUniqueIdFromObject(rawValue);
     }
 
+    function extractBubbleDataObject(rawValue) {
+      const parsed = parseDataJsonSource(rawValue);
+      if (!parsed || typeof parsed !== "object") return null;
+      if (Array.isArray(parsed)) return null;
+      if (parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data)) {
+        return parsed.data;
+      }
+      return parsed;
+    }
+
+    function readCurrentBubbleDataObject() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.BUBBLE_DATA_JSON,
+        inputs.bubble_data_json,
+        window.BUBBLE_DATA_JSON,
+        MANUAL_DATA_JSON
+      ];
+      for (const candidate of candidates) {
+        const obj = extractBubbleDataObject(candidate);
+        if (obj) return obj;
+      }
+      return null;
+    }
+
     function persistObservedUniqueId(uniqueId) {
       if (!uniqueId) return;
       try {
@@ -3756,6 +3781,14 @@ function renderSubmitOutputs(payload) {
         return;
       }
       if (nextUniqueId === lastObservedUniqueId) return;
+
+      const incomingBubbleData = readCurrentBubbleDataObject();
+      if (incomingBubbleData && state.config) {
+        MANUAL_DATA_JSON = incomingBubbleData;
+        loadJsonSafeToForm("human", incomingBubbleData);
+        isFormDirty = computeDirtyState();
+      }
+
       lastObservedUniqueId = nextUniqueId;
       persistObservedUniqueId(nextUniqueId);
       hasPendingUniqueIdSubmit = true;
