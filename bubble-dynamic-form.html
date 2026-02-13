@@ -201,6 +201,115 @@
       transform: translateY(-0.5px);
     }
 
+    #bdf-root .field-wrapper {
+      display: grid;
+      gap: var(--field-gap-internal);
+      padding: var(--form-vertical-padding) 0;
+    }
+
+    #bdf-root .field-wrapper + .field-wrapper {
+      margin-top: var(--field-gap-between);
+    }
+
+    #bdf-root .field-wrapper.group-break-date {
+      margin-top: var(--field-group-gap);
+    }
+
+    #bdf-root .field-row {
+      display: grid;
+      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+      gap: var(--form-row-gap);
+      align-items: center;
+      min-height: 46px;
+    }
+
+    #bdf-root .field-row.is-file-field {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+    }
+
+    #bdf-root .field-row.is-file-field .field-label {
+      padding: 8px 10px;
+      border: 1px solid #edf1f6;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+    }
+
+    #bdf-root .field-row.is-file-field .control-stack {
+      justify-items: stretch;
+    }
+
+#bdf-root #formContainer {
+      min-height: 700px;
+      max-height: 700px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+#bdf-root .field-control.file-field-control {
+      min-height: 120px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+#bdf-root .field-control.file-field-control .file-drop {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      width: 100%;
+    }
+
+#bdf-root .field-control.file-field-control .field-input[type="file"] {
+      display: none;
+    }
+
+    #bdf-root .field-label {
+      display: grid;
+      gap: 2px;
+    }
+
+    #bdf-root .label-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #bdf-root .label-text {
+      font-weight: 560;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    #bdf-root .label-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    #bdf-root .type-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      color: #7b7b75;
+      flex-shrink: 0;
+    }
+
+    #bdf-root .type-icon svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+
 #bdf-root .ai-badge {
       display: inline-flex;
       align-items: center;
