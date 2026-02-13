@@ -1501,6 +1501,7 @@
     const AUTOSAVE_DEBOUNCE_MS = 2000;
     let lastObservedUniqueId = "";
     let hasPendingUniqueIdSubmit = false;
+    const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -3533,15 +3534,65 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
-    function readCurrentUniqueId() {
-      const inputs = window.BUBBLE_INPUTS || {};
-      const hasExplicitBubbleData = Object.prototype.hasOwnProperty.call(inputs, "BUBBLE_DATA_JSON");
-      const candidateRaw = hasExplicitBubbleData ? inputs.BUBBLE_DATA_JSON : MANUAL_DATA_JSON;
-      const candidate = parseDataJsonSource(candidateRaw);
+    function extractUniqueIdFromObject(candidate) {
       if (!candidate || Array.isArray(candidate) || typeof candidate !== "object") return "";
       const uniqueIdRaw = candidate.uniqueid ?? candidate.uniquieid ?? candidate.uniqueId ?? candidate.UniqueId;
-      if (uniqueIdRaw === null || uniqueIdRaw === undefined) return "";
-      return String(uniqueIdRaw).trim();
+      if (uniqueIdRaw !== null && uniqueIdRaw !== undefined) {
+        return String(uniqueIdRaw).trim();
+      }
+      if (candidate.data && typeof candidate.data === "object") {
+        const nested = candidate.data.uniqueid ?? candidate.data.uniquieid ?? candidate.data.uniqueId ?? candidate.data.UniqueId;
+        if (nested !== null && nested !== undefined) {
+          return String(nested).trim();
+        }
+      }
+      return "";
+    }
+
+    function extractUniqueIdFromString(rawValue) {
+      const parsed = parseDataJsonSource(rawValue);
+      const parsedUniqueId = extractUniqueIdFromObject(parsed);
+      if (parsedUniqueId) return parsedUniqueId;
+      const text = String(rawValue || "");
+      const match = text.match(/(?:"|')(?:uniqueid|uniquieid|uniqueId|UniqueId)(?:"|')\s*:\s*(?:"|')([^"']+)(?:"|')/i);
+      return match ? String(match[1] || "").trim() : "";
+    }
+
+    function extractUniqueId(rawValue) {
+      if (typeof rawValue === "string") return extractUniqueIdFromString(rawValue);
+      return extractUniqueIdFromObject(rawValue);
+    }
+
+    function persistObservedUniqueId(uniqueId) {
+      if (!uniqueId) return;
+      try {
+        window.sessionStorage.setItem(UNIQUE_ID_STORAGE_KEY, uniqueId);
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function readPersistedObservedUniqueId() {
+      try {
+        return String(window.sessionStorage.getItem(UNIQUE_ID_STORAGE_KEY) || "").trim();
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function readCurrentUniqueId() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.BUBBLE_DATA_JSON,
+        inputs.bubble_data_json,
+        window.BUBBLE_DATA_JSON,
+        MANUAL_DATA_JSON
+      ];
+      for (const candidate of candidates) {
+        const uniqueId = extractUniqueId(candidate);
+        if (uniqueId) return uniqueId;
+      }
+      return "";
     }
 
     function getSubmitFn() {
@@ -3669,10 +3720,12 @@ function renderSubmitOutputs(payload) {
       if (!nextUniqueId) return;
       if (!lastObservedUniqueId) {
         lastObservedUniqueId = nextUniqueId;
+        persistObservedUniqueId(nextUniqueId);
         return;
       }
       if (nextUniqueId === lastObservedUniqueId) return;
       lastObservedUniqueId = nextUniqueId;
+      persistObservedUniqueId(nextUniqueId);
       hasPendingUniqueIdSubmit = true;
       maybeRunAutosaveOnStartClose();
       if (!isFormSaving) {
@@ -3681,7 +3734,24 @@ function renderSubmitOutputs(payload) {
     }
 
     function initAutosaveStartWatcher() {
-      lastObservedUniqueId = readCurrentUniqueId();
+      const persistedUniqueId = readPersistedObservedUniqueId();
+      const currentUniqueId = readCurrentUniqueId();
+
+      if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
+        lastObservedUniqueId = persistedUniqueId;
+        hasPendingUniqueIdSubmit = true;
+        setTimeout(() => {
+          if (!isFormSaving) {
+            runSubmitFlow({ autosave: false, forceSubmit: true });
+          }
+        }, 0);
+      } else {
+        lastObservedUniqueId = currentUniqueId || persistedUniqueId || "";
+      }
+
+      if (currentUniqueId) {
+        persistObservedUniqueId(currentUniqueId);
+      }
 
       if (window.history && typeof window.history.pushState === "function") {
         const originalPushState = window.history.pushState.bind(window.history);
