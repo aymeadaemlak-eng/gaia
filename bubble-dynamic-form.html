@@ -1507,6 +1507,8 @@
     let changedFieldValuesByKey = new Map();
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
+    let lastStartParamWasTrue = false;
+    let hasSeenStartSignal = false;
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -3793,6 +3795,38 @@ function renderSubmitOutputs(payload) {
       return "";
     }
 
+
+    function readStartSignalValue() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const directValue =
+        inputs.start
+        ?? inputs.START
+        ?? inputs.startParam
+        ?? inputs.start_flag
+        ?? inputs.startFlag;
+
+      if (directValue !== undefined && directValue !== null) {
+        if (typeof directValue === "boolean") return directValue;
+        if (typeof directValue === "number") return directValue === 1;
+        const normalized = String(directValue).trim().toLowerCase();
+        if (["true", "1", "yes"].includes(normalized)) return true;
+        if (["false", "0", "no"].includes(normalized)) return false;
+      }
+
+      try {
+        const queryValue = new URLSearchParams(window.location.search).get("start");
+        if (queryValue !== null) {
+          const normalized = String(queryValue).trim().toLowerCase();
+          if (["true", "1", "yes"].includes(normalized)) return true;
+          if (["false", "0", "no"].includes(normalized)) return false;
+        }
+      } catch (error) {
+        // ignore URL parse errors
+      }
+
+      return null;
+    }
+
     function traceAutosave(label, payload = {}) {
       const snapshot = {
         label,
@@ -3806,6 +3840,9 @@ function renderSubmitOutputs(payload) {
         isFormDirty,
         isFormSaving,
         changedKeys: Array.from(changedFieldKeys || []),
+        startSignal: readStartSignalValue(),
+        lastStartParamWasTrue,
+        hasSeenStartSignal,
         ...payload
       };
       console.info("[BDF_AUTOSAVE_TRACE]", snapshot);
@@ -3833,9 +3870,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function handleBeforeUnload(event) {
+      traceAutosave("handleBeforeUnload", { isFormDirty, hasPendingUniqueIdSubmit });
       if (hasPendingUniqueIdSubmit && !isFormSaving) {
         runSubmitFlow({ autosave: false, forceSubmit: true });
         hasPendingUniqueIdSubmit = false;
+      }
+      if (hasSeenStartSignal && lastStartParamWasTrue && !isFormSaving) {
+        runSubmitFlow({ autosave: true, forceSubmit: true });
       }
       if (!isFormDirty) return undefined;
       if (!isFormSaving) {
@@ -4012,10 +4053,40 @@ function renderSubmitOutputs(payload) {
       applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId || lastObservedUniqueId, incomingColumnJson);
     }
 
+    function evaluateStartSignalTransition() {
+      const startSignal = readStartSignalValue();
+      traceAutosave("evaluateStartSignalTransition:tick", { startSignal });
+      if (startSignal === null) return;
+
+      hasSeenStartSignal = true;
+      if (!lastStartParamWasTrue && startSignal) {
+        lastStartParamWasTrue = true;
+        traceAutosave("evaluateStartSignalTransition:open", { startSignal });
+        return;
+      }
+
+      if (lastStartParamWasTrue && !startSignal) {
+        traceAutosave("evaluateStartSignalTransition:close", { isFormDirty });
+        lastStartParamWasTrue = false;
+        if (isFormDirty && !isFormSaving) {
+          runSubmitFlow({ autosave: true, forceSubmit: true });
+        }
+        return;
+      }
+
+      lastStartParamWasTrue = Boolean(startSignal);
+    }
+
     function initAutosaveStartWatcher() {
       const persistedUniqueId = readPersistedObservedUniqueId();
       const currentUniqueId = readCurrentUniqueId();
       const currentDataSignature = readCurrentBubbleDataSignature();
+      const startSignal = readStartSignalValue();
+      if (startSignal !== null) {
+        hasSeenStartSignal = true;
+        lastStartParamWasTrue = Boolean(startSignal);
+        traceAutosave("initAutosaveStartWatcher:start-seed", { startSignal });
+      }
 
       if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
         lastObservedUniqueId = persistedUniqueId;
@@ -4041,6 +4112,7 @@ function renderSubmitOutputs(payload) {
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
           evaluateUniqueIdTransition();
+          evaluateStartSignalTransition();
           return result;
         };
       }
@@ -4050,14 +4122,18 @@ function renderSubmitOutputs(payload) {
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
           evaluateUniqueIdTransition();
+          evaluateStartSignalTransition();
           return result;
         };
       }
 
       window.addEventListener("popstate", evaluateUniqueIdTransition);
+      window.addEventListener("popstate", evaluateStartSignalTransition);
       window.addEventListener("hashchange", evaluateUniqueIdTransition);
+      window.addEventListener("hashchange", evaluateStartSignalTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
       setInterval(evaluateUniqueIdTransition, 300);
+      setInterval(evaluateStartSignalTransition, 300);
     }
 
     function debounceFormChange() {
