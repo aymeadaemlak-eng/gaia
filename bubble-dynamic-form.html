@@ -1505,6 +1505,8 @@
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
     let changedFieldValuesByKey = new Map();
+    let lastObservedDataSignature = "";
+    let pendingIncomingDataSignature = "";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -3663,6 +3665,21 @@ function renderSubmitOutputs(payload) {
     }
 
 
+    function safeStringify(value) {
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function readCurrentBubbleDataSignature() {
+      const dataObj = readCurrentBubbleDataObject();
+      if (!dataObj || typeof dataObj !== "object") return "";
+      return safeStringify(dataObj);
+    }
+
+
     function readCurrentColumnJsonObject() {
       const inputs = window.BUBBLE_INPUTS || {};
       const candidates = [
@@ -3714,7 +3731,8 @@ function renderSubmitOutputs(payload) {
         lastObservedUniqueId = uniqueId;
         persistObservedUniqueId(uniqueId);
       }
-      traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId });
+      lastObservedDataSignature = readCurrentBubbleDataSignature();
+      traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId, dataSignatureLen: lastObservedDataSignature.length });
     }
 
     function flushPendingIncomingAfterSubmit() {
@@ -3725,8 +3743,10 @@ function renderSubmitOutputs(payload) {
       }
       const incomingBubbleData = pendingIncomingBubbleData;
       const uniqueId = pendingIncomingUniqueId;
+      const dataSignature = pendingIncomingDataSignature;
       pendingIncomingBubbleData = null;
       pendingIncomingUniqueId = "";
+      pendingIncomingDataSignature = "";
 
       const currentUniqueId = readCurrentUniqueId();
       const isSameItemNow = Boolean(currentUniqueId) && currentUniqueId === uniqueId;
@@ -3737,7 +3757,7 @@ function renderSubmitOutputs(payload) {
         return;
       }
 
-      traceAutosave("flushPendingIncomingAfterSubmit:apply", { uniqueId });
+      traceAutosave("flushPendingIncomingAfterSubmit:apply", { uniqueId, dataSignatureLen: dataSignature.length });
       applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, readCurrentColumnJsonObject());
     }
 
@@ -3780,7 +3800,9 @@ function renderSubmitOutputs(payload) {
         lastObservedUniqueId,
         currentUniqueId: readCurrentUniqueId(),
         pendingIncomingUniqueId,
+        pendingIncomingDataSignatureLen: pendingIncomingDataSignature.length,
         hasPendingUniqueIdSubmit,
+        lastObservedDataSignatureLen: lastObservedDataSignature.length,
         isFormDirty,
         isFormSaving,
         changedKeys: Array.from(changedFieldKeys || []),
@@ -3930,16 +3952,29 @@ function renderSubmitOutputs(payload) {
 
     function evaluateUniqueIdTransition() {
       const nextUniqueId = readCurrentUniqueId();
-      traceAutosave("evaluateUniqueIdTransition:tick", { nextUniqueId });
-      if (!nextUniqueId) return;
-      if (!lastObservedUniqueId) {
+      const nextDataSignature = readCurrentBubbleDataSignature();
+      const uniqueIdChanged = Boolean(nextUniqueId) && nextUniqueId !== lastObservedUniqueId;
+      const dataChanged = Boolean(nextDataSignature) && nextDataSignature !== lastObservedDataSignature;
+
+      traceAutosave("evaluateUniqueIdTransition:tick", {
+        nextUniqueId,
+        nextDataSignatureLen: nextDataSignature.length,
+        uniqueIdChanged,
+        dataChanged
+      });
+
+      if (!nextUniqueId && !nextDataSignature) return;
+
+      if (!lastObservedUniqueId && nextUniqueId) {
         traceAutosave("evaluateUniqueIdTransition:init-observed", { nextUniqueId });
         lastObservedUniqueId = nextUniqueId;
         persistObservedUniqueId(nextUniqueId);
-        return;
       }
-      if (nextUniqueId === lastObservedUniqueId) {
-        traceAutosave("evaluateUniqueIdTransition:no-change", { nextUniqueId });
+      if (!lastObservedDataSignature && nextDataSignature) {
+        lastObservedDataSignature = nextDataSignature;
+      }
+
+      if (!uniqueIdChanged && !dataChanged) {
         return;
       }
 
@@ -3948,17 +3983,21 @@ function renderSubmitOutputs(payload) {
 
       if (isFormSaving) {
         pendingIncomingBubbleData = incomingBubbleData;
-        pendingIncomingUniqueId = nextUniqueId;
-        traceAutosave("evaluateUniqueIdTransition:queued-while-saving", { nextUniqueId });
+        pendingIncomingUniqueId = nextUniqueId || lastObservedUniqueId;
+        pendingIncomingDataSignature = nextDataSignature;
+        traceAutosave("evaluateUniqueIdTransition:queued-while-saving", { nextUniqueId, dataChanged, uniqueIdChanged });
         return;
       }
 
       if (isFormDirty) {
         pendingIncomingBubbleData = incomingBubbleData;
-        pendingIncomingUniqueId = nextUniqueId;
+        pendingIncomingUniqueId = nextUniqueId || lastObservedUniqueId;
+        pendingIncomingDataSignature = nextDataSignature;
         hasPendingUniqueIdSubmit = true;
         traceAutosave("evaluateUniqueIdTransition:dirty-submit-current-first", {
           nextUniqueId,
+          dataChanged,
+          uniqueIdChanged,
           pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
         });
         maybeRunAutosaveOnStartClose();
@@ -3969,13 +4008,14 @@ function renderSubmitOutputs(payload) {
         return;
       }
 
-      traceAutosave("evaluateUniqueIdTransition:apply-direct", { nextUniqueId });
-      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId, incomingColumnJson);
+      traceAutosave("evaluateUniqueIdTransition:apply-direct", { nextUniqueId, dataChanged, uniqueIdChanged });
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId || lastObservedUniqueId, incomingColumnJson);
     }
 
     function initAutosaveStartWatcher() {
       const persistedUniqueId = readPersistedObservedUniqueId();
       const currentUniqueId = readCurrentUniqueId();
+      const currentDataSignature = readCurrentBubbleDataSignature();
 
       if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
         lastObservedUniqueId = persistedUniqueId;
@@ -3991,6 +4031,9 @@ function renderSubmitOutputs(payload) {
 
       if (currentUniqueId) {
         persistObservedUniqueId(currentUniqueId);
+      }
+      if (currentDataSignature) {
+        lastObservedDataSignature = currentDataSignature;
       }
 
       if (window.history && typeof window.history.pushState === "function") {
