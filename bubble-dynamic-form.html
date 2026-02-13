@@ -1503,6 +1503,7 @@
     let hasPendingUniqueIdSubmit = false;
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
+    let changedFieldKeys = new Set();
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -2637,6 +2638,16 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+
+    function markFieldAsChanged(fieldKey) {
+      if (!fieldKey) return;
+      changedFieldKeys.add(fieldKey);
+    }
+
+    function clearChangedFieldKeys() {
+      changedFieldKeys = new Set();
+    }
+
     function getActiveSource(fieldKey) {
       const preferredSource = sourceByField[fieldKey];
       if (preferredSource === "human" || preferredSource === "ai") {
@@ -3338,6 +3349,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
@@ -3352,6 +3364,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3382,6 +3395,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3396,6 +3410,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3448,6 +3463,7 @@ function renderSubmitOutputs(payload) {
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
         if (!["file", "multifile", "image"].includes(String(field.type || "").toLowerCase())) return;
+        if (!changedFieldKeys.has(field.key)) return;
         const customFieldName = String(field.label || field.fieldName || field.key || "").trim();
         if (!customFieldName) return;
 
@@ -3550,6 +3566,7 @@ function renderSubmitOutputs(payload) {
 
     function setFieldValue(key, value, field, displayValue) {
       setHumanValue(key, value, field, displayValue);
+      markFieldAsChanged(key);
       isFormDirty = computeDirtyState();
     }
 
@@ -3659,6 +3676,7 @@ function renderSubmitOutputs(payload) {
         refreshAllFields();
         initialSnapshot = buildBaselineSnapshot(incomingBubbleData);
       }
+      clearChangedFieldKeys();
       isFormDirty = false;
       taskStartTimestamp = null;
       hasPendingUniqueIdSubmit = false;
@@ -4018,6 +4036,7 @@ function renderSubmitOutputs(payload) {
           if (isEmptyValue(aiValue)) return;
           humanData[field.key] = aiValue;
           sourceByField[field.key] = "human";
+          markFieldAsChanged(field.key);
           updateFieldDisplayValue(field.key);
         });
         labelMeta.append(applyAiBtn);
@@ -4834,6 +4853,7 @@ function renderSubmitOutputs(payload) {
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
                 sourceByField[field.key] = "human";
+                markFieldAsChanged(field.key);
                 updateEffectiveState(field.key, field);
                 updateAiVisuals(field.key);
                 emit("onFileSelected", {
@@ -4918,6 +4938,7 @@ function renderSubmitOutputs(payload) {
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
             humanData[field.key] = "";
             sourceByField[field.key] = "human";
+            markFieldAsChanged(field.key);
             updateEffectiveState(field.key, field);
             updateAiVisuals(field.key);
             console.log("Pending file selected", {
@@ -5184,6 +5205,7 @@ function renderSubmitOutputs(payload) {
         if (!overwrite && !isEmptyValue(humanData[field.key])) return;
         humanData[field.key] = aiValue;
         sourceByField[field.key] = "human";
+        markFieldAsChanged(field.key);
       });
       refreshAllFields();
     }
@@ -5203,6 +5225,7 @@ function renderSubmitOutputs(payload) {
       triggeredActionUniqueId = "";
       isFormDirty = false;
       isFormSaving = false;
+      clearChangedFieldKeys();
       updateActionBarUi();
       if (columnJson) {
         applyColumnJson(columnJson);
@@ -5326,6 +5349,7 @@ function renderSubmitOutputs(payload) {
         }
         emit("debug:human-json", payload);
         loadJsonSafeToForm("human", payload);
+        clearChangedFieldKeys();
         isFormDirty = computeDirtyState();
         updateActionBarUi();
         openExportModal("human");
