@@ -220,7 +220,7 @@
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: 30px minmax(0, 1fr);
+      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
       gap: 12px;
       align-items: center;
       min-height: 40px;
@@ -233,10 +233,6 @@
       align-items: start;
     }
 
-    #bdf-root .field-row.is-file-field .field-icon-col {
-      display: none;
-    }
-
     #bdf-root .field-row.is-file-field .field-label {
       padding: 6px 8px;
       border: 1px solid #edf1f6;
@@ -246,12 +242,6 @@
 
     #bdf-root .field-row.is-file-field .control-stack {
       justify-items: stretch;
-    }
-
-    #bdf-root .field-row.is-file-field .field-content {
-      grid-template-columns: 1fr;
-      row-gap: 6px;
-      align-items: start;
     }
 
 #bdf-root #formContainer {
@@ -280,25 +270,6 @@
       display: none;
     }
 
-    #bdf-root .field-icon-col {
-      width: 30px;
-      min-width: 30px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: flex-start;
-      opacity: 0.68;
-      padding-top: 1px;
-    }
-
-    #bdf-root .field-content {
-      display: grid;
-      grid-template-columns: minmax(150px, 180px) minmax(0, 1fr);
-      column-gap: 8px;
-      row-gap: 0;
-      align-items: center;
-      min-width: 0;
-    }
-
     #bdf-root .field-label {
       display: grid;
       gap: 0;
@@ -309,7 +280,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 4px;
+      gap: 8px;
     }
 
     #bdf-root .label-text {
@@ -1200,11 +1171,7 @@
       }
 
 #bdf-root .field-row {
-        grid-template-columns: 30px minmax(0, 1fr);
-      }
-
-#bdf-root .field-content {
-        grid-template-columns: minmax(130px, 170px) minmax(0, 1fr);
+        grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
       }
 
 #bdf-root .field-row.is-file-field .field-label {
@@ -1234,11 +1201,6 @@
 #bdf-root .field-row {
         grid-template-columns: 1fr;
         gap: 4px;
-      }
-
-#bdf-root .field-content {
-        grid-template-columns: 1fr;
-        gap: 2px;
       }
     }
   </style>
@@ -4565,16 +4527,12 @@ function renderSubmitOutputs(payload) {
         typeIcon.append(renderIcon(typeMeta.iconKey));
         typeIcon.title = typeMeta.label;
 
-        const iconColumn = document.createElement("div");
-        iconColumn.className = "field-icon-col";
-        iconColumn.append(typeIcon);
-
         const label = document.createElement("label");
         label.className = "label-text";
         label.htmlFor = `field-${field.key}`;
         label.textContent = field.label;
 
-        labelTop.append(label);
+        labelTop.append(typeIcon, label);
 
         const labelMeta = document.createElement("div");
         labelMeta.className = "label-meta";
@@ -5643,10 +5601,7 @@ function renderSubmitOutputs(payload) {
         };
         updateAiVisuals(field.key);
 
-                const contentColumn = document.createElement("div");
-        contentColumn.className = "field-content";
-        contentColumn.append(labelColumn, controlStack);
-        row.append(iconColumn, contentColumn);
+        row.append(labelColumn, controlStack);
         wrapper.append(row);
         formEl.append(wrapper);
 
