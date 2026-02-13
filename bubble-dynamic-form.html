@@ -1499,7 +1499,8 @@
     let isFormSaving = false;
     let lastAutosaveAt = 0;
     const AUTOSAVE_DEBOUNCE_MS = 2000;
-    let lastStartParamWasTrue = false;
+    let lastObservedUniqueId = "";
+    let hasPendingUniqueIdSubmit = false;
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -3517,27 +3518,30 @@ function renderSubmitOutputs(payload) {
       isFormDirty = computeDirtyState();
     }
 
-    function readStartSignalIsTrue() {
+    function parseDataJsonSource(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed);
+        } catch (error) {
+          return null;
+        }
+      }
+      if (typeof rawValue === "object") return rawValue;
+      return null;
+    }
+
+    function readCurrentUniqueId() {
       const inputs = window.BUBBLE_INPUTS || {};
-      const directValue =
-        inputs.start
-        ?? inputs.START
-        ?? inputs.startParam
-        ?? inputs.start_flag
-        ?? inputs.startFlag;
-
-      if (directValue !== undefined && directValue !== null) {
-        if (typeof directValue === "boolean") return directValue;
-        if (typeof directValue === "number") return directValue === 1;
-        return String(directValue).trim().toLowerCase() === "true";
-      }
-
-      try {
-        const value = new URLSearchParams(window.location.search).get("start");
-        return String(value || "").toLowerCase() === "true";
-      } catch (error) {
-        return false;
-      }
+      const hasExplicitBubbleData = Object.prototype.hasOwnProperty.call(inputs, "BUBBLE_DATA_JSON");
+      const candidateRaw = hasExplicitBubbleData ? inputs.BUBBLE_DATA_JSON : MANUAL_DATA_JSON;
+      const candidate = parseDataJsonSource(candidateRaw);
+      if (!candidate || Array.isArray(candidate) || typeof candidate !== "object") return "";
+      const uniqueIdRaw = candidate.uniqueid ?? candidate.uniquieid ?? candidate.uniqueId ?? candidate.UniqueId;
+      if (uniqueIdRaw === null || uniqueIdRaw === undefined) return "";
+      return String(uniqueIdRaw).trim();
     }
 
     function getSubmitFn() {
@@ -3559,15 +3563,22 @@ function renderSubmitOutputs(payload) {
     }
 
     function handleBeforeUnload(event) {
+      if (hasPendingUniqueIdSubmit && !isFormSaving) {
+        runSubmitFlow({ autosave: false, forceSubmit: true });
+        hasPendingUniqueIdSubmit = false;
+      }
       if (!isFormDirty) return undefined;
+      if (!isFormSaving) {
+        runSubmitFlow({ autosave: false, forceSubmit: true });
+      }
       const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
       event.preventDefault();
       event.returnValue = warningMessage;
       return warningMessage;
     }
 
-    function runSubmitFlow({ autosave = false } = {}) {
-      if (isFormSaving) {
+    function runSubmitFlow({ autosave = false, forceSubmit = false } = {}) {
+      if (isFormSaving && !forceSubmit) {
         console.info("submit skipped: saving lock active", { autosave });
         return;
       }
@@ -3640,6 +3651,8 @@ function renderSubmitOutputs(payload) {
         isFormDirty = true;
         console.error("submit failed", error);
       }
+
+      hasPendingUniqueIdSubmit = false;
     }
 
     function maybeRunAutosaveOnStartClose() {
@@ -3651,22 +3664,30 @@ function renderSubmitOutputs(payload) {
       runSubmitFlow({ autosave: true });
     }
 
-    function evaluateStartTransition() {
-      const isStartTrue = readStartSignalIsTrue();
-      if (lastStartParamWasTrue && !isStartTrue) {
-        maybeRunAutosaveOnStartClose();
+    function evaluateUniqueIdTransition() {
+      const nextUniqueId = readCurrentUniqueId();
+      if (!nextUniqueId) return;
+      if (!lastObservedUniqueId) {
+        lastObservedUniqueId = nextUniqueId;
+        return;
       }
-      lastStartParamWasTrue = isStartTrue;
+      if (nextUniqueId === lastObservedUniqueId) return;
+      lastObservedUniqueId = nextUniqueId;
+      hasPendingUniqueIdSubmit = true;
+      maybeRunAutosaveOnStartClose();
+      if (!isFormSaving) {
+        runSubmitFlow({ autosave: false, forceSubmit: true });
+      }
     }
 
     function initAutosaveStartWatcher() {
-      lastStartParamWasTrue = readStartSignalIsTrue();
+      lastObservedUniqueId = readCurrentUniqueId();
 
       if (window.history && typeof window.history.pushState === "function") {
         const originalPushState = window.history.pushState.bind(window.history);
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
-          evaluateStartTransition();
+          evaluateUniqueIdTransition();
           return result;
         };
       }
@@ -3675,15 +3696,15 @@ function renderSubmitOutputs(payload) {
         const originalReplaceState = window.history.replaceState.bind(window.history);
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
-          evaluateStartTransition();
+          evaluateUniqueIdTransition();
           return result;
         };
       }
 
-      window.addEventListener("popstate", evaluateStartTransition);
-      window.addEventListener("hashchange", evaluateStartTransition);
+      window.addEventListener("popstate", evaluateUniqueIdTransition);
+      window.addEventListener("hashchange", evaluateUniqueIdTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
-      setInterval(evaluateStartTransition, 300);
+      setInterval(evaluateUniqueIdTransition, 300);
     }
 
     function debounceFormChange() {
