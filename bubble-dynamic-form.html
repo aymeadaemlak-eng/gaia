@@ -1499,7 +1499,23 @@
     let isFormSaving = false;
     let lastAutosaveAt = 0;
     const AUTOSAVE_DEBOUNCE_MS = 2000;
+    let lastObservedUniqueId = "";
+    let hasPendingUniqueIdSubmit = false;
+    let pendingIncomingBubbleData = null;
+    let pendingIncomingUniqueId = "";
+    let changedFieldKeys = new Set();
+    let changedFieldValuesByKey = new Map();
+    let lastObservedDataSignature = "";
+    let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
+    let hasSeenStartSignal = false;
+    let lastStartLoggedState = "";
+    let hasChangesSinceStartOpen = false;
+    let startOpenSequence = 0;
+    let pendingSubmitUntilConfigReady = null;
+    const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
+    const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
+    const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -1735,6 +1751,7 @@
       if (columnWarning) columnWarning.style.display = "none";
       if (formContainer) formContainer.style.display = "block";
       renderForm(state.config);
+      flushPendingSubmitAfterConfigReady();
     }
 
     const schemaInput = byId("schemaInput");
@@ -2211,15 +2228,14 @@ function renderSubmitOutputs(payload) {
     function buildSubmitOutputsPayload({ autosave = false } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
-      const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = autosave ? "Create" : (hasBubbleData ? "Process" : "Create");
+      const actionType = hasBubbleData ? "Process" : "Create";
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
         output2: endTimestamp,
-        output3: durationMs,
+        output3: readCurrentUniqueId(),
         output4: output4,
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
@@ -2605,17 +2621,80 @@ function renderSubmitOutputs(payload) {
     function buildFieldKeyMap() {
       const map = new Map();
       (state.config?.fields || []).forEach((field) => {
-        if (field.key) map.set(normalizeKey(field.key), field.key);
+        const aliases = [
+          field.key,
+          field.fieldName,
+          field.label
+        ];
+        aliases.forEach((alias) => {
+          const normalizedAlias = normalizeKey(alias);
+          if (!normalizedAlias) return;
+          if (!map.has(normalizedAlias)) {
+            map.set(normalizedAlias, field.key);
+          }
+        });
       });
       return map;
     }
 
     function getFieldKeyFromJsonKey(jsonKey, keyMap) {
       if (!jsonKey) return null;
-      return keyMap.get(normalizeKey(jsonKey)) || null;
+      const direct = keyMap.get(normalizeKey(jsonKey));
+      if (direct) return direct;
+      const normalizedTarget = normalizeKey(jsonKey).toLocaleLowerCase("tr-TR");
+      for (const [candidate, fieldKey] of keyMap.entries()) {
+        if (candidate.toLocaleLowerCase("tr-TR") === normalizedTarget) {
+          return fieldKey;
+        }
+      }
+      return null;
+    }
+
+
+    function markFieldAsChanged(fieldKey) {
+      if (!fieldKey) return;
+      changedFieldKeys.add(fieldKey);
+      persistStartChangedTracking();
+      if (hasSeenStartSignal && lastStartParamWasTrue) {
+        if (!hasChangesSinceStartOpen) {
+          logStartState("edit-detected", { fieldKey, changedKeyCount: changedFieldKeys.size, startOpenSequence });
+        }
+        hasChangesSinceStartOpen = true;
+        persistStartFlowState();
+      }
+    }
+
+    function clearChangedFieldKeys() {
+      changedFieldKeys = new Set();
+    }
+
+
+    function rememberChangedFieldValue(fieldKey, value) {
+      if (!fieldKey) return;
+      changedFieldValuesByKey.set(fieldKey, value);
+      persistStartChangedTracking();
+    }
+
+    function clearChangedFieldValues() {
+      changedFieldValuesByKey = new Map();
+    }
+
+    function clearChangedTracking() {
+      clearChangedFieldKeys();
+      clearChangedFieldValues();
+      clearPersistedStartChangedTracking();
+      persistStartFlowState();
+    }
+
+    function getRememberedChangedValue(fieldKey) {
+      return changedFieldValuesByKey.get(fieldKey);
     }
 
     function getActiveSource(fieldKey) {
+      const preferredSource = sourceByField[fieldKey];
+      if (preferredSource === "human" || preferredSource === "ai") {
+        return preferredSource;
+      }
       if (!isEmptyValue(humanData[fieldKey])) return "human";
       if (!isEmptyValue(aiData[fieldKey])) return "ai";
       return "human";
@@ -2626,6 +2705,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function getEffectiveValue(fieldKey) {
+      const preferredSource = sourceByField[fieldKey];
+      if (preferredSource === "human") {
+        return humanData[fieldKey] ?? "";
+      }
+      if (preferredSource === "ai") {
+        return aiData[fieldKey] ?? "";
+      }
       const humanValue = humanData[fieldKey];
       if (!isEmptyValue(humanValue)) return humanValue;
       const aiValue = aiData[fieldKey];
@@ -3260,6 +3346,7 @@ function renderSubmitOutputs(payload) {
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
       renderForm(state.config);
+      flushPendingSubmitAfterConfigReady();
     }
 
     function buildExportJson() {
@@ -3283,15 +3370,18 @@ function renderSubmitOutputs(payload) {
         if (!field) return;
         snapshot[fieldKey] = normalizeValueForComparison(field, rawValue, state.config);
       });
+
+      (state.config?.fields || []).forEach((field) => {
+        if (snapshot[field.key] !== undefined) return;
+        const initialValue = getInitialValue(field, state.config || {});
+        snapshot[field.key] = normalizeValueForComparison(field, initialValue, state.config);
+      });
+
       return snapshot;
     }
 
     function getCurrentValueForField(field) {
-      const humanValue = humanData[field.key];
-      if (!isEmptyValue(humanValue)) return humanValue;
-      const aiValue = aiData[field.key];
-      if (!isEmptyValue(aiValue)) return aiValue;
-      return "";
+      return getEffectiveValue(field.key);
     }
 
     function getCurrentNormalizedValue(field) {
@@ -3302,13 +3392,16 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
         const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
         entries.push(`"${jsonKey}": ${JSON.stringify(safeValue)}`);
       });
+      traceAutosave("buildKeyValueListFromSources", { entriesCount: entries.length, entries });
       return entries;
     }
 
@@ -3316,6 +3409,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3346,6 +3440,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3360,6 +3455,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
+        if (!changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
         const currentValue = getCurrentNormalizedValue(field);
@@ -3412,6 +3508,7 @@ function renderSubmitOutputs(payload) {
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
         if (!["file", "multifile", "image"].includes(String(field.type || "").toLowerCase())) return;
+        if (!changedFieldKeys.has(field.key)) return;
         const customFieldName = String(field.label || field.fieldName || field.key || "").trim();
         if (!customFieldName) return;
 
@@ -3514,30 +3611,406 @@ function renderSubmitOutputs(payload) {
 
     function setFieldValue(key, value, field, displayValue) {
       setHumanValue(key, value, field, displayValue);
+      markFieldAsChanged(key);
+      rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
     }
 
-    function readStartSignalIsTrue() {
+    function parseDataJsonSource(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed);
+        } catch (error) {
+          return null;
+        }
+      }
+      if (typeof rawValue === "object") return rawValue;
+      return null;
+    }
+
+    function extractUniqueIdFromObject(candidate) {
+      if (!candidate || Array.isArray(candidate) || typeof candidate !== "object") return "";
+      const uniqueIdRaw = candidate.uniqueid ?? candidate.uniquieid ?? candidate.uniqueId ?? candidate.UniqueId;
+      if (uniqueIdRaw !== null && uniqueIdRaw !== undefined) {
+        return String(uniqueIdRaw).trim();
+      }
+      if (candidate.data && typeof candidate.data === "object") {
+        const nested = candidate.data.uniqueid ?? candidate.data.uniquieid ?? candidate.data.uniqueId ?? candidate.data.UniqueId;
+        if (nested !== null && nested !== undefined) {
+          return String(nested).trim();
+        }
+      }
+      return "";
+    }
+
+    function extractUniqueIdFromString(rawValue) {
+      const parsed = parseDataJsonSource(rawValue);
+      const parsedUniqueId = extractUniqueIdFromObject(parsed);
+      if (parsedUniqueId) return parsedUniqueId;
+      const text = String(rawValue || "");
+      const match = text.match(/(?:"|')(?:uniqueid|uniquieid|uniqueId|UniqueId)(?:"|')\s*:\s*(?:"|')([^"']+)(?:"|')/i);
+      return match ? String(match[1] || "").trim() : "";
+    }
+
+    function extractUniqueId(rawValue) {
+      if (typeof rawValue === "string") return extractUniqueIdFromString(rawValue);
+      return extractUniqueIdFromObject(rawValue);
+    }
+
+    function extractBubbleDataObject(rawValue) {
+      const parsed = parseDataJsonSource(rawValue);
+      if (!parsed || typeof parsed !== "object") return null;
+      if (Array.isArray(parsed)) return null;
+      if (parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data)) {
+        return parsed.data;
+      }
+      return parsed;
+    }
+
+    function readCurrentBubbleDataObject() {
       const inputs = window.BUBBLE_INPUTS || {};
-      const directValue =
-        inputs.start
-        ?? inputs.START
-        ?? inputs.startParam
-        ?? inputs.start_flag
-        ?? inputs.startFlag;
-
-      if (directValue !== undefined && directValue !== null) {
-        if (typeof directValue === "boolean") return directValue;
-        if (typeof directValue === "number") return directValue === 1;
-        return String(directValue).trim().toLowerCase() === "true";
+      const candidates = [
+        inputs.BUBBLE_DATA_JSON,
+        inputs.bubble_data_json,
+        window.BUBBLE_DATA_JSON,
+        MANUAL_DATA_JSON
+      ];
+      for (const candidate of candidates) {
+        const obj = extractBubbleDataObject(candidate);
+        if (obj) return obj;
       }
+      return null;
+    }
 
+
+    function safeStringify(value) {
       try {
-        const value = new URLSearchParams(window.location.search).get("start");
-        return String(value || "").toLowerCase() === "true";
+        return JSON.stringify(value);
       } catch (error) {
-        return false;
+        return "";
       }
+    }
+
+    function readCurrentBubbleDataSignature() {
+      const dataObj = readCurrentBubbleDataObject();
+      if (!dataObj || typeof dataObj !== "object") return "";
+      return safeStringify(dataObj);
+    }
+
+
+    function readCurrentColumnJsonObject() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.COLUMN_JSON,
+        inputs.column_json,
+        window.BUBBLE_COLUMN_JSON,
+        MANUAL_COLUMN_JSON
+      ];
+      for (const candidate of candidates) {
+        const parsed = parseDataJsonSource(candidate);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+        if (Array.isArray(parsed.columns)) return parsed;
+      }
+      return null;
+    }
+
+
+    function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
+      traceAutosave("applyIncomingBubbleDataAsCurrentItem:start", {
+        uniqueId,
+        hasIncomingBubbleData: Boolean(incomingBubbleData),
+        incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : [],
+        hasIncomingColumns: Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns)),
+        incomingColumnCount: Array.isArray(incomingColumnJson?.columns) ? incomingColumnJson.columns.length : 0
+      });
+      const hasIncomingColumns = Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns));
+      if (hasIncomingColumns) {
+        MANUAL_COLUMN_JSON = incomingColumnJson;
+        applyColumnJson(incomingColumnJson);
+      }
+
+      if (incomingBubbleData && state.config) {
+        MANUAL_DATA_JSON = incomingBubbleData;
+        humanData = {};
+        aiData = {};
+        sourceByField = {};
+        state.fileBuffers = {};
+        state.fileStaging = {};
+        loadJsonSafeToForm("human", incomingBubbleData);
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        initialSnapshot = buildBaselineSnapshot(incomingBubbleData);
+      }
+      clearChangedTracking();
+      isFormDirty = false;
+      taskStartTimestamp = null;
+      hasPendingUniqueIdSubmit = false;
+      if (uniqueId) {
+        lastObservedUniqueId = uniqueId;
+        persistObservedUniqueId(uniqueId);
+      }
+      lastObservedDataSignature = readCurrentBubbleDataSignature();
+      traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId, dataSignatureLen: lastObservedDataSignature.length });
+    }
+
+    function flushPendingIncomingAfterSubmit() {
+      traceAutosave("flushPendingIncomingAfterSubmit:start");
+      if (!pendingIncomingUniqueId) {
+        traceAutosave("flushPendingIncomingAfterSubmit:skip-no-pending");
+        return;
+      }
+      const incomingBubbleData = pendingIncomingBubbleData;
+      const uniqueId = pendingIncomingUniqueId;
+      const dataSignature = pendingIncomingDataSignature;
+      pendingIncomingBubbleData = null;
+      pendingIncomingUniqueId = "";
+      pendingIncomingDataSignature = "";
+
+      const currentUniqueId = readCurrentUniqueId();
+      const isSameItemNow = Boolean(currentUniqueId) && currentUniqueId === uniqueId;
+      if (isSameItemNow && isFormDirty) {
+        traceAutosave("flushPendingIncomingAfterSubmit:skip-overwrite-dirty", { uniqueId });
+        lastObservedUniqueId = uniqueId;
+        persistObservedUniqueId(uniqueId);
+        return;
+      }
+
+      traceAutosave("flushPendingIncomingAfterSubmit:apply", { uniqueId, dataSignatureLen: dataSignature.length });
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, readCurrentColumnJsonObject());
+    }
+
+    function persistObservedUniqueId(uniqueId) {
+      if (!uniqueId) return;
+      try {
+        window.sessionStorage.setItem(UNIQUE_ID_STORAGE_KEY, uniqueId);
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function readPersistedObservedUniqueId() {
+      try {
+        return String(window.sessionStorage.getItem(UNIQUE_ID_STORAGE_KEY) || "").trim();
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function readPersistedStartFlowState() {
+      try {
+        const raw = window.sessionStorage.getItem(START_FLOW_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        return {
+          lastStartParamWasTrue: Boolean(parsed.lastStartParamWasTrue),
+          hasChangesSinceStartOpen: Boolean(parsed.hasChangesSinceStartOpen),
+          startOpenSequence: Number(parsed.startOpenSequence) || 0,
+          time: parsed.time || ""
+        };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function persistStartFlowState() {
+      try {
+        window.sessionStorage.setItem(START_FLOW_STORAGE_KEY, JSON.stringify({
+          lastStartParamWasTrue,
+          hasChangesSinceStartOpen,
+          startOpenSequence,
+          time: new Date().toISOString()
+        }));
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function persistStartChangedTracking() {
+      try {
+        window.sessionStorage.setItem(START_CHANGED_TRACKING_STORAGE_KEY, JSON.stringify({
+          changedKeys: Array.from(changedFieldKeys || []),
+          changedValues: Array.from((changedFieldValuesByKey || new Map()).entries()),
+          time: new Date().toISOString()
+        }));
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function clearPersistedStartChangedTracking() {
+      try {
+        window.sessionStorage.removeItem(START_CHANGED_TRACKING_STORAGE_KEY);
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
+    function readPersistedStartChangedTracking() {
+      try {
+        const raw = window.sessionStorage.getItem(START_CHANGED_TRACKING_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        const keys = Array.isArray(parsed.changedKeys) ? parsed.changedKeys.filter(Boolean) : [];
+        const changedValues = new Map(Array.isArray(parsed.changedValues) ? parsed.changedValues : []);
+        return { keys, changedValues, time: parsed.time || "" };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function readCurrentUniqueId() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.BUBBLE_DATA_JSON,
+        inputs.bubble_data_json,
+        window.BUBBLE_DATA_JSON,
+        MANUAL_DATA_JSON
+      ];
+      for (const candidate of candidates) {
+        const uniqueId = extractUniqueId(candidate);
+        if (uniqueId) return uniqueId;
+      }
+      return "";
+    }
+
+
+    function normalizeStartSignalValue(rawValue) {
+      if (rawValue === undefined || rawValue === null) return null;
+      if (typeof rawValue === "boolean") return rawValue;
+      if (typeof rawValue === "number") return rawValue === 1;
+      const normalized = String(rawValue).trim().toLowerCase();
+      if (["true", "1", "yes", "open", "opened"].includes(normalized)) return true;
+      if (["false", "0", "no", "close", "closed"].includes(normalized)) return false;
+      return null;
+    }
+
+    function safeReadBubbleInputsFrom(target) {
+      try {
+        return target && target.BUBBLE_INPUTS && typeof target.BUBBLE_INPUTS === "object"
+          ? target.BUBBLE_INPUTS
+          : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function readStartSignalSnapshot() {
+      const keyCandidates = ["start", "START", "startParam", "start_flag", "startFlag", "start_mode", "startMode"];
+      const inputsScopes = [
+        { scope: "window", inputs: safeReadBubbleInputsFrom(window) },
+        { scope: "parent", inputs: safeReadBubbleInputsFrom(window.parent) },
+        { scope: "top", inputs: safeReadBubbleInputsFrom(window.top) }
+      ];
+      const observedRawValues = {};
+
+      for (const { scope, inputs } of inputsScopes) {
+        if (!inputs) continue;
+        for (const key of keyCandidates) {
+          if (!Object.prototype.hasOwnProperty.call(inputs, key)) continue;
+          const rawValue = inputs[key];
+          observedRawValues[`${scope}.${key}`] = rawValue;
+          const parsed = normalizeStartSignalValue(rawValue);
+          if (parsed !== null) {
+            return { value: parsed, source: `${scope}.BUBBLE_INPUTS.${key}`, rawValue, observedRawValues };
+          }
+        }
+      }
+
+      const searchTargets = [
+        { source: "window.location.search", query: window.location.search },
+        { source: "window.location.hash", query: window.location.hash && window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "" }
+      ];
+
+      for (const target of searchTargets) {
+        try {
+          if (!target.query) continue;
+          const queryValue = new URLSearchParams(target.query).get("start");
+          observedRawValues[target.source] = queryValue;
+          const parsed = normalizeStartSignalValue(queryValue);
+          if (parsed !== null) {
+            return { value: parsed, source: `${target.source}:start`, rawValue: queryValue, observedRawValues };
+          }
+        } catch (error) {
+          observedRawValues[`${target.source}:error`] = String(error?.message || error || "parse_error");
+        }
+      }
+
+      return { value: null, source: "unresolved", rawValue: null, observedRawValues };
+    }
+
+    function readStartSignalValue() {
+      return readStartSignalSnapshot().value;
+    }
+
+    function traceAutosave(label, payload = {}) {
+      const snapshot = {
+        label,
+        time: new Date().toISOString(),
+        lastObservedUniqueId,
+        currentUniqueId: readCurrentUniqueId(),
+        pendingIncomingUniqueId,
+        pendingIncomingDataSignatureLen: pendingIncomingDataSignature.length,
+        hasPendingUniqueIdSubmit,
+        lastObservedDataSignatureLen: lastObservedDataSignature.length,
+        isFormDirty,
+        isFormSaving,
+        changedKeys: Array.from(changedFieldKeys || []),
+        startSignal: readStartSignalValue(),
+        lastStartParamWasTrue,
+        hasSeenStartSignal,
+        ...payload
+      };
+      console.info(`[BDF_AUTOSAVE_TRACE] ${JSON.stringify(snapshot)}`);
+      if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
+        setConsole(`trace:${label}`, JSON.stringify(snapshot, null, 2));
+      }
+    }
+
+
+    function logStartState(label, extra = {}) {
+      const startSnapshot = readStartSignalSnapshot();
+      const snapshot = {
+        label,
+        startSignal: startSnapshot.value,
+        startSignalSource: startSnapshot.source,
+        startSignalRawValue: startSnapshot.rawValue,
+        lastStartParamWasTrue,
+        hasSeenStartSignal,
+        isFormDirty,
+        isFormSaving,
+        changedKeys: Array.from(changedFieldKeys || []),
+        observedStartValues: startSnapshot.observedRawValues,
+        ...extra
+      };
+      console.info(`[BDF_START_FLOW] ${JSON.stringify(snapshot)}`);
+      if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
+        setConsole(`start:${label}`, JSON.stringify(snapshot, null, 2));
+      }
+    }
+
+    function flushPendingSubmitAfterConfigReady() {
+      if (!pendingSubmitUntilConfigReady) return;
+      if (!state.config || !Array.isArray(state.config.fields)) return;
+      const pending = pendingSubmitUntilConfigReady;
+      pendingSubmitUntilConfigReady = null;
+      logStartState("flush-pending-submit-after-config", {
+        trigger: pending.trigger,
+        autosave: pending.autosave,
+        forceSubmit: pending.forceSubmit,
+        requestedAt: pending.requestedAt
+      });
+      setTimeout(() => {
+        runSubmitFlow({
+          autosave: pending.autosave,
+          forceSubmit: pending.forceSubmit,
+          trigger: `${pending.trigger}:after-config-ready`
+        });
+      }, 0);
     }
 
     function getSubmitFn() {
@@ -3559,15 +4032,46 @@ function renderSubmitOutputs(payload) {
     }
 
     function handleBeforeUnload(event) {
+      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
+      logStartState("beforeunload", {
+        shouldSubmitOnUnload,
+        hasChangesSinceStartOpen,
+        changedKeyCount: changedFieldKeys.size
+      });
+      if (shouldSubmitOnUnload) {
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload" });
+      }
+      persistStartFlowState();
       if (!isFormDirty) return undefined;
+      if (!isFormSaving) {
+        runSubmitFlow({ autosave: false, forceSubmit: true, trigger: "beforeunload-dirty-fallback" });
+      }
       const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
       event.preventDefault();
       event.returnValue = warningMessage;
       return warningMessage;
     }
 
-    function runSubmitFlow({ autosave = false } = {}) {
-      if (isFormSaving) {
+    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
+      traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      if (!state.config || !Array.isArray(state.config.fields)) {
+        pendingSubmitUntilConfigReady = {
+          autosave,
+          forceSubmit,
+          trigger,
+          requestedAt: new Date().toISOString()
+        };
+        logStartState("submit-skipped-no-config", {
+          trigger,
+          autosave,
+          forceSubmit,
+          hasConfig: Boolean(state.config),
+          queuedForConfigReady: true
+        });
+        isFormSaving = false;
+        return;
+      }
+      if (isFormSaving && !forceSubmit) {
         console.info("submit skipped: saving lock active", { autosave });
         return;
       }
@@ -3590,6 +4094,17 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
+      traceAutosave("runSubmitFlow:payload-built", {
+        trigger,
+        output1: submitOutputsPayload.output1,
+        output2: submitOutputsPayload.output2,
+        output3: submitOutputsPayload.output3,
+        output4: submitOutputsPayload.output4,
+        outputlist1Count: Array.isArray(submitOutputsPayload.outputlist1) ? submitOutputsPayload.outputlist1.length : -1,
+        outputlist2Count: Array.isArray(submitOutputsPayload.outputlist2) ? submitOutputsPayload.outputlist2.length : -1,
+        outputlist3Count: Array.isArray(submitOutputsPayload.outputlist3) ? submitOutputsPayload.outputlist3.length : -1,
+        outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1
+      });
       console.info("submitOutputs payload", submitOutputsPayload);
       console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
@@ -3613,6 +4128,7 @@ function renderSubmitOutputs(payload) {
       if (!fn) {
         isFormSaving = false;
         isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
         console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
         return;
       }
@@ -3625,21 +4141,27 @@ function renderSubmitOutputs(payload) {
             .then(() => {
               isFormSaving = false;
               isFormDirty = false;
+              flushPendingIncomingAfterSubmit();
             })
             .catch((error) => {
               isFormSaving = false;
               isFormDirty = true;
+              flushPendingIncomingAfterSubmit();
               console.error("submit failed", error);
             });
           return;
         }
         isFormSaving = false;
         isFormDirty = false;
+        flushPendingIncomingAfterSubmit();
       } catch (error) {
         isFormSaving = false;
         isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
         console.error("submit failed", error);
       }
+
+      hasPendingUniqueIdSubmit = false;
     }
 
     function maybeRunAutosaveOnStartClose() {
@@ -3651,22 +4173,182 @@ function renderSubmitOutputs(payload) {
       runSubmitFlow({ autosave: true });
     }
 
-    function evaluateStartTransition() {
-      const isStartTrue = readStartSignalIsTrue();
-      if (lastStartParamWasTrue && !isStartTrue) {
-        maybeRunAutosaveOnStartClose();
+    function evaluateUniqueIdTransition() {
+      const nextUniqueId = readCurrentUniqueId();
+      const nextDataSignature = readCurrentBubbleDataSignature();
+      const uniqueIdChanged = Boolean(nextUniqueId) && nextUniqueId !== lastObservedUniqueId;
+      const dataChanged = Boolean(nextDataSignature) && nextDataSignature !== lastObservedDataSignature;
+
+      if (!nextUniqueId && !nextDataSignature) return;
+
+      if (!lastObservedUniqueId && nextUniqueId) {
+        traceAutosave("evaluateUniqueIdTransition:init-observed", { nextUniqueId });
+        lastObservedUniqueId = nextUniqueId;
+        persistObservedUniqueId(nextUniqueId);
       }
-      lastStartParamWasTrue = isStartTrue;
+      if (!lastObservedDataSignature && nextDataSignature) {
+        lastObservedDataSignature = nextDataSignature;
+      }
+
+      if (!uniqueIdChanged && !dataChanged) {
+        return;
+      }
+
+      const incomingBubbleData = readCurrentBubbleDataObject();
+      const incomingColumnJson = readCurrentColumnJsonObject();
+
+      if (isFormSaving) {
+        pendingIncomingBubbleData = incomingBubbleData;
+        pendingIncomingUniqueId = nextUniqueId || lastObservedUniqueId;
+        pendingIncomingDataSignature = nextDataSignature;
+        traceAutosave("evaluateUniqueIdTransition:queued-while-saving", { nextUniqueId, dataChanged, uniqueIdChanged });
+        return;
+      }
+
+      if (isFormDirty) {
+        pendingIncomingBubbleData = incomingBubbleData;
+        pendingIncomingUniqueId = nextUniqueId || lastObservedUniqueId;
+        pendingIncomingDataSignature = nextDataSignature;
+        hasPendingUniqueIdSubmit = true;
+        traceAutosave("evaluateUniqueIdTransition:dirty-submit-current-first", {
+          nextUniqueId,
+          dataChanged,
+          uniqueIdChanged,
+          pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
+        });
+        maybeRunAutosaveOnStartClose();
+        runSubmitFlow({ autosave: false, forceSubmit: true });
+        if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
+          MANUAL_COLUMN_JSON = incomingColumnJson;
+        }
+        return;
+      }
+
+      traceAutosave("evaluateUniqueIdTransition:apply-direct", { nextUniqueId, dataChanged, uniqueIdChanged });
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId || lastObservedUniqueId, incomingColumnJson);
+    }
+
+    function evaluateStartSignalTransition() {
+      const startSignal = readStartSignalValue();
+      if (startSignal === null) return;
+
+      logStartState("tick", {
+        startSignal,
+        changedKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        shouldSubmitIfClose: Boolean(lastStartParamWasTrue && !startSignal && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving)
+      });
+
+      const signalText = String(Boolean(startSignal));
+      if (lastStartLoggedState !== signalText) {
+        lastStartLoggedState = signalText;
+        logStartState("signal-change", { startSignal });
+      }
+
+      hasSeenStartSignal = true;
+      if (!lastStartParamWasTrue && startSignal) {
+        lastStartParamWasTrue = true;
+        startOpenSequence += 1;
+        hasChangesSinceStartOpen = false;
+        logStartState("open", { startSignal, startOpenSequence, changedKeyCount: changedFieldKeys.size });
+        persistStartFlowState();
+        return;
+      }
+
+      if (lastStartParamWasTrue && !startSignal) {
+        const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
+        const shouldSubmit = hasDirtyIndicators && !isFormSaving;
+        logStartState("close", {
+          startSignal,
+          shouldSubmit,
+          hasDirtyIndicators,
+          hasChangesSinceStartOpen,
+          isFormDirty,
+          changedKeyCount: changedFieldKeys.size,
+          startOpenSequence
+        });
+        lastStartParamWasTrue = false;
+        if (shouldSubmit) {
+          logStartState("close-trigger-submit", {
+            mode: "autosave",
+            trigger: "start-close",
+            startOpenSequence,
+            changedKeyCount: changedFieldKeys.size
+          });
+          hasChangesSinceStartOpen = false;
+          persistStartFlowState();
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close" });
+        } else {
+          logStartState("close-skip-submit", {
+            reason: isFormSaving ? "saving-lock" : "no-detected-change",
+            hasChangesSinceStartOpen,
+            isFormDirty,
+            changedKeyCount: changedFieldKeys.size,
+            startOpenSequence
+          });
+        }
+        persistStartFlowState();
+        return;
+      }
+
+      lastStartParamWasTrue = Boolean(startSignal);
+      persistStartFlowState();
     }
 
     function initAutosaveStartWatcher() {
-      lastStartParamWasTrue = readStartSignalIsTrue();
+      const persistedStartFlowState = readPersistedStartFlowState();
+      const persistedChangedTracking = readPersistedStartChangedTracking();
+      const currentDataSignature = readCurrentBubbleDataSignature();
+      const startSignal = readStartSignalValue();
+      if (persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
+        changedFieldKeys = new Set(persistedChangedTracking.keys);
+        changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
+          ? persistedChangedTracking.changedValues
+          : new Map();
+        logStartState("hydrate-persisted-changed-tracking", {
+          changedKeyCount: changedFieldKeys.size,
+          persistedAt: persistedChangedTracking.time || ""
+        });
+      }
+      if (persistedStartFlowState) {
+        startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
+      }
+      if (startSignal !== null) {
+        hasSeenStartSignal = true;
+        lastStartParamWasTrue = Boolean(startSignal);
+        hasChangesSinceStartOpen = lastStartParamWasTrue
+          ? Boolean(persistedStartFlowState?.hasChangesSinceStartOpen)
+          : false;
+        logStartState("seed", { startSignal, startOpenSequence });
+
+        const wasOpenBeforeRemount = Boolean(persistedStartFlowState?.lastStartParamWasTrue);
+        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen);
+        const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
+        if (shouldSubmitRemountClose) {
+          hasChangesSinceStartOpen = false;
+          lastStartParamWasTrue = false;
+          persistStartFlowState();
+          if (changedFieldKeys.size === 0 && persistedChangedTracking?.keys?.length) {
+            changedFieldKeys = new Set(persistedChangedTracking.keys);
+          }
+          logStartState("remount-close-trigger-submit", {
+            persistedStartFlowState,
+            changedKeyCount: changedFieldKeys.size,
+            trigger: "start-close-remount"
+          });
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount" });
+        }
+        persistStartFlowState();
+      }
+      if (currentDataSignature) {
+        lastObservedDataSignature = currentDataSignature;
+      }
 
       if (window.history && typeof window.history.pushState === "function") {
         const originalPushState = window.history.pushState.bind(window.history);
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
-          evaluateStartTransition();
+          evaluateStartSignalTransition();
           return result;
         };
       }
@@ -3675,15 +4357,15 @@ function renderSubmitOutputs(payload) {
         const originalReplaceState = window.history.replaceState.bind(window.history);
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
-          evaluateStartTransition();
+          evaluateStartSignalTransition();
           return result;
         };
       }
 
-      window.addEventListener("popstate", evaluateStartTransition);
-      window.addEventListener("hashchange", evaluateStartTransition);
+      window.addEventListener("popstate", evaluateStartSignalTransition);
+      window.addEventListener("hashchange", evaluateStartSignalTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
-      setInterval(evaluateStartTransition, 300);
+      setInterval(evaluateStartSignalTransition, 300);
     }
 
     function debounceFormChange() {
@@ -3792,6 +4474,8 @@ function renderSubmitOutputs(payload) {
           if (isEmptyValue(aiValue)) return;
           humanData[field.key] = aiValue;
           sourceByField[field.key] = "human";
+          markFieldAsChanged(field.key);
+          rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
           updateFieldDisplayValue(field.key);
         });
         labelMeta.append(applyAiBtn);
@@ -4608,6 +5292,8 @@ function renderSubmitOutputs(payload) {
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
                 sourceByField[field.key] = "human";
+                markFieldAsChanged(field.key);
+                rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
                 updateEffectiveState(field.key, field);
                 updateAiVisuals(field.key);
                 emit("onFileSelected", {
@@ -4692,6 +5378,8 @@ function renderSubmitOutputs(payload) {
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
             humanData[field.key] = "";
             sourceByField[field.key] = "human";
+            markFieldAsChanged(field.key);
+            rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
             updateEffectiveState(field.key, field);
             updateAiVisuals(field.key);
             console.log("Pending file selected", {
@@ -4887,7 +5575,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function updateSubmitState(config) {
-      console.info("updateSubmitState:start", { fieldCount: (config.fields || []).length });
+      console.info(`[updateSubmitState:start] ${JSON.stringify({ fieldCount: (config.fields || []).length })}`);
       const isValid = (config.fields || []).every((field) => {
         let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
@@ -4899,7 +5587,7 @@ function renderSubmitOutputs(payload) {
         if (isFieldRequired(field)) {
           const fieldOk = !isEmptyValue(validationValue);
           if (!fieldOk) {
-            console.info("updateSubmitState:missing", { fieldKey: field.key, label: field.label });
+            console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
           }
           return fieldOk;
         }
@@ -4912,7 +5600,7 @@ function renderSubmitOutputs(payload) {
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
-      console.info("updateSubmitState:done", { isValid, requiredPolicy: config.requiredPolicy });
+      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy })}`);
     }
 
     function focusFirstInvalid() {
@@ -4958,6 +5646,8 @@ function renderSubmitOutputs(payload) {
         if (!overwrite && !isEmptyValue(humanData[field.key])) return;
         humanData[field.key] = aiValue;
         sourceByField[field.key] = "human";
+        markFieldAsChanged(field.key);
+        rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
       });
       refreshAllFields();
     }
@@ -4977,6 +5667,7 @@ function renderSubmitOutputs(payload) {
       triggeredActionUniqueId = "";
       isFormDirty = false;
       isFormSaving = false;
+      clearChangedTracking();
       updateActionBarUi();
       if (columnJson) {
         applyColumnJson(columnJson);
@@ -5100,6 +5791,7 @@ function renderSubmitOutputs(payload) {
         }
         emit("debug:human-json", payload);
         loadJsonSafeToForm("human", payload);
+        clearChangedTracking();
         isFormDirty = computeDirtyState();
         updateActionBarUi();
         openExportModal("human");
