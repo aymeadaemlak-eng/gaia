@@ -3378,6 +3378,7 @@ function renderSubmitOutputs(payload) {
         const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
         entries.push(`"${jsonKey}": ${JSON.stringify(safeValue)}`);
       });
+      traceAutosave("buildKeyValueListFromSources", { entriesCount: entries.length, entries });
       return entries;
     }
 
@@ -3680,6 +3681,13 @@ function renderSubmitOutputs(payload) {
 
 
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
+      traceAutosave("applyIncomingBubbleDataAsCurrentItem:start", {
+        uniqueId,
+        hasIncomingBubbleData: Boolean(incomingBubbleData),
+        incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : [],
+        hasIncomingColumns: Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns)),
+        incomingColumnCount: Array.isArray(incomingColumnJson?.columns) ? incomingColumnJson.columns.length : 0
+      });
       const hasIncomingColumns = Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns));
       if (hasIncomingColumns) {
         MANUAL_COLUMN_JSON = incomingColumnJson;
@@ -3706,10 +3714,15 @@ function renderSubmitOutputs(payload) {
         lastObservedUniqueId = uniqueId;
         persistObservedUniqueId(uniqueId);
       }
+      traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId });
     }
 
     function flushPendingIncomingAfterSubmit() {
-      if (!pendingIncomingUniqueId) return;
+      traceAutosave("flushPendingIncomingAfterSubmit:start");
+      if (!pendingIncomingUniqueId) {
+        traceAutosave("flushPendingIncomingAfterSubmit:skip-no-pending");
+        return;
+      }
       const incomingBubbleData = pendingIncomingBubbleData;
       const uniqueId = pendingIncomingUniqueId;
       pendingIncomingBubbleData = null;
@@ -3718,11 +3731,13 @@ function renderSubmitOutputs(payload) {
       const currentUniqueId = readCurrentUniqueId();
       const isSameItemNow = Boolean(currentUniqueId) && currentUniqueId === uniqueId;
       if (isSameItemNow && isFormDirty) {
+        traceAutosave("flushPendingIncomingAfterSubmit:skip-overwrite-dirty", { uniqueId });
         lastObservedUniqueId = uniqueId;
         persistObservedUniqueId(uniqueId);
         return;
       }
 
+      traceAutosave("flushPendingIncomingAfterSubmit:apply", { uniqueId });
       applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, readCurrentColumnJsonObject());
     }
 
@@ -3756,6 +3771,26 @@ function renderSubmitOutputs(payload) {
         if (uniqueId) return uniqueId;
       }
       return "";
+    }
+
+    function traceAutosave(label, payload = {}) {
+      if (!BDF.DEBUG_MODE) return;
+      const snapshot = {
+        label,
+        time: new Date().toISOString(),
+        lastObservedUniqueId,
+        currentUniqueId: readCurrentUniqueId(),
+        pendingIncomingUniqueId,
+        hasPendingUniqueIdSubmit,
+        isFormDirty,
+        isFormSaving,
+        changedKeys: Array.from(changedFieldKeys || []),
+        ...payload
+      };
+      console.info("[BDF_AUTOSAVE_TRACE]", snapshot);
+      if (!IS_VERSION_MODE) {
+        setConsole(`trace:${label}`, JSON.stringify(snapshot, null, 2));
+      }
     }
 
     function getSubmitFn() {
@@ -3792,6 +3827,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function runSubmitFlow({ autosave = false, forceSubmit = false } = {}) {
+      traceAutosave("runSubmitFlow:start", { autosave, forceSubmit });
       if (isFormSaving && !forceSubmit) {
         console.info("submit skipped: saving lock active", { autosave });
         return;
@@ -3815,6 +3851,16 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
+      traceAutosave("runSubmitFlow:payload-built", {
+        output1: submitOutputsPayload.output1,
+        output2: submitOutputsPayload.output2,
+        output3: submitOutputsPayload.output3,
+        output4: submitOutputsPayload.output4,
+        outputlist1Count: Array.isArray(submitOutputsPayload.outputlist1) ? submitOutputsPayload.outputlist1.length : -1,
+        outputlist2Count: Array.isArray(submitOutputsPayload.outputlist2) ? submitOutputsPayload.outputlist2.length : -1,
+        outputlist3Count: Array.isArray(submitOutputsPayload.outputlist3) ? submitOutputsPayload.outputlist3.length : -1,
+        outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1
+      });
       console.info("submitOutputs payload", submitOutputsPayload);
       console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
@@ -3885,13 +3931,18 @@ function renderSubmitOutputs(payload) {
 
     function evaluateUniqueIdTransition() {
       const nextUniqueId = readCurrentUniqueId();
+      traceAutosave("evaluateUniqueIdTransition:tick", { nextUniqueId });
       if (!nextUniqueId) return;
       if (!lastObservedUniqueId) {
+        traceAutosave("evaluateUniqueIdTransition:init-observed", { nextUniqueId });
         lastObservedUniqueId = nextUniqueId;
         persistObservedUniqueId(nextUniqueId);
         return;
       }
-      if (nextUniqueId === lastObservedUniqueId) return;
+      if (nextUniqueId === lastObservedUniqueId) {
+        traceAutosave("evaluateUniqueIdTransition:no-change", { nextUniqueId });
+        return;
+      }
 
       const incomingBubbleData = readCurrentBubbleDataObject();
       const incomingColumnJson = readCurrentColumnJsonObject();
@@ -3899,6 +3950,7 @@ function renderSubmitOutputs(payload) {
       if (isFormSaving) {
         pendingIncomingBubbleData = incomingBubbleData;
         pendingIncomingUniqueId = nextUniqueId;
+        traceAutosave("evaluateUniqueIdTransition:queued-while-saving", { nextUniqueId });
         return;
       }
 
@@ -3906,6 +3958,10 @@ function renderSubmitOutputs(payload) {
         pendingIncomingBubbleData = incomingBubbleData;
         pendingIncomingUniqueId = nextUniqueId;
         hasPendingUniqueIdSubmit = true;
+        traceAutosave("evaluateUniqueIdTransition:dirty-submit-current-first", {
+          nextUniqueId,
+          pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
+        });
         maybeRunAutosaveOnStartClose();
         runSubmitFlow({ autosave: false, forceSubmit: true });
         if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
@@ -3914,6 +3970,7 @@ function renderSubmitOutputs(payload) {
         return;
       }
 
+      traceAutosave("evaluateUniqueIdTransition:apply-direct", { nextUniqueId });
       applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId, incomingColumnJson);
     }
 
