@@ -125,7 +125,7 @@
       --form-control-pad-x: clamp(7px, 0.9vw, 10px);
       --form-input-pad-y: clamp(6px, 0.8vw, 8px);
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
-      --form-input-min-height: clamp(32px, 4vw, 36px);
+      --form-input-min-height: clamp(34px, 4vw, 38px);
       --field-gap-internal: clamp(4px, 0.6vw, 8px);
       --field-gap-between: clamp(3px, 0.6vw, 6px);
       --field-group-gap: clamp(12px, 1.6vw, 16px);
@@ -190,148 +190,15 @@
     }
 
     #bdf-root .required-hint {
-      font-size: 0.75rem;
-      color: var(--danger);
-      font-weight: 600;
+      display: none !important;
     }
 
-    #bdf-root .field-wrapper {
-      display: grid;
-      gap: var(--field-gap-internal);
-      padding: var(--form-vertical-padding) 0;
-    }
-
-    #bdf-root .field-wrapper + .field-wrapper {
-      margin-top: var(--field-gap-between);
-    }
-
-    #bdf-root .field-wrapper.group-break-date {
-      margin-top: var(--field-group-gap);
-    }
-
-    #bdf-root .field-row {
-      display: grid;
-      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
-      gap: var(--form-row-gap);
-      align-items: start;
-    }
-
-    #bdf-root .field-row.is-file-field {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 8px;
-    }
-
-    #bdf-root .field-row.is-file-field .field-label {
-      padding: 8px 10px;
-      border: 1px solid #edf1f6;
-      border-radius: 10px;
-      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
-    }
-
-    #bdf-root .field-row.is-file-field .control-stack {
-      justify-items: stretch;
-    }
-
-#bdf-root #formContainer {
-      min-height: 700px;
-      max-height: 700px;
-      overflow: auto;
-      padding-right: 4px;
-    }
-
-#bdf-root .field-control.file-field-control {
-      min-height: 120px;
-      display: grid;
-      align-content: start;
-      gap: 10px;
-      cursor: pointer;
-    }
-
-#bdf-root .field-control.file-field-control .file-drop {
-      min-height: 72px;
-      display: grid;
-      place-items: center;
-      width: 100%;
-    }
-
-#bdf-root .field-control.file-field-control .field-input[type="file"] {
-      display: none;
-    }
-
-    #bdf-root .field-label {
-      display: grid;
-      gap: 2px;
-    }
-
-    #bdf-root .label-top {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 5px;
-    }
-
-    #bdf-root .label-text {
-      font-weight: 560;
+    #bdf-root .required-mark {
       font-size: 0.9rem;
-      color: #4b5563;
-    }
-
-    #bdf-root .label-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 4px;
-    }
-
-    #bdf-root .type-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border-radius: 0;
-      background: transparent;
-      border: none;
-      color: #7b7b75;
-      flex-shrink: 0;
-    }
-
-    #bdf-root .type-icon svg {
-      width: 15px;
-      height: 15px;
-      display: block;
-    }
-
-#bdf-root .stage-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.68rem;
+      line-height: 1;
+      color: #a78b6a;
       font-weight: 600;
-      text-transform: capitalize;
-      border: 1px solid transparent;
-      letter-spacing: 0.01em;
-    }
-
-#bdf-root .stage-optional {
-      background: #f3f4f6;
-      color: #6b7280;
-      border-color: #e5e7eb;
-    }
-
-#bdf-root .stage-mandatory {
-      background: rgba(224, 90, 90, 0.12);
-      color: #b63a3a;
-      border-color: rgba(224, 90, 90, 0.4);
-    }
-
-#bdf-root .stage-control {
-      background: rgba(148, 163, 184, 0.08);
-      color: #7c8798;
-      border-color: rgba(148, 163, 184, 0.4);
-      font-size: 0.62rem;
-      margin-top: 4px;
+      transform: translateY(-0.5px);
     }
 
 #bdf-root .ai-badge {
@@ -384,12 +251,13 @@
     }
 
 #bdf-root .field-control {
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
+      border: 1px solid #e8ebf0;
+      border-radius: 10px;
       padding: var(--form-control-pad-y) var(--form-control-pad-x);
       background: #fff;
       position: relative;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
     }
 
 #bdf-root .field-control::before {
@@ -419,8 +287,8 @@
     }
 
 #bdf-root .field-control:focus-within {
-      border-color: rgba(37, 99, 235, 0.55);
-      box-shadow: 0 0 0 2px var(--focus);
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
     }
 
 #bdf-root .field-control.invalid {
@@ -883,18 +751,46 @@
 
 #bdf-root .action-bar {
       position: sticky;
-      top: 10px;
-      z-index: 15;
+      top: 0;
+      z-index: 25;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(4px);
-      margin-bottom: 10px;
+      gap: 12px;
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid #e4e8ee;
+      border-radius: 12px;
+      background: #f8fafc;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      margin-bottom: 12px;
+    }
+
+#bdf-root .action-meta {
+      display: grid;
+      gap: 2px;
+      min-width: 88px;
+    }
+
+#bdf-root .action-meta-title {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 0.01em;
+    }
+
+#bdf-root .action-meta-subtitle {
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+#bdf-root .action-main {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
     }
 
 #bdf-root .action-split {
@@ -903,8 +799,9 @@
       align-items: stretch;
       border-radius: 10px;
       overflow: visible;
-      border: 1px solid var(--border);
+      border: 1px solid #cbd5e1;
       background: #fff;
+      box-shadow: 0 1px 1px rgba(15,23,42,0.04);
     }
 
 #bdf-root .action-split button {
@@ -913,17 +810,31 @@
     }
 
 #bdf-root .action-trigger-btn {
-      background: #f8fafc;
-      color: var(--text);
-      min-width: 150px;
+      background: #ffffff;
+      color: #0f172a;
+      min-width: 190px;
       text-align: left;
+      font-weight: 600;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
     }
 
 #bdf-root .action-chevron-btn {
-      background: #e2e8f0;
-      color: #0f172a;
+      background: #eff6ff;
+      color: #1e3a8a;
       min-width: 40px;
       padding: 8px 10px;
+      border-left: 1px solid #cbd5e1;
+    }
+
+#bdf-root .action-split button:hover {
+      background: #f1f5f9;
+    }
+
+#bdf-root .action-split button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+      position: relative;
+      z-index: 1;
     }
 
 #bdf-root .action-menu {
@@ -1147,6 +1058,15 @@
         max-height: 85vh;
       }
 
+#bdf-root .action-bar {
+        align-items: flex-start;
+      }
+
+#bdf-root .action-main {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
 #bdf-root .field-row.is-amount-field .control-stack {
         max-width: min(100%, 248px);
       }
@@ -1314,13 +1234,19 @@
     <section class="card">
       <div id="formContainer">
         <div id="actionBar" class="action-bar">
-          <div class="action-split" id="actionSplit">
-            <button id="actionTriggerBtn" type="button" class="action-trigger-btn">Create</button>
-            <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
-            <div id="actionMenu" class="action-menu"></div>
+          <div class="action-meta">
+            <span class="action-meta-title">Aksiyon</span>
+            <span class="action-meta-subtitle">Süreç adımını seçin</span>
           </div>
-          <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
-          <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
+          <div class="action-main">
+            <div class="action-split" id="actionSplit">
+              <button id="actionTriggerBtn" type="button" class="action-trigger-btn">Aksiyon seç</button>
+              <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
+              <div id="actionMenu" class="action-menu"></div>
+            </div>
+            <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
+            <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
+          </div>
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <form id="dynamicForm" class="grid"></form>
@@ -2429,8 +2355,9 @@ function renderSubmitOutputs(payload) {
 
     function createMandatoryBadge() {
       const badge = document.createElement("span");
-      badge.className = "stage-badge stage-mandatory";
-      badge.textContent = "Mandatory";
+      badge.className = "required-mark";
+      badge.textContent = "*";
+      badge.setAttribute("aria-hidden", "true");
       return badge;
     }
 
@@ -2917,15 +2844,6 @@ function renderSubmitOutputs(payload) {
 
     function getMergedValidationValue(field) {
       return getEffectiveValue(field.key);
-    }
-
-    function getStageBadge(stageType) {
-      const normalized = normalizeStageType(stageType);
-      if (!["optional", "mandatory", "control"].includes(normalized)) return null;
-      const badge = document.createElement("span");
-      badge.className = `stage-badge stage-${normalized}`;
-      badge.textContent = normalized === "optional" ? "Optional" : normalized === "mandatory" ? "Mandatory" : "Control";
-      return badge;
     }
 
     function isImageLike(file) {
@@ -4494,10 +4412,7 @@ function renderSubmitOutputs(payload) {
         const labelMeta = document.createElement("div");
         labelMeta.className = "label-meta";
 
-        const stageBadge = getStageBadge(field.stageType);
-        if (stageBadge) {
-          labelMeta.append(stageBadge);
-        } else if (field.required) {
+        if (field.required) {
           labelMeta.append(createMandatoryBadge());
         }
 
