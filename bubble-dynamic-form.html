@@ -232,6 +232,32 @@
       justify-items: stretch;
     }
 
+#bdf-root #formContainer {
+      min-height: 600px;
+      max-height: 600px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+#bdf-root .field-control.file-field-control {
+      min-height: 140px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+#bdf-root .field-control.file-field-control .file-drop {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      width: 100%;
+    }
+
+#bdf-root .field-control.file-field-control .field-input[type="file"] {
+      display: none;
+    }
+
     #bdf-root .field-label {
       display: grid;
       gap: 4px;
@@ -1114,6 +1140,11 @@
 
 #bdf-root .field-row.is-file-field .field-label {
         padding: 7px 9px;
+      }
+
+#bdf-root #formContainer {
+        min-height: 520px;
+        max-height: 80vh;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -4149,6 +4180,9 @@ function renderSubmitOutputs(payload) {
             .then(() => {
               isFormSaving = false;
               isFormDirty = false;
+              if (shouldResetAfterSubmit({ autosave })) {
+                resetFormAfterSuccessfulSubmit();
+              }
               flushPendingIncomingAfterSubmit();
             })
             .catch((error) => {
@@ -4161,6 +4195,9 @@ function renderSubmitOutputs(payload) {
         }
         isFormSaving = false;
         isFormDirty = false;
+        if (shouldResetAfterSubmit({ autosave })) {
+          resetFormAfterSuccessfulSubmit();
+        }
         flushPendingIncomingAfterSubmit();
       } catch (error) {
         isFormSaving = false;
@@ -4170,6 +4207,17 @@ function renderSubmitOutputs(payload) {
       }
 
       hasPendingUniqueIdSubmit = false;
+    }
+
+    function shouldResetAfterSubmit({ autosave }) {
+      if (autosave) return false;
+      const mode = String(state.config?.mode || "").trim().toLowerCase();
+      return mode === "create";
+    }
+
+    function resetFormAfterSuccessfulSubmit() {
+      resetAllStores();
+      summaryBox.style.display = "none";
     }
 
     function maybeRunAutosaveOnStartClose() {
@@ -5203,6 +5251,7 @@ function renderSubmitOutputs(payload) {
           });
           inputEl = grid;
         } else if (["file", "multifile", "image"].includes(field.type)) {
+          control.classList.add("file-field-control");
           const drop = document.createElement("div");
           drop.className = "file-drop";
           drop.textContent = "Dosya sürükleyin veya seçin";
@@ -5422,17 +5471,28 @@ function renderSubmitOutputs(payload) {
             });
           };
 
-          drop.addEventListener("dragover", (event) => {
+          const setDropActive = (active) => {
+            drop.style.borderColor = active ? varPrimary() : "";
+          };
+
+          const isInteractiveFileActionTarget = (eventTarget) => {
+            return Boolean(eventTarget && eventTarget.closest && eventTarget.closest("button, a, input, .file-thumb-wrap"));
+          };
+
+          control.addEventListener("dragover", (event) => {
             event.preventDefault();
-            drop.style.borderColor = varPrimary();
+            setDropActive(true);
           });
-          drop.addEventListener("dragleave", () => {
-            drop.style.borderColor = "";
+          control.addEventListener("dragleave", (event) => {
+            if (event.relatedTarget && control.contains(event.relatedTarget)) {
+              return;
+            }
+            setDropActive(false);
           });
-          drop.addEventListener("drop", (event) => {
+          control.addEventListener("drop", (event) => {
             event.preventDefault();
             handleFiles(event.dataTransfer.files);
-            drop.style.borderColor = "";
+            setDropActive(false);
           });
 
           fileInput.addEventListener("change", (event) => {
@@ -5440,7 +5500,8 @@ function renderSubmitOutputs(payload) {
             event.target.value = "";
           });
 
-          drop.addEventListener("click", () => {
+          control.addEventListener("click", (event) => {
+            if (isInteractiveFileActionTarget(event.target)) return;
             fileInput.click();
           });
 
