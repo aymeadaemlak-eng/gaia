@@ -2606,14 +2606,33 @@ function renderSubmitOutputs(payload) {
     function buildFieldKeyMap() {
       const map = new Map();
       (state.config?.fields || []).forEach((field) => {
-        if (field.key) map.set(normalizeKey(field.key), field.key);
+        const aliases = [
+          field.key,
+          field.fieldName,
+          field.label
+        ];
+        aliases.forEach((alias) => {
+          const normalizedAlias = normalizeKey(alias);
+          if (!normalizedAlias) return;
+          if (!map.has(normalizedAlias)) {
+            map.set(normalizedAlias, field.key);
+          }
+        });
       });
       return map;
     }
 
     function getFieldKeyFromJsonKey(jsonKey, keyMap) {
       if (!jsonKey) return null;
-      return keyMap.get(normalizeKey(jsonKey)) || null;
+      const direct = keyMap.get(normalizeKey(jsonKey));
+      if (direct) return direct;
+      const normalizedTarget = normalizeKey(jsonKey).toLocaleLowerCase("tr-TR");
+      for (const [candidate, fieldKey] of keyMap.entries()) {
+        if (candidate.toLocaleLowerCase("tr-TR") === normalizedTarget) {
+          return fieldKey;
+        }
+      }
+      return null;
     }
 
     function getActiveSource(fieldKey) {
