@@ -130,7 +130,7 @@
       --field-gap-between: 4px;
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
-      --field-control-height: 36px;
+      --field-control-height: 32px;
       font-size: 14px;
       color: var(--text);
     }
@@ -220,18 +220,18 @@
     }
 
     #bdf-root .field-row {
-      display: grid;
-      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
-      gap: 12px;
+      display: flex;
       align-items: center;
+      gap: 12px;
       min-height: 40px;
-      padding: 0;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
     #bdf-root .field-row.is-file-field {
-      grid-template-columns: 1fr;
+      flex-direction: column;
       gap: 6px;
-      align-items: start;
+      align-items: stretch;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
@@ -239,6 +239,8 @@
       border: 1px solid #edf1f6;
       border-radius: 8px;
       background: #fff;
+      flex: 1 1 auto;
+      max-width: none;
     }
 
     #bdf-root .field-row.is-file-field .control-stack {
@@ -279,6 +281,8 @@
       min-height: var(--field-control-height);
       margin: 0;
       padding: 0;
+      flex: 0 0 clamp(170px, 28vw, 220px);
+      max-width: clamp(170px, 28vw, 220px);
     }
 
     #bdf-root .label-top {
@@ -295,7 +299,7 @@
       font-weight: 500;
       font-size: 14px;
       color: #6b7280;
-      line-height: 1.25;
+      line-height: 1.2;
       margin: 0;
       padding: 0;
     }
@@ -375,6 +379,8 @@
       justify-items: start;
       align-items: center;
       min-height: var(--field-control-height);
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -442,15 +448,16 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 0 2px;
-      border-radius: 4px;
+      height: var(--field-control-height);
+      min-height: var(--field-control-height);
+      padding: 6px 10px;
+      border-radius: 6px;
       font-size: 14px;
       font-weight: 500;
       background: transparent;
       color: #111827;
       outline: none;
-      min-height: var(--field-control-height);
-      line-height: 1.25;
+      line-height: 20px;
       margin: 0;
       box-sizing: border-box;
     }
@@ -611,7 +618,7 @@
 #bdf-root .error-text {
       font-size: 0.75rem;
       color: var(--danger);
-      min-height: 16px;
+      min-height: 0;
     }
 
 #bdf-root .inline-row {
@@ -1192,7 +1199,12 @@
       }
 
 #bdf-root .field-row {
-        grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+        gap: 10px;
+      }
+
+#bdf-root .field-label {
+        flex-basis: clamp(150px, 34vw, 190px);
+        max-width: clamp(150px, 34vw, 190px);
       }
 
 #bdf-root .field-row.is-file-field .field-label {
@@ -1220,8 +1232,13 @@
 
     @media (max-width: 360px) {
 #bdf-root .field-row {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
         gap: 4px;
+      }
+
+#bdf-root .field-label {
+        max-width: none;
       }
     }
   </style>
