@@ -3838,35 +3838,72 @@ function renderSubmitOutputs(payload) {
     }
 
 
-    function readStartSignalValue() {
-      const inputs = window.BUBBLE_INPUTS || {};
-      const directValue =
-        inputs.start
-        ?? inputs.START
-        ?? inputs.startParam
-        ?? inputs.start_flag
-        ?? inputs.startFlag;
-
-      if (directValue !== undefined && directValue !== null) {
-        if (typeof directValue === "boolean") return directValue;
-        if (typeof directValue === "number") return directValue === 1;
-        const normalized = String(directValue).trim().toLowerCase();
-        if (["true", "1", "yes"].includes(normalized)) return true;
-        if (["false", "0", "no"].includes(normalized)) return false;
-      }
-
-      try {
-        const queryValue = new URLSearchParams(window.location.search).get("start");
-        if (queryValue !== null) {
-          const normalized = String(queryValue).trim().toLowerCase();
-          if (["true", "1", "yes"].includes(normalized)) return true;
-          if (["false", "0", "no"].includes(normalized)) return false;
-        }
-      } catch (error) {
-        // ignore URL parse errors
-      }
-
+    function normalizeStartSignalValue(rawValue) {
+      if (rawValue === undefined || rawValue === null) return null;
+      if (typeof rawValue === "boolean") return rawValue;
+      if (typeof rawValue === "number") return rawValue === 1;
+      const normalized = String(rawValue).trim().toLowerCase();
+      if (["true", "1", "yes", "open", "opened"].includes(normalized)) return true;
+      if (["false", "0", "no", "close", "closed"].includes(normalized)) return false;
       return null;
+    }
+
+    function safeReadBubbleInputsFrom(target) {
+      try {
+        return target && target.BUBBLE_INPUTS && typeof target.BUBBLE_INPUTS === "object"
+          ? target.BUBBLE_INPUTS
+          : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function readStartSignalSnapshot() {
+      const keyCandidates = ["start", "START", "startParam", "start_flag", "startFlag", "start_mode", "startMode"];
+      const inputsScopes = [
+        { scope: "window", inputs: safeReadBubbleInputsFrom(window) },
+        { scope: "parent", inputs: safeReadBubbleInputsFrom(window.parent) },
+        { scope: "top", inputs: safeReadBubbleInputsFrom(window.top) }
+      ];
+      const observedRawValues = {};
+
+      for (const { scope, inputs } of inputsScopes) {
+        if (!inputs) continue;
+        for (const key of keyCandidates) {
+          if (!Object.prototype.hasOwnProperty.call(inputs, key)) continue;
+          const rawValue = inputs[key];
+          observedRawValues[`${scope}.${key}`] = rawValue;
+          const parsed = normalizeStartSignalValue(rawValue);
+          if (parsed !== null) {
+            return { value: parsed, source: `${scope}.BUBBLE_INPUTS.${key}`, rawValue, observedRawValues };
+          }
+        }
+      }
+
+      const searchTargets = [
+        { source: "window.location.search", query: window.location.search },
+        { source: "window.location.hash", query: window.location.hash && window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "" }
+      ];
+
+      for (const target of searchTargets) {
+        try {
+          if (!target.query) continue;
+          const queryValue = new URLSearchParams(target.query).get("start");
+          observedRawValues[target.source] = queryValue;
+          const parsed = normalizeStartSignalValue(queryValue);
+          if (parsed !== null) {
+            return { value: parsed, source: `${target.source}:start`, rawValue: queryValue, observedRawValues };
+          }
+        } catch (error) {
+          observedRawValues[`${target.source}:error`] = String(error?.message || error || "parse_error");
+        }
+      }
+
+      return { value: null, source: "unresolved", rawValue: null, observedRawValues };
+    }
+
+    function readStartSignalValue() {
+      return readStartSignalSnapshot().value;
     }
 
     function traceAutosave(label, payload = {}) {
@@ -3895,14 +3932,18 @@ function renderSubmitOutputs(payload) {
 
 
     function logStartState(label, extra = {}) {
+      const startSnapshot = readStartSignalSnapshot();
       const snapshot = {
         label,
-        startSignal: readStartSignalValue(),
+        startSignal: startSnapshot.value,
+        startSignalSource: startSnapshot.source,
+        startSignalRawValue: startSnapshot.rawValue,
         lastStartParamWasTrue,
         hasSeenStartSignal,
         isFormDirty,
         isFormSaving,
         changedKeys: Array.from(changedFieldKeys || []),
+        observedStartValues: startSnapshot.observedRawValues,
         ...extra
       };
       console.info(`[BDF_START_FLOW] ${JSON.stringify(snapshot)}`);
