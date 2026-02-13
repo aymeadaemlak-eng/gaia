@@ -1512,6 +1512,7 @@
     let lastStartLoggedState = "";
     let hasChangesSinceStartOpen = false;
     let startOpenSequence = 0;
+    let pendingSubmitUntilConfigReady = null;
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
@@ -1749,6 +1750,7 @@
       if (columnWarning) columnWarning.style.display = "none";
       if (formContainer) formContainer.style.display = "block";
       renderForm(state.config);
+      flushPendingSubmitAfterConfigReady();
     }
 
     const schemaInput = byId("schemaInput");
@@ -3340,6 +3342,7 @@ function renderSubmitOutputs(payload) {
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
       renderForm(state.config);
+      flushPendingSubmitAfterConfigReady();
     }
 
     function buildExportJson() {
@@ -3952,6 +3955,26 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function flushPendingSubmitAfterConfigReady() {
+      if (!pendingSubmitUntilConfigReady) return;
+      if (!state.config || !Array.isArray(state.config.fields)) return;
+      const pending = pendingSubmitUntilConfigReady;
+      pendingSubmitUntilConfigReady = null;
+      logStartState("flush-pending-submit-after-config", {
+        trigger: pending.trigger,
+        autosave: pending.autosave,
+        forceSubmit: pending.forceSubmit,
+        requestedAt: pending.requestedAt
+      });
+      setTimeout(() => {
+        runSubmitFlow({
+          autosave: pending.autosave,
+          forceSubmit: pending.forceSubmit,
+          trigger: `${pending.trigger}:after-config-ready`
+        });
+      }, 0);
+    }
+
     function getSubmitFn() {
       return (
         (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
@@ -3994,11 +4017,18 @@ function renderSubmitOutputs(payload) {
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
       if (!state.config || !Array.isArray(state.config.fields)) {
+        pendingSubmitUntilConfigReady = {
+          autosave,
+          forceSubmit,
+          trigger,
+          requestedAt: new Date().toISOString()
+        };
         logStartState("submit-skipped-no-config", {
           trigger,
           autosave,
           forceSubmit,
-          hasConfig: Boolean(state.config)
+          hasConfig: Boolean(state.config),
+          queuedForConfigReady: true
         });
         isFormSaving = false;
         return;
