@@ -1509,6 +1509,7 @@
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
     let hasSeenStartSignal = false;
+    let lastStartLoggedState = "";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -3851,6 +3852,24 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+
+    function logStartState(label, extra = {}) {
+      const snapshot = {
+        label,
+        startSignal: readStartSignalValue(),
+        lastStartParamWasTrue,
+        hasSeenStartSignal,
+        isFormDirty,
+        isFormSaving,
+        changedKeys: Array.from(changedFieldKeys || []),
+        ...extra
+      };
+      console.info(`[BDF_START_FLOW] ${JSON.stringify(snapshot)}`);
+      if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
+        setConsole(`start:${label}`, JSON.stringify(snapshot, null, 2));
+      }
+    }
+
     function getSubmitFn() {
       return (
         (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
@@ -3870,7 +3889,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function handleBeforeUnload(event) {
-      traceAutosave("handleBeforeUnload", { isFormDirty, hasPendingUniqueIdSubmit });
+      logStartState("beforeunload", { isFormDirty, hasPendingUniqueIdSubmit });
       if (hasPendingUniqueIdSubmit && !isFormSaving) {
         runSubmitFlow({ autosave: false, forceSubmit: true });
         hasPendingUniqueIdSubmit = false;
@@ -3997,13 +4016,6 @@ function renderSubmitOutputs(payload) {
       const uniqueIdChanged = Boolean(nextUniqueId) && nextUniqueId !== lastObservedUniqueId;
       const dataChanged = Boolean(nextDataSignature) && nextDataSignature !== lastObservedDataSignature;
 
-      traceAutosave("evaluateUniqueIdTransition:tick", {
-        nextUniqueId,
-        nextDataSignatureLen: nextDataSignature.length,
-        uniqueIdChanged,
-        dataChanged
-      });
-
       if (!nextUniqueId && !nextDataSignature) return;
 
       if (!lastObservedUniqueId && nextUniqueId) {
@@ -4055,20 +4067,27 @@ function renderSubmitOutputs(payload) {
 
     function evaluateStartSignalTransition() {
       const startSignal = readStartSignalValue();
-      traceAutosave("evaluateStartSignalTransition:tick", { startSignal });
       if (startSignal === null) return;
+
+      const signalText = String(Boolean(startSignal));
+      if (lastStartLoggedState !== signalText) {
+        lastStartLoggedState = signalText;
+        logStartState("signal-change", { startSignal });
+      }
 
       hasSeenStartSignal = true;
       if (!lastStartParamWasTrue && startSignal) {
         lastStartParamWasTrue = true;
-        traceAutosave("evaluateStartSignalTransition:open", { startSignal });
+        logStartState("open", { startSignal });
         return;
       }
 
       if (lastStartParamWasTrue && !startSignal) {
-        traceAutosave("evaluateStartSignalTransition:close", { isFormDirty });
+        const shouldSubmit = isFormDirty && !isFormSaving;
+        logStartState("close", { startSignal, shouldSubmit });
         lastStartParamWasTrue = false;
-        if (isFormDirty && !isFormSaving) {
+        if (shouldSubmit) {
+          logStartState("close-trigger-submit", { mode: "autosave" });
           runSubmitFlow({ autosave: true, forceSubmit: true });
         }
         return;
@@ -4085,7 +4104,7 @@ function renderSubmitOutputs(payload) {
       if (startSignal !== null) {
         hasSeenStartSignal = true;
         lastStartParamWasTrue = Boolean(startSignal);
-        traceAutosave("initAutosaveStartWatcher:start-seed", { startSignal });
+        logStartState("seed", { startSignal });
       }
 
       if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
