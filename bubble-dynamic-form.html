@@ -2216,7 +2216,7 @@ function renderSubmitOutputs(payload) {
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = autosave ? "Create" : (hasBubbleData ? "Process" : "Create");
+      const actionType = hasBubbleData ? "Process" : "Create";
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
