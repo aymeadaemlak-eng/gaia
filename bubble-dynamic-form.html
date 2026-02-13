@@ -118,16 +118,16 @@
       --success: #16a34a;
       --warning: #f59e0b;
       --focus: rgba(37, 99, 235, 0.12);
-      --form-row-gap: clamp(5px, 0.8vw, 8px);
+      --form-row-gap: clamp(2px, 0.4vw, 5px);
       --form-field-gap: clamp(6px, 0.8vw, 8px);
-      --form-vertical-padding: clamp(1px, 0.2vw, 3px);
+      --form-vertical-padding: clamp(0px, 0.1vw, 2px);
       --form-control-pad-y: clamp(5px, 0.7vw, 7px);
       --form-control-pad-x: clamp(7px, 0.9vw, 10px);
       --form-input-pad-y: clamp(6px, 0.8vw, 8px);
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
-      --form-input-min-height: clamp(34px, 4vw, 38px);
-      --field-gap-internal: clamp(4px, 0.6vw, 8px);
-      --field-gap-between: clamp(3px, 0.6vw, 6px);
+      --form-input-min-height: clamp(30px, 3.2vw, 34px);
+      --field-gap-internal: clamp(2px, 0.4vw, 4px);
+      --field-gap-between: clamp(1px, 0.2vw, 3px);
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       font-size: 14px;
@@ -182,11 +182,12 @@
     }
 
     #bdf-root label {
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 500;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      color: #667085;
     }
 
     #bdf-root .required-hint {
@@ -194,11 +195,12 @@
     }
 
     #bdf-root .required-mark {
-      font-size: 0.9rem;
+      font-size: 1rem;
       line-height: 1;
-      color: #a78b6a;
-      font-weight: 600;
-      transform: translateY(-0.5px);
+      color: #8b5e3c;
+      font-weight: 700;
+      margin-left: 2px;
+      transform: translateY(1px);
     }
 
     #bdf-root .field-wrapper {
@@ -217,23 +219,23 @@
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+      grid-template-columns: minmax(165px, 210px) minmax(0, 1fr);
       gap: var(--form-row-gap);
       align-items: center;
-      min-height: 46px;
+      min-height: 40px;
     }
 
     #bdf-root .field-row.is-file-field {
       grid-template-columns: minmax(0, 1fr);
-      gap: 8px;
+      gap: 6px;
       align-items: start;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
-      padding: 8px 10px;
+      padding: 6px 8px;
       border: 1px solid #edf1f6;
-      border-radius: 10px;
-      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+      border-radius: 8px;
+      background: #fff;
     }
 
     #bdf-root .field-row.is-file-field .control-stack {
@@ -248,15 +250,15 @@
     }
 
 #bdf-root .field-control.file-field-control {
-      min-height: 120px;
+      min-height: 110px;
       display: grid;
       align-content: start;
-      gap: 10px;
+      gap: 8px;
       cursor: pointer;
     }
 
 #bdf-root .field-control.file-field-control .file-drop {
-      min-height: 72px;
+      min-height: 64px;
       display: grid;
       place-items: center;
       width: 100%;
@@ -268,45 +270,47 @@
 
     #bdf-root .field-label {
       display: grid;
-      gap: 2px;
+      gap: 1px;
     }
 
     #bdf-root .label-top {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
-      gap: 5px;
+      align-items: baseline;
+      gap: 4px;
     }
 
     #bdf-root .label-text {
-      font-weight: 560;
-      font-size: 0.9rem;
-      color: #4b5563;
+      font-weight: 500;
+      font-size: 0.92rem;
+      color: #6b7280;
+      line-height: 1.35;
     }
 
     #bdf-root .label-meta {
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 4px;
+      align-items: center;
+      gap: 3px;
+      min-height: 0;
     }
 
     #bdf-root .type-icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 0;
       background: transparent;
       border: none;
-      color: #7b7b75;
+      color: #8a8a84;
       flex-shrink: 0;
     }
 
     #bdf-root .type-icon svg {
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
       display: block;
     }
 
@@ -317,8 +321,8 @@
       border: 1px solid rgba(37, 99, 235, 0.25);
       background: rgba(37, 99, 235, 0.08);
       border-radius: 999px;
-      padding: 2px 10px;
-      font-size: 0.7rem;
+      padding: 1px 8px;
+      font-size: 0.68rem;
       cursor: pointer;
       color: var(--primary);
       white-space: nowrap;
@@ -327,8 +331,8 @@
     }
 
 #bdf-root .ai-badge img {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       display: inline-block;
       object-fit: contain;
     }
@@ -350,7 +354,7 @@
 
 #bdf-root .control-stack {
       display: grid;
-      gap: var(--field-gap-internal);
+      gap: 2px;
       width: 100%;
       justify-items: start;
     }
@@ -360,13 +364,13 @@
     }
 
 #bdf-root .field-control {
-      border: 1px solid #e8ebf0;
-      border-radius: 10px;
-      padding: var(--form-control-pad-y) var(--form-control-pad-x);
-      background: #fff;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 2px 4px;
+      background: transparent;
       position: relative;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+      transition: border-color 0.14s ease, background-color 0.14s ease;
+      box-shadow: none;
     }
 
 #bdf-root .field-control::before {
@@ -374,35 +378,41 @@
     }
 
 #bdf-root .field-control.ai-active {
-      background: rgba(37, 99, 235, 0.04);
+      background: rgba(37, 99, 235, 0.03);
     }
 
 #bdf-root .field-control.ai-active .field-input {
-      background: rgba(37, 99, 235, 0.02);
-      padding-right: 56px;
+      background: transparent;
+      padding-right: 50px;
     }
 
 #bdf-root .ai-pill {
       position: absolute;
-      top: 6px;
-      right: 36px;
-      font-size: 0.65rem;
+      top: 5px;
+      right: 30px;
+      font-size: 0.62rem;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 1px 6px;
       border-radius: 999px;
       background: rgba(37, 99, 235, 0.14);
       color: var(--primary);
       pointer-events: none;
     }
 
+#bdf-root .field-control:hover {
+      border-color: #e7e9ee;
+      background: #fcfcfd;
+    }
+
 #bdf-root .field-control:focus-within {
-      border-color: rgba(59, 130, 246, 0.6);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+      border-color: #cfd6e3;
+      background: #ffffff;
+      box-shadow: none;
     }
 
 #bdf-root .field-control.invalid {
-      border-color: rgba(224, 90, 90, 0.7);
-      box-shadow: 0 0 0 2px rgba(224, 90, 90, 0.18);
+      border-color: rgba(224, 90, 90, 0.55);
+      box-shadow: none;
     }
 
 #bdf-root .field-input,
@@ -410,35 +420,38 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: var(--form-input-pad-y) var(--form-input-pad-x);
-      border-radius: 10px;
-      font-size: 0.9rem;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      font-weight: 500;
       background: transparent;
-      color: var(--text);
+      color: #111827;
       outline: none;
       min-height: var(--form-input-min-height);
+      line-height: 1.3;
     }
 
 #bdf-root .field-input::placeholder,
 #bdf-root textarea::placeholder {
       color: #9ca3af;
+      opacity: 0.9;
     }
 
 #bdf-root .field-input.is-date-input::placeholder {
-      color: #c2c9d4;
+      color: #b4bbc8;
     }
 
 #bdf-root .field-control.has-icon .field-input {
-      padding-right: 42px;
+      padding-right: 34px;
     }
 
 #bdf-root .field-control.has-icon .field-input.is-date-input {
-      padding-right: 44px;
+      padding-right: 36px;
     }
 
 #bdf-root textarea.field-input {
       resize: vertical;
-      min-height: 96px;
+      min-height: 72px;
     }
 
 #bdf-root .field-icon-button {
@@ -1148,10 +1161,10 @@
 
     @media (max-width: 900px) {
 #bdf-root {
-        --form-row-gap: 8px;
+        --form-row-gap: 6px;
         --form-field-gap: 6px;
-        --form-vertical-padding: 4px;
-        --field-gap-between: 6px;
+        --form-vertical-padding: 2px;
+        --field-gap-between: 3px;
       }
 
 #bdf-root .field-row {
@@ -4649,7 +4662,7 @@ function renderSubmitOutputs(payload) {
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
-          inputEl.placeholder = field.placeholder || "";
+          inputEl.placeholder = field.placeholder || "Empty";
           if (field.type === "password") inputEl.type = "password";
           if (field.type === "email") inputEl.type = "email";
           if (field.type === "url") inputEl.type = "url";
@@ -4707,7 +4720,7 @@ function renderSubmitOutputs(payload) {
           inputEl.className = "field-input";
           inputEl.id = `field-${field.key}`;
           inputEl.setAttribute("aria-describedby", `error-${field.key}`);
-          inputEl.placeholder = field.placeholder || "";
+          inputEl.placeholder = field.placeholder || "Empty";
           inputEl.value = effectiveInitial || "";
           setValue = (value) => {
             inputEl.value = value ?? "";
@@ -4747,7 +4760,7 @@ function renderSubmitOutputs(payload) {
             select.innerHTML = "";
             const emptyOption = document.createElement("option");
             emptyOption.value = "";
-            emptyOption.textContent = "Seçiniz";
+            emptyOption.textContent = "Empty";
             select.append(emptyOption);
             const groups = {};
             (field.options || []).forEach((opt) => {
