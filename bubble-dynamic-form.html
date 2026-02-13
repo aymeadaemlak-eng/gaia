@@ -130,6 +130,7 @@
       --field-gap-between: 4px;
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
+      --field-control-height: 36px;
       font-size: 14px;
       color: var(--text);
     }
@@ -271,23 +272,32 @@
     }
 
     #bdf-root .field-label {
-      display: grid;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       gap: 0;
-      align-content: center;
+      min-height: var(--field-control-height);
+      margin: 0;
+      padding: 0;
     }
 
     #bdf-root .label-top {
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
+      flex-wrap: nowrap;
+      align-items: center;
       gap: 8px;
+      min-height: var(--field-control-height);
+      margin: 0;
+      padding: 0;
     }
 
     #bdf-root .label-text {
       font-weight: 500;
       font-size: 14px;
       color: #6b7280;
-      line-height: 1.2;
+      line-height: 1.25;
+      margin: 0;
+      padding: 0;
     }
 
     #bdf-root .label-meta {
@@ -304,11 +314,14 @@
       justify-content: center;
       width: 16px;
       height: 16px;
+      line-height: 1;
       border-radius: 0;
       background: transparent;
       border: none;
       color: #8a8a84;
       flex-shrink: 0;
+      margin: 0;
+      padding: 0;
     }
 
     #bdf-root .type-icon svg {
@@ -360,6 +373,8 @@
       gap: 0;
       width: 100%;
       justify-items: start;
+      align-items: center;
+      min-height: var(--field-control-height);
     }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -372,8 +387,12 @@
       padding: 0;
       background: transparent;
       position: relative;
+      min-height: var(--field-control-height);
+      display: flex;
+      align-items: center;
       transition: border-color 0.14s ease, background-color 0.14s ease;
       box-shadow: none;
+      box-sizing: border-box;
     }
 
 #bdf-root .field-control::before {
@@ -423,15 +442,17 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 1px 2px;
+      padding: 0 2px;
       border-radius: 4px;
       font-size: 14px;
       font-weight: 500;
       background: transparent;
       color: #111827;
       outline: none;
-      min-height: var(--form-input-min-height);
-      line-height: 1.4;
+      min-height: var(--field-control-height);
+      line-height: 1.25;
+      margin: 0;
+      box-sizing: border-box;
     }
 
 #bdf-root .field-input::placeholder,
