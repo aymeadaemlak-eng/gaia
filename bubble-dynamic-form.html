@@ -3692,6 +3692,15 @@ function renderSubmitOutputs(payload) {
       const uniqueId = pendingIncomingUniqueId;
       pendingIncomingBubbleData = null;
       pendingIncomingUniqueId = "";
+
+      const currentUniqueId = readCurrentUniqueId();
+      const isSameItemNow = Boolean(currentUniqueId) && currentUniqueId === uniqueId;
+      if (isSameItemNow && isFormDirty) {
+        lastObservedUniqueId = uniqueId;
+        persistObservedUniqueId(uniqueId);
+        return;
+      }
+
       applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, readCurrentColumnJsonObject());
     }
 
