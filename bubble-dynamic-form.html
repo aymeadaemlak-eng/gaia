@@ -1512,6 +1512,7 @@
     let lastStartLoggedState = "";
     let hasChangesSinceStartOpen = false;
     let startOpenSequence = 0;
+    const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -2655,6 +2656,7 @@ function renderSubmitOutputs(payload) {
           logStartState("edit-detected", { fieldKey, changedKeyCount: changedFieldKeys.size, startOpenSequence });
         }
         hasChangesSinceStartOpen = true;
+        persistStartFlowState();
       }
     }
 
@@ -2675,6 +2677,7 @@ function renderSubmitOutputs(payload) {
     function clearChangedTracking() {
       clearChangedFieldKeys();
       clearChangedFieldValues();
+      persistStartFlowState();
     }
 
     function getRememberedChangedValue(fieldKey) {
@@ -3789,6 +3792,36 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function readPersistedStartFlowState() {
+      try {
+        const raw = window.sessionStorage.getItem(START_FLOW_STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        return {
+          lastStartParamWasTrue: Boolean(parsed.lastStartParamWasTrue),
+          hasChangesSinceStartOpen: Boolean(parsed.hasChangesSinceStartOpen),
+          startOpenSequence: Number(parsed.startOpenSequence) || 0,
+          time: parsed.time || ""
+        };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function persistStartFlowState() {
+      try {
+        window.sessionStorage.setItem(START_FLOW_STORAGE_KEY, JSON.stringify({
+          lastStartParamWasTrue,
+          hasChangesSinceStartOpen,
+          startOpenSequence,
+          time: new Date().toISOString()
+        }));
+      } catch (error) {
+        // ignore storage access issues
+      }
+    }
+
     function readCurrentUniqueId() {
       const inputs = window.BUBBLE_INPUTS || {};
       const candidates = [
@@ -3906,6 +3939,7 @@ function renderSubmitOutputs(payload) {
       if (shouldSubmitOnUnload) {
         runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload" });
       }
+      persistStartFlowState();
       if (!isFormDirty) return undefined;
       if (!isFormSaving) {
         runSubmitFlow({ autosave: false, forceSubmit: true, trigger: "beforeunload-dirty-fallback" });
@@ -4125,38 +4159,40 @@ function renderSubmitOutputs(payload) {
             startOpenSequence
           });
         }
+        persistStartFlowState();
         return;
       }
 
       lastStartParamWasTrue = Boolean(startSignal);
+      persistStartFlowState();
     }
 
     function initAutosaveStartWatcher() {
-      const persistedUniqueId = readPersistedObservedUniqueId();
-      const currentUniqueId = readCurrentUniqueId();
+      const persistedStartFlowState = readPersistedStartFlowState();
       const currentDataSignature = readCurrentBubbleDataSignature();
       const startSignal = readStartSignalValue();
+      if (persistedStartFlowState) {
+        startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
+      }
       if (startSignal !== null) {
         hasSeenStartSignal = true;
         lastStartParamWasTrue = Boolean(startSignal);
-        hasChangesSinceStartOpen = false;
+        hasChangesSinceStartOpen = lastStartParamWasTrue
+          ? Boolean(persistedStartFlowState?.hasChangesSinceStartOpen)
+          : false;
         logStartState("seed", { startSignal, startOpenSequence });
-      }
 
-      if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
-        lastObservedUniqueId = persistedUniqueId;
-        hasPendingUniqueIdSubmit = true;
-        setTimeout(() => {
-          if (!isFormSaving) {
-            runSubmitFlow({ autosave: false, forceSubmit: true });
-          }
-        }, 0);
-      } else {
-        lastObservedUniqueId = currentUniqueId || persistedUniqueId || "";
-      }
-
-      if (currentUniqueId) {
-        persistObservedUniqueId(currentUniqueId);
+        const wasOpenBeforeRemount = Boolean(persistedStartFlowState?.lastStartParamWasTrue);
+        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen);
+        const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
+        if (shouldSubmitRemountClose) {
+          logStartState("remount-close-trigger-submit", {
+            persistedStartFlowState,
+            trigger: "start-close-remount"
+          });
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount" });
+        }
+        persistStartFlowState();
       }
       if (currentDataSignature) {
         lastObservedDataSignature = currentDataSignature;
