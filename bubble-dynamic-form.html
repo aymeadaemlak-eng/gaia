@@ -127,7 +127,7 @@
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
       --form-input-min-height: 32px;
       --field-gap-internal: 3px;
-      --field-gap-between: 8px;
+      --field-gap-between: 4px;
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       font-size: 14px;
@@ -195,10 +195,10 @@
     }
 
     #bdf-root .required-mark {
-      font-size: 1rem;
+      font-size: 1.1rem;
       line-height: 1;
-      color: #8b5e3c;
-      font-weight: 700;
+      color: #dc2626;
+      font-weight: 800;
       margin-left: 2px;
       transform: translateY(1px);
     }
@@ -207,7 +207,7 @@
       display: grid;
       gap: var(--field-gap-internal);
       padding: var(--form-vertical-padding) 0;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
@@ -1212,7 +1212,7 @@
       }
     }
 
-    @media (max-width: 330px) {
+    @media (max-width: 360px) {
 #bdf-root .field-row {
         grid-template-columns: 1fr;
         gap: 6px;
