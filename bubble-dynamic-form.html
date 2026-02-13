@@ -1510,6 +1510,8 @@
     let lastStartParamWasTrue = false;
     let hasSeenStartSignal = false;
     let lastStartLoggedState = "";
+    let hasChangesSinceStartOpen = false;
+    let startOpenSequence = 0;
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -2648,6 +2650,12 @@ function renderSubmitOutputs(payload) {
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
+      if (hasSeenStartSignal && lastStartParamWasTrue) {
+        if (!hasChangesSinceStartOpen) {
+          logStartState("edit-detected", { fieldKey, changedKeyCount: changedFieldKeys.size, startOpenSequence });
+        }
+        hasChangesSinceStartOpen = true;
+      }
     }
 
     function clearChangedFieldKeys() {
@@ -3889,17 +3897,18 @@ function renderSubmitOutputs(payload) {
     }
 
     function handleBeforeUnload(event) {
-      logStartState("beforeunload", { isFormDirty, hasPendingUniqueIdSubmit });
-      if (hasPendingUniqueIdSubmit && !isFormSaving) {
-        runSubmitFlow({ autosave: false, forceSubmit: true });
-        hasPendingUniqueIdSubmit = false;
-      }
-      if (hasSeenStartSignal && lastStartParamWasTrue && !isFormSaving) {
-        runSubmitFlow({ autosave: true, forceSubmit: true });
+      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
+      logStartState("beforeunload", {
+        shouldSubmitOnUnload,
+        hasChangesSinceStartOpen,
+        changedKeyCount: changedFieldKeys.size
+      });
+      if (shouldSubmitOnUnload) {
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload" });
       }
       if (!isFormDirty) return undefined;
       if (!isFormSaving) {
-        runSubmitFlow({ autosave: false, forceSubmit: true });
+        runSubmitFlow({ autosave: false, forceSubmit: true, trigger: "beforeunload-dirty-fallback" });
       }
       const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
       event.preventDefault();
@@ -3907,8 +3916,8 @@ function renderSubmitOutputs(payload) {
       return warningMessage;
     }
 
-    function runSubmitFlow({ autosave = false, forceSubmit = false } = {}) {
-      traceAutosave("runSubmitFlow:start", { autosave, forceSubmit });
+    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
+      traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
       if (isFormSaving && !forceSubmit) {
         console.info("submit skipped: saving lock active", { autosave });
         return;
@@ -3933,6 +3942,7 @@ function renderSubmitOutputs(payload) {
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
       traceAutosave("runSubmitFlow:payload-built", {
+        trigger,
         output1: submitOutputsPayload.output1,
         output2: submitOutputsPayload.output2,
         output3: submitOutputsPayload.output3,
@@ -4078,17 +4088,42 @@ function renderSubmitOutputs(payload) {
       hasSeenStartSignal = true;
       if (!lastStartParamWasTrue && startSignal) {
         lastStartParamWasTrue = true;
-        logStartState("open", { startSignal });
+        startOpenSequence += 1;
+        hasChangesSinceStartOpen = false;
+        logStartState("open", { startSignal, startOpenSequence, changedKeyCount: changedFieldKeys.size });
         return;
       }
 
       if (lastStartParamWasTrue && !startSignal) {
-        const shouldSubmit = isFormDirty && !isFormSaving;
-        logStartState("close", { startSignal, shouldSubmit });
+        const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
+        const shouldSubmit = hasDirtyIndicators && !isFormSaving;
+        logStartState("close", {
+          startSignal,
+          shouldSubmit,
+          hasDirtyIndicators,
+          hasChangesSinceStartOpen,
+          isFormDirty,
+          changedKeyCount: changedFieldKeys.size,
+          startOpenSequence
+        });
         lastStartParamWasTrue = false;
         if (shouldSubmit) {
-          logStartState("close-trigger-submit", { mode: "autosave" });
-          runSubmitFlow({ autosave: true, forceSubmit: true });
+          logStartState("close-trigger-submit", {
+            mode: "autosave",
+            trigger: "start-close",
+            startOpenSequence,
+            changedKeyCount: changedFieldKeys.size
+          });
+          hasChangesSinceStartOpen = false;
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close" });
+        } else {
+          logStartState("close-skip-submit", {
+            reason: isFormSaving ? "saving-lock" : "no-detected-change",
+            hasChangesSinceStartOpen,
+            isFormDirty,
+            changedKeyCount: changedFieldKeys.size,
+            startOpenSequence
+          });
         }
         return;
       }
@@ -4104,7 +4139,8 @@ function renderSubmitOutputs(payload) {
       if (startSignal !== null) {
         hasSeenStartSignal = true;
         lastStartParamWasTrue = Boolean(startSignal);
-        logStartState("seed", { startSignal });
+        hasChangesSinceStartOpen = false;
+        logStartState("seed", { startSignal, startOpenSequence });
       }
 
       if (persistedUniqueId && currentUniqueId && persistedUniqueId !== currentUniqueId) {
@@ -4130,7 +4166,6 @@ function renderSubmitOutputs(payload) {
         const originalPushState = window.history.pushState.bind(window.history);
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
-          evaluateUniqueIdTransition();
           evaluateStartSignalTransition();
           return result;
         };
@@ -4140,18 +4175,14 @@ function renderSubmitOutputs(payload) {
         const originalReplaceState = window.history.replaceState.bind(window.history);
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
-          evaluateUniqueIdTransition();
           evaluateStartSignalTransition();
           return result;
         };
       }
 
-      window.addEventListener("popstate", evaluateUniqueIdTransition);
       window.addEventListener("popstate", evaluateStartSignalTransition);
-      window.addEventListener("hashchange", evaluateUniqueIdTransition);
       window.addEventListener("hashchange", evaluateStartSignalTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
-      setInterval(evaluateUniqueIdTransition, 300);
       setInterval(evaluateStartSignalTransition, 300);
     }
 
