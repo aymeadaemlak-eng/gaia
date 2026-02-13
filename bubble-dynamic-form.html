@@ -3952,6 +3952,16 @@ function renderSubmitOutputs(payload) {
 
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      if (!state.config || !Array.isArray(state.config.fields)) {
+        logStartState("submit-skipped-no-config", {
+          trigger,
+          autosave,
+          forceSubmit,
+          hasConfig: Boolean(state.config)
+        });
+        isFormSaving = false;
+        return;
+      }
       if (isFormSaving && !forceSubmit) {
         console.info("submit skipped: saving lock active", { autosave });
         return;
@@ -4113,6 +4123,13 @@ function renderSubmitOutputs(payload) {
       const startSignal = readStartSignalValue();
       if (startSignal === null) return;
 
+      logStartState("tick", {
+        startSignal,
+        changedKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        shouldSubmitIfClose: Boolean(lastStartParamWasTrue && !startSignal && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving)
+      });
+
       const signalText = String(Boolean(startSignal));
       if (lastStartLoggedState !== signalText) {
         lastStartLoggedState = signalText;
@@ -4125,6 +4142,7 @@ function renderSubmitOutputs(payload) {
         startOpenSequence += 1;
         hasChangesSinceStartOpen = false;
         logStartState("open", { startSignal, startOpenSequence, changedKeyCount: changedFieldKeys.size });
+        persistStartFlowState();
         return;
       }
 
@@ -4149,6 +4167,7 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size
           });
           hasChangesSinceStartOpen = false;
+          persistStartFlowState();
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close" });
         } else {
           logStartState("close-skip-submit", {
@@ -4186,6 +4205,9 @@ function renderSubmitOutputs(payload) {
         const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen);
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
+          hasChangesSinceStartOpen = false;
+          lastStartParamWasTrue = false;
+          persistStartFlowState();
           logStartState("remount-close-trigger-submit", {
             persistedStartFlowState,
             trigger: "start-close-remount"
