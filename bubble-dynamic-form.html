@@ -3623,7 +3623,30 @@ function renderSubmitOutputs(payload) {
     }
 
 
-    function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId) {
+    function readCurrentColumnJsonObject() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.COLUMN_JSON,
+        inputs.column_json,
+        window.BUBBLE_COLUMN_JSON,
+        MANUAL_COLUMN_JSON
+      ];
+      for (const candidate of candidates) {
+        const parsed = parseDataJsonSource(candidate);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+        if (Array.isArray(parsed.columns)) return parsed;
+      }
+      return null;
+    }
+
+
+    function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
+      const hasIncomingColumns = Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns));
+      if (hasIncomingColumns) {
+        MANUAL_COLUMN_JSON = incomingColumnJson;
+        applyColumnJson(incomingColumnJson);
+      }
+
       if (incomingBubbleData && state.config) {
         MANUAL_DATA_JSON = incomingBubbleData;
         humanData = {};
@@ -3651,7 +3674,7 @@ function renderSubmitOutputs(payload) {
       const uniqueId = pendingIncomingUniqueId;
       pendingIncomingBubbleData = null;
       pendingIncomingUniqueId = "";
-      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId);
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, readCurrentColumnJsonObject());
     }
 
     function persistObservedUniqueId(uniqueId) {
@@ -3822,6 +3845,7 @@ function renderSubmitOutputs(payload) {
       if (nextUniqueId === lastObservedUniqueId) return;
 
       const incomingBubbleData = readCurrentBubbleDataObject();
+      const incomingColumnJson = readCurrentColumnJsonObject();
 
       if (isFormSaving) {
         pendingIncomingBubbleData = incomingBubbleData;
@@ -3835,10 +3859,13 @@ function renderSubmitOutputs(payload) {
         hasPendingUniqueIdSubmit = true;
         maybeRunAutosaveOnStartClose();
         runSubmitFlow({ autosave: false, forceSubmit: true });
+        if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
+          MANUAL_COLUMN_JSON = incomingColumnJson;
+        }
         return;
       }
 
-      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId);
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId, incomingColumnJson);
     }
 
     function initAutosaveStartWatcher() {
