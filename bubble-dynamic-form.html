@@ -2213,7 +2213,6 @@ function renderSubmitOutputs(payload) {
     function buildSubmitOutputsPayload({ autosave = false } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
-      const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
       const actionType = hasBubbleData ? "Process" : "Create";
@@ -2221,7 +2220,7 @@ function renderSubmitOutputs(payload) {
       return {
         output1: startTimestamp,
         output2: endTimestamp,
-        output3: durationMs,
+        output3: readCurrentUniqueId(),
         output4: output4,
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
