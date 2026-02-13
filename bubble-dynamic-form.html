@@ -2617,6 +2617,10 @@ function renderSubmitOutputs(payload) {
     }
 
     function getActiveSource(fieldKey) {
+      const preferredSource = sourceByField[fieldKey];
+      if (preferredSource === "human" || preferredSource === "ai") {
+        return preferredSource;
+      }
       if (!isEmptyValue(humanData[fieldKey])) return "human";
       if (!isEmptyValue(aiData[fieldKey])) return "ai";
       return "human";
@@ -2627,6 +2631,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function getEffectiveValue(fieldKey) {
+      const preferredSource = sourceByField[fieldKey];
+      if (preferredSource === "human") {
+        return humanData[fieldKey] ?? "";
+      }
+      if (preferredSource === "ai") {
+        return aiData[fieldKey] ?? "";
+      }
       const humanValue = humanData[fieldKey];
       if (!isEmptyValue(humanValue)) return humanValue;
       const aiValue = aiData[fieldKey];
@@ -3284,15 +3295,18 @@ function renderSubmitOutputs(payload) {
         if (!field) return;
         snapshot[fieldKey] = normalizeValueForComparison(field, rawValue, state.config);
       });
+
+      (state.config?.fields || []).forEach((field) => {
+        if (snapshot[field.key] !== undefined) return;
+        const initialValue = getInitialValue(field, state.config || {});
+        snapshot[field.key] = normalizeValueForComparison(field, initialValue, state.config);
+      });
+
       return snapshot;
     }
 
     function getCurrentValueForField(field) {
-      const humanValue = humanData[field.key];
-      if (!isEmptyValue(humanValue)) return humanValue;
-      const aiValue = aiData[field.key];
-      if (!isEmptyValue(aiValue)) return aiValue;
-      return "";
+      return getEffectiveValue(field.key);
     }
 
     function getCurrentNormalizedValue(field) {
