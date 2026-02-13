@@ -2876,6 +2876,10 @@ function renderSubmitOutputs(payload) {
       return String(stageType).trim().toLowerCase();
     }
 
+    function isInnerStageType(stageType) {
+      return normalizeStageType(stageType) === "innerstage";
+    }
+
     function isFieldRequired(field) {
       return Boolean(field.required) || normalizeStageType(field.stageType) === "mandatory";
     }
@@ -3297,11 +3301,14 @@ function renderSubmitOutputs(payload) {
     function buildConfigFromColumnJson(columnData) {
       if (!columnData) return null;
       const columns = columnData.columns || [];
-      const fields = columns.map((column, index) => {
+      const fields = columns.reduce((acc, column, index) => {
         const fieldName = column.id || `field_${index + 1}`;
         const normalized = normalizeColumnType(column.type, column.multiple);
         const stageType = column.stageType || "optional";
-        return {
+        if (isInnerStageType(stageType)) {
+          return acc;
+        }
+        acc.push({
           key: fieldName,
           fieldName,
           label: column.header || fieldName,
@@ -3314,8 +3321,9 @@ function renderSubmitOutputs(payload) {
           options: Array.isArray(column.source) ? column.source.map((value) => ({ value, label: value })) : [],
           default: column.default,
           ui: column.ui || {}
-        };
-      });
+        });
+        return acc;
+      }, []);
       return {
         fields,
         currentDateTimeISO: columnData.currentDateTimeISO || defaultSchema.currentDateTimeISO,
@@ -5320,13 +5328,34 @@ function renderSubmitOutputs(payload) {
             const errors = [];
             const accepted = [];
 
+            const matchesAccept = (file) => {
+              if (!accept) return true;
+              const acceptRules = accept
+                .split(",")
+                .map((rule) => rule.trim().toLowerCase())
+                .filter(Boolean);
+              if (!acceptRules.length) return true;
+              const fileType = String(file.type || "").toLowerCase();
+              const fileName = String(file.name || "").toLowerCase();
+              return acceptRules.some((rule) => {
+                if (rule === "*/*") return true;
+                if (rule.endsWith("/*")) {
+                  return fileType.startsWith(rule.slice(0, -1));
+                }
+                if (rule.startsWith(".")) {
+                  return fileName.endsWith(rule);
+                }
+                return fileType === rule;
+              });
+            };
+
             for (const file of files) {
               if (accepted.length >= maxFiles) continue;
               if (file.size > maxSizeMB * 1024 * 1024) {
                 errors.push(`${file.name}: Dosya çok büyük.`);
                 continue;
               }
-              if (accept && !file.type.match(accept.replace("*", ".*"))) {
+              if (!matchesAccept(file)) {
                 errors.push(`${file.name}: Tür desteklenmiyor.`);
                 continue;
               }
@@ -5409,6 +5438,10 @@ function renderSubmitOutputs(payload) {
           fileInput.addEventListener("change", (event) => {
             handleFiles(event.target.files);
             event.target.value = "";
+          });
+
+          drop.addEventListener("click", () => {
+            fileInput.click();
           });
 
           control.append(drop, fileInput, list);
