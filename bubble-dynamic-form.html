@@ -35,6 +35,7 @@
           { id: "1770577890579x349136294770973501", name: "İhtar Dilekçesi Hazırla" }
         ]
       },
+      start: false,
       VERSION: true
     };
   </script>
@@ -1494,6 +1495,11 @@
     let selectedActionName = "Create";
     let triggeredActionUniqueId = "";
     let actionOptions = [];
+    let isFormDirty = false;
+    let isFormSaving = false;
+    let lastAutosaveAt = 0;
+    const AUTOSAVE_DEBOUNCE_MS = 2000;
+    let lastStartParamWasTrue = false;
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -2202,13 +2208,13 @@ function renderSubmitOutputs(payload) {
       console.info("submitOutputs rendered", safePayload);
     }
 
-    function buildSubmitOutputsPayload() {
+    function buildSubmitOutputsPayload({ autosave = false } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const durationMs = new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime();
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = hasBubbleData ? "Process" : "Create";
+      const actionType = autosave ? "Create" : (hasBubbleData ? "Process" : "Create");
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -3508,6 +3514,176 @@ function renderSubmitOutputs(payload) {
 
     function setFieldValue(key, value, field, displayValue) {
       setHumanValue(key, value, field, displayValue);
+      isFormDirty = computeDirtyState();
+    }
+
+    function readStartSignalIsTrue() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const directValue =
+        inputs.start
+        ?? inputs.START
+        ?? inputs.startParam
+        ?? inputs.start_flag
+        ?? inputs.startFlag;
+
+      if (directValue !== undefined && directValue !== null) {
+        if (typeof directValue === "boolean") return directValue;
+        if (typeof directValue === "number") return directValue === 1;
+        return String(directValue).trim().toLowerCase() === "true";
+      }
+
+      try {
+        const value = new URLSearchParams(window.location.search).get("start");
+        return String(value || "").toLowerCase() === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function getSubmitFn() {
+      return (
+        (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
+        (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
+        (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit)
+      );
+    }
+
+    function computeDirtyState() {
+      if (!state.config) return false;
+      return (
+        buildKeyValueListFromSources().length > 0
+        || buildAddedCustomFields().length > 0
+        || buildDeletedFields().length > 0
+        || buildModifiedFields().length > 0
+      );
+    }
+
+    function handleBeforeUnload(event) {
+      if (!isFormDirty) return undefined;
+      const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
+      event.preventDefault();
+      event.returnValue = warningMessage;
+      return warningMessage;
+    }
+
+    function runSubmitFlow({ autosave = false } = {}) {
+      if (isFormSaving) {
+        console.info("submit skipped: saving lock active", { autosave });
+        return;
+      }
+
+      isFormSaving = true;
+      if (autosave) {
+        triggeredActionUniqueId = "";
+      }
+
+      ensureTaskStartTimestamp();
+      validateAll();
+      const firstInvalidKey = focusFirstInvalid();
+      const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
+      if (invalidCount > 0) {
+        summaryBox.style.display = "block";
+        summaryBox.textContent = `${invalidCount} alan eksik veya hatalı.`;
+      } else {
+        summaryBox.style.display = "none";
+      }
+
+      const exportPayload = buildExportJson();
+      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
+      console.info("submitOutputs payload", submitOutputsPayload);
+      console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
+      setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
+      renderSubmitOutputs(submitOutputsPayload);
+
+      emit("onSubmitAttempt", {
+        values: exportPayload,
+        isFormValid: invalidCount === 0,
+        firstInvalidKey,
+        output1: submitOutputsPayload.output1,
+        output2: submitOutputsPayload.output2,
+        output3: submitOutputsPayload.output3,
+        output4: submitOutputsPayload.output4,
+        outputlist1: submitOutputsPayload.outputlist1,
+        outputlist2: submitOutputsPayload.outputlist2,
+        outputlist3: submitOutputsPayload.outputlist3,
+        outputlist4: submitOutputsPayload.outputlist4
+      });
+
+      const fn = getSubmitFn();
+      if (!fn) {
+        isFormSaving = false;
+        isFormDirty = true;
+        console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
+        return;
+      }
+
+      const payload = submitOutputsPayload;
+      try {
+        const maybePromise = fn(payload);
+        if (maybePromise && typeof maybePromise.then === "function") {
+          maybePromise
+            .then(() => {
+              isFormSaving = false;
+              isFormDirty = false;
+            })
+            .catch((error) => {
+              isFormSaving = false;
+              isFormDirty = true;
+              console.error("submit failed", error);
+            });
+          return;
+        }
+        isFormSaving = false;
+        isFormDirty = false;
+      } catch (error) {
+        isFormSaving = false;
+        isFormDirty = true;
+        console.error("submit failed", error);
+      }
+    }
+
+    function maybeRunAutosaveOnStartClose() {
+      const now = Date.now();
+      if (!isFormDirty) return;
+      if (isFormSaving) return;
+      if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
+      lastAutosaveAt = now;
+      runSubmitFlow({ autosave: true });
+    }
+
+    function evaluateStartTransition() {
+      const isStartTrue = readStartSignalIsTrue();
+      if (lastStartParamWasTrue && !isStartTrue) {
+        maybeRunAutosaveOnStartClose();
+      }
+      lastStartParamWasTrue = isStartTrue;
+    }
+
+    function initAutosaveStartWatcher() {
+      lastStartParamWasTrue = readStartSignalIsTrue();
+
+      if (window.history && typeof window.history.pushState === "function") {
+        const originalPushState = window.history.pushState.bind(window.history);
+        window.history.pushState = function pushStatePatched(...args) {
+          const result = originalPushState(...args);
+          evaluateStartTransition();
+          return result;
+        };
+      }
+
+      if (window.history && typeof window.history.replaceState === "function") {
+        const originalReplaceState = window.history.replaceState.bind(window.history);
+        window.history.replaceState = function replaceStatePatched(...args) {
+          const result = originalReplaceState(...args);
+          evaluateStartTransition();
+          return result;
+        };
+      }
+
+      window.addEventListener("popstate", evaluateStartTransition);
+      window.addEventListener("hashchange", evaluateStartTransition);
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      setInterval(evaluateStartTransition, 300);
     }
 
     function debounceFormChange() {
@@ -4799,6 +4975,8 @@ function renderSubmitOutputs(payload) {
       selectedActionId = "";
       selectedActionName = getDefaultActionLabel();
       triggeredActionUniqueId = "";
+      isFormDirty = false;
+      isFormSaving = false;
       updateActionBarUi();
       if (columnJson) {
         applyColumnJson(columnJson);
@@ -4820,22 +4998,13 @@ function renderSubmitOutputs(payload) {
 
     window.BDF_submit = () => {
       if (!formEl) return;
-      validateAll();
-      const payload = buildSubmitOutputsPayload();
-      const fn =
-        (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
-        (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
-        (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit);
-
-      if (fn) {
-        fn(payload);
-      } else {
-        console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
-      }
+      runSubmitFlow({ autosave: false });
     };
 
     if (!BDF.__listenersBound) {
       BDF.__listenersBound = true;
+
+      initAutosaveStartWatcher();
 
       if (actionChevronBtn) {
         actionChevronBtn.addEventListener("click", (event) => {
@@ -4876,47 +5045,8 @@ function renderSubmitOutputs(payload) {
 
 
       safeOn("#dynamicForm", "submit", (event) => {
-      event.preventDefault();
-      ensureTaskStartTimestamp();
-      validateAll();
-      const firstInvalidKey = focusFirstInvalid();
-      const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
-      if (invalidCount > 0) {
-        summaryBox.style.display = "block";
-        summaryBox.textContent = `${invalidCount} alan eksik veya hatalı.`;
-      } else {
-        summaryBox.style.display = "none";
-      }
-      const exportPayload = buildExportJson();
-      const submitOutputsPayload = buildSubmitOutputsPayload();
-      console.info("submitOutputs payload", submitOutputsPayload);
-      console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl) });
-      setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
-      renderSubmitOutputs(submitOutputsPayload);
-      emit("onSubmitAttempt", {
-        values: exportPayload,
-        isFormValid: invalidCount === 0,
-        firstInvalidKey,
-        output1: submitOutputsPayload.output1,
-        output2: submitOutputsPayload.output2,
-        output3: submitOutputsPayload.output3,
-        output4: submitOutputsPayload.output4,
-        outputlist1: submitOutputsPayload.outputlist1,
-        outputlist2: submitOutputsPayload.outputlist2,
-        outputlist3: submitOutputsPayload.outputlist3,
-        outputlist4: submitOutputsPayload.outputlist4
-      });
-      const payload = submitOutputsPayload;
-      const fn =
-        (typeof window.bubble_fn_submit === "function" && window.bubble_fn_submit) ||
-        (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
-        (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit);
-
-      if (fn) {
-        fn(payload);
-      } else {
-        console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
-      }
+        event.preventDefault();
+        runSubmitFlow({ autosave: false });
       });
 
       safeOn("#submitBtn", "click", () => {
@@ -4970,6 +5100,7 @@ function renderSubmitOutputs(payload) {
         }
         emit("debug:human-json", payload);
         loadJsonSafeToForm("human", payload);
+        isFormDirty = computeDirtyState();
         updateActionBarUi();
         openExportModal("human");
       });
