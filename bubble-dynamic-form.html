@@ -3774,7 +3774,6 @@ function renderSubmitOutputs(payload) {
     }
 
     function traceAutosave(label, payload = {}) {
-      if (!BDF.DEBUG_MODE) return;
       const snapshot = {
         label,
         time: new Date().toISOString(),
@@ -3788,7 +3787,7 @@ function renderSubmitOutputs(payload) {
         ...payload
       };
       console.info("[BDF_AUTOSAVE_TRACE]", snapshot);
-      if (!IS_VERSION_MODE) {
+      if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
         setConsole(`trace:${label}`, JSON.stringify(snapshot, null, 2));
       }
     }
