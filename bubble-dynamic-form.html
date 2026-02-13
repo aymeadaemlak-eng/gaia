@@ -36,6 +36,7 @@
         ]
       },
       start: false,
+      editing: true,
       VERSION: true
     };
   </script>
@@ -1052,7 +1053,44 @@
       color: var(--warning);
       font-size: 0.78rem;
       font-weight: 600;
-    }
+}
+
+#bdf-root .edit-mode-root {
+  display: none;
+  gap: 10px;
+}
+
+#bdf-root .edit-mode-toolbar {
+  display: grid;
+  grid-template-columns: 1fr minmax(140px, 180px);
+  gap: 8px;
+}
+
+#bdf-root .edit-mode-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+#bdf-root .edit-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid #f0f3f8;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+#bdf-root .edit-row:hover { background: #f8fbff; }
+#bdf-root .edit-row-label { font-size: 11px; color: var(--muted); }
+#bdf-root .edit-row-value { font-size: 14px; color: var(--text); }
+#bdf-root .edit-row.empty .edit-row-value { color: #9aa3b2; font-style: italic; }
 #bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
@@ -1423,6 +1461,18 @@
           </div>
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
+        <div id="editModeRoot" class="edit-mode-root">
+          <div class="edit-mode-toolbar">
+            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan adı veya değer ara…" />
+            <select id="editFilterSelect" class="field-input">
+              <option value="all">All</option>
+              <option value="filled">Filled</option>
+              <option value="empty">Empty</option>
+              <option value="changed">Changed</option>
+            </select>
+          </div>
+          <div id="editModeList" class="edit-mode-list"></div>
+        </div>
         <form id="dynamicForm" class="grid"></form>
         <div class="inline-row" id="formActions" style="margin-top: 12px;">
           <button id="submitBtn" type="submit">Submit</button>
@@ -1462,6 +1512,7 @@
       BDF.DEBUG_MODE = IS_DEBUG_MODE && !IS_VERSION_MODE;
 
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
+      const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true;
 
     let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
     let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
@@ -1635,6 +1686,7 @@
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
+    let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
@@ -1903,6 +1955,10 @@
     const showInlineHelpInput = byId("showInlineHelp");
     const autoFocusInvalidInput = byId("autoFocusInvalid");
     const formEl = byId("dynamicForm");
+    const editModeRoot = byId("editModeRoot");
+    const editSearchInput = byId("editSearchInput");
+    const editFilterSelect = byId("editFilterSelect");
+    const editModeList = byId("editModeList");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
     const summaryBox = byId("summaryBox");
@@ -1986,6 +2042,13 @@
       fieldRefs: {},
       columnData: null
     };
+
+    let editModeSearchTerm = "";
+    let editModeFilter = "all";
+    let editModeDebounceTimer = null;
+    let editModeVisibleFields = [];
+    const EDIT_ROW_HEIGHT = 68;
+    let editModeRenderToken = 0;
 
     const defaultSchema = {
       fields: [
@@ -2190,8 +2253,17 @@
       if (columnWarning) {
         columnWarning.style.display = debugVisible && !columnJson ? "block" : "none";
       }
-    if (formActions) {
+      if (formActions) {
         formActions.style.display = "none";
+      }
+      if (editModeRoot) {
+        editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
+      }
+      if (actionBar) {
+        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
+      }
+      if (formEl) {
+        formEl.style.display = IS_EDITING_MODE ? "none" : "grid";
       }
       if (formContainer) {
         formContainer.style.display = "block";
@@ -2362,7 +2434,9 @@ function renderSubmitOutputs(payload) {
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
       const actionType = hasBubbleData ? "Process" : "Create";
-      const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
+      const output4 = (IS_EDITING_MODE && autosave)
+        ? baseOutput4
+        : `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
         output2: endTimestamp,
@@ -2386,6 +2460,15 @@ function renderSubmitOutputs(payload) {
       } catch (error) {
         return null;
       }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function getCurrentDateTime(config) {
@@ -2786,6 +2869,7 @@ function renderSubmitOutputs(payload) {
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
+      dirtyFields[fieldKey] = true;
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -2798,6 +2882,7 @@ function renderSubmitOutputs(payload) {
 
     function clearChangedFieldKeys() {
       changedFieldKeys = new Set();
+      dirtyFields = {};
     }
 
 
@@ -3307,6 +3392,9 @@ function renderSubmitOutputs(payload) {
       Object.keys(state.fieldRefs).forEach((fieldKey) => {
         updateFieldDisplayValue(fieldKey);
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+      }
       updateToolbarStatus();
       if (state.config) {
         updateSubmitState(state.config);
@@ -4529,6 +4617,140 @@ function renderSubmitOutputs(payload) {
       }, 500);
     }
 
+    function valueToSearchText(value) {
+      if (isEmptyValue(value)) return "";
+      if (typeof value === "string") return value.toLowerCase();
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => {
+            if (typeof item === "string") return item;
+            if (item && typeof item === "object") return `${item.filename || ""} ${item.url || ""} ${item.name || ""}`;
+            return String(item || "");
+          })
+          .join(" ")
+          .toLowerCase();
+      }
+      if (value && typeof value === "object") {
+        return `${value.filename || ""} ${value.url || ""} ${JSON.stringify(value)}`.toLowerCase();
+      }
+      return String(value).toLowerCase();
+    }
+
+    function getEditValueDisplay(field, value) {
+      if (isEmptyValue(value)) return "Boş";
+      if (Array.isArray(value)) return value.map((v) => (typeof v === "string" ? v : (v?.filename || v?.url || JSON.stringify(v)))).join(", ");
+      if (typeof value === "object") return value.filename || value.url || JSON.stringify(value);
+      return String(value);
+    }
+
+    function matchesEditSearch(field, value, term) {
+      if (!term) return true;
+      const q = term.toLowerCase();
+      const label = String(field.label || field.fieldName || field.key || "").toLowerCase();
+      if (label.includes(q)) return true;
+      return valueToSearchText(value).includes(q);
+    }
+
+    function fieldPassesEditFilter(field, value) {
+      if (editModeFilter === "filled") return !isEmptyValue(value);
+      if (editModeFilter === "empty") return isEmptyValue(value);
+      if (editModeFilter === "changed") return Boolean(dirtyFields[field.key]);
+      return true;
+    }
+
+    function openInlineEditor(row, field, currentValue) {
+      if (!row || row.dataset.editing === "1") return;
+      row.dataset.editing = "1";
+      const isMultiline = String(field.type || "").toLowerCase() === "multiline" || String(field.type || "").toLowerCase() === "textarea";
+      const input = document.createElement(isMultiline ? "textarea" : "input");
+      if (!isMultiline) {
+        if (["number", "integer", "decimal", "currency", "percent"].includes(String(field.type || "").toLowerCase())) input.type = "number";
+        else if (String(field.type || "").toLowerCase() === "date") input.type = "date";
+        else input.type = "text";
+      }
+      input.className = "field-input";
+      input.value = isEmptyValue(currentValue) ? "" : String(Array.isArray(currentValue) ? currentValue.join(", ") : currentValue);
+      const valueEl = row.querySelector(".edit-row-value");
+      if (!valueEl) return;
+      valueEl.textContent = "";
+      valueEl.appendChild(input);
+      const commit = () => {
+        const nextRaw = input.value;
+        const nextValue = input.type === "number" ? normalizeNumberInput(nextRaw) : nextRaw;
+        row.dataset.editing = "0";
+        const currentNormalized = normalizeValueForComparison(field, getEffectiveValue(field.key), state.config);
+        const nextNormalized = normalizeValueForComparison(field, nextValue, state.config);
+        if (areValuesDifferent(currentNormalized, nextNormalized)) {
+          setFieldValue(field.key, nextValue, field);
+          runEditModeFilterRender();
+        }
+        valueEl.textContent = getEditValueDisplay(field, getEffectiveValue(field.key));
+        row.classList.toggle("empty", isEmptyValue(getEffectiveValue(field.key)));
+      };
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !isMultiline) {
+          event.preventDefault();
+          input.blur();
+        }
+      });
+      input.addEventListener("blur", commit, { once: true });
+      input.focus();
+      if (isMultiline) input.style.minHeight = "72px";
+    }
+
+    function renderEditModeVirtualList(fields) {
+      if (!editModeList) return;
+      editModeVisibleFields = fields;
+      const token = ++editModeRenderToken;
+      editModeList.innerHTML = "";
+      const viewport = document.createElement("div");
+      viewport.style.position = "relative";
+      viewport.style.height = `${Math.max(1, fields.length * EDIT_ROW_HEIGHT)}px`;
+      editModeList.appendChild(viewport);
+
+      const paint = () => {
+        if (token !== editModeRenderToken) return;
+        const scrollTop = editModeList.scrollTop || 0;
+        const viewHeight = editModeList.clientHeight || 400;
+        const start = Math.max(0, Math.floor(scrollTop / EDIT_ROW_HEIGHT) - 4);
+        const end = Math.min(fields.length, Math.ceil((scrollTop + viewHeight) / EDIT_ROW_HEIGHT) + 6);
+        viewport.innerHTML = "";
+        for (let i = start; i < end; i += 1) {
+          const field = fields[i];
+          const value = getEffectiveValue(field.key);
+          const row = document.createElement("div");
+          row.className = "edit-row";
+          if (isEmptyValue(value)) row.classList.add("empty");
+          row.style.top = `${i * EDIT_ROW_HEIGHT}px`;
+          row.style.height = `${EDIT_ROW_HEIGHT}px`;
+          row.innerHTML = `<div class="edit-row-label">${escapeHtml(field.label || field.key)}</div><div class="edit-row-value">${escapeHtml(getEditValueDisplay(field, value))}</div>`;
+          const normalizedType = String(field.type || "").toLowerCase();
+          if (["file", "image", "multifile", "multi"].includes(normalizedType)) {
+            row.addEventListener("click", () => {
+              const ref = state.fieldRefs[field.key];
+              if (ref?.inputEl && typeof ref.inputEl.click === "function") ref.inputEl.click();
+            });
+          } else {
+            row.addEventListener("click", () => openInlineEditor(row, field, value));
+          }
+          viewport.appendChild(row);
+        }
+      };
+      editModeList.onscroll = paint;
+      paint();
+    }
+
+    function runEditModeFilterRender() {
+      if (!IS_EDITING_MODE || !state.config) return;
+      const term = String(editModeSearchTerm || "").trim();
+      const filtered = (state.config.fields || []).filter((field) => {
+        const value = getEffectiveValue(field.key);
+        if (!fieldPassesEditFilter(field, value)) return false;
+        return matchesEditSearch(field, value, term);
+      });
+      renderEditModeVirtualList(filtered);
+    }
+
     function renderForm(config) {
       formEl.innerHTML = "";
       state.values = {};
@@ -4540,8 +4762,28 @@ function renderSubmitOutputs(payload) {
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
+      if (IS_EDITING_MODE) {
+        if (actionBar) actionBar.style.display = "none";
+        if (formEl) formEl.style.display = "none";
+      } else {
+        if (actionBar) actionBar.style.display = "";
+        if (formEl) formEl.style.display = "grid";
+      }
+
       let previousGroup = null;
       config.fields.forEach((field, index) => {
+        if (IS_EDITING_MODE) {
+          let initialValue = getInitialValue(field, state.config || {});
+          if (["file", "image", "multifile"].includes(field.type)) {
+            const initialFiles = normalizeInitialFileList(initialValue).map((entry) => ({ ...entry, raw: null, base64: "" }));
+            state.fileBuffers[field.key] = initialFiles;
+            state.values[field.key] = initialValue;
+          } else {
+            state.values[field.key] = initialValue;
+          }
+          state.fieldRefs[field.key] = state.fieldRefs[field.key] || {};
+          return;
+        }
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
 
@@ -5917,6 +6159,24 @@ function renderSubmitOutputs(payload) {
         closeActionMenu();
       });
 
+
+      if (editSearchInput) {
+        editSearchInput.addEventListener("input", (event) => {
+          const nextTerm = String(event?.target?.value || "");
+          if (editModeDebounceTimer) clearTimeout(editModeDebounceTimer);
+          editModeDebounceTimer = setTimeout(() => {
+            editModeSearchTerm = nextTerm;
+            runEditModeFilterRender();
+          }, 200);
+        });
+      }
+
+      if (editFilterSelect) {
+        editFilterSelect.addEventListener("change", (event) => {
+          editModeFilter = String(event?.target?.value || "all").toLowerCase();
+          runEditModeFilterRender();
+        });
+      }
 
       safeOn("#dynamicForm", "submit", (event) => {
         event.preventDefault();
