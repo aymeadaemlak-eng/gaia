@@ -3845,7 +3845,7 @@ function renderSubmitOutputs(payload) {
         hasSeenStartSignal,
         ...payload
       };
-      console.info("[BDF_AUTOSAVE_TRACE]", snapshot);
+      console.info(`[BDF_AUTOSAVE_TRACE] ${JSON.stringify(snapshot)}`);
       if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
         setConsole(`trace:${label}`, JSON.stringify(snapshot, null, 2));
       }
@@ -5343,7 +5343,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function updateSubmitState(config) {
-      console.info("updateSubmitState:start", { fieldCount: (config.fields || []).length });
+      console.info(`[updateSubmitState:start] ${JSON.stringify({ fieldCount: (config.fields || []).length })}`);
       const isValid = (config.fields || []).every((field) => {
         let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
@@ -5355,7 +5355,7 @@ function renderSubmitOutputs(payload) {
         if (isFieldRequired(field)) {
           const fieldOk = !isEmptyValue(validationValue);
           if (!fieldOk) {
-            console.info("updateSubmitState:missing", { fieldKey: field.key, label: field.label });
+            console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
           }
           return fieldOk;
         }
@@ -5368,7 +5368,7 @@ function renderSubmitOutputs(payload) {
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
-      console.info("updateSubmitState:done", { isValid, requiredPolicy: config.requiredPolicy });
+      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy })}`);
     }
 
     function focusFirstInvalid() {
