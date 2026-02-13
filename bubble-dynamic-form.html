@@ -118,16 +118,16 @@
       --success: #16a34a;
       --warning: #f59e0b;
       --focus: rgba(37, 99, 235, 0.12);
-      --form-row-gap: clamp(2px, 0.4vw, 5px);
+      --form-row-gap: 12px;
       --form-field-gap: clamp(6px, 0.8vw, 8px);
-      --form-vertical-padding: clamp(0px, 0.1vw, 2px);
+      --form-vertical-padding: 0px;
       --form-control-pad-y: clamp(5px, 0.7vw, 7px);
       --form-control-pad-x: clamp(7px, 0.9vw, 10px);
       --form-input-pad-y: clamp(6px, 0.8vw, 8px);
       --form-input-pad-x: clamp(4px, 0.6vw, 6px);
-      --form-input-min-height: clamp(30px, 3.2vw, 34px);
-      --field-gap-internal: clamp(2px, 0.4vw, 4px);
-      --field-gap-between: clamp(1px, 0.2vw, 3px);
+      --form-input-min-height: 32px;
+      --field-gap-internal: 3px;
+      --field-gap-between: 8px;
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       font-size: 14px;
@@ -207,27 +207,29 @@
       display: grid;
       gap: var(--field-gap-internal);
       padding: var(--form-vertical-padding) 0;
+      margin-bottom: 8px;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
-      margin-top: var(--field-gap-between);
+      margin-top: 0;
     }
 
     #bdf-root .field-wrapper.group-break-date {
-      margin-top: var(--field-group-gap);
+      margin-top: 16px;
     }
 
     #bdf-root .field-row {
       display: grid;
-      grid-template-columns: minmax(165px, 210px) minmax(0, 1fr);
-      gap: var(--form-row-gap);
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 12px;
       align-items: center;
-      min-height: 40px;
+      min-height: 42px;
+      padding: 10px 0;
     }
 
     #bdf-root .field-row.is-file-field {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 6px;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 12px;
       align-items: start;
     }
 
@@ -268,6 +270,22 @@
       display: none;
     }
 
+    #bdf-root .field-icon-col {
+      width: 30px;
+      min-width: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      opacity: 0.68;
+      padding-top: 1px;
+    }
+
+    #bdf-root .field-content {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
     #bdf-root .field-label {
       display: grid;
       gap: 1px;
@@ -282,9 +300,9 @@
 
     #bdf-root .label-text {
       font-weight: 500;
-      font-size: 0.92rem;
+      font-size: 14px;
       color: #6b7280;
-      line-height: 1.35;
+      line-height: 1.2;
     }
 
     #bdf-root .label-meta {
@@ -354,7 +372,7 @@
 
 #bdf-root .control-stack {
       display: grid;
-      gap: 2px;
+      gap: 3px;
       width: 100%;
       justify-items: start;
     }
@@ -365,8 +383,8 @@
 
 #bdf-root .field-control {
       border: 1px solid transparent;
-      border-radius: 8px;
-      padding: 2px 4px;
+      border-radius: 6px;
+      padding: 0;
       background: transparent;
       position: relative;
       transition: border-color 0.14s ease, background-color 0.14s ease;
@@ -420,15 +438,15 @@
 #bdf-root textarea {
       width: 100%;
       border: none;
-      padding: 2px 4px;
-      border-radius: 6px;
-      font-size: 0.92rem;
+      padding: 1px 2px;
+      border-radius: 4px;
+      font-size: 14px;
       font-weight: 500;
       background: transparent;
       color: #111827;
       outline: none;
       min-height: var(--form-input-min-height);
-      line-height: 1.3;
+      line-height: 1.4;
     }
 
 #bdf-root .field-input::placeholder,
@@ -1161,14 +1179,14 @@
 
     @media (max-width: 900px) {
 #bdf-root {
-        --form-row-gap: 6px;
+        --form-row-gap: 10px;
         --form-field-gap: 6px;
-        --form-vertical-padding: 2px;
-        --field-gap-between: 3px;
+        --form-vertical-padding: 0px;
+        --field-gap-between: 8px;
       }
 
 #bdf-root .field-row {
-        grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+        grid-template-columns: 30px minmax(0, 1fr);
       }
 
 #bdf-root .field-row.is-file-field .field-label {
@@ -4524,12 +4542,16 @@ function renderSubmitOutputs(payload) {
         typeIcon.append(renderIcon(typeMeta.iconKey));
         typeIcon.title = typeMeta.label;
 
+        const iconColumn = document.createElement("div");
+        iconColumn.className = "field-icon-col";
+        iconColumn.append(typeIcon);
+
         const label = document.createElement("label");
         label.className = "label-text";
         label.htmlFor = `field-${field.key}`;
         label.textContent = field.label;
 
-        labelTop.append(typeIcon, label);
+        labelTop.append(label);
 
         const labelMeta = document.createElement("div");
         labelMeta.className = "label-meta";
@@ -5598,7 +5620,10 @@ function renderSubmitOutputs(payload) {
         };
         updateAiVisuals(field.key);
 
-        row.append(labelColumn, controlStack);
+                const contentColumn = document.createElement("div");
+        contentColumn.className = "field-content";
+        contentColumn.append(labelColumn, controlStack);
+        row.append(iconColumn, contentColumn);
         wrapper.append(row);
         formEl.append(wrapper);
 
