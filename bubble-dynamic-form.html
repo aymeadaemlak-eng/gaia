@@ -1501,6 +1501,8 @@
     const AUTOSAVE_DEBOUNCE_MS = 2000;
     let lastObservedUniqueId = "";
     let hasPendingUniqueIdSubmit = false;
+    let pendingIncomingBubbleData = null;
+    let pendingIncomingUniqueId = "";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
@@ -3620,6 +3622,38 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+
+    function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId) {
+      if (incomingBubbleData && state.config) {
+        MANUAL_DATA_JSON = incomingBubbleData;
+        humanData = {};
+        aiData = {};
+        sourceByField = {};
+        state.fileBuffers = {};
+        state.fileStaging = {};
+        loadJsonSafeToForm("human", incomingBubbleData);
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        initialSnapshot = buildBaselineSnapshot(incomingBubbleData);
+      }
+      isFormDirty = false;
+      taskStartTimestamp = null;
+      hasPendingUniqueIdSubmit = false;
+      if (uniqueId) {
+        lastObservedUniqueId = uniqueId;
+        persistObservedUniqueId(uniqueId);
+      }
+    }
+
+    function flushPendingIncomingAfterSubmit() {
+      if (!pendingIncomingUniqueId) return;
+      const incomingBubbleData = pendingIncomingBubbleData;
+      const uniqueId = pendingIncomingUniqueId;
+      pendingIncomingBubbleData = null;
+      pendingIncomingUniqueId = "";
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId);
+    }
+
     function persistObservedUniqueId(uniqueId) {
       if (!uniqueId) return;
       try {
@@ -3732,6 +3766,7 @@ function renderSubmitOutputs(payload) {
       if (!fn) {
         isFormSaving = false;
         isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
         console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
         return;
       }
@@ -3744,19 +3779,23 @@ function renderSubmitOutputs(payload) {
             .then(() => {
               isFormSaving = false;
               isFormDirty = false;
+              flushPendingIncomingAfterSubmit();
             })
             .catch((error) => {
               isFormSaving = false;
               isFormDirty = true;
+              flushPendingIncomingAfterSubmit();
               console.error("submit failed", error);
             });
           return;
         }
         isFormSaving = false;
         isFormDirty = false;
+        flushPendingIncomingAfterSubmit();
       } catch (error) {
         isFormSaving = false;
         isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
         console.error("submit failed", error);
       }
 
@@ -3783,19 +3822,23 @@ function renderSubmitOutputs(payload) {
       if (nextUniqueId === lastObservedUniqueId) return;
 
       const incomingBubbleData = readCurrentBubbleDataObject();
-      if (incomingBubbleData && state.config) {
-        MANUAL_DATA_JSON = incomingBubbleData;
-        loadJsonSafeToForm("human", incomingBubbleData);
-        isFormDirty = computeDirtyState();
+
+      if (isFormSaving) {
+        pendingIncomingBubbleData = incomingBubbleData;
+        pendingIncomingUniqueId = nextUniqueId;
+        return;
       }
 
-      lastObservedUniqueId = nextUniqueId;
-      persistObservedUniqueId(nextUniqueId);
-      hasPendingUniqueIdSubmit = true;
-      maybeRunAutosaveOnStartClose();
-      if (!isFormSaving) {
+      if (isFormDirty) {
+        pendingIncomingBubbleData = incomingBubbleData;
+        pendingIncomingUniqueId = nextUniqueId;
+        hasPendingUniqueIdSubmit = true;
+        maybeRunAutosaveOnStartClose();
         runSubmitFlow({ autosave: false, forceSubmit: true });
+        return;
       }
+
+      applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, nextUniqueId);
     }
 
     function initAutosaveStartWatcher() {
