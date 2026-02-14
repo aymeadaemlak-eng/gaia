@@ -1291,6 +1291,19 @@
   margin-bottom: 6px;
   min-height: 18px;
 }
+#bdf-root .edit-stage-fields-skeleton {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#bdf-root .edit-stage-fields-skeleton .line {
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #eef3fb 0%, #e5edf9 50%, #eef3fb 100%);
+  background-size: 220% 100%;
+  animation: bdf-loading 1.2s ease-in-out infinite;
+}
 
 #bdf-root .edit-mode-loading {
   display: none;
@@ -5208,6 +5221,35 @@ function renderSubmitOutputs(payload) {
       return true;
     }
 
+    function fuzzySimilarityScore(haystack, needle) {
+      if (!needle) return 0;
+      let matches = 0;
+      let cursor = 0;
+      for (let i = 0; i < haystack.length && cursor < needle.length; i += 1) {
+        if (haystack[i] === needle[cursor]) {
+          matches += 1;
+          cursor += 1;
+        }
+      }
+      if (!matches) return 0;
+      return matches / needle.length;
+    }
+
+    function quickFieldSearchScore(field, term) {
+      if (!term) return 0;
+      const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
+      const label = String(field.label || "").toLocaleLowerCase("tr-TR");
+      const targets = [id, label];
+      let best = 0;
+      targets.forEach((target) => {
+        if (!target) return;
+        if (target.startsWith(term)) best = Math.max(best, 300 + (term.length / Math.max(target.length, 1)));
+        else if (target.includes(term)) best = Math.max(best, 200 + (term.length / Math.max(target.length, 1)));
+        else best = Math.max(best, 100 * fuzzySimilarityScore(target, term));
+      });
+      return best;
+    }
+
     function renderEditProgress(stageMeta) {
       if (!editProgressWrap || !editProgressTrack) return;
       editProgressTrack.innerHTML = "";
@@ -5266,7 +5308,11 @@ function renderSubmitOutputs(payload) {
       if (editStageStatus) {
         editStageStatus.textContent = selectedFields.length ? "İçerik yükleniyor…" : "Bu aşamada gösterilecek alan yok.";
       }
-      if (editStageFields) editStageFields.innerHTML = "";
+      if (editStageFields) {
+        editStageFields.innerHTML = selectedFields.length
+          ? '<div class="edit-stage-fields-skeleton"><div class="line"></div><div class="line"></div><div class="line"></div></div>'
+          : '';
+      }
       let cursor = 0;
       const chunkSize = 4;
       const total = selectedFields.length;
@@ -5274,6 +5320,7 @@ function renderSubmitOutputs(payload) {
         if (renderSeq !== editStageRenderSeq) return;
         if (stageKey !== editSelectedStage) return;
         if (!editStageFields) return;
+        if (cursor === 0) editStageFields.innerHTML = "";
         const limit = Math.min(cursor + chunkSize, total);
         for (let i = cursor; i < limit; i += 1) {
           const wrapper = wrappersByKey.get(selectedFields[i].key);
@@ -5358,18 +5405,17 @@ function renderSubmitOutputs(payload) {
 
       if (editQuickFields) editQuickFields.innerHTML = "";
       if (editStageTabs) editStageTabs.innerHTML = "";
-      if (editStageFields) editStageFields.innerHTML = "";
       if (editStageHeading) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
       }
 
       const unassignedFields = (stageMap.get("Ungrouped") || []).filter((field) => isQuickEntryEligible(field));
       const quickCandidates = term
-        ? unassignedFields.filter((field) => {
-          const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
-          const header = String(field.label || "").toLocaleLowerCase("tr-TR");
-          return id.includes(term) || header.includes(term);
-        })
+        ? unassignedFields
+          .map((field, index) => ({ field, index, score: quickFieldSearchScore(field, term) }))
+          .filter((item) => item.score > 0)
+          .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+          .map((item) => item.field)
         : unassignedFields;
       const quickItems = [];
       for (const field of quickCandidates) {
