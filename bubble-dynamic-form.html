@@ -36,6 +36,9 @@
         ]
       },
       start: false,
+      editing: true,
+      EDITING_STAGE_GROUPS_JSON: [],
+      EDITING_ALL_FIELDS_JSON: [],
       VERSION: true
     };
   </script>
@@ -249,6 +252,15 @@
 
     #bdf-root .field-row.is-file-field .control-stack {
       justify-items: stretch;
+    }
+
+#bdf-root.editing-mode #formContainer {
+      width: 100%;
+      max-width: unset;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
     }
 
 #bdf-root #formContainer {
@@ -1052,7 +1064,198 @@
       color: var(--warning);
       font-size: 0.78rem;
       font-weight: 600;
-    }
+}
+
+#bdf-root .edit-mode-root {
+  display: none;
+  gap: 12px;
+  width: 100%;
+  max-width: unset;
+  flex: 1 1 auto;
+}
+
+#bdf-root .edit-mode-toolbar {
+  display: grid;
+  gap: 8px;
+}
+
+#bdf-root .edit-progress-wrap {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+#bdf-root .edit-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+}
+
+#bdf-root .edit-progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-progress-step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: #fff;
+}
+
+#bdf-root .edit-progress-step.completed .edit-progress-step-dot {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+#bdf-root .edit-progress-step.active {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-progress-step.active .edit-progress-step-dot {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
+}
+
+#bdf-root .edit-progress-step.upcoming {
+  opacity: 0.6;
+}
+
+#bdf-root .edit-progress-sep {
+  color: #cbd5e1;
+}
+
+#bdf-root .edit-progress-toggle {
+  justify-self: start;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+#bdf-root .edit-quick-list {
+
+  display: grid;
+  gap: 8px;
+}
+
+#bdf-root .edit-quick-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #dbe3f2;
+  background: #f8fbff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+#bdf-root .edit-quick-item small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#bdf-root .edit-stage-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+#bdf-root .edit-stage-tabs {
+  display: grid;
+  gap: 6px;
+}
+
+#bdf-root .edit-stage-tab {
+  text-align: left;
+  border: 1px solid #d7deeb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  min-height: 40px;
+}
+
+#bdf-root .edit-stage-tab.active {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-stage-tab.completed {
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+#bdf-root .edit-stage-tab.upcoming {
+  opacity: 0.9;
+  color: #475569;
+}
+
+#bdf-root .edit-stage-panel {
+  border: 1px solid #e6ebf5;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 320px;
+  background: #fff;
+}
+
+#bdf-root .edit-mode-loading {
+  display: none;
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid #e2e8f3;
+  border-radius: 12px;
+  background: #fafcff;
+  padding: 14px;
+  gap: 12px;
+  align-content: start;
+}
+
+#bdf-root .edit-mode-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d9e2f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: bdf-spin 0.8s linear infinite;
+}
+
+#bdf-root .edit-skeleton-row {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eef3fb 0%, #e5edf9 50%, #eef3fb 100%);
+  background-size: 220% 100%;
+  animation: bdf-loading 1.2s ease-in-out infinite;
+}
+
+#bdf-root .edit-skeleton-row.head { width: 40%; height: 18px; }
+#bdf-root .edit-skeleton-row.wide { width: 100%; }
+#bdf-root .edit-skeleton-row.mid { width: 72%; }
+
+@keyframes bdf-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -20% 0; }
+}
+
+@keyframes bdf-spin {
+  to { transform: rotate(360deg); }
+}
 #bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
@@ -1239,6 +1442,19 @@
 #bdf-root .field-row.is-amount-field .control-stack {
         max-width: min(100%, 248px);
       }
+
+#bdf-root .edit-stage-layout {
+        grid-template-columns: 1fr;
+      }
+
+#bdf-root .edit-stage-tabs {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+
+#bdf-root .edit-progress-track {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
 
     @media (max-width: 360px) {
@@ -1361,7 +1577,7 @@
         </div>
       </div>
       <div class="inline-row" style="margin-top: 12px;">
-        <button id="loadSample">Örnek Schema Yükle</button>
+        <button id="loadSample">Schema Yükle</button>
         <button class="secondary" id="renderForm">Render Et</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
       </div>
@@ -1381,7 +1597,7 @@
         <h2>Dynamic Form</h2>
         <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
-          <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
+          <button type="button" id="loadColumnJson">Column Yükle</button>
           <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
           <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
           <button type="button" class="ghost" id="applyAiToEmpty">AI -> Boş Human Alanlara Uygula</button>
@@ -1400,7 +1616,7 @@
         </div>
         </div>
         <div id="columnWarning" class="debug-warning" style="display:none;">
-          Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+          Column JSON yüklenmedi. Debug toolbar üzerinden yükleyin.
         </div>
       </section>
     </div>
@@ -1423,6 +1639,34 @@
           </div>
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
+        <div id="editModeRoot" class="edit-mode-root">
+          <div class="edit-mode-toolbar">
+            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+          </div>
+          <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
+            <div id="editProgressTrack" class="edit-progress-track"></div>
+            <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
+          </div>
+          <div id="editModeLoading" class="edit-mode-loading">
+            <span class="edit-mode-spinner" aria-hidden="true"></span>
+            <span id="editModeLoadingText">Yükleniyor</span>
+            <div class="edit-skeleton-row head"></div>
+            <div class="edit-skeleton-row wide"></div>
+            <div class="edit-skeleton-row mid"></div>
+            <div class="edit-skeleton-row wide"></div>
+          </div>
+          <section id="editQuickSection" style="display:none;">
+            <h3 style="margin:4px 0 8px 0; font-size:14px;">Hızlı Giriş</h3>
+            <div id="editQuickFields" class="edit-quick-list"></div>
+          </section>
+          <div id="editStageLayout" class="edit-stage-layout" style="display:none;">
+            <div id="editStageTabs" class="edit-stage-tabs"></div>
+            <div id="editStagePanel" class="edit-stage-panel">
+              <h3 id="editStageHeading" style="margin:0 0 8px 0; font-size:14px;"></h3>
+              <div id="editStageFields" class="grid" style="gap:8px;"></div>
+            </div>
+          </div>
+        </div>
         <form id="dynamicForm" class="grid"></form>
         <div class="inline-row" id="formActions" style="margin-top: 12px;">
           <button id="submitBtn" type="submit">Submit</button>
@@ -1462,6 +1706,7 @@
       BDF.DEBUG_MODE = IS_DEBUG_MODE && !IS_VERSION_MODE;
 
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
+      const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true;
 
     let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
     let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
@@ -1635,6 +1880,7 @@
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
+    let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
@@ -1903,6 +2149,19 @@
     const showInlineHelpInput = byId("showInlineHelp");
     const autoFocusInvalidInput = byId("autoFocusInvalid");
     const formEl = byId("dynamicForm");
+    const editModeRoot = byId("editModeRoot");
+    const editSearchInput = byId("editSearchInput");
+    const editProgressWrap = byId("editProgressWrap");
+    const editProgressTrack = byId("editProgressTrack");
+    const editProgressToggle = byId("editProgressToggle");
+    const editModeLoading = byId("editModeLoading");
+    const editModeLoadingText = byId("editModeLoadingText");
+    const editQuickSection = byId("editQuickSection");
+    const editQuickFields = byId("editQuickFields");
+    const editStageLayout = byId("editStageLayout");
+    const editStageTabs = byId("editStageTabs");
+    const editStageHeading = byId("editStageHeading");
+    const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
     const summaryBox = byId("summaryBox");
@@ -1987,6 +2246,18 @@
       columnData: null
     };
 
+    let editModeSearchTerm = "";
+    let editModeDebounceTimer = null;
+    let editModeStageOrder = [];
+    let editModeStageMeta = [];
+    let editSelectedStage = "";
+    let editProcessActiveStageKey = "";
+    let editProcessShowAll = false;
+    let editQuickPinnedKeys = [];
+    let editModePayloadLoaded = false;
+    let lastEditModePayloadSignature = "";
+    let editModePayloadPollTimer = null;
+
     const defaultSchema = {
       fields: [
         {
@@ -2003,7 +2274,7 @@
           label: "E-posta",
           type: "email",
           required: true,
-          placeholder: "ornek@mail.com"
+          placeholder: "mail@example.com"
         },
         {
           key: "phone",
@@ -2190,8 +2461,27 @@
       if (columnWarning) {
         columnWarning.style.display = debugVisible && !columnJson ? "block" : "none";
       }
-    if (formActions) {
+      if (formActions) {
         formActions.style.display = "none";
+      }
+      if (rootElement) {
+        rootElement.classList.toggle("editing-mode", IS_EDITING_MODE);
+      }
+      if (editModeRoot) {
+        editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
+      }
+      if (IS_EDITING_MODE && !editModePayloadLoaded) {
+        setEditModeLoading(true, "Edit verileri yükleniyor…");
+      }
+      if (actionBar) {
+        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
+      }
+      if (formEl) {
+        formEl.style.display = IS_EDITING_MODE ? "none" : "grid";
+      }
+      if (!IS_EDITING_MODE) {
+        if (editQuickSection) editQuickSection.style.display = "none";
+        if (editStageLayout) editStageLayout.style.display = "none";
       }
       if (formContainer) {
         formContainer.style.display = "block";
@@ -2362,7 +2652,9 @@ function renderSubmitOutputs(payload) {
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
       const actionType = hasBubbleData ? "Process" : "Create";
-      const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
+      const output4 = (IS_EDITING_MODE && autosave)
+        ? baseOutput4
+        : `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
         output2: endTimestamp,
@@ -2386,6 +2678,15 @@ function renderSubmitOutputs(payload) {
       } catch (error) {
         return null;
       }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function getCurrentDateTime(config) {
@@ -2786,6 +3087,7 @@ function renderSubmitOutputs(payload) {
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
+      dirtyFields[fieldKey] = true;
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -2798,6 +3100,7 @@ function renderSubmitOutputs(payload) {
 
     function clearChangedFieldKeys() {
       changedFieldKeys = new Set();
+      dirtyFields = {};
     }
 
 
@@ -3307,6 +3610,10 @@ function renderSubmitOutputs(payload) {
       Object.keys(state.fieldRefs).forEach((fieldKey) => {
         updateFieldDisplayValue(fieldKey);
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+        if (formEl) formEl.style.display = "none";
+      }
       updateToolbarStatus();
       if (state.config) {
         updateSubmitState(state.config);
@@ -4529,6 +4836,446 @@ function renderSubmitOutputs(payload) {
       }, 500);
     }
 
+    function setEditModeLoading(isLoading, message = "") {
+      if (!editModeLoading) return;
+      editModeLoading.style.display = isLoading ? "grid" : "none";
+      if (editQuickSection) editQuickSection.style.display = isLoading ? "none" : "block";
+      if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
+      if (editProgressWrap) editProgressWrap.style.display = isLoading ? "none" : editProgressWrap.style.display;
+      if (editModeLoadingText && message) {
+        editModeLoadingText.textContent = message;
+      }
+    }
+
+    function parseIncomingJson(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed);
+        } catch (error) {
+          return null;
+        }
+      }
+      return rawValue;
+    }
+
+    function readEditModePayloadSources() {
+      const source = window.BUBBLE_INPUTS || {};
+      const stageRaw = source.editSchemaJson ?? source.editUiSchema ?? source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
+      const allRaw = source.EDITING_ALL_FIELDS_JSON ?? source.editingAllFields ?? source.editing_all_fields ?? null;
+      return {
+        stageGroups: parseIncomingJson(stageRaw),
+        allFields: parseIncomingJson(allRaw)
+      };
+    }
+
+    function buildEditPayloadSignature(payload) {
+      try {
+        const stage = payload?.stageGroups || [];
+        const all = payload?.allFields || [];
+        return `${JSON.stringify(stage).length}:${JSON.stringify(all).length}`;
+      } catch (error) {
+        return `${Date.now()}`;
+      }
+    }
+
+    function getStageKey(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return `name:${normalizedName.toLocaleLowerCase("tr-TR")}`;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `order:${orderNumber}`;
+      return `fallback:${fallbackIndex}`;
+    }
+
+    function getStageLabel(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return normalizedName;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `Stage ${orderNumber}`;
+      return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function normalizeEditFieldItem(item, index, stageName = "", stageKey = "") {
+      const raw = item && typeof item === "object" ? item : { value: item };
+      const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.header || raw.label || `field_${index + 1}`).trim();
+      const label = String(raw.header || raw.label || raw.fieldName || raw.name || key).trim() || key;
+      const normalized = normalizeColumnType(raw.type || "text", raw.multiple || raw.allowMultiple);
+      const type = String(normalized.type || raw.type || "text").toLowerCase();
+      const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? raw.default ?? "";
+      const sourceOptions = Array.isArray(raw.source) ? raw.source : [];
+      const options = Array.isArray(raw.options) ? raw.options : sourceOptions;
+      return {
+        key,
+        fieldName: key,
+        label,
+        type,
+        displayType: normalized.displayType || raw.type || "text",
+        required: normalizeStageType(raw.stageType || "optional") === "mandatory" || Boolean(raw.required),
+        stageType: raw.stageType || "optional",
+        allowMultiple: Boolean(raw.multiple || raw.allowMultiple),
+        readOnly: Boolean(raw.readOnly),
+        options: options.map((opt) => {
+          if (typeof opt === "object" && opt) {
+            const value = String(opt.value ?? opt.id ?? opt.label ?? "").trim();
+            const label = String(opt.label ?? opt.value ?? opt.id ?? "").trim();
+            return { value, label };
+          }
+          const text = String(opt ?? "").trim();
+          return { value: text, label: text };
+        }).filter((opt) => opt.value),
+        default: raw.default ?? "",
+        ui: raw.ui || {},
+        _stageName: stageName,
+        _stageKey: stageKey,
+        _initialValue: value
+      };
+    }
+
+    function buildConfigFromEditPayload(payload) {
+      const stageGroups = Array.isArray(payload?.stageGroups) ? payload.stageGroups : [];
+      const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
+      const list = [];
+      editModeStageOrder = [];
+      editModeStageMeta = [];
+
+      if (stageGroups.length) {
+        const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
+        sortedGroups.forEach((group, groupIndex) => {
+          const stageName = String(group?.stage?.name || "").trim();
+          const stageOrder = Number(group?.stage?.order);
+          const stageKey = getStageKey(stageName, stageOrder, groupIndex);
+          const stageLabel = getStageLabel(stageName, stageOrder, groupIndex);
+          const fields = Array.isArray(group?.fields) ? group.fields : [];
+          if (!fields.length) return;
+          const normalizedFields = [];
+          fields.forEach((field, index) => {
+            if (isInnerStageType(field?.stageType)) return;
+            normalizedFields.push(normalizeEditFieldItem(field, index, stageLabel, stageKey));
+          });
+          if (!normalizedFields.length) return;
+          editModeStageOrder.push(stageKey);
+          editModeStageMeta.push({ key: stageKey, name: stageName, order: Number.isFinite(stageOrder) ? stageOrder : null, label: stageLabel });
+          normalizedFields.forEach((field) => list.push(field));
+        });
+      }
+
+      if (allFields.length) {
+        const map = new Map(list.map((field) => [field.key, field]));
+        allFields.forEach((field, index) => {
+          if (isInnerStageType(field?.stageType)) return;
+          const normalized = normalizeEditFieldItem(field, index, "Ungrouped", "Ungrouped");
+          if (!map.has(normalized.key)) {
+            list.push(normalized);
+            map.set(normalized.key, normalized);
+          } else {
+            const existing = map.get(normalized.key);
+            if (isEmptyValue(existing?._initialValue) && !isEmptyValue(normalized._initialValue)) {
+              existing._initialValue = normalized._initialValue;
+            }
+          }
+        });
+      }
+      if (!list.length) return null;
+
+      const initialValues = {};
+      list.forEach((field) => {
+        initialValues[field.key] = field._initialValue;
+      });
+
+      return {
+        fields: list.map((field) => {
+          const next = {
+            ...field,
+            editStageName: field._stageName || "Ungrouped",
+            editStageKey: field._stageKey || "Ungrouped"
+          };
+          delete next._initialValue;
+          return next;
+        }),
+        currentDateTimeISO: defaultSchema.currentDateTimeISO,
+        locale: "tr-TR",
+        timezone: "Europe/Istanbul",
+        mode: "edit",
+        initialValues,
+        requiredPolicy: "soft",
+        showInlineHelp: false,
+        autoFocusFirstInvalid: false
+      };
+    }
+
+    function hydrateEditHumanDataFromBubble(config) {
+      const sourceObj = readCurrentBubbleDataObject() || {};
+      const fields = Array.isArray(config?.fields) ? config.fields : [];
+      if (!fields.length) return;
+      const indexMap = new Map();
+      fields.forEach((field) => {
+        const aliases = [field.key, field.fieldName, field.label]
+          .map((v) => String(v || "").trim())
+          .filter(Boolean);
+        aliases.forEach((alias) => {
+          if (!indexMap.has(alias)) indexMap.set(alias, field.key);
+          const lower = alias.toLocaleLowerCase("tr-TR");
+          if (!indexMap.has(lower)) indexMap.set(lower, field.key);
+        });
+      });
+
+      Object.entries(sourceObj).forEach(([rawKey, rawValue]) => {
+        const key = String(rawKey || "").trim();
+        if (!key) return;
+        const direct = indexMap.get(key) || indexMap.get(key.toLocaleLowerCase("tr-TR"));
+        if (!direct) return;
+        humanData[direct] = rawValue;
+        sourceByField[direct] = "human";
+      });
+    }
+
+    function applyEditModePayloadIfReady() {
+      if (!IS_EDITING_MODE) return false;
+      const payload = readEditModePayloadSources();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      if (!hasStage && !hasAll) {
+        setEditModeLoading(true, "Edit verileri bekleniyor…");
+        return false;
+      }
+
+      const signature = buildEditPayloadSignature(payload);
+      if (editModePayloadLoaded && signature === lastEditModePayloadSignature) {
+        setEditModeLoading(false);
+        return true;
+      }
+
+      const config = buildConfigFromEditPayload(payload);
+      if (!config) {
+        setEditModeLoading(true, "Edit verisi çözümlenemedi…");
+        return false;
+      }
+
+      humanData = { ...(humanData || {}), ...(config.initialValues || {}) };
+      hydrateEditHumanDataFromBubble(config);
+      Object.keys(config.initialValues || {}).forEach((key) => {
+        if (!sourceByField[key]) sourceByField[key] = "human";
+      });
+      state.config = config;
+      editQuickPinnedKeys = [];
+      for (const field of (config.fields || [])) {
+        if (!field || !field.key) continue;
+        if (editQuickPinnedKeys.includes(field.key)) continue;
+        editQuickPinnedKeys.push(field.key);
+        if (editQuickPinnedKeys.length >= 5) break;
+      }
+      columnJson = {
+        columns: config.fields.map((field) => ({
+          fieldName: field.fieldName || field.key,
+          header: field.label,
+          type: field.type,
+          stageType: field.stageType || "optional",
+          required: Boolean(field.required),
+          multiple: Boolean(field.allowMultiple),
+          ui: field.ui || {}
+        })),
+        mode: "edit",
+        currentDateTimeISO: config.currentDateTimeISO,
+        locale: config.locale,
+        timezone: config.timezone
+      };
+      lastEditModePayloadSignature = signature;
+      editModePayloadLoaded = true;
+      editProcessShowAll = false;
+      setEditModeLoading(false);
+      renderForm(config);
+      flushPendingSubmitAfterConfigReady();
+      return true;
+    }
+
+    function resolveActiveProcessStageKey(stageMeta) {
+      const dataObj = readCurrentBubbleDataObject() || {};
+      const rawStage = dataObj.stage;
+      if (rawStage === null || rawStage === undefined || rawStage === "") return "";
+      const stageText = String(rawStage).trim();
+      const stageTextLower = stageText.toLocaleLowerCase("tr-TR");
+
+      const byName = stageMeta.find((item) => String(item.name || "").trim().toLocaleLowerCase("tr-TR") === stageTextLower);
+      if (byName) return byName.key;
+
+      const numericValue = Number(rawStage);
+      if (Number.isFinite(numericValue)) {
+        const byOrder = stageMeta.find((item) => Number(item.order) === numericValue);
+        if (byOrder) return byOrder.key;
+      }
+      return "unknown";
+    }
+
+    function getProcessStageStatus(stageIndex, activeIndex) {
+      if (activeIndex < 0) return "upcoming";
+      if (stageIndex < activeIndex) return "completed";
+      if (stageIndex === activeIndex) return "active";
+      return "upcoming";
+    }
+
+    function getStageDisplayLabel(stageMetaByKey, stageKey, fallbackIndex = 0) {
+      const meta = stageMetaByKey.get(stageKey) || null;
+      const label = String(meta?.label || meta?.name || "").trim();
+      if (label) return label;
+      const order = Number(meta?.order);
+      if (Number.isFinite(order)) return `Stage ${order}`;
+      return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function renderEditProgress(stageMeta) {
+      if (!editProgressWrap || !editProgressTrack) return;
+      editProgressTrack.innerHTML = "";
+      if (!stageMeta.length) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeKey = resolveActiveProcessStageKey(stageMeta);
+      editProcessActiveStageKey = activeKey;
+      if (!activeKey) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeIndex = stageMeta.findIndex((item) => item.key === activeKey);
+      const visibleStages = (editProcessShowAll || activeIndex < 0)
+        ? stageMeta
+        : stageMeta.slice(0, activeIndex + 1);
+
+      visibleStages.forEach((stage, index) => {
+        const realIndex = stageMeta.findIndex((item) => item.key === stage.key);
+        const status = getProcessStageStatus(realIndex, activeIndex);
+        const step = document.createElement("div");
+        step.className = `edit-progress-step ${status}`;
+        const dot = document.createElement("span");
+        dot.className = "edit-progress-step-dot";
+        dot.textContent = status === "completed" ? "✓" : String(realIndex + 1);
+        const label = document.createElement("span");
+        label.textContent = stage.label;
+        step.append(dot, label);
+        editProgressTrack.appendChild(step);
+        if (index < visibleStages.length - 1) {
+          const sep = document.createElement("span");
+          sep.className = "edit-progress-sep";
+          sep.textContent = "—";
+          editProgressTrack.appendChild(sep);
+        }
+      });
+
+      if (editProgressToggle) {
+        if (activeIndex >= 0 && stageMeta.length > activeIndex + 1) {
+          editProgressToggle.style.display = "inline-flex";
+          editProgressToggle.textContent = editProcessShowAll ? "Daha az göster" : "Tüm süreç";
+        } else {
+          editProgressToggle.style.display = "none";
+        }
+      }
+
+      editProgressWrap.style.display = "grid";
+    }
+
+    function runEditModeFilterRender() {
+      if (!IS_EDITING_MODE || !state.config) return;
+      const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
+      const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
+      const stageMap = new Map();
+      fields.forEach((field) => {
+        const stageKey = String(field.editStageKey || "Ungrouped");
+        if (!stageMap.has(stageKey)) stageMap.set(stageKey, []);
+        stageMap.get(stageKey).push(field);
+      });
+
+      const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage]));
+      const stageMatchesByTerm = new Set();
+      if (term) {
+        Array.from(stageMap.keys()).forEach((stageKey, index) => {
+          const stageLabel = getStageDisplayLabel(stageLabelByKey, stageKey, index).toLocaleLowerCase("tr-TR");
+          if (stageLabel.includes(term)) stageMatchesByTerm.add(stageKey);
+        });
+      }
+
+      const filtered = fields.filter((field) => {
+        if (!term) return true;
+        const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
+        const header = String(field.label || "").toLocaleLowerCase("tr-TR");
+        const stageKey = String(field.editStageKey || "Ungrouped");
+        return id.includes(term) || header.includes(term) || stageMatchesByTerm.has(stageKey);
+      });
+
+      const stageKeys = [];
+      (editModeStageOrder || []).forEach((stageKey) => {
+        const items = stageMap.get(stageKey) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
+      });
+      Array.from(stageMap.keys()).forEach((stageKey) => {
+        if (stageKey === "Ungrouped") return;
+        if (stageKeys.includes(stageKey)) return;
+        const items = stageMap.get(stageKey) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
+      });
+
+      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
+        editSelectedStage = stageKeys[0] || "";
+      }
+      if (editStageLayout) {
+        editStageLayout.style.display = stageKeys.length ? "grid" : "none";
+      }
+
+      const wrappersByKey = new Map();
+      const wrapperPool = [
+        ...Array.from(formEl.querySelectorAll('.field-wrapper')),
+        ...(editModeRoot ? Array.from(editModeRoot.querySelectorAll('.field-wrapper')) : [])
+      ];
+      wrapperPool.forEach((wrapper) => {
+        const key = wrapper.dataset.fieldKey || "";
+        if (key) wrappersByKey.set(key, wrapper);
+      });
+
+      if (editQuickFields) editQuickFields.innerHTML = "";
+      if (editStageTabs) editStageTabs.innerHTML = "";
+      if (editStageFields) editStageFields.innerHTML = "";
+      if (editStageHeading) {
+        editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
+      }
+
+      const quickKeys = (editQuickPinnedKeys || []).slice(0, 5);
+      quickKeys.forEach((key) => {
+        const wrapper = wrappersByKey.get(key);
+        if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
+      });
+
+      const activeProcessIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
+      stageKeys.forEach((stageKey, visibleIndex) => {
+        const stageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === stageKey);
+        const status = getProcessStageStatus(stageMetaIndex, activeProcessIndex);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `edit-stage-tab ${status}`;
+        btn.textContent = getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex);
+        if (stageKey === editSelectedStage) btn.classList.add('active');
+        if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
+        btn.addEventListener('click', () => {
+          editSelectedStage = stageKey;
+          runEditModeFilterRender();
+        });
+        if (editStageTabs) editStageTabs.appendChild(btn);
+      });
+
+      const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
+      selectedFields.forEach((field) => {
+        const wrapper = wrappersByKey.get(field.key);
+        if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
+      });
+
+      renderEditProgress(editModeStageMeta || []);
+      const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
+      if (activeTab) activeTab.scrollIntoView({ block: 'nearest' });
+    }
+
+
+
     function renderForm(config) {
       formEl.innerHTML = "";
       state.values = {};
@@ -4540,10 +5287,20 @@ function renderSubmitOutputs(payload) {
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
+      if (IS_EDITING_MODE) {
+        if (actionBar) actionBar.style.display = "none";
+        if (formEl) formEl.style.display = "none";
+      } else {
+        if (actionBar) actionBar.style.display = "";
+        if (formEl) formEl.style.display = "grid";
+      }
+
       let previousGroup = null;
       config.fields.forEach((field, index) => {
+
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
+        wrapper.dataset.fieldKey = field.key;
 
         const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
@@ -5661,6 +6418,9 @@ function renderSubmitOutputs(payload) {
           }, 0);
         }
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+      }
       updateToolbarStatus();
       updateSubmitState(config);
       captureInitialSnapshot();
@@ -5918,6 +6678,24 @@ function renderSubmitOutputs(payload) {
       });
 
 
+      if (editSearchInput) {
+        editSearchInput.addEventListener("input", (event) => {
+          const nextTerm = String(event?.target?.value || "");
+          if (editModeDebounceTimer) clearTimeout(editModeDebounceTimer);
+          editModeDebounceTimer = setTimeout(() => {
+            editModeSearchTerm = nextTerm;
+            runEditModeFilterRender();
+          }, 200);
+        });
+      }
+
+      if (editProgressToggle) {
+        editProgressToggle.addEventListener("click", () => {
+          editProcessShowAll = !editProcessShowAll;
+          runEditModeFilterRender();
+        });
+      }
+
       safeOn("#dynamicForm", "submit", (event) => {
         event.preventDefault();
         runSubmitFlow({ autosave: false });
@@ -6091,7 +6869,20 @@ function renderSubmitOutputs(payload) {
     applyVersionVisibility();
     syncActionOptions();
     initLateIncomingDataSync();
-    if (columnJson) {
+    if (IS_EDITING_MODE) {
+      const payloadAppliedNow = applyEditModePayloadIfReady();
+      if (!payloadAppliedNow) {
+        formContainer.style.display = "block";
+        if (formEl) formEl.innerHTML = "";
+        editModePayloadPollTimer = setInterval(() => {
+          const applied = applyEditModePayloadIfReady();
+          if (applied && editModePayloadPollTimer) {
+            clearInterval(editModePayloadPollTimer);
+            editModePayloadPollTimer = null;
+          }
+        }, 300);
+      }
+    } else if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
