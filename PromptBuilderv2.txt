@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<!--
+BUBBLE DYNAMIC GİRİŞ ÖNCELİĞİ:
+1) editableText içeriğini güncelle (Bubble paste bölgesi).
+2) customFieldSelect option listesi güncelle.
+3) actionSelect option listesi güncelle.
+CSS ve statik stil ayarları bu notların altında duruyor.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Prompt Builder</title>
+    <script>
+        (function () {
+            function parseJSONSafe(str, fallback) {
+                try {
+                    const trimmed = (str || '').trim();
+                    if (!trimmed) return fallback;
+                    return JSON.parse(trimmed);
+                } catch (e) {
+                    console.warn('JSON parse fallback', e);
+                    return fallback;
+                }
+            }
+
+            const editableHTMLStr = `{{editable_html}}`;          // string
+            const customFieldsStr = `{{custom_fields_json}}`;     // JSON string (array)
+            const actionsStr = `{{actions_json}}`;                // JSON string (array)
+            const togglesStr = `{{toggles_json}}`;                // JSON string (object)
+
+            window.BUBBLE_CONFIG = window.BUBBLE_CONFIG || {
+                editableHTML: editableHTMLStr,
+                customFields: parseJSONSafe(customFieldsStr, []),
+                actions: parseJSONSafe(actionsStr, []),
+                toggles: parseJSONSafe(togglesStr, {})
+            };
+        })();
+    </script>
+    <!-- BUBBLE DYNAMIC DATA (ilk burayı doldur) -->
+    <template id="bubble-editable-template">
+{{editable_html}}
+    </template>
+    <script type="application/json" id="bubble-options">
+{
+  "customFields": [],
+  "actions": [],
+  "toggles": {
+    "autoflow": false,
+    "memory": false
+  }
+}
+    </script>
+    <style>
+        /* Genel tipografi ve zemin */
+        :root {
+            --bg1: #00c6ff;
+            --bg2: #006166;
+            --hover: #008ba7;
+        }
+
+        body {
+            margin: 0;
+            padding: 0 12px 16px;
+            font-family: "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+            background: #f3f4f6;
+            color: #0f1115;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #111;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .icon:hover {
+            color: #0F5DB6;
+        }
+
+        .icon:active {
+            transform: scale(0.92);
+            color: #0C4790;
+        }
+
+        .container {
+            width: 400px;
+            min-width: 400px;
+            max-width: 400px;
+            min-height: 400px;
+            max-height: 90vh;
+            margin: 16px auto;
+            padding: 18px 18px 26px;
+            background: linear-gradient(180deg, #ffffff 0%, #fdfefe 100%);
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            position: relative;
+            resize: none;
+            overflow: auto;
+        }
+
+        /* AutoFlow Toggle Butonu */
+        #toggleAutoflow {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid #1fc667;
+            color: #0a4a28;
+            background: linear-gradient(145deg, #f3fff7, #d8ffe8);
+            transition: background 0.25s ease, color 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        #toggleAutoflow.active {
+            background: linear-gradient(145deg, #1fc667, #16b35b);
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(22, 179, 91, 0.25);
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px #17DB4E;
+            }
+            to {
+                box-shadow: 0 0 20px #17DB4E;
+            }
+        }
+
+        /* Sabit işlem barı (Add Custom Field & Add Action) */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 16px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+
+        /* Tüm butonlar ve dropdownlar için temel stil */
+        button,
+        select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #d6d8dc;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            margin: 10px 10px;
+            background-color: #fff;
+        }
+
+        button:hover,
+        select:hover {
+            background-color: #f7f9fb;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        button:active,
+        select:active {
+            transform: translateY(1px);
+        }
+
+        /* Action Dropdown ve Token Uyumu */
+        #actionSelect,
+        .action {
+            border-color: #0f66c2;
+            background-color: #0f66c2;
+            color: white;
+        }
+
+        /* Custom Field Dropdown ve Token Uyumu */
+        #customFieldSelect,
+        .custom-field {
+            border-color: #006166;
+            background-color: #006166;
+            color: white;
+        }
+
+        /* Token genel stil */
+        .token {
+            display: inline-block;
+            margin: 4px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Zorunlu - Kırmızı */
+        .mandatory {
+            border-color: #ff4d4f;
+            background-color: #fff5f5;
+            color: #c62828;
+        }
+
+        /* Opsiyonel - Mavi-Yeşil */
+        .optional {
+            border-color: #22a087;
+            background-color: #e9faf6;
+            color: #0f6a5c;
+        }
+
+        /* Kontrol - Yeşil */
+        .control {
+            border-color: #17DB4E;
+            background-color: #edfff4;
+            color: #0a512a;
+        }
+
+        /* Editlenebilir Alan */
+        .editable-container {
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            padding: 16px 16px 20px;
+            background-color: #fff;
+            min-height: 200px;
+            max-height: 62vh;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            line-height: 1.6;
+            text-align: left;
+            word-wrap: break-word;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 820px;
+            margin: 18px auto 18px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Dropdown Menüler */
+        .dropdown-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 8px 0 14px;
+        }
+
+        select {
+            width: 180px;
+        }
+
+        /* Toggle alanı */
+        .toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin: 26px 0 14px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toggle {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #d8d8d8;
+            background: #f7f9fb;
+            color: #111;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .toggle.active {
+            border-color: #17DB4E;
+            background: #edfff1;
+            color: #006166;
+        }
+
+        .toggle-label {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .toggle-value {
+            min-height: 16px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Buton Grubu */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Save ve Test Butonları */
+        #saveButton,
+        #testButton {
+            margin-top: 12px;
+            background-color: #0f66c2;
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        #saveButton:hover {
+            background-color: #0c549f;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(15, 102, 194, 0.25);
+        }
+
+        /* Test Prompt gizli */
+        #testButton {
+            display: none;
+        }
+
+        /* Dropdownlar ve butonlar arasındaki mesafe */
+        button,
+        select {
+            margin: 10px 10px;
+        }
+
+        /* Resize handle (manuel sürükleme) */
+        .resize-handle {
+            display: none;
+        }
+
+        /* Memory Toggle tamamen gizli */
+        #toggleMemory {
+            display: none;
+        }
+
+        /* === CSVBOX MODAL OVERRIDE ===================================== */
+        .csvbox-import-btn {
+            all: unset;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 420px;
+            padding: 18px 24px;
+            font: 600 18px/1.1 "Inter", sans-serif;
+            letter-spacing: 0.25px;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+            transition: 0.25s cubic-bezier(0.4, 0.8, 0.4, 1);
+        }
+
+        .csvbox-import-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.35s cubic-bezier(0.4, 0.8, 0.4, 1);
+        }
+
+        .csvbox-import-btn:hover {
+            background: var(--hover);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .csvbox-import-btn:hover svg {
+            transform: rotate(90deg) scale(1.08);
+        }
+
+        .csvbox-import-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+        }
+
+        .csvbox-import-btn:focus-visible {
+            outline: 3px solid rgba(0, 198, 255, 0.4);
+            outline-offset: 2px;
+        }
+
+    .inline-hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #7a7c80;
+        margin-bottom: 6px;
+    }
+    .palette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    .palette-panel {
+        display: none;
+        position: absolute;
+        min-width: 240px;
+        max-width: 320px;
+        background: #ffffff;
+        border: 1px solid #e3e5e8;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        pointer-events: auto;
+    }
+    .palette.active .palette-panel { display: block; }
+    .palette-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #9aa0a6;
+        margin: 10px 0 6px;
+    }
+    .palette-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .palette-item {
+        border: 1px solid #dce0e5;
+        background: #f7f9fb;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 12px;
+        color: #1b1d21;
+        cursor: pointer;
+        transition: all 0.12s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .palette-item:hover {
+        border-color: #0f66c2;
+        background: #eef3fb;
+        color: #0f66c2;
+    }
+    .palette-item.is-active {
+        outline: 2px solid #0f66c2;
+        outline-offset: 1px;
+        background: #eef3fb;
+        border-color: #0f66c2;
+        color: #0f66c2;
+    }
+    .palette-badge {
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 10px;
+        background: #e9ecf1;
+        color: #4a5568;
+        border: 1px solid #d5d9df;
+        text-transform: capitalize;
+    }
+    .palette-trigger {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid #d6d8dc;
+        background: #f5f6f8;
+        color: #0f66c2;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+    }
+    .palette-trigger:hover {
+        background: #eef3fb;
+        border-color: #0f66c2;
+    }
+    .floating-trigger {
+        position: absolute;
+        z-index: 60;
+        display: none;
+        pointer-events: auto;
+    }
+    .palette-search {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #d6d8dc;
+        border-radius: 8px;
+        font-size: 12px;
+        margin-bottom: 10px;
+        outline: none;
+        transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+    .palette-search:focus {
+        border-color: #0f66c2;
+        box-shadow: 0 0 0 3px rgba(15, 102, 194, 0.12);
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- BUBBLE DYNAMIC: editableText (önce doldur) -->
+        <div class="editable-container" contenteditable="true" id="editableText" spellcheck="false">
+            <!-- bubble_editable_template içerik buraya hydrate edilir -->
+        </div>
+
+        <button id="caretTrigger" class="palette-trigger floating-trigger" type="button" aria-label="Add">+</button>
+        <div class="palette" id="palettePanel">
+            <div class="palette-panel">
+                <input id="paletteSearch" class="palette-search" type="text" placeholder="Ara ve ekle..." />
+                <div class="palette-title">Custom Fields</div>
+                <div class="palette-list" id="paletteCustom"></div>
+                <div class="palette-title">Actions</div>
+                <div class="palette-list" id="paletteActions"></div>
+            </div>
+        </div>
+
+        <div class="toggle-container">
+            <div class="toggle-wrapper">
+                <div id="toggleAutoflow" class="toggle" onclick="toggleOption('autoflow')">
+                    <span class="toggle-label">Autoflow</span>
+                </div>
+                <div class="toggle-value"></div>
+            </div>
+            <div class="toggle-wrapper">
+                <div id="toggleMemory" class="toggle" onclick="toggleOption('memory')">
+                    <span class="toggle-label">Memory</span>
+                </div>
+                <div class="toggle-value"></div>
+            </div>
+        </div>
+
+        <button id="testButton" onclick="testPrompt()">Test Prompt</button>
+        <button id="saveButton" onclick="savePrompt()">Save</button>
+        <div id="resizeHandle" class="resize-handle" title="Köşeden sürükleyerek yeniden boyutlandır"></div>
+
+        <script>
+(function() {
+    const state = window.__FLOW_BUILDER_STATE__ || { customFields: [], actions: [], toggles: new Set(), savedRange: null };
+    window.__FLOW_BUILDER_STATE__ = state;
+
+    const palettePanel = document.getElementById('palettePanel');
+    const paletteCustom = document.getElementById('paletteCustom');
+    const paletteActions = document.getElementById('paletteActions');
+    const paletteSearch = document.getElementById('paletteSearch');
+    const caretTrigger = document.getElementById('caretTrigger');
+    const editableText = document.getElementById('editableText');
+    const paletteInner = palettePanel ? palettePanel.querySelector('.palette-panel') : null;
+    const container = document.querySelector('.container');
+
+    let paletteItems = [];
+    let selectedIndex = -1;
+
+    function hydrateFromBubbleConfig() {
+        let cfg = {};
+        const optsEl = document.getElementById('bubble-options');
+        if (optsEl) {
+            try {
+                cfg = JSON.parse(optsEl.textContent || '{}');
+            } catch (err) {
+                console.warn('bubble-options parse error', err);
+            }
+        }
+
+        const winCfg = window.BUBBLE_CONFIG || {};
+        cfg = {
+            editableHTML: winCfg.editableHTML || cfg.editableHTML || '',
+            customFields: (Array.isArray(winCfg.customFields) && winCfg.customFields.length)
+                ? winCfg.customFields
+                : (Array.isArray(cfg.customFields) ? cfg.customFields : []),
+            actions: (Array.isArray(winCfg.actions) && winCfg.actions.length)
+                ? winCfg.actions
+                : (Array.isArray(cfg.actions) ? cfg.actions : []),
+            toggles: (winCfg.toggles && Object.keys(winCfg.toggles || {}).length)
+                ? winCfg.toggles
+                : (cfg.toggles || {})
+        };
+
+        const editableTemplate = document.getElementById('bubble-editable-template');
+        const editableHTML = cfg.editableHTML || (editableTemplate ? editableTemplate.innerHTML.trim() : '');
+        if (editableText && editableHTML) {
+            editableText.innerHTML = editableHTML;
+        }
+
+        state.customFields = Array.isArray(cfg.customFields) ? cfg.customFields : [];
+        state.actions = Array.isArray(cfg.actions) ? cfg.actions : [];
+        const togglesCfg = cfg.toggles && typeof cfg.toggles === 'object' ? cfg.toggles : {};
+        state.toggles = new Set(
+            Object.entries(togglesCfg)
+                .filter(([, value]) => !!value)
+                .map(([key]) => key)
+        );
+    }
+
+    function applyToggles() {
+        state.toggles.forEach(toggle => {
+            const el = document.getElementById(`toggle${toggle.charAt(0).toUpperCase() + toggle.slice(1)}`);
+            if (el) el.classList.add('active');
+        });
+    }
+
+            function createToken(content, className, dataId) {
+                const token = document.createElement('span');
+        token.classList.add('token');
+        if (className) token.classList.add(className);
+                token.textContent = content;
+                token.dataset.id = dataId;
+                token.onclick = () => token.remove();
+                token.contentEditable = "false";
+                token.draggable = false;
+                return token;
+            }
+
+    function insertTokenFromItem(item, fallbackClass = 'action') {
+        if (!item) return;
+        const className = item.class || fallbackClass;
+        const label = item.label || '';
+        const id = item.id || '';
+        if (!label) return;
+        const token = createToken(label.split(' (')[0], className, id);
+                const space = document.createTextNode(' ');
+
+                const selection = window.getSelection();
+        let range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+
+        if (!(range && editableText.contains(range.commonAncestorContainer))) {
+            if (state.savedRange) {
+                range = state.savedRange.cloneRange();
+            } else {
+                range = document.createRange();
+                range.selectNodeContents(editableText);
+                range.collapse(false);
+            }
+        }
+
+        if (range && editableText.contains(range.commonAncestorContainer)) {
+                    range.deleteContents();
+                    range.insertNode(space.cloneNode());
+                    range.insertNode(token);
+                    range.setStartAfter(token);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else {
+            editableText.appendChild(space);
+            editableText.appendChild(token);
+                }
+
+        editableText.focus();
+            }
+
+    function currentRangeRect() {
+        const sel = window.getSelection();
+        let range = sel?.rangeCount ? sel.getRangeAt(0) : null;
+        if (!(range && editableText.contains(range.commonAncestorContainer))) {
+            range = state.savedRange;
+        }
+        if (!range) return null;
+        const rects = range.getClientRects();
+        const rect = rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+        return rect;
+    }
+
+    function positionFloatingTrigger() {
+        if (!caretTrigger || !container) return;
+        const rect = currentRangeRect();
+        if (!rect) {
+            caretTrigger.style.display = 'none';
+            return;
+        }
+        const cRect = container.getBoundingClientRect();
+        const top = rect.top - cRect.top + container.scrollTop - 6;
+        const left = rect.right - cRect.left + container.scrollLeft + 8;
+        caretTrigger.style.top = `${top}px`;
+        caretTrigger.style.left = `${left}px`;
+        caretTrigger.style.display = 'flex';
+            }
+
+            function getAllElements(className) {
+        if (!editableText) {
+                    console.error('Editable container not found.');
+                    return [];
+                }
+        const elements = editableText.querySelectorAll(`.${className}`);
+                return Array.from(elements).map(element => element.dataset.id);
+            }
+
+            function savePrompt() {
+        const promptContentText = editableText.innerText.trim();
+        const promptContentHTML = editableText.innerHTML.trim();
+
+                const mandatoryFieldsOutput = getAllElements('mandatory');
+                const optionalFieldsOutput = getAllElements('optional');
+                const controlFieldsOutput = getAllElements('control');
+                const actionsOutput = getAllElements('action');
+        const memoryOutput = state.toggles.has('memory');
+        const autoflowOutput = state.toggles.has('autoflow');
+
+                if (typeof bubble_fn_savePrompt === 'function') {
+                    bubble_fn_savePrompt({
+                        output1: promptContentText,
+                        output2: promptContentHTML,
+                        outputlist1: mandatoryFieldsOutput,
+                        outputlist2: optionalFieldsOutput,
+                        outputlist3: controlFieldsOutput,
+                        outputlist4: actionsOutput,
+                        output3: autoflowOutput,
+                        output4: memoryOutput
+                    });
+                }
+            }
+
+            function testPrompt() {
+        const promptContentText = editableText.innerText.trim();
+                const promptContentHTML = "Test: This is a special trigger text.";
+
+                const mandatoryFieldsOutput = getAllElements('mandatory');
+                const optionalFieldsOutput = getAllElements('optional');
+                const controlFieldsOutput = getAllElements('control');
+                const actionsOutput = getAllElements('action');
+        const memoryOutput = state.toggles.has('memory');
+        const autoflowOutput = state.toggles.has('autoflow');
+
+                if (typeof bubble_fn_testPrompt === 'function') {
+                    bubble_fn_testPrompt({
+                        output1: promptContentText,
+                        output2: promptContentHTML,
+                        outputlist1: mandatoryFieldsOutput,
+                        outputlist2: optionalFieldsOutput,
+                        outputlist3: controlFieldsOutput,
+                        outputlist4: actionsOutput,
+                        output3: autoflowOutput,
+                        output4: memoryOutput
+                    });
+                }
+    }
+
+    function toggleOption(option) {
+        if (state.toggles.has(option)) {
+            state.toggles.delete(option);
+        } else {
+            state.toggles.add(option);
+        }
+        const toggleElement = document.getElementById(`toggle${option.charAt(0).toUpperCase() + option.slice(1)}`);
+        if (toggleElement) toggleElement.classList.toggle('active', state.toggles.has(option));
+    }
+    window.toggleOption = toggleOption;
+    window.savePrompt = savePrompt;
+    window.testPrompt = testPrompt;
+
+    function renderPalette(filterText = '') {
+        const q = filterText.trim().toLowerCase();
+        paletteItems = [];
+        selectedIndex = -1;
+
+        if (paletteCustom) {
+            paletteCustom.innerHTML = '';
+            state.customFields
+                .filter(item => (item.label || '').toLowerCase().includes(q))
+                .forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'palette-item';
+                    const label = document.createElement('span');
+                    label.textContent = item.label || 'Untitled';
+                    const badge = document.createElement('span');
+                    badge.className = 'palette-badge';
+                    badge.textContent = item.class || 'field';
+                    btn.append(label, badge);
+                    btn.onclick = () => { insertTokenFromItem(item, item.class || 'optional'); hidePalette(); };
+                    paletteCustom.appendChild(btn);
+                    paletteItems.push({ type: 'field', data: item, btn });
+                });
+        }
+
+        if (paletteActions) {
+            paletteActions.innerHTML = '';
+            state.actions
+                .filter(item => (item.label || '').toLowerCase().includes(q))
+                .forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'palette-item';
+                    const label = document.createElement('span');
+                    label.textContent = item.label || 'Action';
+                    const badge = document.createElement('span');
+                    badge.className = 'palette-badge';
+                    badge.textContent = item.class || 'action';
+                    btn.append(label, badge);
+                    btn.onclick = () => { insertTokenFromItem(item, item.class || 'action'); hidePalette(); };
+                    paletteActions.appendChild(btn);
+                    paletteItems.push({ type: 'action', data: item, btn });
+                });
+        }
+
+        if (paletteItems.length) {
+            selectedIndex = 0;
+            updateSelection();
+        }
+    }
+
+    function updateSelection() {
+        paletteItems.forEach((item, idx) => {
+            item.btn.classList.toggle('is-active', idx === selectedIndex);
+        });
+    }
+
+    function moveSelection(delta) {
+        if (!paletteItems.length) return;
+        selectedIndex = (selectedIndex + delta + paletteItems.length) % paletteItems.length;
+        updateSelection();
+    }
+
+    function activateSelection() {
+        if (selectedIndex < 0 || !paletteItems[selectedIndex]) return;
+        const sel = paletteItems[selectedIndex];
+        insertTokenFromItem(sel.data, sel.type === 'field' ? (sel.data.class || 'optional') : (sel.data.class || 'action'));
+        hidePalette();
+    }
+
+    function positionPalette() {
+        if (!palettePanel || !paletteInner || !container) return;
+        const rect = currentRangeRect();
+        if (!rect) return;
+        const containerRect = container.getBoundingClientRect();
+        const top = Math.max(0, rect.bottom - containerRect.top + container.scrollTop + 8);
+        const left = Math.max(0, rect.left - containerRect.left + container.scrollLeft);
+        palettePanel.style.top = '0';
+        palettePanel.style.left = '0';
+        paletteInner.style.top = `${top}px`;
+        paletteInner.style.left = `${left}px`;
+    }
+
+    function showPalette(focusSearch = true) {
+        const sel = window.getSelection();
+        if (sel?.rangeCount && editableText.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+            state.savedRange = sel.getRangeAt(0).cloneRange();
+        } else {
+            const r = document.createRange();
+            r.selectNodeContents(editableText);
+            r.collapse(false);
+            state.savedRange = r;
+        }
+
+        renderPalette('');
+        positionPalette();
+        palettePanel?.classList.add('active');
+        paletteInner?.classList.add('active');
+        if (paletteSearch && focusSearch) {
+            paletteSearch.value = '';
+            paletteSearch.focus();
+        }
+    }
+
+    function hidePalette() {
+        palettePanel?.classList.remove('active');
+        paletteInner?.classList.remove('active');
+        selectedIndex = -1;
+    }
+
+    caretTrigger?.addEventListener('click', () => {
+        if (palettePanel?.classList.contains('active')) hidePalette();
+        else showPalette(true);
+    });
+
+    editableText?.addEventListener('keydown', (e) => {
+        if (e.key === '/') {
+            e.preventDefault();
+            showPalette(true);
+        } else if (e.key === 'Escape') {
+            hidePalette();
+        }
+    });
+
+    paletteSearch?.addEventListener('input', (e) => {
+        renderPalette(e.target.value || '');
+        positionPalette();
+    });
+
+    paletteSearch?.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            moveSelection(1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            moveSelection(-1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            activateSelection();
+        } else if (e.key === 'Escape') {
+            hidePalette();
+            editableText?.focus();
+        }
+    });
+
+    ['keyup','mouseup','input','focus'].forEach(evt => {
+        editableText?.addEventListener(evt, () => {
+            positionFloatingTrigger();
+        });
+    });
+    editableText?.addEventListener('blur', () => {
+        if (caretTrigger) caretTrigger.style.display = 'none';
+    });
+    document.addEventListener('selectionchange', () => {
+        positionFloatingTrigger();
+    });
+
+    hydrateFromBubbleConfig();
+    applyToggles();
+    renderPalette();
+    positionFloatingTrigger();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        hydrateFromBubbleConfig();
+        applyToggles();
+        renderPalette();
+        positionFloatingTrigger();
+    });
+
+    setTimeout(() => {
+        if (!document.getElementById('editableText')?.innerHTML.trim()) {
+            hydrateFromBubbleConfig();
+            applyToggles();
+            renderPalette();
+            positionFloatingTrigger();
+        }
+    }, 200);
+})();
+        </script>
+    </div>
+</body>
+</html>
