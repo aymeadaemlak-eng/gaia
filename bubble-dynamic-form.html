@@ -5073,7 +5073,11 @@ function renderSubmitOutputs(payload) {
       });
       state.config = config;
       editQuickPinnedKeys = [];
-      for (const field of (config.fields || [])) {
+      const pinCandidates = [
+        ...(config.fields || []).filter((field) => String(field?.editStageKey || "Ungrouped") === "Ungrouped"),
+        ...(config.fields || [])
+      ];
+      for (const field of pinCandidates) {
         if (!field || !field.key) continue;
         if (editQuickPinnedKeys.includes(field.key)) continue;
         editQuickPinnedKeys.push(field.key);
@@ -5129,6 +5133,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function getStageDisplayLabel(stageMetaByKey, stageKey, fallbackIndex = 0) {
+      if (String(stageKey) === "Ungrouped") return "Unassigned";
       const meta = stageMetaByKey.get(stageKey) || null;
       const label = String(meta?.label || meta?.name || "").trim();
       if (label) return label;
@@ -5218,19 +5223,25 @@ function renderSubmitOutputs(payload) {
       });
 
       const stageKeys = [];
+      if (stageMap.has("Ungrouped")) stageKeys.push("Ungrouped");
       (editModeStageOrder || []).forEach((stageKey) => {
-        const items = stageMap.get(stageKey) || [];
-        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
+        if (stageKeys.includes(stageKey)) return;
+        if (stageMap.has(stageKey)) stageKeys.push(stageKey);
       });
       Array.from(stageMap.keys()).forEach((stageKey) => {
-        if (stageKey === "Ungrouped") return;
         if (stageKeys.includes(stageKey)) return;
-        const items = stageMap.get(stageKey) || [];
-        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
+        stageKeys.push(stageKey);
+      });
+
+      const filteredCountByStage = new Map();
+      stageKeys.forEach((stageKey) => {
+        const count = (stageMap.get(stageKey) || []).filter((f) => filtered.some((x) => x.key === f.key)).length;
+        filteredCountByStage.set(stageKey, count);
       });
 
       if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
-        editSelectedStage = stageKeys[0] || "";
+        const firstMatched = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
+        editSelectedStage = firstMatched || stageKeys[0] || "";
       }
       if (editStageLayout) {
         editStageLayout.style.display = stageKeys.length ? "grid" : "none";
@@ -5275,7 +5286,8 @@ function renderSubmitOutputs(payload) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `edit-stage-tab ${status}`;
-        btn.textContent = getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex);
+        const count = filteredCountByStage.get(stageKey) || 0;
+        btn.textContent = `${getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex)} (${count})`;
         if (stageKey === editSelectedStage) btn.classList.add('active');
         if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
         btn.addEventListener('click', () => {
