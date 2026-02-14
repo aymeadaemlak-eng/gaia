@@ -1498,6 +1498,7 @@
               <option value="changed">Changed</option>
             </select>
           </div>
+          <div id="editModeOtherPreview" class="helper-text" style="padding:4px 2px 0 2px;"></div>
           <div id="editModeLoading" class="edit-mode-loading"><span class="edit-mode-spinner" aria-hidden="true"></span><span id="editModeLoadingText">Edit verileri yükleniyor…</span></div>
           <div id="editModeList" class="edit-mode-list"></div>
         </div>
@@ -1988,6 +1989,7 @@
     const editFilterSelect = byId("editFilterSelect");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
+    const editModeOtherPreview = byId("editModeOtherPreview");
     const editModeList = byId("editModeList");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
@@ -2078,7 +2080,10 @@
     let editModeDebounceTimer = null;
     let editModeVisibleFields = [];
     const EDIT_ROW_HEIGHT = 68;
+    const EDIT_HEADER_HEIGHT = 34;
     let editModeRenderToken = 0;
+    let editModeStageOrder = [];
+    let editModeOtherFieldSamples = [];
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -4735,11 +4740,14 @@ function renderSubmitOutputs(payload) {
       const stageGroups = Array.isArray(payload?.stageGroups) ? payload.stageGroups : [];
       const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
       const list = [];
+      editModeStageOrder = [];
+      editModeOtherFieldSamples = [];
 
       if (stageGroups.length) {
         const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
         sortedGroups.forEach((group, groupIndex) => {
           const stageName = String(group?.stage?.name || `stage_${groupIndex + 1}`);
+          editModeStageOrder.push(stageName);
           const fields = Array.isArray(group?.fields) ? group.fields : [];
           fields.forEach((field, index) => {
             if (isInnerStageType(field?.stageType)) return;
@@ -4756,6 +4764,7 @@ function renderSubmitOutputs(payload) {
           if (!map.has(normalized.key)) {
             list.push(normalized);
             map.set(normalized.key, normalized);
+            editModeOtherFieldSamples.push(normalized);
           } else {
             const existing = map.get(normalized.key);
             if (isEmptyValue(existing?._initialValue) && !isEmptyValue(normalized._initialValue)) {
@@ -4764,16 +4773,6 @@ function renderSubmitOutputs(payload) {
           }
         });
       }
-
-      if (!list.length) {
-        const fallbackColumns = Array.isArray((window.BUBBLE_INPUTS || {})?.COLUMN_JSON?.columns)
-          ? (window.BUBBLE_INPUTS || {}).COLUMN_JSON.columns
-          : [];
-        fallbackColumns.forEach((column, index) => {
-          list.push(normalizeEditFieldItem(column, index, "column"));
-        });
-      }
-
       if (!list.length) return null;
 
       const initialValues = {};
@@ -4783,7 +4782,7 @@ function renderSubmitOutputs(payload) {
 
       return {
         fields: list.map((field) => {
-          const next = { ...field };
+          const next = { ...field, editStageName: field._stageName || "Ungrouped" };
           delete next._initialValue;
           return next;
         }),
@@ -4956,35 +4955,93 @@ function renderSubmitOutputs(payload) {
       if (isMultiline) input.style.minHeight = "72px";
     }
 
+    function renderEditModeOtherPreview() {
+      if (!editModeOtherPreview) return;
+      const sample = (editModeOtherFieldSamples || []).slice(0, 5).map((field) => field.label || field.key);
+      if (!sample.length) {
+        editModeOtherPreview.textContent = "";
+        return;
+      }
+      editModeOtherPreview.textContent = `Diğer custom field örnekleri: ${sample.join(" • ")}`;
+    }
+
+    function buildEditModeItems(fields) {
+      const groups = new Map();
+      (fields || []).forEach((field) => {
+        const stage = String(field.editStageName || "Ungrouped");
+        if (!groups.has(stage)) groups.set(stage, []);
+        groups.get(stage).push(field);
+      });
+      const orderedStages = [];
+      (editModeStageOrder || []).forEach((stage) => {
+        if (groups.has(stage)) orderedStages.push(stage);
+      });
+      Array.from(groups.keys()).forEach((stage) => {
+        if (!orderedStages.includes(stage)) orderedStages.push(stage);
+      });
+      const items = [];
+      orderedStages.forEach((stage) => {
+        items.push({ kind: "header", stage });
+        groups.get(stage).forEach((field) => items.push({ kind: "field", field }));
+      });
+      return items;
+    }
+
     function renderEditModeVirtualList(fields) {
       if (!editModeList) return;
+      const items = buildEditModeItems(fields);
       editModeVisibleFields = fields;
       const token = ++editModeRenderToken;
       editModeList.innerHTML = "";
-      if (!fields.length) {
+      if (!items.length) {
         editModeList.innerHTML = '<div class="helper-text" style="padding:12px;">Gösterilecek alan bulunamadı.</div>';
         return;
       }
 
+      const tops = [];
+      let totalHeight = 0;
+      items.forEach((item, i) => {
+        tops[i] = totalHeight;
+        totalHeight += item.kind === "header" ? EDIT_HEADER_HEIGHT : EDIT_ROW_HEIGHT;
+      });
+
       const viewport = document.createElement("div");
       viewport.style.position = "relative";
-      viewport.style.height = `${Math.max(1, fields.length * EDIT_ROW_HEIGHT)}px`;
+      viewport.style.height = `${Math.max(1, totalHeight)}px`;
       editModeList.appendChild(viewport);
 
       const paint = () => {
         if (token !== editModeRenderToken) return;
         const scrollTop = editModeList.scrollTop || 0;
         const viewHeight = editModeList.clientHeight || 400;
-        const start = Math.max(0, Math.floor(scrollTop / EDIT_ROW_HEIGHT) - 4);
-        const end = Math.min(fields.length, Math.ceil((scrollTop + viewHeight) / EDIT_ROW_HEIGHT) + 6);
         viewport.innerHTML = "";
-        for (let i = start; i < end; i += 1) {
-          const field = fields[i];
+        for (let i = 0; i < items.length; i += 1) {
+          const top = tops[i];
+          const height = items[i].kind === "header" ? EDIT_HEADER_HEIGHT : EDIT_ROW_HEIGHT;
+          if (top + height < scrollTop - 120 || top > scrollTop + viewHeight + 120) continue;
+          const item = items[i];
+          if (item.kind === "header") {
+            const header = document.createElement("div");
+            header.className = "edit-row-label";
+            header.style.position = "absolute";
+            header.style.top = `${top}px`;
+            header.style.height = `${EDIT_HEADER_HEIGHT}px`;
+            header.style.left = "0";
+            header.style.right = "0";
+            header.style.padding = "8px 10px";
+            header.style.fontWeight = "700";
+            header.style.background = "#f8fafc";
+            header.style.borderBottom = "1px solid #edf1f6";
+            header.textContent = item.stage;
+            viewport.appendChild(header);
+            continue;
+          }
+          const field = item.field;
           const value = getEffectiveValue(field.key);
           const row = document.createElement("div");
           row.className = "edit-row";
           if (isEmptyValue(value)) row.classList.add("empty");
-          row.style.top = `${i * EDIT_ROW_HEIGHT}px`;
+          row.style.top = `${top}px`;
           row.style.height = `${EDIT_ROW_HEIGHT}px`;
           row.innerHTML = `<div class="edit-row-label">${escapeHtml(field.label || field.key)}</div><div class="edit-row-value">${escapeHtml(getEditValueDisplay(field, value))}</div>`;
           const normalizedType = String(field.type || "").toLowerCase();
@@ -5011,6 +5068,7 @@ function renderSubmitOutputs(payload) {
         if (!fieldPassesEditFilter(field, value)) return false;
         return matchesEditSearch(field, value, term);
       });
+      renderEditModeOtherPreview();
       renderEditModeVirtualList(filtered);
     }
 
