@@ -254,6 +254,15 @@
       justify-items: stretch;
     }
 
+#bdf-root.editing-mode #formContainer {
+      width: 100%;
+      max-width: unset;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
 #bdf-root #formContainer {
       height: 680px;
       overflow-y: auto;
@@ -1059,51 +1068,83 @@
 
 #bdf-root .edit-mode-root {
   display: none;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+  max-width: unset;
+  flex: 1 1 auto;
 }
 
 #bdf-root .edit-mode-toolbar {
   display: grid;
-  grid-template-columns: 1fr minmax(140px, 180px);
   gap: 8px;
 }
 
-#bdf-root .edit-mode-list {
-  border: 1px solid var(--border);
+#bdf-root .edit-quick-list {
+  display: grid;
+  gap: 8px;
+}
+
+#bdf-root .edit-quick-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #dbe3f2;
+  background: #f8fbff;
   border-radius: 10px;
-  background: #fff;
-  max-height: 62vh;
-  overflow: auto;
-}
-
-#bdf-root .edit-row {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-bottom: 1px solid #f0f3f8;
   padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
+  display: grid;
+  gap: 2px;
 }
 
-#bdf-root .edit-row:hover { background: #f8fbff; }
-#bdf-root .edit-row-label { font-size: 11px; color: var(--muted); }
-#bdf-root .edit-row-value { font-size: 14px; color: var(--text); }
-#bdf-root .edit-row.empty .edit-row-value { color: #9aa3b2; font-style: italic; }
+#bdf-root .edit-quick-item small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#bdf-root .edit-stage-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+#bdf-root .edit-stage-tabs {
+  display: grid;
+  gap: 6px;
+}
+
+#bdf-root .edit-stage-tab {
+  text-align: left;
+  border: 1px solid #d7deeb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+#bdf-root .edit-stage-tab.active {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-stage-panel {
+  border: 1px solid #e6ebf5;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 320px;
+  background: #fff;
+}
 
 #bdf-root .edit-mode-loading {
   display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 120px;
-  border: 1px dashed var(--border);
-  border-radius: 10px;
-  color: var(--muted);
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid #e2e8f3;
+  border-radius: 12px;
   background: #fafcff;
+  padding: 14px;
+  gap: 12px;
+  align-content: start;
 }
 
 #bdf-root .edit-mode-spinner {
@@ -1113,6 +1154,23 @@
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: bdf-spin 0.8s linear infinite;
+}
+
+#bdf-root .edit-skeleton-row {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eef3fb 0%, #e5edf9 50%, #eef3fb 100%);
+  background-size: 220% 100%;
+  animation: bdf-loading 1.2s ease-in-out infinite;
+}
+
+#bdf-root .edit-skeleton-row.head { width: 40%; height: 18px; }
+#bdf-root .edit-skeleton-row.wide { width: 100%; }
+#bdf-root .edit-skeleton-row.mid { width: 72%; }
+
+@keyframes bdf-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -20% 0; }
 }
 
 @keyframes bdf-spin {
@@ -1304,6 +1362,14 @@
 #bdf-root .field-row.is-amount-field .control-stack {
         max-width: min(100%, 248px);
       }
+
+#bdf-root .edit-stage-layout {
+        grid-template-columns: 1fr;
+      }
+
+#bdf-root .edit-stage-tabs {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
     }
 
     @media (max-width: 360px) {
@@ -1426,7 +1492,7 @@
         </div>
       </div>
       <div class="inline-row" style="margin-top: 12px;">
-        <button id="loadSample">Örnek Schema Yükle</button>
+        <button id="loadSample">Schema Yükle</button>
         <button class="secondary" id="renderForm">Render Et</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
       </div>
@@ -1446,7 +1512,7 @@
         <h2>Dynamic Form</h2>
         <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
-          <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
+          <button type="button" id="loadColumnJson">Column Yükle</button>
           <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
           <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
           <button type="button" class="ghost" id="applyAiToEmpty">AI -> Boş Human Alanlara Uygula</button>
@@ -1465,7 +1531,7 @@
         </div>
         </div>
         <div id="columnWarning" class="debug-warning" style="display:none;">
-          Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+          Column JSON yüklenmedi. Debug toolbar üzerinden yükleyin.
         </div>
       </section>
     </div>
@@ -1491,16 +1557,25 @@
         <div id="editModeRoot" class="edit-mode-root">
           <div class="edit-mode-toolbar">
             <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
-            <div></div>
           </div>
-          <div id="editModeLoading" class="edit-mode-loading"><span class="edit-mode-spinner" aria-hidden="true"></span><span id="editModeLoadingText">Yükleniyor</span></div>
+          <div id="editModeLoading" class="edit-mode-loading">
+            <span class="edit-mode-spinner" aria-hidden="true"></span>
+            <span id="editModeLoadingText">Yükleniyor</span>
+            <div class="edit-skeleton-row head"></div>
+            <div class="edit-skeleton-row wide"></div>
+            <div class="edit-skeleton-row mid"></div>
+            <div class="edit-skeleton-row wide"></div>
+          </div>
           <section id="editQuickSection" style="display:none;">
             <h3 style="margin:4px 0 8px 0; font-size:14px;">Hızlı Giriş</h3>
-            <div id="editQuickFields" class="grid" style="gap:8px;"></div>
+            <div id="editQuickFields" class="edit-quick-list"></div>
           </section>
-          <div id="editStageLayout" class="grid two" style="display:none; gap:10px; align-items:start;">
-            <div id="editStageTabs" class="grid" style="gap:6px;"></div>
-            <div id="editStageFields" class="grid" style="gap:8px;"></div>
+          <div id="editStageLayout" class="edit-stage-layout" style="display:none;">
+            <div id="editStageTabs" class="edit-stage-tabs"></div>
+            <div id="editStagePanel" class="edit-stage-panel">
+              <h3 id="editStageHeading" style="margin:0 0 8px 0; font-size:14px;"></h3>
+              <div id="editStageFields" class="grid" style="gap:8px;"></div>
+            </div>
           </div>
         </div>
         <form id="dynamicForm" class="grid"></form>
@@ -1987,13 +2062,13 @@
     const formEl = byId("dynamicForm");
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
-    const editFilterSelect = byId("editFilterSelect");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
     const editQuickSection = byId("editQuickSection");
     const editQuickFields = byId("editQuickFields");
     const editStageLayout = byId("editStageLayout");
     const editStageTabs = byId("editStageTabs");
+    const editStageHeading = byId("editStageHeading");
     const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
@@ -2080,14 +2155,8 @@
     };
 
     let editModeSearchTerm = "";
-    let editModeFilter = "all";
     let editModeDebounceTimer = null;
-    let editModeVisibleFields = [];
-    const EDIT_ROW_HEIGHT = 68;
-    const EDIT_HEADER_HEIGHT = 34;
-    let editModeRenderToken = 0;
     let editModeStageOrder = [];
-    let editModeOtherFieldSamples = [];
     let editSelectedStage = "";
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
@@ -2109,7 +2178,7 @@
           label: "E-posta",
           type: "email",
           required: true,
-          placeholder: "ornek@mail.com"
+          placeholder: "mail@example.com"
         },
         {
           key: "phone",
@@ -2298,6 +2367,9 @@
       }
       if (formActions) {
         formActions.style.display = "none";
+      }
+      if (rootElement) {
+        rootElement.classList.toggle("editing-mode", IS_EDITING_MODE);
       }
       if (editModeRoot) {
         editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
@@ -4670,7 +4742,7 @@ function renderSubmitOutputs(payload) {
 
     function setEditModeLoading(isLoading, message = "") {
       if (!editModeLoading) return;
-      editModeLoading.style.display = isLoading ? "flex" : "none";
+      editModeLoading.style.display = isLoading ? "grid" : "none";
       if (editQuickSection) editQuickSection.style.display = isLoading ? "none" : "block";
       if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
       if (editModeLoadingText && message) {
@@ -4694,7 +4766,7 @@ function renderSubmitOutputs(payload) {
 
     function readEditModePayloadSources() {
       const source = window.BUBBLE_INPUTS || {};
-      const stageRaw = source.editUiSchema ?? source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
+      const stageRaw = source.editSchemaJson ?? source.editUiSchema ?? source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
       const allRaw = source.EDITING_ALL_FIELDS_JSON ?? source.editingAllFields ?? source.editing_all_fields ?? null;
       return {
         stageGroups: parseIncomingJson(stageRaw),
@@ -4752,18 +4824,21 @@ function renderSubmitOutputs(payload) {
       const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
       const list = [];
       editModeStageOrder = [];
-      editModeOtherFieldSamples = [];
 
       if (stageGroups.length) {
         const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
         sortedGroups.forEach((group, groupIndex) => {
           const stageName = String(group?.stage?.name || `stage_${groupIndex + 1}`);
-          editModeStageOrder.push(stageName);
           const fields = Array.isArray(group?.fields) ? group.fields : [];
+          if (!fields.length) return;
+          const normalizedFields = [];
           fields.forEach((field, index) => {
             if (isInnerStageType(field?.stageType)) return;
-            list.push(normalizeEditFieldItem(field, index, stageName));
+            normalizedFields.push(normalizeEditFieldItem(field, index, stageName));
           });
+          if (!normalizedFields.length) return;
+          editModeStageOrder.push(stageName);
+          normalizedFields.forEach((field) => list.push(field));
         });
       }
 
@@ -4771,11 +4846,10 @@ function renderSubmitOutputs(payload) {
         const map = new Map(list.map((field) => [field.key, field]));
         allFields.forEach((field, index) => {
           if (isInnerStageType(field?.stageType)) return;
-          const normalized = normalizeEditFieldItem(field, index, "all");
+          const normalized = normalizeEditFieldItem(field, index, "Ungrouped");
           if (!map.has(normalized.key)) {
             list.push(normalized);
             map.set(normalized.key, normalized);
-            editModeOtherFieldSamples.push(normalized);
           } else {
             const existing = map.get(normalized.key);
             if (isEmptyValue(existing?._initialValue) && !isEmptyValue(normalized._initialValue)) {
@@ -4885,86 +4959,6 @@ function renderSubmitOutputs(payload) {
       return true;
     }
 
-    function valueToSearchText(value) {
-      if (isEmptyValue(value)) return "";
-      if (typeof value === "string") return value.toLowerCase();
-      if (Array.isArray(value)) {
-        return value
-          .map((item) => {
-            if (typeof item === "string") return item;
-            if (item && typeof item === "object") return `${item.filename || ""} ${item.url || ""} ${item.name || ""}`;
-            return String(item || "");
-          })
-          .join(" ")
-          .toLowerCase();
-      }
-      if (value && typeof value === "object") {
-        return `${value.filename || ""} ${value.url || ""} ${JSON.stringify(value)}`.toLowerCase();
-      }
-      return String(value).toLowerCase();
-    }
-
-    function getEditValueDisplay(field, value) {
-      if (isEmptyValue(value)) return "Boş";
-      if (Array.isArray(value)) return value.map((v) => (typeof v === "string" ? v : (v?.filename || v?.url || JSON.stringify(v)))).join(", ");
-      if (typeof value === "object") return value.filename || value.url || JSON.stringify(value);
-      return String(value);
-    }
-
-    function matchesEditSearch(field, value, term) {
-      if (!term) return true;
-      const q = term.toLowerCase();
-      const label = String(field.label || field.fieldName || field.key || "").toLowerCase();
-      if (label.includes(q)) return true;
-      return valueToSearchText(value).includes(q);
-    }
-
-    function fieldPassesEditFilter(field, value) {
-      if (editModeFilter === "filled") return !isEmptyValue(value);
-      if (editModeFilter === "empty") return isEmptyValue(value);
-      if (editModeFilter === "changed") return Boolean(dirtyFields[field.key]);
-      return true;
-    }
-
-    function openInlineEditor(row, field, currentValue) {
-      if (!row || row.dataset.editing === "1") return;
-      row.dataset.editing = "1";
-      const isMultiline = String(field.type || "").toLowerCase() === "multiline" || String(field.type || "").toLowerCase() === "textarea";
-      const input = document.createElement(isMultiline ? "textarea" : "input");
-      if (!isMultiline) {
-        if (["number", "integer", "decimal", "currency", "percent"].includes(String(field.type || "").toLowerCase())) input.type = "number";
-        else if (String(field.type || "").toLowerCase() === "date") input.type = "date";
-        else input.type = "text";
-      }
-      input.className = "field-input";
-      input.value = isEmptyValue(currentValue) ? "" : String(Array.isArray(currentValue) ? currentValue.join(", ") : currentValue);
-      const valueEl = row.querySelector(".edit-row-value");
-      if (!valueEl) return;
-      valueEl.textContent = "";
-      valueEl.appendChild(input);
-      const commit = () => {
-        const nextRaw = input.value;
-        const nextValue = input.type === "number" ? normalizeNumberInput(nextRaw) : nextRaw;
-        row.dataset.editing = "0";
-        const currentNormalized = normalizeValueForComparison(field, getEffectiveValue(field.key), state.config);
-        const nextNormalized = normalizeValueForComparison(field, nextValue, state.config);
-        if (areValuesDifferent(currentNormalized, nextNormalized)) {
-          setFieldValue(field.key, nextValue, field);
-          runEditModeFilterRender();
-        }
-        valueEl.textContent = getEditValueDisplay(field, getEffectiveValue(field.key));
-        row.classList.toggle("empty", isEmptyValue(getEffectiveValue(field.key)));
-      };
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" && !isMultiline) {
-          event.preventDefault();
-          input.blur();
-        }
-      });
-      input.addEventListener("blur", commit, { once: true });
-      input.focus();
-      if (isMultiline) input.style.minHeight = "72px";
-    }
     function runEditModeFilterRender() {
       if (!IS_EDITING_MODE || !state.config) return;
       const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
@@ -4983,16 +4977,20 @@ function renderSubmitOutputs(payload) {
         return id.includes(term) || header.includes(term);
       });
 
-      const quickSource = term ? filtered : fields;
-      const quickKeys = [];
-      for (const field of quickSource) {
-        if (!quickKeys.includes(field.key)) quickKeys.push(field.key);
-        if (quickKeys.length >= 5) break;
-      }
+      const stageNames = [];
+      (editModeStageOrder || []).forEach((stage) => {
+        const items = stageMap.get(stage) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageNames.push(stage);
+      });
+      Array.from(stageMap.keys()).forEach((stage) => {
+        if (stageNames.includes(stage)) return;
+        const items = stageMap.get(stage) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageNames.push(stage);
+      });
 
-      if (editQuickFields) editQuickFields.innerHTML = "";
-      if (editStageTabs) editStageTabs.innerHTML = "";
-      if (editStageFields) editStageFields.innerHTML = "";
+      if (!editSelectedStage || !stageNames.includes(editSelectedStage)) {
+        editSelectedStage = stageNames[0] || "";
+      }
 
       const wrappersByKey = new Map();
       Array.from(formEl.querySelectorAll('.field-wrapper')).forEach((wrapper) => {
@@ -5000,32 +4998,42 @@ function renderSubmitOutputs(payload) {
         if (key) wrappersByKey.set(key, wrapper);
       });
 
-      quickKeys.forEach((key) => {
-        const wrapper = wrappersByKey.get(key);
-        if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
-      });
+      if (editQuickFields) editQuickFields.innerHTML = "";
+      if (editStageTabs) editStageTabs.innerHTML = "";
+      if (editStageFields) editStageFields.innerHTML = "";
+      if (editStageHeading) editStageHeading.textContent = editSelectedStage || "";
 
-      const stageNames = [];
-      (editModeStageOrder || []).forEach((stage) => {
-        const has = (stageMap.get(stage) || []).some((f) => filtered.some((x) => x.key === f.key));
-        if (has) stageNames.push(stage);
-      });
-      Array.from(stageMap.keys()).forEach((stage) => {
-        if (stageNames.includes(stage)) return;
-        const has = (stageMap.get(stage) || []).some((f) => filtered.some((x) => x.key === f.key));
-        if (has) stageNames.push(stage);
-      });
-
-      if (!editSelectedStage || !stageNames.includes(editSelectedStage)) {
-        editSelectedStage = stageNames[0] || "";
+      const quickSource = term ? filtered : (stageMap.get(editModeStageOrder[0]) || fields);
+      const quickFields = [];
+      for (const field of quickSource) {
+        if (quickFields.some((x) => x.key === field.key)) continue;
+        quickFields.push(field);
+        if (quickFields.length >= 5) break;
       }
+
+      quickFields.forEach((field) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'edit-quick-item';
+        btn.innerHTML = `<span>${escapeHtml(field.label || field.key)}</span><small>${escapeHtml(field.key)} • ${escapeHtml(field.editStageName || 'Ungrouped')}</small>`;
+        btn.addEventListener('click', () => {
+          editSelectedStage = String(field.editStageName || "Ungrouped");
+          runEditModeFilterRender();
+          requestAnimationFrame(() => {
+            const wrapper = wrappersByKey.get(field.key);
+            const input = wrapper?.querySelector('input,select,textarea,button');
+            if (wrapper) wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (input && typeof input.focus === 'function') input.focus();
+          });
+        });
+        if (editQuickFields) editQuickFields.appendChild(btn);
+      });
 
       stageNames.forEach((stage) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'secondary';
+        btn.className = 'edit-stage-tab';
         btn.textContent = stage;
-        btn.style.textAlign = 'left';
         if (stage === editSelectedStage) btn.classList.add('active');
         btn.addEventListener('click', () => {
           editSelectedStage = stage;
@@ -5036,11 +5044,11 @@ function renderSubmitOutputs(payload) {
 
       const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
       selectedFields.forEach((field) => {
-        if (quickKeys.includes(field.key)) return;
         const wrapper = wrappersByKey.get(field.key);
         if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
       });
     }
+
 
     function renderForm(config) {
       formEl.innerHTML = "";
