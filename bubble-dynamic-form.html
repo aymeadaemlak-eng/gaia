@@ -5216,7 +5216,11 @@ function renderSubmitOutputs(payload) {
       }
 
       const wrappersByKey = new Map();
-      Array.from(formEl.querySelectorAll('.field-wrapper')).forEach((wrapper) => {
+      const wrapperPool = [
+        ...Array.from(formEl.querySelectorAll('.field-wrapper')),
+        ...(editModeRoot ? Array.from(editModeRoot.querySelectorAll('.field-wrapper')) : [])
+      ];
+      wrapperPool.forEach((wrapper) => {
         const key = wrapper.dataset.fieldKey || "";
         if (key) wrappersByKey.set(key, wrapper);
       });
