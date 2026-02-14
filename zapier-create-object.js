@@ -33,21 +33,21 @@ const normalizeBase64 = (value) => {
 };
 
 const uploadFile = async (z, bundle, base64Contents, filename) => {
+  const payload = {
+    name: filename || 'upload.jpg',
+    contents: base64Contents,
+    private: true,
+    attach_to: bundle.inputData.organisation_id
+  };
+
   const options = {
-    url: 'https://gaiasphere.io/version-live/api/1.1/wf/uploadfile',
+    url: 'https://gaiasphere.io/version-live/api/1.1/fileupload',
     method: 'POST',
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${bundle.authData.access_token}`
     },
-    body: {
-      attach_to: bundle.inputData.organisation_id,
-      key_file: {
-        filename: filename || 'upload.jpg',
-        contents: base64Contents,
-        private: true
-      }
-    }
+    body: payload
   };
 
   const response = await z.request(options);
