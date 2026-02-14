@@ -5003,30 +5003,21 @@ function renderSubmitOutputs(payload) {
       if (editStageFields) editStageFields.innerHTML = "";
       if (editStageHeading) editStageHeading.textContent = editSelectedStage || "";
 
-      const quickSource = term ? filtered : (stageMap.get(editModeStageOrder[0]) || fields);
+      const ungroupedFields = fields.filter((field) => String(field.editStageName || "Ungrouped") === "Ungrouped");
+      const quickSource = term
+        ? ungroupedFields.filter((field) => filtered.some((x) => x.key === field.key))
+        : ungroupedFields;
       const quickFields = [];
       for (const field of quickSource) {
         if (quickFields.some((x) => x.key === field.key)) continue;
         quickFields.push(field);
         if (quickFields.length >= 5) break;
       }
+      const quickKeys = quickFields.map((field) => field.key);
 
       quickFields.forEach((field) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'edit-quick-item';
-        btn.innerHTML = `<span>${escapeHtml(field.label || field.key)}</span><small>${escapeHtml(field.key)} • ${escapeHtml(field.editStageName || 'Ungrouped')}</small>`;
-        btn.addEventListener('click', () => {
-          editSelectedStage = String(field.editStageName || "Ungrouped");
-          runEditModeFilterRender();
-          requestAnimationFrame(() => {
-            const wrapper = wrappersByKey.get(field.key);
-            const input = wrapper?.querySelector('input,select,textarea,button');
-            if (wrapper) wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            if (input && typeof input.focus === 'function') input.focus();
-          });
-        });
-        if (editQuickFields) editQuickFields.appendChild(btn);
+        const wrapper = wrappersByKey.get(field.key);
+        if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
       });
 
       stageNames.forEach((stage) => {
@@ -5044,6 +5035,7 @@ function renderSubmitOutputs(payload) {
 
       const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
       selectedFields.forEach((field) => {
+        if (quickKeys.includes(field.key)) return;
         const wrapper = wrappersByKey.get(field.key);
         if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
       });
