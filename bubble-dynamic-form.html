@@ -5350,44 +5350,27 @@ function renderSubmitOutputs(payload) {
       });
 
       const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage]));
-      const stageMatchesByTerm = new Set();
-      if (term) {
-        Array.from(stageMap.keys()).forEach((stageKey, index) => {
-          const stageLabel = getStageDisplayLabel(stageLabelByKey, stageKey, index).toLocaleLowerCase("tr-TR");
-          if (stageLabel.includes(term)) stageMatchesByTerm.add(stageKey);
-        });
-      }
-
-      const filtered = fields.filter((field) => {
-        if (!term) return true;
-        const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
-        const header = String(field.label || "").toLocaleLowerCase("tr-TR");
-        const stageKey = String(field.editStageKey || "Ungrouped");
-        return id.includes(term) || header.includes(term) || stageMatchesByTerm.has(stageKey);
-      });
-
       const stageKeys = [];
-      if (stageMap.has("Ungrouped")) stageKeys.push("Ungrouped");
       (editModeStageOrder || []).forEach((stageKey) => {
         if (stageKeys.includes(stageKey)) return;
+        if (String(stageKey) === "Ungrouped") return;
         if (stageMap.has(stageKey)) stageKeys.push(stageKey);
       });
       Array.from(stageMap.keys()).forEach((stageKey) => {
         if (stageKeys.includes(stageKey)) return;
+        if (String(stageKey) === "Ungrouped") return;
         stageKeys.push(stageKey);
       });
 
       const filteredCountByStage = new Map();
       stageKeys.forEach((stageKey) => {
-        const count = (stageMap.get(stageKey) || []).filter((f) => filtered.some((x) => x.key === f.key)).length;
+        const count = (stageMap.get(stageKey) || []).length;
         filteredCountByStage.set(stageKey, count);
       });
 
-      const firstMatched = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
-      if (term) {
-        editSelectedStage = firstMatched || stageKeys[0] || "";
-      } else if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
-        editSelectedStage = firstMatched || stageKeys[0] || "";
+      const firstWithFields = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
+      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
+        editSelectedStage = firstWithFields || stageKeys[0] || "";
       }
       if (editStageLayout) {
         editStageLayout.style.display = stageKeys.length ? "grid" : "none";
@@ -5458,7 +5441,7 @@ function renderSubmitOutputs(payload) {
         if (editStageTabs) editStageTabs.appendChild(btn);
       });
 
-      const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
+      const selectedFields = stageMap.get(editSelectedStage) || [];
       const selectedStageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editSelectedStage);
       const activeProcessIndexForSelected = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
       const selectedStageStatus = getProcessStageStatus(selectedStageMetaIndex, activeProcessIndexForSelected);
