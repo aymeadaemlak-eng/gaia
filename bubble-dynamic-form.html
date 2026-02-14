@@ -1251,6 +1251,47 @@
   background: #fff;
 }
 
+#bdf-root .edit-stage-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#bdf-root .edit-stage-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #dbe3f2;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+#bdf-root .edit-stage-chip.completed {
+  color: #1e40af;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+#bdf-root .edit-stage-chip.active {
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+#bdf-root .edit-stage-chip.upcoming {
+  opacity: 0.7;
+}
+
+#bdf-root .edit-stage-status {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 6px;
+  min-height: 18px;
+}
+
 #bdf-root .edit-mode-loading {
   display: none;
   width: 100%;
@@ -1699,7 +1740,9 @@
           <div id="editStageLayout" class="edit-stage-layout" style="display:none;">
             <div id="editStageTabs" class="edit-stage-tabs"></div>
             <div id="editStagePanel" class="edit-stage-panel">
-              <h3 id="editStageHeading" style="margin:0 0 8px 0; font-size:14px;"></h3>
+              <h3 id="editStageHeading" style="margin:0 0 6px 0; font-size:14px;"></h3>
+              <div id="editStageMeta" class="edit-stage-meta"><span></span><span id="editStageChip" class="edit-stage-chip"></span></div>
+              <div id="editStageStatus" class="edit-stage-status"></div>
               <div id="editStageFields" class="grid" style="gap:8px;"></div>
             </div>
           </div>
@@ -2199,6 +2242,8 @@
     const editStageLayout = byId("editStageLayout");
     const editStageTabs = byId("editStageTabs");
     const editStageHeading = byId("editStageHeading");
+    const editStageChip = byId("editStageChip");
+    const editStageStatus = byId("editStageStatus");
     const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
@@ -2294,6 +2339,7 @@
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
+    let editStageRenderSeq = 0;
 
     const defaultSchema = {
       fields: [
@@ -5214,6 +5260,37 @@ function renderSubmitOutputs(payload) {
       editProgressWrap.style.display = "grid";
     }
 
+    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey }) {
+      editStageRenderSeq += 1;
+      const renderSeq = editStageRenderSeq;
+      if (editStageStatus) {
+        editStageStatus.textContent = selectedFields.length ? "İçerik yükleniyor…" : "Bu aşamada gösterilecek alan yok.";
+      }
+      if (editStageFields) editStageFields.innerHTML = "";
+      let cursor = 0;
+      const chunkSize = 4;
+      const total = selectedFields.length;
+      const pump = () => {
+        if (renderSeq !== editStageRenderSeq) return;
+        if (stageKey !== editSelectedStage) return;
+        if (!editStageFields) return;
+        const limit = Math.min(cursor + chunkSize, total);
+        for (let i = cursor; i < limit; i += 1) {
+          const wrapper = wrappersByKey.get(selectedFields[i].key);
+          if (wrapper) editStageFields.appendChild(wrapper);
+        }
+        cursor = limit;
+        if (cursor < total) {
+          requestAnimationFrame(pump);
+          return;
+        }
+        if (editStageStatus) {
+          editStageStatus.textContent = total ? `${total} alan listelendi.` : "Bu aşamada gösterilecek alan yok.";
+        }
+      };
+      requestAnimationFrame(pump);
+    }
+
     function runEditModeFilterRender() {
       if (!IS_EDITING_MODE || !state.config) return;
       const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
@@ -5336,10 +5413,15 @@ function renderSubmitOutputs(payload) {
       });
 
       const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
-      selectedFields.forEach((field) => {
-        const wrapper = wrappersByKey.get(field.key);
-        if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
-      });
+      const selectedStageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editSelectedStage);
+      const activeProcessIndexForSelected = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
+      const selectedStageStatus = getProcessStageStatus(selectedStageMetaIndex, activeProcessIndexForSelected);
+      if (editStageChip) {
+        editStageChip.className = `edit-stage-chip ${selectedStageStatus}`;
+        const statusLabel = selectedStageStatus === "active" ? "Current" : (selectedStageStatus === "completed" ? "Completed" : "Pending");
+        editStageChip.textContent = statusLabel;
+      }
+      renderSelectedStageFieldsProgressively({ stageKey: editSelectedStage, selectedFields, wrappersByKey });
 
       renderEditProgress(editModeStageMeta || []);
       const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
