@@ -5180,12 +5180,20 @@ function renderSubmitOutputs(payload) {
       });
 
       const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage]));
+      const stageMatchesByTerm = new Set();
+      if (term) {
+        Array.from(stageMap.keys()).forEach((stageKey, index) => {
+          const stageLabel = getStageDisplayLabel(stageLabelByKey, stageKey, index).toLocaleLowerCase("tr-TR");
+          if (stageLabel.includes(term)) stageMatchesByTerm.add(stageKey);
+        });
+      }
 
       const filtered = fields.filter((field) => {
         if (!term) return true;
         const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
         const header = String(field.label || "").toLocaleLowerCase("tr-TR");
-        return id.includes(term) || header.includes(term);
+        const stageKey = String(field.editStageKey || "Ungrouped");
+        return id.includes(term) || header.includes(term) || stageMatchesByTerm.has(stageKey);
       });
 
       const stageKeys = [];
@@ -5221,9 +5229,7 @@ function renderSubmitOutputs(payload) {
       }
 
       const ungroupedFields = fields.filter((field) => String(field.editStageKey || "Ungrouped") === "Ungrouped");
-      const quickSource = term
-        ? ungroupedFields.filter((field) => filtered.some((x) => x.key === field.key))
-        : ungroupedFields;
+      const quickSource = ungroupedFields;
       const quickFields = [];
       for (const field of quickSource) {
         if (quickFields.some((x) => x.key === field.key)) continue;
