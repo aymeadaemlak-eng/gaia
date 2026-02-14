@@ -2253,6 +2253,7 @@
     let editSelectedStage = "";
     let editProcessActiveStageKey = "";
     let editProcessShowAll = false;
+    let editQuickPinnedKeys = [];
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -5058,6 +5059,13 @@ function renderSubmitOutputs(payload) {
         if (!sourceByField[key]) sourceByField[key] = "human";
       });
       state.config = config;
+      editQuickPinnedKeys = [];
+      for (const field of (config.fields || [])) {
+        if (!field || !field.key) continue;
+        if (editQuickPinnedKeys.includes(field.key)) continue;
+        editQuickPinnedKeys.push(field.key);
+        if (editQuickPinnedKeys.length >= 5) break;
+      }
       columnJson = {
         columns: config.fields.map((field) => ({
           fieldName: field.fieldName || field.key,
@@ -5232,18 +5240,9 @@ function renderSubmitOutputs(payload) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
       }
 
-      const ungroupedFields = fields.filter((field) => String(field.editStageKey || "Ungrouped") === "Ungrouped");
-      const quickSource = ungroupedFields;
-      const quickFields = [];
-      for (const field of quickSource) {
-        if (quickFields.some((x) => x.key === field.key)) continue;
-        quickFields.push(field);
-        if (quickFields.length >= 5) break;
-      }
-      const quickKeys = quickFields.map((field) => field.key);
-
-      quickFields.forEach((field) => {
-        const wrapper = wrappersByKey.get(field.key);
+      const quickKeys = (editQuickPinnedKeys || []).slice(0, 5);
+      quickKeys.forEach((key) => {
+        const wrapper = wrappersByKey.get(key);
         if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
       });
 
@@ -5266,7 +5265,6 @@ function renderSubmitOutputs(payload) {
 
       const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => filtered.some((x) => x.key === field.key));
       selectedFields.forEach((field) => {
-        if (quickKeys.includes(field.key)) return;
         const wrapper = wrappersByKey.get(field.key);
         if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
       });
