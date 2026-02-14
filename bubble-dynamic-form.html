@@ -4742,6 +4742,7 @@ function renderSubmitOutputs(payload) {
           const stageName = String(group?.stage?.name || `stage_${groupIndex + 1}`);
           const fields = Array.isArray(group?.fields) ? group.fields : [];
           fields.forEach((field, index) => {
+            if (isInnerStageType(field?.stageType)) return;
             list.push(normalizeEditFieldItem(field, index, stageName));
           });
         });
@@ -4750,6 +4751,7 @@ function renderSubmitOutputs(payload) {
       if (allFields.length) {
         const map = new Map(list.map((field) => [field.key, field]));
         allFields.forEach((field, index) => {
+          if (isInnerStageType(field?.stageType)) return;
           const normalized = normalizeEditFieldItem(field, index, "all");
           if (!map.has(normalized.key)) {
             list.push(normalized);
@@ -4796,6 +4798,32 @@ function renderSubmitOutputs(payload) {
       };
     }
 
+    function hydrateEditHumanDataFromBubble(config) {
+      const sourceObj = readCurrentBubbleDataObject() || {};
+      const fields = Array.isArray(config?.fields) ? config.fields : [];
+      if (!fields.length) return;
+      const indexMap = new Map();
+      fields.forEach((field) => {
+        const aliases = [field.key, field.fieldName, field.label]
+          .map((v) => String(v || "").trim())
+          .filter(Boolean);
+        aliases.forEach((alias) => {
+          if (!indexMap.has(alias)) indexMap.set(alias, field.key);
+          const lower = alias.toLocaleLowerCase("tr-TR");
+          if (!indexMap.has(lower)) indexMap.set(lower, field.key);
+        });
+      });
+
+      Object.entries(sourceObj).forEach(([rawKey, rawValue]) => {
+        const key = String(rawKey || "").trim();
+        if (!key) return;
+        const direct = indexMap.get(key) || indexMap.get(key.toLocaleLowerCase("tr-TR"));
+        if (!direct) return;
+        humanData[direct] = rawValue;
+        sourceByField[direct] = "human";
+      });
+    }
+
     function applyEditModePayloadIfReady() {
       if (!IS_EDITING_MODE) return false;
       const payload = readEditModePayloadSources();
@@ -4819,6 +4847,7 @@ function renderSubmitOutputs(payload) {
       }
 
       humanData = { ...(humanData || {}), ...(config.initialValues || {}) };
+      hydrateEditHumanDataFromBubble(config);
       Object.keys(config.initialValues || {}).forEach((key) => {
         if (!sourceByField[key]) sourceByField[key] = "human";
       });
@@ -6137,6 +6166,9 @@ function renderSubmitOutputs(payload) {
           }, 0);
         }
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+      }
       updateToolbarStatus();
       updateSubmitState(config);
       captureInitialSnapshot();
