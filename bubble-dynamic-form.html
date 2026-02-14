@@ -37,6 +37,8 @@
       },
       start: false,
       editing: true,
+      EDITING_STAGE_GROUPS_JSON: [],
+      EDITING_ALL_FIELDS_JSON: [],
       VERSION: true
     };
   </script>
@@ -1091,6 +1093,31 @@
 #bdf-root .edit-row-label { font-size: 11px; color: var(--muted); }
 #bdf-root .edit-row-value { font-size: 14px; color: var(--text); }
 #bdf-root .edit-row.empty .edit-row-value { color: #9aa3b2; font-style: italic; }
+
+#bdf-root .edit-mode-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 120px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fafcff;
+}
+
+#bdf-root .edit-mode-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d9e2f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: bdf-spin 0.8s linear infinite;
+}
+
+@keyframes bdf-spin {
+  to { transform: rotate(360deg); }
+}
 #bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
@@ -1471,6 +1498,7 @@
               <option value="changed">Changed</option>
             </select>
           </div>
+          <div id="editModeLoading" class="edit-mode-loading"><span class="edit-mode-spinner" aria-hidden="true"></span><span id="editModeLoadingText">Edit verileri yükleniyor…</span></div>
           <div id="editModeList" class="edit-mode-list"></div>
         </div>
         <form id="dynamicForm" class="grid"></form>
@@ -1958,6 +1986,8 @@
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
     const editFilterSelect = byId("editFilterSelect");
+    const editModeLoading = byId("editModeLoading");
+    const editModeLoadingText = byId("editModeLoadingText");
     const editModeList = byId("editModeList");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
@@ -2049,6 +2079,9 @@
     let editModeVisibleFields = [];
     const EDIT_ROW_HEIGHT = 68;
     let editModeRenderToken = 0;
+    let editModePayloadLoaded = false;
+    let lastEditModePayloadSignature = "";
+    let editModePayloadPollTimer = null;
 
     const defaultSchema = {
       fields: [
@@ -2258,6 +2291,9 @@
       }
       if (editModeRoot) {
         editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
+      }
+      if (IS_EDITING_MODE && !editModePayloadLoaded) {
+        setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
       if (actionBar) {
         actionBar.style.display = IS_EDITING_MODE ? "none" : "";
@@ -4617,6 +4653,178 @@ function renderSubmitOutputs(payload) {
       }, 500);
     }
 
+    function setEditModeLoading(isLoading, message = "") {
+      if (!editModeLoading || !editModeList) return;
+      editModeLoading.style.display = isLoading ? "flex" : "none";
+      editModeList.style.display = isLoading ? "none" : "block";
+      if (editModeLoadingText && message) {
+        editModeLoadingText.textContent = message;
+      }
+    }
+
+    function parseIncomingJson(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed);
+        } catch (error) {
+          return null;
+        }
+      }
+      return rawValue;
+    }
+
+    function readEditModePayloadSources() {
+      const source = window.BUBBLE_INPUTS || {};
+      const stageRaw = source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
+      const allRaw = source.EDITING_ALL_FIELDS_JSON ?? source.editingAllFields ?? source.editing_all_fields ?? null;
+      return {
+        stageGroups: parseIncomingJson(stageRaw),
+        allFields: parseIncomingJson(allRaw)
+      };
+    }
+
+    function buildEditPayloadSignature(payload) {
+      try {
+        const stage = payload?.stageGroups || [];
+        const all = payload?.allFields || [];
+        return `${JSON.stringify(stage).length}:${JSON.stringify(all).length}`;
+      } catch (error) {
+        return `${Date.now()}`;
+      }
+    }
+
+    function normalizeEditFieldItem(item, index, stageName = "") {
+      const raw = item && typeof item === "object" ? item : { value: item };
+      const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.label || `field_${index + 1}`).trim();
+      const label = String(raw.label || raw.fieldName || raw.name || key).trim() || key;
+      const type = String(raw.type || "text").toLowerCase();
+      const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? "";
+      return {
+        key,
+        fieldName: key,
+        label,
+        type,
+        required: false,
+        stageType: "optional",
+        allowMultiple: Boolean(raw.multiple || raw.allowMultiple),
+        readOnly: Boolean(raw.readOnly),
+        options: Array.isArray(raw.options) ? raw.options : [],
+        default: "",
+        ui: raw.ui || {},
+        _stageName: stageName,
+        _initialValue: value
+      };
+    }
+
+    function buildConfigFromEditPayload(payload) {
+      const stageGroups = Array.isArray(payload?.stageGroups) ? payload.stageGroups : [];
+      const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
+      const list = [];
+
+      if (stageGroups.length) {
+        const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
+        sortedGroups.forEach((group, groupIndex) => {
+          const stageName = String(group?.stage?.name || `stage_${groupIndex + 1}`);
+          const fields = Array.isArray(group?.fields) ? group.fields : [];
+          fields.forEach((field, index) => {
+            list.push(normalizeEditFieldItem(field, index, stageName));
+          });
+        });
+      }
+
+      if (allFields.length) {
+        const map = new Map(list.map((field) => [field.key, field]));
+        allFields.forEach((field, index) => {
+          const normalized = normalizeEditFieldItem(field, index, "all");
+          if (!map.has(normalized.key)) {
+            list.push(normalized);
+            map.set(normalized.key, normalized);
+          } else {
+            const existing = map.get(normalized.key);
+            if (isEmptyValue(existing?._initialValue) && !isEmptyValue(normalized._initialValue)) {
+              existing._initialValue = normalized._initialValue;
+            }
+          }
+        });
+      }
+
+      if (!list.length) return null;
+
+      const initialValues = {};
+      list.forEach((field) => {
+        initialValues[field.key] = field._initialValue;
+      });
+
+      return {
+        fields: list.map((field) => {
+          const next = { ...field };
+          delete next._initialValue;
+          return next;
+        }),
+        currentDateTimeISO: defaultSchema.currentDateTimeISO,
+        locale: "tr-TR",
+        timezone: "Europe/Istanbul",
+        mode: "edit",
+        initialValues,
+        requiredPolicy: "soft",
+        showInlineHelp: false,
+        autoFocusFirstInvalid: false
+      };
+    }
+
+    function applyEditModePayloadIfReady() {
+      if (!IS_EDITING_MODE) return false;
+      const payload = readEditModePayloadSources();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      if (!hasStage && !hasAll) {
+        setEditModeLoading(true, "Edit verileri bekleniyor…");
+        return false;
+      }
+
+      const signature = buildEditPayloadSignature(payload);
+      if (editModePayloadLoaded && signature === lastEditModePayloadSignature) {
+        setEditModeLoading(false);
+        return true;
+      }
+
+      const config = buildConfigFromEditPayload(payload);
+      if (!config) {
+        setEditModeLoading(true, "Edit verisi çözümlenemedi…");
+        return false;
+      }
+
+      humanData = { ...(humanData || {}), ...(config.initialValues || {}) };
+      Object.keys(config.initialValues || {}).forEach((key) => {
+        if (!sourceByField[key]) sourceByField[key] = "human";
+      });
+      state.config = config;
+      columnJson = {
+        columns: config.fields.map((field) => ({
+          fieldName: field.fieldName || field.key,
+          header: field.label,
+          type: field.type,
+          stageType: field.stageType || "optional",
+          required: Boolean(field.required),
+          multiple: Boolean(field.allowMultiple),
+          ui: field.ui || {}
+        })),
+        mode: "edit",
+        currentDateTimeISO: config.currentDateTimeISO,
+        locale: config.locale,
+        timezone: config.timezone
+      };
+      lastEditModePayloadSignature = signature;
+      editModePayloadLoaded = true;
+      setEditModeLoading(false);
+      renderForm(config);
+      flushPendingSubmitAfterConfigReady();
+      return true;
+    }
+
     function valueToSearchText(value) {
       if (isEmptyValue(value)) return "";
       if (typeof value === "string") return value.toLowerCase();
@@ -6351,7 +6559,20 @@ function renderSubmitOutputs(payload) {
     applyVersionVisibility();
     syncActionOptions();
     initLateIncomingDataSync();
-    if (columnJson) {
+    if (IS_EDITING_MODE) {
+      const payloadAppliedNow = applyEditModePayloadIfReady();
+      if (!payloadAppliedNow) {
+        formContainer.style.display = "block";
+        if (formEl) formEl.innerHTML = "";
+        editModePayloadPollTimer = setInterval(() => {
+          const applied = applyEditModePayloadIfReady();
+          if (applied && editModePayloadPollTimer) {
+            clearInterval(editModePayloadPollTimer);
+            editModePayloadPollTimer = null;
+          }
+        }, 300);
+      }
+    } else if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
