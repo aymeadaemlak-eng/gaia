@@ -414,11 +414,26 @@ function indexByHeader_(headers) {
 function buildPlaceholdersFromPayload_(payload) {
   const p = {};
   applyKeyMap_(p, payload);
-  if (payload.Vekil && typeof payload.Vekil === 'object') applyKeyMap_(p, payload.Vekil);
+  const hasVekilObject = hasNonEmptyObject_(payload.Vekil);
+  if (hasVekilObject) applyKeyMap_(p, payload.Vekil);
   if (payload.Davalı && typeof payload.Davalı === 'object') applyKeyMap_(p, payload.Davalı);
+  p._Has_Vekil_Object = hasVekilObject;
   for (const k in p) if (typeof p[k] === 'string') p[k] = p[k].trim();
   applyDavaliDirectory_(p);
   return p;
+}
+
+
+function hasNonEmptyObject_(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  for (const k in value) {
+    if (!Object.prototype.hasOwnProperty.call(value, k)) continue;
+    const current = value[k];
+    if (current == null) continue;
+    if (typeof current === 'string' && current.trim() === '') continue;
+    return true;
+  }
+  return false;
 }
 
 
@@ -609,7 +624,7 @@ function applyKeyMap_(out, src) {
 
 
 function pickIhtarTemplateId_(cfg, placeholders) {
-  if (!hasValue_(placeholders.Vekil_Adi)) return VEKILSIZ_TEMPLATE_ID;
+  if (!isTrue(placeholders._Has_Vekil_Object)) return VEKILSIZ_TEMPLATE_ID;
   const dk = isTrue(placeholders.Deger_Kaybi_Talebi);
   const hf = isTrue(placeholders.Hasar_Farki_Talebi);
   const amb = isTrue(placeholders.AMB_Talebi);
