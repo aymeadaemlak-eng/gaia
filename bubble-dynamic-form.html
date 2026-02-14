@@ -1079,7 +1079,72 @@
   gap: 8px;
 }
 
+#bdf-root .edit-progress-wrap {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+#bdf-root .edit-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+}
+
+#bdf-root .edit-progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-progress-step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: #fff;
+}
+
+#bdf-root .edit-progress-step.completed .edit-progress-step-dot {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+#bdf-root .edit-progress-step.active {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-progress-step.active .edit-progress-step-dot {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
+}
+
+#bdf-root .edit-progress-step.upcoming {
+  opacity: 0.6;
+}
+
+#bdf-root .edit-progress-sep {
+  color: #cbd5e1;
+}
+
+#bdf-root .edit-progress-toggle {
+  justify-self: start;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
 #bdf-root .edit-quick-list {
+
   display: grid;
   gap: 8px;
 }
@@ -1125,6 +1190,15 @@
   border-color: rgba(37, 99, 235, 0.35);
   color: #1d4ed8;
   font-weight: 600;
+}
+
+#bdf-root .edit-stage-tab.completed {
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+#bdf-root .edit-stage-tab.upcoming {
+  opacity: 0.65;
 }
 
 #bdf-root .edit-stage-panel {
@@ -1370,6 +1444,11 @@
 #bdf-root .edit-stage-tabs {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       }
+
+#bdf-root .edit-progress-track {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
 
     @media (max-width: 360px) {
@@ -1557,6 +1636,10 @@
         <div id="editModeRoot" class="edit-mode-root">
           <div class="edit-mode-toolbar">
             <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+          </div>
+          <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
+            <div id="editProgressTrack" class="edit-progress-track"></div>
+            <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
           </div>
           <div id="editModeLoading" class="edit-mode-loading">
             <span class="edit-mode-spinner" aria-hidden="true"></span>
@@ -2062,6 +2145,9 @@
     const formEl = byId("dynamicForm");
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
+    const editProgressWrap = byId("editProgressWrap");
+    const editProgressTrack = byId("editProgressTrack");
+    const editProgressToggle = byId("editProgressToggle");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
     const editQuickSection = byId("editQuickSection");
@@ -2157,7 +2243,10 @@
     let editModeSearchTerm = "";
     let editModeDebounceTimer = null;
     let editModeStageOrder = [];
+    let editModeStageMeta = [];
     let editSelectedStage = "";
+    let editProcessActiveStageKey = "";
+    let editProcessShowAll = false;
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -4745,6 +4834,7 @@ function renderSubmitOutputs(payload) {
       editModeLoading.style.display = isLoading ? "grid" : "none";
       if (editQuickSection) editQuickSection.style.display = isLoading ? "none" : "block";
       if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
+      if (editProgressWrap) editProgressWrap.style.display = isLoading ? "none" : editProgressWrap.style.display;
       if (editModeLoadingText && message) {
         editModeLoadingText.textContent = message;
       }
@@ -4784,7 +4874,23 @@ function renderSubmitOutputs(payload) {
       }
     }
 
-    function normalizeEditFieldItem(item, index, stageName = "") {
+    function getStageKey(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return `name:${normalizedName.toLocaleLowerCase("tr-TR")}`;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `order:${orderNumber}`;
+      return `fallback:${fallbackIndex}`;
+    }
+
+    function getStageLabel(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return normalizedName;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `Stage ${orderNumber}`;
+      return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function normalizeEditFieldItem(item, index, stageName = "", stageKey = "") {
       const raw = item && typeof item === "object" ? item : { value: item };
       const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.header || raw.label || `field_${index + 1}`).trim();
       const label = String(raw.header || raw.label || raw.fieldName || raw.name || key).trim() || key;
@@ -4815,6 +4921,7 @@ function renderSubmitOutputs(payload) {
         default: raw.default ?? "",
         ui: raw.ui || {},
         _stageName: stageName,
+        _stageKey: stageKey,
         _initialValue: value
       };
     }
@@ -4824,20 +4931,25 @@ function renderSubmitOutputs(payload) {
       const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
       const list = [];
       editModeStageOrder = [];
+      editModeStageMeta = [];
 
       if (stageGroups.length) {
         const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
         sortedGroups.forEach((group, groupIndex) => {
-          const stageName = String(group?.stage?.name || `stage_${groupIndex + 1}`);
+          const stageName = String(group?.stage?.name || "").trim();
+          const stageOrder = Number(group?.stage?.order);
+          const stageKey = getStageKey(stageName, stageOrder, groupIndex);
+          const stageLabel = getStageLabel(stageName, stageOrder, groupIndex);
           const fields = Array.isArray(group?.fields) ? group.fields : [];
           if (!fields.length) return;
           const normalizedFields = [];
           fields.forEach((field, index) => {
             if (isInnerStageType(field?.stageType)) return;
-            normalizedFields.push(normalizeEditFieldItem(field, index, stageName));
+            normalizedFields.push(normalizeEditFieldItem(field, index, stageLabel, stageKey));
           });
           if (!normalizedFields.length) return;
-          editModeStageOrder.push(stageName);
+          editModeStageOrder.push(stageKey);
+          editModeStageMeta.push({ key: stageKey, name: stageName, order: Number.isFinite(stageOrder) ? stageOrder : null, label: stageLabel });
           normalizedFields.forEach((field) => list.push(field));
         });
       }
@@ -4846,7 +4958,7 @@ function renderSubmitOutputs(payload) {
         const map = new Map(list.map((field) => [field.key, field]));
         allFields.forEach((field, index) => {
           if (isInnerStageType(field?.stageType)) return;
-          const normalized = normalizeEditFieldItem(field, index, "Ungrouped");
+          const normalized = normalizeEditFieldItem(field, index, "Ungrouped", "Ungrouped");
           if (!map.has(normalized.key)) {
             list.push(normalized);
             map.set(normalized.key, normalized);
@@ -4867,7 +4979,11 @@ function renderSubmitOutputs(payload) {
 
       return {
         fields: list.map((field) => {
-          const next = { ...field, editStageName: field._stageName || "Ungrouped" };
+          const next = {
+            ...field,
+            editStageName: field._stageName || "Ungrouped",
+            editStageKey: field._stageKey || "Ungrouped"
+          };
           delete next._initialValue;
           return next;
         }),
@@ -4953,10 +5069,88 @@ function renderSubmitOutputs(payload) {
       };
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
+      editProcessShowAll = false;
       setEditModeLoading(false);
       renderForm(config);
       flushPendingSubmitAfterConfigReady();
       return true;
+    }
+
+    function resolveActiveProcessStageKey(stageMeta) {
+      const dataObj = readCurrentBubbleDataObject() || {};
+      const rawStage = dataObj.stage;
+      if (rawStage === null || rawStage === undefined || rawStage === "") return "";
+      const stageText = String(rawStage).trim();
+      const stageTextLower = stageText.toLocaleLowerCase("tr-TR");
+
+      const byName = stageMeta.find((item) => String(item.name || "").trim().toLocaleLowerCase("tr-TR") === stageTextLower);
+      if (byName) return byName.key;
+
+      const numericValue = Number(rawStage);
+      if (Number.isFinite(numericValue)) {
+        const byOrder = stageMeta.find((item) => Number(item.order) === numericValue);
+        if (byOrder) return byOrder.key;
+      }
+      return "unknown";
+    }
+
+    function getProcessStageStatus(stageIndex, activeIndex) {
+      if (activeIndex < 0) return "upcoming";
+      if (stageIndex < activeIndex) return "completed";
+      if (stageIndex === activeIndex) return "active";
+      return "upcoming";
+    }
+
+    function renderEditProgress(stageMeta) {
+      if (!editProgressWrap || !editProgressTrack) return;
+      editProgressTrack.innerHTML = "";
+      if (!stageMeta.length) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeKey = resolveActiveProcessStageKey(stageMeta);
+      editProcessActiveStageKey = activeKey;
+      if (!activeKey) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeIndex = stageMeta.findIndex((item) => item.key === activeKey);
+      const visibleStages = (editProcessShowAll || activeIndex < 0)
+        ? stageMeta
+        : stageMeta.slice(0, activeIndex + 1);
+
+      visibleStages.forEach((stage, index) => {
+        const realIndex = stageMeta.findIndex((item) => item.key === stage.key);
+        const status = getProcessStageStatus(realIndex, activeIndex);
+        const step = document.createElement("div");
+        step.className = `edit-progress-step ${status}`;
+        const dot = document.createElement("span");
+        dot.className = "edit-progress-step-dot";
+        dot.textContent = status === "completed" ? "✓" : String(realIndex + 1);
+        const label = document.createElement("span");
+        label.textContent = stage.label;
+        step.append(dot, label);
+        editProgressTrack.appendChild(step);
+        if (index < visibleStages.length - 1) {
+          const sep = document.createElement("span");
+          sep.className = "edit-progress-sep";
+          sep.textContent = "—";
+          editProgressTrack.appendChild(sep);
+        }
+      });
+
+      if (editProgressToggle) {
+        if (activeIndex >= 0 && stageMeta.length > activeIndex + 1) {
+          editProgressToggle.style.display = "inline-flex";
+          editProgressToggle.textContent = editProcessShowAll ? "Daha az göster" : "Tüm süreç";
+        } else {
+          editProgressToggle.style.display = "none";
+        }
+      }
+
+      editProgressWrap.style.display = "grid";
     }
 
     function runEditModeFilterRender() {
@@ -4965,10 +5159,12 @@ function renderSubmitOutputs(payload) {
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
       const stageMap = new Map();
       fields.forEach((field) => {
-        const stage = String(field.editStageName || "Ungrouped");
-        if (!stageMap.has(stage)) stageMap.set(stage, []);
-        stageMap.get(stage).push(field);
+        const stageKey = String(field.editStageKey || "Ungrouped");
+        if (!stageMap.has(stageKey)) stageMap.set(stageKey, []);
+        stageMap.get(stageKey).push(field);
       });
+
+      const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage.label]));
 
       const filtered = fields.filter((field) => {
         if (!term) return true;
@@ -4977,19 +5173,23 @@ function renderSubmitOutputs(payload) {
         return id.includes(term) || header.includes(term);
       });
 
-      const stageNames = [];
-      (editModeStageOrder || []).forEach((stage) => {
-        const items = stageMap.get(stage) || [];
-        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageNames.push(stage);
+      const stageKeys = [];
+      (editModeStageOrder || []).forEach((stageKey) => {
+        const items = stageMap.get(stageKey) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
       });
-      Array.from(stageMap.keys()).forEach((stage) => {
-        if (stageNames.includes(stage)) return;
-        const items = stageMap.get(stage) || [];
-        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageNames.push(stage);
+      Array.from(stageMap.keys()).forEach((stageKey) => {
+        if (stageKey === "Ungrouped") return;
+        if (stageKeys.includes(stageKey)) return;
+        const items = stageMap.get(stageKey) || [];
+        if (items.length && items.some((f) => filtered.some((x) => x.key === f.key))) stageKeys.push(stageKey);
       });
 
-      if (!editSelectedStage || !stageNames.includes(editSelectedStage)) {
-        editSelectedStage = stageNames[0] || "";
+      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
+        editSelectedStage = stageKeys[0] || "";
+      }
+      if (editStageLayout) {
+        editStageLayout.style.display = stageKeys.length ? "grid" : "none";
       }
 
       const wrappersByKey = new Map();
@@ -5001,9 +5201,11 @@ function renderSubmitOutputs(payload) {
       if (editQuickFields) editQuickFields.innerHTML = "";
       if (editStageTabs) editStageTabs.innerHTML = "";
       if (editStageFields) editStageFields.innerHTML = "";
-      if (editStageHeading) editStageHeading.textContent = editSelectedStage || "";
+      if (editStageHeading) {
+        editStageHeading.textContent = stageLabelByKey.get(editSelectedStage) || editSelectedStage || "";
+      }
 
-      const ungroupedFields = fields.filter((field) => String(field.editStageName || "Ungrouped") === "Ungrouped");
+      const ungroupedFields = fields.filter((field) => String(field.editStageKey || "Ungrouped") === "Ungrouped");
       const quickSource = term
         ? ungroupedFields.filter((field) => filtered.some((x) => x.key === field.key))
         : ungroupedFields;
@@ -5020,14 +5222,18 @@ function renderSubmitOutputs(payload) {
         if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
       });
 
-      stageNames.forEach((stage) => {
+      const activeProcessIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
+      stageKeys.forEach((stageKey) => {
+        const stageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === stageKey);
+        const status = getProcessStageStatus(stageMetaIndex, activeProcessIndex);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'edit-stage-tab';
-        btn.textContent = stage;
-        if (stage === editSelectedStage) btn.classList.add('active');
+        btn.className = `edit-stage-tab ${status}`;
+        btn.textContent = stageLabelByKey.get(stageKey) || stageKey;
+        if (stageKey === editSelectedStage) btn.classList.add('active');
+        if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
         btn.addEventListener('click', () => {
-          editSelectedStage = stage;
+          editSelectedStage = stageKey;
           runEditModeFilterRender();
         });
         if (editStageTabs) editStageTabs.appendChild(btn);
@@ -5039,7 +5245,12 @@ function renderSubmitOutputs(payload) {
         const wrapper = wrappersByKey.get(field.key);
         if (wrapper && editStageFields) editStageFields.appendChild(wrapper);
       });
+
+      renderEditProgress(editModeStageMeta || []);
+      const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
+      if (activeTab) activeTab.scrollIntoView({ block: 'nearest' });
     }
+
 
 
     function renderForm(config) {
@@ -6452,6 +6663,13 @@ function renderSubmitOutputs(payload) {
             editModeSearchTerm = nextTerm;
             runEditModeFilterRender();
           }, 200);
+        });
+      }
+
+      if (editProgressToggle) {
+        editProgressToggle.addEventListener("click", () => {
+          editProcessShowAll = !editProcessShowAll;
+          runEditModeFilterRender();
         });
       }
 
