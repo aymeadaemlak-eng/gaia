@@ -1161,19 +1161,44 @@
 }
 
 #bdf-root .edit-quick-item {
-  width: 100%;
-  text-align: left;
+  min-height: 38px;
   border: 1px solid #dbe3f2;
   background: #f8fbff;
-  border-radius: 10px;
-  padding: 8px 10px;
-  display: grid;
-  gap: 2px;
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-#bdf-root .edit-quick-item small {
-  color: var(--muted);
-  font-size: 11px;
+#bdf-root .edit-quick-item:hover {
+  border-color: #93c5fd;
+}
+
+#bdf-root .edit-quick-item-label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-quick-item-value {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-quick-empty {
+  color: #64748b;
+  font-size: 13px;
+  padding: 6px 2px;
 }
 
 #bdf-root .edit-stage-layout {
@@ -2266,7 +2291,6 @@
     let editSelectedStage = "";
     let editProcessActiveStageKey = "";
     let editProcessShowAll = false;
-    let editQuickPinnedKeys = [];
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -5072,17 +5096,6 @@ function renderSubmitOutputs(payload) {
         if (!sourceByField[key]) sourceByField[key] = "human";
       });
       state.config = config;
-      editQuickPinnedKeys = [];
-      const pinCandidates = [
-        ...(config.fields || []).filter((field) => String(field?.editStageKey || "Ungrouped") === "Ungrouped"),
-        ...(config.fields || [])
-      ];
-      for (const field of pinCandidates) {
-        if (!field || !field.key) continue;
-        if (editQuickPinnedKeys.includes(field.key)) continue;
-        editQuickPinnedKeys.push(field.key);
-        if (editQuickPinnedKeys.length >= 5) break;
-      }
       columnJson = {
         columns: config.fields.map((field) => ({
           fieldName: field.fieldName || field.key,
@@ -5140,6 +5153,25 @@ function renderSubmitOutputs(payload) {
       const order = Number(meta?.order);
       if (Number.isFinite(order)) return `Stage ${order}`;
       return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function isQuickEntryEligible(field) {
+      const type = String(field?.type || field?.displayType || "").toLocaleLowerCase("tr-TR");
+      return !(
+        type.includes("file")
+        || type.includes("image")
+        || type.includes("multiline")
+        || type.includes("textarea")
+        || type.includes("text (long)")
+      );
+    }
+
+    function getQuickEntryDisplayValue(field) {
+      const value = getEffectiveValue(field.key);
+      if (isEmptyValue(value)) return "Boş";
+      if (Array.isArray(value)) return value.map((v) => (typeof v === "string" ? v : JSON.stringify(v))).join(", ");
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
     }
 
     function renderEditProgress(stageMeta) {
@@ -5239,8 +5271,10 @@ function renderSubmitOutputs(payload) {
         filteredCountByStage.set(stageKey, count);
       });
 
-      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
-        const firstMatched = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
+      const firstMatched = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
+      if (term) {
+        editSelectedStage = firstMatched || stageKeys[0] || "";
+      } else if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
         editSelectedStage = firstMatched || stageKeys[0] || "";
       }
       if (editStageLayout) {
@@ -5264,7 +5298,21 @@ function renderSubmitOutputs(payload) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
       }
 
-      const quickKeys = (editQuickPinnedKeys || []).slice(0, 5);
+      const unassignedFields = (stageMap.get("Ungrouped") || []).filter((field) => isQuickEntryEligible(field));
+      const quickCandidates = term
+        ? unassignedFields.filter((field) => {
+          const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
+          const header = String(field.label || "").toLocaleLowerCase("tr-TR");
+          return id.includes(term) || header.includes(term);
+        })
+        : unassignedFields;
+      const quickItems = [];
+      for (const field of quickCandidates) {
+        if (quickItems.some((x) => x.key === field.key)) continue;
+        quickItems.push(field);
+        if (quickItems.length >= 5) break;
+      }
+
       const hasSearch = Boolean(term);
       const hasAnyResult = filtered.length > 0;
       const showNoResult = hasSearch && !hasAnyResult;
@@ -5272,11 +5320,26 @@ function renderSubmitOutputs(payload) {
         editSearchEmpty.style.display = showNoResult ? "block" : "none";
         editSearchEmpty.textContent = showNoResult ? `"${editModeSearchTerm}" değeri ile sonuç bulunamadı.` : "";
       }
-      if (!showNoResult) {
-        quickKeys.forEach((key) => {
-          const wrapper = wrappersByKey.get(key);
-          if (wrapper && editQuickFields) editQuickFields.appendChild(wrapper);
-        });
+      if (editQuickFields) {
+        if (showNoResult) {
+          editQuickFields.innerHTML = "";
+        } else if (!quickItems.length) {
+          editQuickFields.innerHTML = '<div class="edit-quick-empty">Uygun alan bulunamadı</div>';
+        } else {
+          editQuickFields.innerHTML = "";
+          quickItems.forEach((field) => {
+            const row = document.createElement('div');
+            row.className = 'edit-quick-item';
+            const label = document.createElement('span');
+            label.className = 'edit-quick-item-label';
+            label.textContent = field.label || field.key;
+            const value = document.createElement('span');
+            value.className = 'edit-quick-item-value';
+            value.textContent = getQuickEntryDisplayValue(field);
+            row.append(label, value);
+            editQuickFields.appendChild(row);
+          });
+        }
       }
 
       const activeProcessIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
