@@ -4698,21 +4698,33 @@ function renderSubmitOutputs(payload) {
 
     function normalizeEditFieldItem(item, index, stageName = "") {
       const raw = item && typeof item === "object" ? item : { value: item };
-      const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.label || `field_${index + 1}`).trim();
-      const label = String(raw.label || raw.fieldName || raw.name || key).trim() || key;
-      const type = String(raw.type || "text").toLowerCase();
-      const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? "";
+      const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.header || raw.label || `field_${index + 1}`).trim();
+      const label = String(raw.header || raw.label || raw.fieldName || raw.name || key).trim() || key;
+      const normalized = normalizeColumnType(raw.type || "text", raw.multiple || raw.allowMultiple);
+      const type = String(normalized.type || raw.type || "text").toLowerCase();
+      const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? raw.default ?? "";
+      const sourceOptions = Array.isArray(raw.source) ? raw.source : [];
+      const options = Array.isArray(raw.options) ? raw.options : sourceOptions;
       return {
         key,
         fieldName: key,
         label,
         type,
-        required: false,
-        stageType: "optional",
+        displayType: normalized.displayType || raw.type || "text",
+        required: normalizeStageType(raw.stageType || "optional") === "mandatory" || Boolean(raw.required),
+        stageType: raw.stageType || "optional",
         allowMultiple: Boolean(raw.multiple || raw.allowMultiple),
         readOnly: Boolean(raw.readOnly),
-        options: Array.isArray(raw.options) ? raw.options : [],
-        default: "",
+        options: options.map((opt) => {
+          if (typeof opt === "object" && opt) {
+            const value = String(opt.value ?? opt.id ?? opt.label ?? "").trim();
+            const label = String(opt.label ?? opt.value ?? opt.id ?? "").trim();
+            return { value, label };
+          }
+          const text = String(opt ?? "").trim();
+          return { value: text, label: text };
+        }).filter((opt) => opt.value),
+        default: raw.default ?? "",
         ui: raw.ui || {},
         _stageName: stageName,
         _initialValue: value
@@ -4748,6 +4760,15 @@ function renderSubmitOutputs(payload) {
               existing._initialValue = normalized._initialValue;
             }
           }
+        });
+      }
+
+      if (!list.length) {
+        const fallbackColumns = Array.isArray((window.BUBBLE_INPUTS || {})?.COLUMN_JSON?.columns)
+          ? (window.BUBBLE_INPUTS || {}).COLUMN_JSON.columns
+          : [];
+        fallbackColumns.forEach((column, index) => {
+          list.push(normalizeEditFieldItem(column, index, "column"));
         });
       }
 
@@ -4911,6 +4932,11 @@ function renderSubmitOutputs(payload) {
       editModeVisibleFields = fields;
       const token = ++editModeRenderToken;
       editModeList.innerHTML = "";
+      if (!fields.length) {
+        editModeList.innerHTML = '<div class="helper-text" style="padding:12px;">Gösterilecek alan bulunamadı.</div>';
+        return;
+      }
+
       const viewport = document.createElement("div");
       viewport.style.position = "relative";
       viewport.style.height = `${Math.max(1, fields.length * EDIT_ROW_HEIGHT)}px`;
