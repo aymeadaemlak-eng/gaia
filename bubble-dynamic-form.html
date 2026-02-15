@@ -2352,6 +2352,10 @@
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
+    let editModeSlowPollTimer = null;
+    let editModeStablePollCount = 0;
+    let editCachedPayloadRawSignature = "";
+    let editCachedPayloadParsed = { stageGroups: null, allFields: null };
     let editStageRenderSeq = 0;
 
     const defaultSchema = {
@@ -4961,10 +4965,17 @@ function renderSubmitOutputs(payload) {
       const source = window.BUBBLE_INPUTS || {};
       const stageRaw = source.editSchemaJson ?? source.editUiSchema ?? source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
       const allRaw = source.EDITING_ALL_FIELDS_JSON ?? source.editingAllFields ?? source.editing_all_fields ?? null;
-      return {
+      const rawSignature = `${typeof stageRaw}:${String(stageRaw ?? "").slice(0, 50000)}||${typeof allRaw}:${String(allRaw ?? "").slice(0, 50000)}`;
+      if (rawSignature === editCachedPayloadRawSignature) {
+        return editCachedPayloadParsed;
+      }
+      const parsed = {
         stageGroups: parseIncomingJson(stageRaw),
         allFields: parseIncomingJson(allRaw)
       };
+      editCachedPayloadRawSignature = rawSignature;
+      editCachedPayloadParsed = parsed;
+      return parsed;
     }
 
     function buildEditPayloadSignature(payload) {
@@ -5133,18 +5144,21 @@ function renderSubmitOutputs(payload) {
       const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
       const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
       if (!hasStage && !hasAll) {
+        editModeStablePollCount = 0;
         setEditModeLoading(true, "Edit verileri bekleniyor…");
         return false;
       }
 
       const signature = buildEditPayloadSignature(payload);
       if (editModePayloadLoaded && signature === lastEditModePayloadSignature) {
+        editModeStablePollCount += 1;
         setEditModeLoading(false);
         return true;
       }
 
       const config = buildConfigFromEditPayload(payload);
       if (!config) {
+        editModeStablePollCount = 0;
         setEditModeLoading(true, "Edit verisi çözümlenemedi…");
         return false;
       }
@@ -5172,6 +5186,7 @@ function renderSubmitOutputs(payload) {
       };
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
+      editModeStablePollCount = 0;
       editProcessShowAll = false;
       setEditModeLoading(false);
       renderForm(config);
@@ -5181,10 +5196,34 @@ function renderSubmitOutputs(payload) {
 
     function ensureEditModePayloadPolling() {
       if (!IS_EDITING_MODE) return;
-      if (editModePayloadPollTimer) return;
-      editModePayloadPollTimer = setInterval(() => {
-        applyEditModePayloadIfReady();
-      }, 300);
+      const startFastPolling = () => {
+        if (editModeSlowPollTimer) {
+          clearInterval(editModeSlowPollTimer);
+          editModeSlowPollTimer = null;
+        }
+        if (editModePayloadPollTimer) return;
+        editModePayloadPollTimer = setInterval(() => {
+          applyEditModePayloadIfReady();
+          if (editModeStablePollCount >= 8) {
+            clearInterval(editModePayloadPollTimer);
+            editModePayloadPollTimer = null;
+            editModeSlowPollTimer = setInterval(() => {
+              const before = lastEditModePayloadSignature;
+              const applied = applyEditModePayloadIfReady();
+              const changed = before !== lastEditModePayloadSignature;
+              if (!applied || changed) {
+                if (editModeSlowPollTimer) {
+                  clearInterval(editModeSlowPollTimer);
+                  editModeSlowPollTimer = null;
+                }
+                startFastPolling();
+              }
+            }, 2500);
+          }
+        }, 300);
+      };
+      if (editModePayloadPollTimer || editModeSlowPollTimer) return;
+      startFastPolling();
     }
 
     function resolveActiveProcessStageKey(stageMeta) {
