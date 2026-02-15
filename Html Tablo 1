@@ -9,12 +9,12 @@
 #dynamic-table-wrapper {
   --dt-bg: #ffffff;
   --dt-surface: #f8fbff;
-  --dt-border: #dbe3f1;
-  --dt-border-strong: #bcc7de;
-  --dt-primary: #0a63ff;
-  --dt-text: #1e293b;
-  --dt-muted: #75869e;
-  --dt-highlight: #e5efff;
+  --dt-border: #e8ebf2;
+  --dt-border-strong: #d7deea;
+  --dt-primary: #2383e2;
+  --dt-text: #1f2328;
+  --dt-muted: #70757f;
+  --dt-highlight: #ecf3ff;
 }
 
 #dynamic-table-wrapper,
@@ -38,58 +38,204 @@
   display: flex;
   flex-direction: column;
   background: var(--dt-bg);
-  border: 0px solid var(--dt-border);
-  border-radius: 0px;
-  padding: 0px;
-  gap: 14px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
 }
 
-#dynamic-table-wrapper .dt-top {
+#dynamic-table-wrapper .dt-header {
+  padding: 1px 0 0;
+}
+
+#dynamic-table-wrapper .dt-title-row {
   display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 1px 0 4px;
+}
+
+#dynamic-table-wrapper .dt-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--dt-text);
+}
+
+#dynamic-table-wrapper .dt-title-context {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dt-muted);
+  opacity: 0.65;
+}
+
+#dynamic-table-wrapper .dt-toolbar {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding: 5px 4px;
+  border-top: 1px solid rgba(15, 23, 42, 0.04);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
 }
 
-#dynamic-table-wrapper .dt-top-controls {
+#dynamic-table-wrapper .dt-toolbar-left,
+#dynamic-table-wrapper .dt-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
-  width: 100%;
+  gap: 6px;
+}
+
+#dynamic-table-wrapper .dt-icon-btn,
+#dynamic-table-wrapper .dt-action-btn {
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dt-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+#dynamic-table-wrapper .dt-icon-btn {
+  width: 40px;
+  padding: 0;
+  font-size: 18px;
+}
+
+#dynamic-table-wrapper #dt-btn-search {
+  font-size: 21px;
+}
+
+#dynamic-table-wrapper .dt-svg-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#dynamic-table-wrapper .dt-icon-btn:hover,
+#dynamic-table-wrapper .dt-action-btn:hover,
+#dynamic-table-wrapper .dt-action-btn[aria-expanded='true'] {
+  background: #f4f5f7;
+  border-color: #eceff5;
+  color: var(--dt-text);
+}
+
+#dynamic-table-wrapper .dt-action-btn-primary {
+  background: var(--dt-primary);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+  min-width: 78px;
+}
+
+#dynamic-table-wrapper .dt-action-btn-primary:hover {
+  background: #1f75cc;
+  color: #fff;
+}
+
+#dynamic-table-wrapper .dt-search-wrap {
+  display: flex;
+  align-items: center;
+  width: 0;
+  max-width: 360px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 180ms ease, opacity 180ms ease;
+}
+
+#dynamic-table-wrapper .dt-search-wrap.is-open {
+  width: min(52vw, 340px);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #dynamic-table-wrapper .dt-search {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--dt-border);
-  font-size: 14px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dt-border-strong);
+  font-size: 13px;
   background: #fff;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-#dynamic-table-wrapper .dt-search:focus {
+#dynamic-table-wrapper .dt-search:focus,
+#dynamic-table-wrapper .dt-action-btn:focus-visible,
+#dynamic-table-wrapper .dt-icon-btn:focus-visible {
   outline: none;
   border-color: var(--dt-primary);
-  box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
+  box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.14);
 }
 
-
-#dynamic-table-wrapper .dt-selection-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+#dynamic-table-wrapper .dt-field-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
   min-width: 170px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--dt-border);
+  border-radius: 10px;
+  border: 1px solid var(--dt-border-strong);
   background: #fff;
-  color: var(--dt-muted);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  display: none;
+  z-index: 120;
+}
+
+#dynamic-table-wrapper .dt-field-menu.is-open {
+  display: block;
+}
+
+#dynamic-table-wrapper .dt-field-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  padding: 7px 8px;
   font-size: 13px;
-  line-height: 1.2;
-  white-space: nowrap;
+  color: var(--dt-text);
+  cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-field-item:hover {
+  background: #f6f8fb;
+}
+
+#dynamic-table-wrapper .dt-action-group {
+  position: relative;
+}
+
+#dynamic-table-wrapper .dt-settings-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 170px;
+  border-radius: 10px;
+  border: 1px solid var(--dt-border-strong);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  display: none;
+  z-index: 130;
+}
+
+#dynamic-table-wrapper .dt-settings-menu.is-open {
+  display: block;
 }
 
 #dynamic-table-wrapper #hot-container {
@@ -97,7 +243,8 @@
   min-height: 0;
   height: 100%;
   border: 1px solid var(--dt-border);
-  border-radius: 12px;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
   overflow: hidden;
   background: var(--dt-surface);
 }
@@ -125,9 +272,7 @@
   background: #fbfdff !important;
 }
 
-#dynamic-table-wrapper .dt-img-thumb {
-  display: none;
-}
+#dynamic-table-wrapper .dt-img-thumb { display: none; }
 
 #dynamic-table-wrapper .dt-check {
   display: inline-flex;
@@ -196,18 +341,41 @@
   color: inherit;
 }
 
-
-#dynamic-table-wrapper .dt-footer {
-  display: none;
-}
+#dynamic-table-wrapper .dt-footer { display: none; }
 </style>
 
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
-    <div class="dt-top">
-      <div class="dt-top-controls">
-        <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
-        <span id="selection-count" class="dt-selection-chip">Öğe seçilmedi</span>
+    <div class="dt-header">
+      <div class="dt-title-row">
+        <h1 class="dt-title">Dosyalar</h1>
+        <span class="dt-title-context">/ Süreç</span>
+      </div>
+      <div class="dt-toolbar">
+        <div class="dt-toolbar-left">
+          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala">⇅</button>
+          <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama">⌕</button>
+          <div id="dt-search-wrap" class="dt-search-wrap">
+            <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+          </div>
+        </div>
+        <div class="dt-toolbar-right">
+          <div class="dt-action-group">
+            <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2"></circle></svg></button>
+            <div id="dt-settings-menu" class="dt-settings-menu" role="menu" aria-hidden="true">
+              <button id="dt-settings-import" class="dt-field-item" type="button">Import</button>
+              <button id="dt-settings-export" class="dt-field-item" type="button">Export</button>
+            </div>
+          </div>
+          <div class="dt-action-group">
+            <button id="dt-btn-field" class="dt-action-btn" type="button" aria-expanded="false">Field ▾</button>
+            <div id="dt-field-menu" class="dt-field-menu" role="menu" aria-hidden="true">
+              <button class="dt-field-item" type="button">Add field</button>
+              <button class="dt-field-item" type="button">Manage fields</button>
+            </div>
+          </div>
+          <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button">+ New</button>
+        </div>
       </div>
     </div>
     <div id="hot-container"></div>
@@ -229,14 +397,24 @@
     columns: [],
     displayRows: [],
     selection: new Set(),
-    selectionOrder: []
+    selectionOrder: [],
+    isSearchOpen: false
   };
 
   const els = {
     wrapper: document.getElementById('dynamic-table-wrapper'),
     container: document.getElementById('hot-container'),
     search: document.getElementById('dt-search'),
-    selectionText: document.getElementById('selection-count'),
+    searchWrap: document.getElementById('dt-search-wrap'),
+    searchToggleButton: document.getElementById('dt-btn-search'),
+    sortButton: document.getElementById('dt-btn-sort'),
+    settingsButton: document.getElementById('dt-btn-settings'),
+    settingsMenu: document.getElementById('dt-settings-menu'),
+    settingsImportButton: document.getElementById('dt-settings-import'),
+    settingsExportButton: document.getElementById('dt-settings-export'),
+    newButton: document.getElementById('dt-btn-new'),
+    fieldButton: document.getElementById('dt-btn-field'),
+    fieldMenu: document.getElementById('dt-field-menu'),
     totals: document.getElementById('footer-totals')
   };
 
@@ -595,7 +773,7 @@
     }
 
     const wrapperHeight = Math.floor(els.wrapper?.clientHeight || 0);
-    const topHeight = Math.floor(els.search?.closest('.dt-top')?.offsetHeight || 0);
+    const topHeight = Math.floor(els.wrapper?.querySelector('.dt-header')?.offsetHeight || 0);
     const fallbackHeight = wrapperHeight - topHeight - 14;
 
     return Math.max(260, fallbackHeight || 320);
@@ -686,11 +864,56 @@
     loadDisplayRows(buildDisplayRows(filtered));
   }
 
+  function openSearch() {
+    if (!els.searchWrap) return;
+    els.searchWrap.classList.add('is-open');
+    state.isSearchOpen = true;
+    if (els.searchToggleButton) {
+      els.searchToggleButton.setAttribute('aria-expanded', 'true');
+    }
+    if (els.search) {
+      setTimeout(() => {
+        try { els.search.focus(); } catch (err) {}
+      }, 30);
+    }
+  }
+
+  function closeSearch(clearValue) {
+    if (!els.searchWrap) return;
+    els.searchWrap.classList.remove('is-open');
+    state.isSearchOpen = false;
+    if (els.searchToggleButton) {
+      els.searchToggleButton.setAttribute('aria-expanded', 'false');
+    }
+    if (clearValue && els.search && els.search.value) {
+      els.search.value = '';
+      applySearch('');
+    }
+  }
+
   function attachSearchListener() {
     if (!els.search || els.search.dataset.listenerAttached) return;
     els.search.addEventListener('input', event => {
       applySearch(event.target.value.trim());
     });
+
+    els.search.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSearch(true);
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (!state.isSearchOpen) return;
+      const target = event.target;
+      const insideWrap = !!target.closest('#dt-search-wrap');
+      const searchToggleClicked = !!target.closest('#dt-btn-search');
+      if (!insideWrap && !searchToggleClicked && !(els.search && els.search.value)) {
+        closeSearch(false);
+      }
+    });
+
     els.search.dataset.listenerAttached = 'true';
   }
 
@@ -810,6 +1033,103 @@
     return ids;
   }
 
+  function create() {
+    if (typeof window.bubble_fn_create === 'function') {
+      window.bubble_fn_create();
+    }
+  }
+
+  function importData() {
+    if (typeof window.bubble_fn_import === 'function') {
+      window.bubble_fn_import();
+    }
+  }
+
+  function exportData() {
+    if (typeof window.bubble_fn_export === 'function') {
+      window.bubble_fn_export();
+    }
+  }
+
+  function attachActionButtons() {
+    if (els.newButton) {
+      els.newButton.addEventListener('click', create);
+    }
+
+    if (els.searchToggleButton) {
+      els.searchToggleButton.addEventListener('click', () => {
+        if (state.isSearchOpen) {
+          closeSearch(!els.search?.value);
+        } else {
+          openSearch();
+        }
+      });
+    }
+
+    if (els.sortButton) {
+      els.sortButton.addEventListener('click', () => {
+        if (typeof state.hot?.getPlugin === 'function') {
+          const plugin = state.hot.getPlugin('columnSorting');
+          if (plugin && typeof plugin.clearSort === 'function') {
+            plugin.clearSort();
+          }
+        }
+      });
+    }
+
+    if (els.settingsButton && els.settingsMenu) {
+      els.settingsButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = els.settingsMenu.classList.toggle('is-open');
+        els.settingsButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        els.settingsMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      });
+
+      if (els.settingsImportButton) {
+        els.settingsImportButton.addEventListener('click', () => {
+          importData();
+          els.settingsMenu.classList.remove('is-open');
+          els.settingsButton.setAttribute('aria-expanded', 'false');
+          els.settingsMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
+      if (els.settingsExportButton) {
+        els.settingsExportButton.addEventListener('click', () => {
+          exportData();
+          els.settingsMenu.classList.remove('is-open');
+          els.settingsButton.setAttribute('aria-expanded', 'false');
+          els.settingsMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
+      document.addEventListener('click', event => {
+        if (!els.settingsMenu.classList.contains('is-open')) return;
+        if (event.target.closest('#dt-settings-menu') || event.target.closest('#dt-btn-settings')) return;
+        els.settingsMenu.classList.remove('is-open');
+        els.settingsButton.setAttribute('aria-expanded', 'false');
+        els.settingsMenu.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    if (els.fieldButton && els.fieldMenu) {
+      els.fieldButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = els.fieldMenu.classList.toggle('is-open');
+        els.fieldButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        els.fieldMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      });
+
+      document.addEventListener('click', event => {
+        if (!els.fieldMenu.classList.contains('is-open')) return;
+        if (event.target.closest('#dt-field-menu') || event.target.closest('#dt-btn-field')) return;
+        els.fieldMenu.classList.remove('is-open');
+        els.fieldButton.setAttribute('aria-expanded', 'false');
+        els.fieldMenu.setAttribute('aria-hidden', 'true');
+      });
+    }
+  }
+
   window.dynamicTable = {
     setTableData,
     refreshTable,
@@ -818,6 +1138,9 @@
     start,
     edit,
     save,
+    create,
+    import: importData,
+    export: exportData,
     delete: deleteSelected
   };
 
@@ -828,8 +1151,12 @@
   window.start = start;
   window.edit = edit;
   window.save = save;
+  window.create = create;
+  window.importData = importData;
+  window.exportData = exportData;
   window.deleteSelected = deleteSelected;
 
+  attachActionButtons();
   autoInitialize();
 })();
 </script>
