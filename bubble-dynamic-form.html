@@ -1799,7 +1799,7 @@
       BDF.DEBUG_MODE = IS_DEBUG_MODE && !IS_VERSION_MODE;
 
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
-      const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true;
+      const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true || INITIAL_INPUTS?.editing === 1 || String(INITIAL_INPUTS?.editing || "").trim().toLowerCase() === "true";
 
     let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
     let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
@@ -3864,9 +3864,16 @@ function renderSubmitOutputs(payload) {
       };
     }
 
+    function getEditModeBaselinePayload() {
+      const bubbleData = readCurrentBubbleDataObject() || {};
+      const configInitial = state.config?.initialValues || {};
+      return { ...configInitial, ...bubbleData };
+    }
+
     function captureInitialSnapshot() {
       if (initialSnapshot || !state.config) return;
-      initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
+      const baselinePayload = IS_EDITING_MODE ? getEditModeBaselinePayload() : MANUAL_DATA_JSON;
+      initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
     function applyColumnJson(columnData) {
@@ -4278,7 +4285,7 @@ function renderSubmitOutputs(payload) {
         loadJsonSafeToForm("human", incomingBubbleData);
         initializeSourceByFieldFromAi();
         refreshAllFields();
-        initialSnapshot = buildBaselineSnapshot(incomingBubbleData);
+        initialSnapshot = buildBaselineSnapshot(IS_EDITING_MODE ? getEditModeBaselinePayload() : incomingBubbleData);
       }
       clearChangedTracking();
       isFormDirty = false;
