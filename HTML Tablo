@@ -6,15 +6,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css" />
 
 <style>
+
 :root {
-  --dt-bg: #ffffff;
-  --dt-surface: #f8fbff;
-  --dt-border: #dbe3f1;
-  --dt-border-strong: #bcc7de;
-  --dt-primary: #0a63ff;
-  --dt-text: #1e293b;
-  --dt-muted: #75869e;
-  --dt-highlight: #e5efff;
+  --dt-bg: #f7f7f5;
+  --dt-surface: #ffffff;
+  --dt-border: #ececec;
+  --dt-border-strong: #dbdbd8;
+  --dt-primary: #2383e2;
+  --dt-text: #37352f;
+  --dt-muted: #787774;
+  --dt-highlight: #f1f8ff;
 }
 
 * {
@@ -23,11 +24,12 @@
 
 #dynamic-table-wrapper {
   width: 100%;
-  min-height: 900px;
+  min-height: 860px;
   display: flex;
   flex-direction: column;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--dt-text);
+  background: transparent;
 }
 
 .dt-inner {
@@ -35,33 +37,39 @@
   display: flex;
   flex-direction: column;
   background: var(--dt-bg);
-  border: 1px solid var(--dt-border);
-  border-radius: 16px;
-  padding: 18px;
-  gap: 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px 10px 0;
+  gap: 10px;
 }
 
 .dt-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .dt-search {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: 12px;
+  height: 38px;
+  padding: 8px 14px;
+  border-radius: 10px;
   border: 1px solid var(--dt-border);
   font-size: 14px;
+  color: var(--dt-text);
   background: #fff;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.dt-search::placeholder {
+  color: #9b9a97;
 }
 
 .dt-search:focus {
   outline: none;
-  border-color: var(--dt-primary);
-  box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
+  border-color: rgba(35, 131, 226, 0.5);
+  box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.14);
 }
 
 #hot-container {
@@ -73,22 +81,30 @@
   background: var(--dt-surface);
 }
 
-.handsontable th {
-  background: var(--dt-surface) !important;
-  color: var(--dt-muted) !important;
-  font-weight: 600 !important;
-  border-right: 1px solid var(--dt-border) !important;
-}
-
+.handsontable th,
 .handsontable td {
   border-right: 1px solid var(--dt-border) !important;
   border-bottom: 1px solid var(--dt-border) !important;
+}
+
+.handsontable th {
+  background: #fff !important;
+  color: var(--dt-muted) !important;
+  font-weight: 500 !important;
+}
+
+.handsontable td {
   color: var(--dt-text) !important;
   font-size: 13px;
+  background: #fff !important;
 }
 
 .handsontable tr:nth-child(even) td {
-  background: #fbfdff !important;
+  background: #fff !important;
+}
+
+.handsontable tbody tr:hover td {
+  background: #f7f7f6 !important;
 }
 
 .dt-img-thumb {
@@ -102,7 +118,7 @@
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  background: #f1f5f9;
+  background: #eef6ff;
   color: var(--dt-primary);
   font-weight: 700;
   font-size: 14px;
@@ -110,19 +126,21 @@
 }
 
 .handsontable .currentRow td,
-.handsontable td.area {
+.handsontable td.area,
+.handsontable td.current {
   background: var(--dt-highlight) !important;
 }
 
 .handsontable thead th {
   position: relative;
   overflow: visible !important;
-  padding: 4px 8px !important;
+  padding: 5px 8px !important;
   background: #fff !important;
   z-index: 30 !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  color: var(--dt-text) !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  color: var(--dt-muted) !important;
+  text-transform: none;
 }
 
 .handsontable thead th .relative {
@@ -135,7 +153,7 @@
 .handsontable thead th .htDropdownMenuButton {
   position: absolute;
   top: 50%;
-  right: 1px;
+  right: 2px;
   width: 16px;
   height: 16px;
   margin: 0;
@@ -145,8 +163,14 @@
   transform: translateY(-50%);
   z-index: 40;
   pointer-events: auto;
-  opacity: 1;
+  opacity: .7;
   background: #fff;
+  border-radius: 4px;
+}
+
+.handsontable thead th:hover .htDropdownMenuButton {
+  opacity: 1;
+  background: #f5f5f4;
 }
 
 .handsontable thead th .colHeader {
@@ -158,19 +182,31 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px;
+  padding-right: 14px;
   color: inherit;
 }
 
+.handsontable .ht_master .wtHolder::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.handsontable .ht_master .wtHolder::-webkit-scrollbar-thumb {
+  background: #d9d9d6;
+  border-radius: 999px;
+}
 
 .dt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 10px;
-  border-top: 1px solid var(--dt-border);
-  font-size: 13px;
+  min-height: 36px;
+  padding: 0 2px;
+  border-top: 1px solid transparent;
+  font-size: 12px;
+  color: #9b9a97;
 }
+
 </style>
 
 <div id="dynamic-table-wrapper">
