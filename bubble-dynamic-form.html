@@ -1983,6 +1983,7 @@
     let isEditPanelOpen = false;
     let hasEnteredInlineEditPanel = false;
     let hadInlineEditDirtyChange = false;
+    let isInlineEditingLatched = false;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2677,11 +2678,13 @@
       const desired = Boolean(nextOpen);
       if (desired && !canOpenInlineEditPanel()) {
         isEditPanelOpen = false;
+        isInlineEditingLatched = false;
         updateInlineEditToggleUi();
         applyVersionVisibility();
         return;
       }
       isEditPanelOpen = desired;
+      isInlineEditingLatched = desired;
       if (isEditPanelOpen) {
         hasEnteredInlineEditPanel = true;
         hasEnteredEditSession = true;
@@ -4642,6 +4645,14 @@ function renderSubmitOutputs(payload) {
     }
 
     function readEditingSignalValue() {
+      if (isInlineEditingLatched) {
+        const startSignal = readStartSignalValue();
+        if (startSignal === false) {
+          isInlineEditingLatched = false;
+          return false;
+        }
+        return true;
+      }
       const editingValue = window.BUBBLE_INPUTS?.editing;
       if (editingValue === true || editingValue === 1) return true;
       if (editingValue === false || editingValue === 0) return false;
@@ -5153,6 +5164,11 @@ function renderSubmitOutputs(payload) {
       }
 
       if (lastStartParamWasTrue && !startSignal) {
+        isInlineEditingLatched = false;
+        if (isEditPanelOpen) {
+          isEditPanelOpen = false;
+          applyVersionVisibility();
+        }
         const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
         logStartState("close", {
