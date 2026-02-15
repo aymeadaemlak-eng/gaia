@@ -1737,6 +1737,7 @@
           </div>
           <div class="edit-mode-toolbar">
             <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+            <button id="inlineEditCollapseBtn" type="button" class="ghost" style="display:none;">Show less</button>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editModeLoading" class="edit-mode-loading">
@@ -2257,6 +2258,7 @@
     const formEl = byId("dynamicForm");
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
+    const inlineEditCollapseBtn = byId("inlineEditCollapseBtn");
     const editSearchEmpty = byId("editSearchEmpty");
     const editProgressWrap = byId("editProgressWrap");
     const editProgressTrack = byId("editProgressTrack");
@@ -2578,22 +2580,26 @@
       if (formActions) {
         formActions.style.display = "none";
       }
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
       if (rootElement) {
-        rootElement.classList.toggle("editing-mode", IS_EDITING_MODE || isEditPanelOpen);
+        rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
       if (editModeRoot) {
-        editModeRoot.style.display = (IS_EDITING_MODE || isEditPanelOpen) ? "grid" : "none";
+        editModeRoot.style.display = isEditUiActive ? "grid" : "none";
       }
-      if ((IS_EDITING_MODE || isEditPanelOpen) && !editModePayloadLoaded) {
+      if (isEditUiActive && !editModePayloadLoaded) {
         setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
       if (actionBar) {
-        actionBar.style.display = "";
+        actionBar.style.display = isEditUiActive ? "none" : "";
       }
       if (formEl) {
-        formEl.style.display = "grid";
+        formEl.style.display = isEditUiActive ? "none" : "grid";
       }
-      if (!IS_EDITING_MODE && !isEditPanelOpen) {
+      if (inlineEditCollapseBtn) {
+        inlineEditCollapseBtn.style.display = isEditPanelOpen && !IS_EDITING_MODE ? "inline-flex" : "none";
+      }
+      if (!isEditUiActive) {
         if (editQuickSection) editQuickSection.style.display = "none";
         if (editStageLayout) editStageLayout.style.display = "none";
       }
@@ -5971,8 +5977,9 @@ function renderSubmitOutputs(payload) {
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
-      if (actionBar) actionBar.style.display = "";
-      if (formEl) formEl.style.display = "grid";
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
+      if (actionBar) actionBar.style.display = isEditUiActive ? "none" : "";
+      if (formEl) formEl.style.display = isEditUiActive ? "none" : "grid";
 
       let previousGroup = null;
       config.fields.forEach((field, index) => {
@@ -7349,6 +7356,13 @@ function renderSubmitOutputs(payload) {
         toggleInlineEditBtn.addEventListener("click", (event) => {
           event.preventDefault();
           setInlineEditPanelOpen(!isEditPanelOpen);
+        });
+      }
+
+      if (inlineEditCollapseBtn) {
+        inlineEditCollapseBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          setInlineEditPanelOpen(false);
         });
       }
 
