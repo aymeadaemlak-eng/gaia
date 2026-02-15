@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css" />
 
 <style>
-:root {
+#dynamic-table-wrapper {
   --dt-bg: #ffffff;
   --dt-surface: #f8fbff;
   --dt-border: #dbe3f1;
@@ -17,7 +17,8 @@
   --dt-highlight: #e5efff;
 }
 
-* {
+#dynamic-table-wrapper,
+#dynamic-table-wrapper * {
   box-sizing: border-box;
 }
 
@@ -30,7 +31,7 @@
   color: var(--dt-text);
 }
 
-.dt-inner {
+#dynamic-table-wrapper .dt-inner {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -41,14 +42,14 @@
   gap: 14px;
 }
 
-.dt-top {
+#dynamic-table-wrapper .dt-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
-.dt-top-controls {
+#dynamic-table-wrapper .dt-top-controls {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -56,7 +57,7 @@
   width: 100%;
 }
 
-.dt-search {
+#dynamic-table-wrapper .dt-search {
   flex: 1;
   min-width: 0;
   padding: 10px 14px;
@@ -67,14 +68,14 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.dt-search:focus {
+#dynamic-table-wrapper .dt-search:focus {
   outline: none;
   border-color: var(--dt-primary);
   box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
 }
 
 
-.dt-selection-chip {
+#dynamic-table-wrapper .dt-selection-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +90,7 @@
   white-space: nowrap;
 }
 
-#hot-container {
+#dynamic-table-wrapper #hot-container {
   flex: 1;
   min-height: 360px;
   border: 1px solid var(--dt-border);
@@ -98,29 +99,29 @@
   background: var(--dt-surface);
 }
 
-.handsontable th {
+#dynamic-table-wrapper .handsontable th {
   background: var(--dt-surface) !important;
   color: var(--dt-muted) !important;
   font-weight: 600 !important;
   border-right: 1px solid var(--dt-border) !important;
 }
 
-.handsontable td {
+#dynamic-table-wrapper .handsontable td {
   border-right: 1px solid var(--dt-border) !important;
   border-bottom: 1px solid var(--dt-border) !important;
   color: var(--dt-text) !important;
   font-size: 13px;
 }
 
-.handsontable tr:nth-child(even) td {
+#dynamic-table-wrapper .handsontable tr:nth-child(even) td {
   background: #fbfdff !important;
 }
 
-.dt-img-thumb {
+#dynamic-table-wrapper .dt-img-thumb {
   display: none;
 }
 
-.dt-check {
+#dynamic-table-wrapper .dt-check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -134,12 +135,12 @@
   line-height: 1;
 }
 
-.handsontable .currentRow td,
-.handsontable td.area {
+#dynamic-table-wrapper .handsontable .currentRow td,
+#dynamic-table-wrapper .handsontable td.area {
   background: var(--dt-highlight) !important;
 }
 
-.handsontable thead th {
+#dynamic-table-wrapper .handsontable thead th {
   position: relative;
   overflow: visible !important;
   padding: 4px 8px !important;
@@ -150,14 +151,14 @@
   color: var(--dt-text) !important;
 }
 
-.handsontable thead th .relative {
+#dynamic-table-wrapper .handsontable thead th .relative {
   position: relative;
   overflow: visible;
   display: block;
   padding: 0;
 }
 
-.handsontable thead th .htDropdownMenuButton {
+#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton {
   position: absolute;
   top: 50%;
   right: 1px;
@@ -174,7 +175,7 @@
   background: #fff;
 }
 
-.handsontable thead th .colHeader {
+#dynamic-table-wrapper .handsontable thead th .colHeader {
   display: block;
   line-height: 18px;
   position: relative;
@@ -188,7 +189,7 @@
 }
 
 
-.dt-footer {
+#dynamic-table-wrapper .dt-footer {
   display: none;
 }
 </style>
@@ -579,6 +580,11 @@
 
   function calculateHeight() {
     const viewport = window.innerHeight || 800;
+    const containerHeight = els.container ? els.container.clientHeight : 0;
+    if (containerHeight > 0) {
+      return Math.max(420, containerHeight);
+    }
+
     const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
     const reservedSpace = 84;
     return Math.max(420, Math.min(wrapperHeight - reservedSpace, viewport - 150));
@@ -677,6 +683,15 @@
     els.search.dataset.listenerAttached = 'true';
   }
 
+  function attachResizeListener() {
+    if (!els.wrapper || els.wrapper.dataset.resizeAttached === 'true') return;
+    window.addEventListener('resize', () => {
+      if (!state.hot) return;
+      state.hot.updateSettings({ height: calculateHeight() });
+    });
+    els.wrapper.dataset.resizeAttached = 'true';
+  }
+
   function setTableData(data, columns) {
     log('setTableData', { rows: Array.isArray(data) ? data.length : 0, columns: Array.isArray(columns) ? columns.length : 0 });
     if (!Array.isArray(data) || !Array.isArray(columns) || columns.length === 0) {
@@ -688,6 +703,7 @@
     state.columns = sanitizeColumns(columns);
     loadDisplayRows(buildDisplayRows(state.rawRows));
     attachSearchListener();
+    attachResizeListener();
   }
 
   function refreshTable(data) {
