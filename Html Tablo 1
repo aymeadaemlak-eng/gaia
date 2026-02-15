@@ -45,11 +45,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.dt-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
 }
 
 .dt-search {
   flex: 1;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--dt-border);
@@ -62,6 +71,22 @@
   outline: none;
   border-color: var(--dt-primary);
   box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
+}
+
+
+.dt-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 170px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border);
+  background: #fff;
+  color: var(--dt-muted);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 #hot-container {
@@ -164,24 +189,20 @@
 
 
 .dt-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 10px;
-  border-top: 1px solid var(--dt-border);
-  font-size: 13px;
+  display: none;
 }
 </style>
 
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
     <div class="dt-top">
-      <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+      <div class="dt-top-controls">
+        <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+        <span id="selection-count" class="dt-selection-chip">Öğe seçilmedi</span>
+      </div>
     </div>
     <div id="hot-container"></div>
-    <div class="dt-footer">
-      <span id="selection-count">Öğe seçilmedi</span>
-    </div>
+    <div class="dt-footer"></div>
   </div>
 </div>
 
