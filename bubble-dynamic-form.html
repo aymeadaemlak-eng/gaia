@@ -5242,8 +5242,8 @@ function renderSubmitOutputs(payload) {
       });
     }
 
-    function applyEditModePayloadIfReady() {
-      if (!IS_EDITING_MODE) return false;
+    function applyEditModePayloadIfReady(forceEditMode = false) {
+      if (!IS_EDITING_MODE && !forceEditMode) return false;
       const payload = readEditModePayloadSources();
       const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
       const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
@@ -5303,8 +5303,8 @@ function renderSubmitOutputs(payload) {
       return true;
     }
 
-    function ensureEditModePayloadPolling() {
-      if (!IS_EDITING_MODE) return;
+    function ensureEditModePayloadPolling(forceEditMode = false) {
+      if (!IS_EDITING_MODE && !forceEditMode) return;
       const startFastPolling = () => {
         if (editModeSlowPollTimer) {
           clearInterval(editModeSlowPollTimer);
@@ -5312,13 +5312,13 @@ function renderSubmitOutputs(payload) {
         }
         if (editModePayloadPollTimer) return;
         editModePayloadPollTimer = setInterval(() => {
-          applyEditModePayloadIfReady();
+          applyEditModePayloadIfReady(forceEditMode);
           if (editModeStablePollCount >= 8) {
             clearInterval(editModePayloadPollTimer);
             editModePayloadPollTimer = null;
             editModeSlowPollTimer = setInterval(() => {
               const before = lastEditModePayloadSignature;
-              const applied = applyEditModePayloadIfReady();
+              const applied = applyEditModePayloadIfReady(forceEditMode);
               const changed = before !== lastEditModePayloadSignature;
               if (!applied || changed) {
                 if (editModeSlowPollTimer) {
@@ -7246,21 +7246,26 @@ function renderSubmitOutputs(payload) {
     applyVersionVisibility();
     syncActionOptions();
     initLateIncomingDataSync();
+    const hasStagePayloadInput = Boolean(INITIAL_INPUTS?.editSchemaJson || INITIAL_INPUTS?.editUiSchema || INITIAL_INPUTS?.EDITING_STAGE_GROUPS_JSON || INITIAL_INPUTS?.editingStageGroups || INITIAL_INPUTS?.editing_stage_groups);
+    const hasAllFieldsPayloadInput = Boolean(INITIAL_INPUTS?.EDITING_ALL_FIELDS_JSON || INITIAL_INPUTS?.editingAllFields || INITIAL_INPUTS?.editing_all_fields);
+    const hasEditPayloadInput = hasStagePayloadInput || hasAllFieldsPayloadInput;
+    const shouldUseEditPayloadBootstrap = IS_EDITING_MODE || (hasEnteredEditSession && hasEditPayloadInput);
     traceAutosave("edit-session-bootstrap", {
       initialEditingMode: IS_EDITING_MODE,
       initialEditingInput: INITIAL_INPUTS?.editing,
-      hasStagePayloadInput: Boolean(INITIAL_INPUTS?.editSchemaJson || INITIAL_INPUTS?.editUiSchema || INITIAL_INPUTS?.EDITING_STAGE_GROUPS_JSON || INITIAL_INPUTS?.editingStageGroups || INITIAL_INPUTS?.editing_stage_groups),
-      hasAllFieldsPayloadInput: Boolean(INITIAL_INPUTS?.EDITING_ALL_FIELDS_JSON || INITIAL_INPUTS?.editingAllFields || INITIAL_INPUTS?.editing_all_fields),
+      hasStagePayloadInput,
+      hasAllFieldsPayloadInput,
       hasColumnJsonInput: Boolean(INITIAL_INPUTS?.COLUMN_JSON || INITIAL_INPUTS?.column_json),
-      hasBubbleDataInput: Boolean(INITIAL_INPUTS?.BUBBLE_DATA_JSON || INITIAL_INPUTS?.bubble_data_json)
+      hasBubbleDataInput: Boolean(INITIAL_INPUTS?.BUBBLE_DATA_JSON || INITIAL_INPUTS?.bubble_data_json),
+      shouldUseEditPayloadBootstrap
     });
-    if (IS_EDITING_MODE) {
-      const payloadAppliedNow = applyEditModePayloadIfReady();
+    if (shouldUseEditPayloadBootstrap) {
+      const payloadAppliedNow = applyEditModePayloadIfReady(!IS_EDITING_MODE);
       if (!payloadAppliedNow) {
         formContainer.style.display = "block";
         if (formEl) formEl.innerHTML = "";
       }
-      ensureEditModePayloadPolling();
+      ensureEditModePayloadPolling(!IS_EDITING_MODE);
     } else if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
