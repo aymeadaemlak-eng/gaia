@@ -1976,6 +1976,7 @@
     let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
     let lastChangedMode = "";
+    let hadEditModeDirtyChange = false;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2753,7 +2754,8 @@ function renderSubmitOutputs(payload) {
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
       const effectiveMode = String(modeHint || "").trim().toLowerCase();
-      const isEditAutosave = autosave && (effectiveMode === "edit" || (effectiveMode !== "normal" && isEditingModeNow()));
+      const editContextActive = hadEditModeDirtyChange || IS_EDITING_MODE || isEditingModeNow();
+      const isEditAutosave = autosave && (effectiveMode === "edit" || (effectiveMode !== "normal" && editContextActive));
       const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
@@ -3197,7 +3199,9 @@ function renderSubmitOutputs(payload) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
       dirtyFields[fieldKey] = true;
-      lastChangedMode = isEditingModeNow() ? "edit" : "normal";
+      const editingNow = isEditingModeNow();
+      lastChangedMode = editingNow ? "edit" : "normal";
+      if (editingNow || IS_EDITING_MODE) hadEditModeDirtyChange = true;
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -3228,6 +3232,7 @@ function renderSubmitOutputs(payload) {
       clearChangedFieldKeys();
       clearChangedFieldValues();
       lastChangedMode = "";
+      hadEditModeDirtyChange = false;
       clearPersistedStartChangedTracking();
       persistStartFlowState();
     }
