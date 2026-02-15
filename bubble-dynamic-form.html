@@ -1987,6 +1987,8 @@
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
     let pendingStartCloseAutosave = null;
+    let hasSeenEditingSignal = false;
+    let lastEditingParamWasTrue = false;
     let activeSubmitAttemptId = 0;
     let submitLockTimeoutHandle = null;
     const SUBMIT_LOCK_TIMEOUT_MS = 15000;
@@ -4558,6 +4560,17 @@ function renderSubmitOutputs(payload) {
       return readStartSignalSnapshot().value;
     }
 
+    function readEditingSignalValue() {
+      const editingValue = window.BUBBLE_INPUTS?.editing;
+      if (editingValue === true || editingValue === 1) return true;
+      if (editingValue === false || editingValue === 0) return false;
+      const text = String(editingValue ?? "").trim().toLowerCase();
+      if (text === "true" || text === "1") return true;
+      if (text === "false" || text === "0") return false;
+      return null;
+    }
+
+
     function traceAutosave(label, payload = {}) {
       const snapshot = {
         label,
@@ -4919,13 +4932,24 @@ function renderSubmitOutputs(payload) {
       return modeHint;
     }
 
-    function maybeRunAutosaveOnStartClose() {
+    function maybeRunAutosaveOnStartClose(trigger = "unknown") {
       const now = Date.now();
+      const startSignal = readStartSignalValue();
+      const editingSignal = readEditingSignalValue();
       if (!isFormDirty) return;
       if (isFormSaving) return;
+      if (startSignal === true || editingSignal === true) {
+        traceAutosave("autosave-deferred-session-open", {
+          trigger,
+          startSignal,
+          editingSignal,
+          reason: startSignal === true ? "start-true" : "editing-true"
+        });
+        return;
+      }
       if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
       lastAutosaveAt = now;
-      runSubmitFlow({ autosave: true, modeHint: getSubmitModeHint() });
+      runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
 
     function evaluateUniqueIdTransition() {
@@ -4971,7 +4995,7 @@ function renderSubmitOutputs(payload) {
           uniqueIdChanged,
           pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
         });
-        maybeRunAutosaveOnStartClose();
+        maybeRunAutosaveOnStartClose("uniqueid-dirty-current-first:prefetch");
         runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "uniqueid-dirty-current-first", modeHint: getSubmitModeHint() });
         if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
           MANUAL_COLUMN_JSON = incomingColumnJson;
@@ -5055,11 +5079,39 @@ function renderSubmitOutputs(payload) {
       persistStartFlowState();
     }
 
+    function evaluateEditingSignalTransition() {
+      const editingSignal = readEditingSignalValue();
+      if (editingSignal === null) return;
+
+      if (!hasSeenEditingSignal) {
+        hasSeenEditingSignal = true;
+        lastEditingParamWasTrue = Boolean(editingSignal);
+        traceAutosave("editing-signal-seed", { editingSignal });
+        return;
+      }
+
+      if (lastEditingParamWasTrue && !editingSignal) {
+        const hasDirtyIndicators = isFormDirty || changedFieldKeys.size > 0 || hasChangesSinceStartOpen;
+        const shouldSubmit = hasDirtyIndicators && !isFormSaving;
+        traceAutosave("editing-close", { editingSignal, hasDirtyIndicators, shouldSubmit });
+        lastEditingParamWasTrue = false;
+        if (shouldSubmit) {
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "editing-close", modeHint: getSubmitModeHint() });
+        } else if (hasDirtyIndicators && isFormSaving) {
+          queueStartCloseAutosave("editing-close", "saving-lock");
+        }
+        return;
+      }
+
+      lastEditingParamWasTrue = Boolean(editingSignal);
+    }
+
     function initAutosaveStartWatcher() {
       const persistedStartFlowState = readPersistedStartFlowState();
       const persistedChangedTracking = readPersistedStartChangedTracking();
       const currentDataSignature = readCurrentBubbleDataSignature();
       const startSignal = readStartSignalValue();
+      const editingSignal = readEditingSignalValue();
       if (persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
         changedFieldKeys = new Set(persistedChangedTracking.keys);
         changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
@@ -5085,6 +5137,11 @@ function renderSubmitOutputs(payload) {
       if (persistedStartFlowState) {
         startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
       }
+      if (editingSignal !== null) {
+        hasSeenEditingSignal = true;
+        lastEditingParamWasTrue = Boolean(editingSignal);
+      }
+
       if (startSignal !== null) {
         hasSeenStartSignal = true;
         lastStartParamWasTrue = Boolean(startSignal);
@@ -5134,6 +5191,7 @@ function renderSubmitOutputs(payload) {
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
           evaluateStartSignalTransition();
+          evaluateEditingSignalTransition();
           return result;
         };
       }
@@ -5143,6 +5201,7 @@ function renderSubmitOutputs(payload) {
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
           evaluateStartSignalTransition();
+          evaluateEditingSignalTransition();
           return result;
         };
       }
@@ -5150,7 +5209,10 @@ function renderSubmitOutputs(payload) {
       window.addEventListener("popstate", evaluateStartSignalTransition);
       window.addEventListener("hashchange", evaluateStartSignalTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
-      setInterval(evaluateStartSignalTransition, 300);
+      setInterval(() => {
+        evaluateStartSignalTransition();
+        evaluateEditingSignalTransition();
+      }, 300);
     }
 
     function debounceFormChange() {
@@ -5164,7 +5226,7 @@ function renderSubmitOutputs(payload) {
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
         if (IS_EDITING_MODE) {
-          maybeRunAutosaveOnStartClose();
+          maybeRunAutosaveOnStartClose("debounce-form-change");
         }
       }, 500);
     }
