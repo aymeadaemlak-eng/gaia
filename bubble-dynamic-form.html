@@ -4414,6 +4414,9 @@ function renderSubmitOutputs(payload) {
         window.sessionStorage.setItem(START_CHANGED_TRACKING_STORAGE_KEY, JSON.stringify({
           changedKeys: Array.from(changedFieldKeys || []),
           changedValues: Array.from((changedFieldValuesByKey || new Map()).entries()),
+          lastChangedMode,
+          hadEditModeDirtyChange,
+          hasEnteredEditSession,
           time: new Date().toISOString()
         }));
       } catch (error) {
@@ -4437,7 +4440,15 @@ function renderSubmitOutputs(payload) {
         if (!parsed || typeof parsed !== "object") return null;
         const keys = Array.isArray(parsed.changedKeys) ? parsed.changedKeys.filter(Boolean) : [];
         const changedValues = new Map(Array.isArray(parsed.changedValues) ? parsed.changedValues : []);
-        return { keys, changedValues, time: parsed.time || "" };
+        const persistedLastChangedMode = String(parsed.lastChangedMode || "").trim().toLowerCase();
+        return {
+          keys,
+          changedValues,
+          lastChangedMode: persistedLastChangedMode === "edit" ? "edit" : (persistedLastChangedMode === "normal" ? "normal" : ""),
+          hadEditModeDirtyChange: Boolean(parsed.hadEditModeDirtyChange),
+          hasEnteredEditSession: Boolean(parsed.hasEnteredEditSession),
+          time: parsed.time || ""
+        };
       } catch (error) {
         return null;
       }
@@ -4932,6 +4943,18 @@ function renderSubmitOutputs(payload) {
         changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
           ? persistedChangedTracking.changedValues
           : new Map();
+        if (persistedChangedTracking.lastChangedMode) {
+          lastChangedMode = persistedChangedTracking.lastChangedMode;
+        }
+        hadEditModeDirtyChange = hadEditModeDirtyChange || Boolean(persistedChangedTracking.hadEditModeDirtyChange);
+        hasEnteredEditSession = hasEnteredEditSession || Boolean(persistedChangedTracking.hasEnteredEditSession) || lastChangedMode === "edit";
+        traceAutosave("hydrate-persisted-edit-context", collectEditContextSnapshot({
+          persistedAt: persistedChangedTracking.time || "",
+          persistedLastChangedMode: persistedChangedTracking.lastChangedMode || "",
+          persistedHadEditModeDirtyChange: Boolean(persistedChangedTracking.hadEditModeDirtyChange),
+          persistedHasEnteredEditSession: Boolean(persistedChangedTracking.hasEnteredEditSession),
+          changedKeyCount: changedFieldKeys.size
+        }));
         logStartState("hydrate-persisted-changed-tracking", {
           changedKeyCount: changedFieldKeys.size,
           persistedAt: persistedChangedTracking.time || ""
