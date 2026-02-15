@@ -3121,6 +3121,21 @@ function renderSubmitOutputs(payload) {
       return normalized;
     }
 
+    function sanitizeNumberTyping(raw, { integer = false } = {}) {
+      if (raw === null || raw === undefined) return "";
+      let value = String(raw).replace(/[^0-9,.-]/g, "");
+      value = value.replace(/(?!^)-/g, "");
+      const sepRegex = integer ? /[.,]/g : /[.,]/g;
+      let seenSep = false;
+      value = value.replace(sepRegex, (match) => {
+        if (integer) return "";
+        if (seenSep) return "";
+        seenSep = true;
+        return match;
+      });
+      return value;
+    }
+
     function formatNumberDisplay(value, options = {}) {
       if (value === "" || value === null || value === undefined || Number.isNaN(Number(value))) return "";
       const numeric = Number(value);
@@ -4901,13 +4916,15 @@ function renderSubmitOutputs(payload) {
     }
 
     function shouldResetAfterSubmit({ autosave }) {
-      if (autosave) return false;
-      const mode = String(state.config?.mode || "").trim().toLowerCase();
-      return mode === "create";
+      return true;
     }
 
     function resetFormAfterSuccessfulSubmit() {
+      hasChangesSinceStartOpen = false;
+      pendingStartCloseAutosave = null;
+      pendingSubmitUntilConfigReady = null;
       resetAllStores();
+      persistStartFlowState();
       summaryBox.style.display = "none";
     }
 
@@ -6060,7 +6077,11 @@ function renderSubmitOutputs(payload) {
           inputEl.addEventListener("input", (event) => {
             if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const raw = event.target.value;
-              setFieldValue(field.key, normalizeNumberInput(raw), field, raw);
+              const sanitizedRaw = sanitizeNumberTyping(raw, { integer: field.type === "integer" });
+              if (sanitizedRaw !== raw) {
+                event.target.value = sanitizedRaw;
+              }
+              setFieldValue(field.key, normalizeNumberInput(sanitizedRaw), field, sanitizedRaw);
             } else {
               setFieldValue(field.key, event.target.value, field);
             }
