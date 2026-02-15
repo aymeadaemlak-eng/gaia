@@ -1,0 +1,775 @@
+}</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css" />
+
+<style>
+:root {
+  --dt-bg: #ffffff;
+  --dt-surface: #f8fbff;
+  --dt-border: #dbe3f1;
+  --dt-border-strong: #bcc7de;
+  --dt-primary: #0a63ff;
+  --dt-text: #1e293b;
+  --dt-muted: #75869e;
+  --dt-highlight: #e5efff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#dynamic-table-wrapper {
+  width: 100%;
+  min-height: 900px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--dt-text);
+}
+
+.dt-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--dt-bg);
+  border: 1px solid var(--dt-border);
+  border-radius: 16px;
+  padding: 18px;
+  gap: 14px;
+}
+
+.dt-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.dt-search {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border);
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.dt-search:focus {
+  outline: none;
+  border-color: var(--dt-primary);
+  box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
+}
+
+#hot-container {
+  flex: 1;
+  min-height: 360px;
+  border: 1px solid var(--dt-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--dt-surface);
+}
+
+.handsontable th {
+  background: var(--dt-surface) !important;
+  color: var(--dt-muted) !important;
+  font-weight: 600 !important;
+  border-right: 1px solid var(--dt-border) !important;
+}
+
+.handsontable td {
+  border-right: 1px solid var(--dt-border) !important;
+  border-bottom: 1px solid var(--dt-border) !important;
+  color: var(--dt-text) !important;
+  font-size: 13px;
+}
+
+.handsontable tr:nth-child(even) td {
+  background: #fbfdff !important;
+}
+
+.dt-img-thumb {
+  display: none;
+}
+
+.dt-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: var(--dt-primary);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.handsontable .currentRow td,
+.handsontable td.area {
+  background: var(--dt-highlight) !important;
+}
+
+.handsontable thead th {
+  position: relative;
+  overflow: visible !important;
+  padding: 4px 8px !important;
+  background: #fff !important;
+  z-index: 30 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--dt-text) !important;
+}
+
+.handsontable thead th .relative {
+  position: relative;
+  overflow: visible;
+  display: block;
+  padding: 0;
+}
+
+.handsontable thead th .htDropdownMenuButton {
+  position: absolute;
+  top: 50%;
+  right: 1px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  z-index: 40;
+  pointer-events: auto;
+  opacity: 1;
+  background: #fff;
+}
+
+.handsontable thead th .colHeader {
+  display: block;
+  line-height: 18px;
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 12px;
+  color: inherit;
+}
+
+
+.dt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--dt-border);
+  font-size: 13px;
+}
+</style>
+
+<div id="dynamic-table-wrapper">
+  <div class="dt-inner">
+    <div class="dt-top">
+      <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+    </div>
+    <div id="hot-container"></div>
+    <div class="dt-footer">
+      <span id="selection-count">Öğe seçilmedi</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  const DEBUG = true;
+  const log = (...args) => { if (DEBUG) console.log('[DynamicTable]', ...args); };
+
+  const state = {
+    hot: null,
+    rawRows: [],
+    columns: [],
+    displayRows: [],
+    selection: new Set(),
+    selectionOrder: []
+  };
+
+  const els = {
+    wrapper: document.getElementById('dynamic-table-wrapper'),
+    container: document.getElementById('hot-container'),
+    search: document.getElementById('dt-search'),
+    selectionText: document.getElementById('selection-count'),
+    totals: document.getElementById('footer-totals')
+  };
+
+  const UNIQUE_KEYS = ['uniqueid', 'unique_id', 'unique', 'id', 'Id', 'ID'];
+  const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
+
+  function sanitizeColumns(columns) {
+    if (!Array.isArray(columns)) return [];
+    const seen = new Set();
+    const sanitized = [];
+
+    columns.forEach((col, index) => {
+      if ((col?.type || '').toLowerCase() === 'hidden') {
+        return;
+      }
+      const id = (col?.id || col?.data || col?.field || col?.key || col?.header || col?.title || `column_${index + 1}`).toString();
+      if (seen.has(id)) return;
+      seen.add(id);
+      sanitized.push({
+        id,
+        header: col?.header || col?.title || col?.label || id,
+        width: col?.columnWidth || col?.width || Math.min(Math.max((col?.header || id).length * 9 + 60, 140), 420),
+        readOnly: col?.readOnly !== false,
+        type: (col?.type || 'text').toLowerCase(),
+        sourceKeys: [id, col?.data, col?.field, col?.key, col?.header, col?.title, col?.label, col?.name].filter(Boolean)
+      });
+    });
+
+    return sanitized;
+  }
+
+  function normalizeRow(row, index) {
+    if (row && typeof row === 'object' && !Array.isArray(row)) {
+      return Object.assign({ __sourceIndex: index }, row);
+    }
+    return { __sourceIndex: index, value: row };
+  }
+
+  function pickValue(row, column) {
+    if (!row || typeof row !== 'object') return column.default || '';
+    for (const key of column.sourceKeys) {
+      if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
+        return row[key];
+      }
+    }
+    const normalizedRowKeys = Object.keys(row).map(key => ({
+      original: key,
+      normalized: key.toString().trim().toLocaleLowerCase('tr-TR')
+    }));
+    const normalizedCandidates = column.sourceKeys.map(key => key.toString().trim().toLocaleLowerCase('tr-TR'));
+    for (const candidate of normalizedRowKeys) {
+      if (normalizedCandidates.includes(candidate.normalized)) {
+        const value = row[candidate.original];
+        if (value !== undefined && value !== null && value !== '') {
+          return value;
+        }
+      }
+    }
+    return column.default || '';
+  }
+
+  function isBooleanValue(value) {
+    return typeof value === 'boolean' || value === 'true' || value === 'false' || value === 1 || value === 0 || value === '1' || value === '0';
+  }
+
+  function coerceBoolean(value) {
+    if (value === true || value === 'true' || value === 1 || value === '1') return true;
+    return false;
+  }
+
+  function looksLikeImageUrl(value) {
+    if (typeof value !== 'string') return false;
+    const trimmed = value.trim();
+    if (!/^https?:\/\//i.test(trimmed)) return false;
+    return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(trimmed);
+  }
+
+  function splitImageList(value) {
+    if (typeof value !== 'string') return [];
+    return value
+      .split(/[;,]/)
+      .map(part => part.trim())
+      .filter(part => part && looksLikeImageUrl(part));
+  }
+
+  function looksLikeDateString(value) {
+    if (typeof value !== 'string') return false;
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    // ISO or yyyy-mm-dd or with time components; avoid pure numbers to prevent number columns from being parsed.
+    if (/^\d{4}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{1,2}(?::\d{1,2})?)?/.test(trimmed)) return true;
+    if (trimmed.includes('T') && /\d/.test(trimmed)) return true;
+    return false;
+  }
+
+  function formatDateValue(value) {
+    if (value === null || value === undefined || value === '') return '';
+
+    let date;
+    const str = typeof value === 'string' ? value.trim() : value;
+
+    if (typeof value === 'number') {
+      const num = value > 1e12 ? value : value * 1000;
+      date = new Date(num);
+    } else if (typeof str === 'string' && /^\d{10,13}$/.test(str)) {
+      const num = str.length === 13 ? Number(str) : Number(str) * 1000;
+      date = new Date(num);
+    } else {
+      date = new Date(value);
+    }
+
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    const hasTime =
+      date.getHours() !== 0 ||
+      date.getMinutes() !== 0 ||
+      date.getSeconds() !== 0;
+
+    try {
+      return new Intl.DateTimeFormat('tr-TR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        ...(hasTime ? { hour: '2-digit', minute: '2-digit' } : {})
+      }).format(date);
+    } catch (err) {
+      return String(value);
+    }
+  }
+
+  function buildDisplayRows(rows) {
+    return rows.map((row, idx) => {
+      const display = { __sourceIndex: row.__sourceIndex ?? idx };
+      state.columns.forEach(col => {
+        display[col.id] = pickValue(row, col);
+      });
+      return display;
+    });
+  }
+
+  function isNumericColumn(column) {
+    if (!column) return false;
+    if (column.type === 'numeric' || column.type === 'number') return true;
+    const header = column.header.toLocaleLowerCase('tr-TR');
+    return NUMERIC_HINTS.some(hint => header.includes(hint));
+  }
+
+  function getSafeRenderer(col) {
+    const baseText = Handsontable?.renderers?.TextRenderer;
+    const checkboxRenderer = Handsontable?.renderers?.checkboxRenderer;
+
+    if (!baseText) return null;
+
+    const type = (col?.type || '').toLowerCase();
+    const numberFormatter = new Intl.NumberFormat('tr-TR');
+
+    const renderBoolean = function(instance, td, row, colIndex, prop, value) {
+      const checked = coerceBoolean(value);
+      Handsontable.dom.empty(td);
+      td.style.textAlign = 'center';
+      const mark = document.createElement('span');
+      mark.className = 'dt-check';
+      mark.textContent = checked ? '✓' : '';
+      td.appendChild(mark);
+    };
+
+    const renderNumeric = function(instance, td, row, colIndex, prop, value) {
+      baseText.apply(this, arguments);
+      if (value === null || value === undefined || value === '') return;
+      const num = Number(value);
+      if (!Number.isNaN(num)) {
+        td.textContent = numberFormatter.format(num);
+      }
+    };
+
+    const renderDate = function(instance, td, row, colIndex, prop, value) {
+      baseText.apply(this, arguments);
+      td.textContent = formatDateValue(value);
+      td.style.textAlign = 'left';
+    };
+
+    const renderImage = function(instance, td, row, colIndex, prop, value) {
+      Handsontable.dom.empty(td);
+      const urls = splitImageList(value);
+      if (!urls.length) {
+        td.textContent = value || '';
+        return;
+      }
+      td.style.whiteSpace = 'normal';
+      const list = document.createElement('div');
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '4px';
+      urls.forEach(url => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = url.split('/').pop() || 'dosya';
+        link.style.wordBreak = 'break-all';
+        list.appendChild(link);
+      });
+      td.appendChild(list);
+    };
+
+    const renderAuto = function(instance, td, row, colIndex, prop, value) {
+      const rawValue = value;
+
+      if (isBooleanValue(rawValue) && checkboxRenderer) {
+        return checkboxRenderer.apply(this, [instance, td, row, colIndex, prop, coerceBoolean(rawValue)]);
+      }
+
+      if (looksLikeImageUrl(rawValue)) {
+        return renderImage(instance, td, row, colIndex, prop, rawValue);
+      }
+
+       if (looksLikeDateString(rawValue)) {
+        baseText.apply(this, arguments);
+        td.textContent = formatDateValue(rawValue);
+        td.style.textAlign = 'left';
+        return;
+      }
+
+      return baseText.apply(this, arguments);
+    };
+
+    if (type === 'boolean' || type === 'checkbox') return renderBoolean;
+    if (type === 'numeric' || type === 'number') return renderNumeric;
+    if (type === 'date') return renderDate;
+    if (type === 'image') return renderImage;
+
+    return renderAuto;
+  }
+
+  function updateFooter() {
+    if (!els.totals || !state.hot) return;
+    const rows = state.hot.getSourceData();
+    if (!rows || rows.length === 0) {
+      els.totals.innerHTML = '';
+      return;
+    }
+
+    const summaries = [];
+    state.columns.filter(isNumericColumn).forEach(col => {
+      let sum = 0;
+      let count = 0;
+      rows.forEach(row => {
+        const value = row[col.id];
+        const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+        if (!isNaN(num)) {
+          sum += num;
+          count += 1;
+        }
+      });
+      if (count > 0) {
+        summaries.push(`${col.header}: ${sum.toLocaleString('tr-TR')}`);
+      }
+    });
+    els.totals.innerHTML = summaries.map(text => `<span>${text}</span>`).join('');
+  }
+
+  function updateSelectionText() {
+    if (!els.selectionText) return;
+    const count = state.selection.size;
+    els.selectionText.textContent = count === 0 ? 'Öğe seçilmedi' : `${count} öğe seçili`;
+  }
+
+  function handleSelection() {
+    if (!state.hot) return;
+    const ranges = state.hot.getSelectedRange();
+    state.selection.clear();
+    state.selectionOrder = [];
+
+    if (ranges && ranges.length) {
+      ranges.forEach(range => {
+        const start = Math.max(range.from.row, 0);
+        const end = Math.max(range.to.row, 0);
+        for (let rowIndex = Math.min(start, end); rowIndex <= Math.max(start, end); rowIndex += 1) {
+          const sourceIndex = state.displayRows[rowIndex]?.__sourceIndex;
+          if (sourceIndex === undefined) continue;
+          if (!state.selection.has(sourceIndex)) {
+            state.selection.add(sourceIndex);
+            state.selectionOrder.push(sourceIndex);
+          }
+        }
+      });
+    }
+
+    updateSelectionText();
+    if (typeof window.bubble_fn_hasSelection === 'function') {
+      window.bubble_fn_hasSelection(state.selection.size > 0);
+    }
+  }
+
+  function prioritizeSelection(sourceIndex) {
+    if (sourceIndex === undefined) return;
+    let appended = false;
+    if (!state.selection.has(sourceIndex)) {
+      state.selection.add(sourceIndex);
+      state.selectionOrder = [...state.selectionOrder, sourceIndex];
+      appended = true;
+    }
+    state.selectionOrder = [
+      sourceIndex,
+      ...state.selectionOrder.filter(index => index !== sourceIndex)
+    ];
+    if (appended) {
+      updateSelectionText();
+      if (typeof window.bubble_fn_hasSelection === 'function') {
+        window.bubble_fn_hasSelection(true);
+      }
+    }
+  }
+
+  function handleDoubleClick(event) {
+    if (!state.hot || !event.target) return;
+    const cell = event.target.closest('td');
+    if (!cell) return;
+
+    let rowIndex = NaN;
+    if (typeof state.hot.getCoords === 'function') {
+      try {
+        const coords = state.hot.getCoords(cell);
+        if (coords && typeof coords.row === 'number') {
+          rowIndex = coords.row;
+        }
+      } catch (err) {
+        rowIndex = NaN;
+      }
+    }
+    if (!Number.isInteger(rowIndex)) {
+      const rowAttr = cell.getAttribute('data-row');
+      rowIndex = rowAttr ? parseInt(rowAttr, 10) : NaN;
+    }
+    if (!Number.isInteger(rowIndex) || rowIndex < 0) return;
+
+    const sourceIndex = state.displayRows[rowIndex]?.__sourceIndex;
+    if (sourceIndex === undefined) return;
+
+    prioritizeSelection(sourceIndex);
+    start();
+  }
+
+  function attachDoubleClickListener() {
+    if (!els.container || els.container.dataset.doubleClickAttached === 'true') return;
+    els.container.addEventListener('dblclick', handleDoubleClick);
+    els.container.dataset.doubleClickAttached = 'true';
+  }
+
+  function calculateHeight() {
+    const viewport = window.innerHeight || 800;
+    const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
+    return Math.max(420, Math.min(wrapperHeight - 120, viewport - 180));
+  }
+
+  function mountHandsontable() {
+    if (!els.container) {
+      console.warn('Handsontable container missing');
+      return;
+    }
+
+    const settings = {
+      data: state.displayRows,
+      columns: state.columns.map(col => {
+        const renderer = typeof getSafeRenderer === 'function' ? getSafeRenderer(col) : null;
+        return {
+          data: col.id,
+          readOnly: col.readOnly,
+          width: col.width,
+          ...(renderer ? { renderer } : {})
+        };
+      }),
+      cells: (row, col) => {
+        const column = state.columns[col];
+        const colType = (column?.type || '').toLowerCase();
+        const rowData = state.displayRows?.[row];
+        const cellValue = rowData ? rowData[column?.id] : undefined;
+        const isBool = isBooleanValue(cellValue);
+        const meta = {};
+        if (colType === 'boolean' || colType === 'checkbox' || isBool) {
+          meta.type = 'checkbox';
+        }
+        return meta;
+      },
+      colHeaders: state.columns.map(col => col.header),
+      rowHeaders: true,
+      height: calculateHeight(),
+      width: '100%',
+      manualColumnResize: true,
+      manualColumnMove: false,
+      manualRowMove: false,
+      filters: true,
+      dropdownMenu: true,
+      columnSorting: true,
+      selectionMode: 'multiple',
+      licenseKey: 'non-commercial-and-evaluation',
+      afterSelectionEnd: handleSelection,
+      afterFilter: () => {
+        updateFooter();
+        handleSelection();
+      }
+    };
+
+    if (state.hot) {
+      state.hot.updateSettings(settings);
+    } else {
+      state.hot = new Handsontable(els.container, settings);
+    }
+
+    updateFooter();
+    attachDoubleClickListener();
+  }
+
+  function loadDisplayRows(rows) {
+    state.displayRows = rows;
+    mountHandsontable();
+    updateFooter();
+    state.selection.clear();
+    state.selectionOrder = [];
+    updateSelectionText();
+  }
+
+  function applySearch(term) {
+    if (!term) {
+      loadDisplayRows(buildDisplayRows(state.rawRows));
+      return;
+    }
+
+    const lowered = term.toLocaleLowerCase('tr-TR');
+    const filtered = state.rawRows.filter(row => {
+      return state.columns.some(col => {
+        const value = pickValue(row, col);
+        if (value === null || value === undefined) return false;
+        return String(value).toLocaleLowerCase('tr-TR').includes(lowered);
+      });
+    });
+
+    loadDisplayRows(buildDisplayRows(filtered));
+  }
+
+  function attachSearchListener() {
+    if (!els.search || els.search.dataset.listenerAttached) return;
+    els.search.addEventListener('input', event => {
+      applySearch(event.target.value.trim());
+    });
+    els.search.dataset.listenerAttached = 'true';
+  }
+
+  function setTableData(data, columns) {
+    log('setTableData', { rows: Array.isArray(data) ? data.length : 0, columns: Array.isArray(columns) ? columns.length : 0 });
+    if (!Array.isArray(data) || !Array.isArray(columns) || columns.length === 0) {
+      console.warn('setTableData: invalid data or columns');
+      return;
+    }
+
+    state.rawRows = data.map((row, index) => normalizeRow(row, index));
+    state.columns = sanitizeColumns(columns);
+    loadDisplayRows(buildDisplayRows(state.rawRows));
+    attachSearchListener();
+  }
+
+  function refreshTable(data) {
+    if (!Array.isArray(data) || state.columns.length === 0) {
+      console.warn('refreshTable: missing data or columns');
+      return;
+    }
+    state.rawRows = data.map((row, index) => normalizeRow(row, index));
+    loadDisplayRows(buildDisplayRows(state.rawRows));
+  }
+
+  function clearSelection() {
+    state.selection.clear();
+    state.selectionOrder = [];
+    updateSelectionText();
+    if (state.hot) {
+      try { state.hot.deselectCell(); } catch (err) {}
+    }
+    if (typeof window.bubble_fn_hasSelection === 'function') {
+      window.bubble_fn_hasSelection(false);
+    }
+  }
+
+  function autoInitialize() {
+    try {
+      const script = document.getElementById('bubble-table-config');
+      if (!script) return;
+      const config = JSON.parse(script.textContent || '{}');
+      if (Array.isArray(config.data) && Array.isArray(config.columns)) {
+        setTableData(config.data, config.columns);
+      }
+    } catch (error) {
+      console.warn('Failed to parse bubble-table-config', error);
+    }
+  }
+
+  function getSelectedUniqueIds() {
+    const ids = [];
+    state.selectionOrder.forEach(index => {
+      if (!state.selection.has(index)) return;
+      const raw = state.rawRows[index];
+      if (!raw) return;
+      for (const key of UNIQUE_KEYS) {
+        if (raw[key] !== undefined && raw[key] !== null && raw[key] !== '') {
+          ids.push(String(raw[key]));
+          return;
+        }
+      }
+    });
+    return ids;
+  }
+
+  function start() {
+    const ids = getSelectedUniqueIds();
+    if (typeof window.bubble_fn_start === 'function') {
+      window.bubble_fn_start(ids);
+    }
+    return ids;
+  }
+
+  function edit() {
+    const ids = getSelectedUniqueIds();
+    if (typeof window.bubble_fn_edit === 'function') {
+      window.bubble_fn_edit(ids);
+    }
+    return ids;
+  }
+
+  function save() {
+    const ids = getSelectedUniqueIds();
+    if (typeof window.bubble_fn_save === 'function') {
+      window.bubble_fn_save(ids);
+    }
+    return ids;
+  }
+
+  function deleteSelected() {
+    const ids = getSelectedUniqueIds();
+    if (typeof window.bubble_fn_delete === 'function') {
+      window.bubble_fn_delete(ids);
+    }
+    return ids;
+  }
+
+  window.dynamicTable = {
+    setTableData,
+    refreshTable,
+    clearSelection,
+    getSelectedUniqueIds,
+    start,
+    edit,
+    save,
+    delete: deleteSelected
+  };
+
+  window.setTableData = setTableData;
+  window.refreshTable = refreshTable;
+  window.clearSelection = clearSelection;
+  window.getSelectedUniqueIds = getSelectedUniqueIds;
+  window.start = start;
+  window.edit = edit;
+  window.save = save;
+  window.deleteSelected = deleteSelected;
+
+  autoInitialize();
+})();
+</script>
