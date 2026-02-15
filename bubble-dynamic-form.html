@@ -4739,6 +4739,15 @@ function renderSubmitOutputs(payload) {
       if (!state.config || !Array.isArray(state.config.fields)) return;
       const pending = pendingSubmitUntilConfigReady;
       pendingSubmitUntilConfigReady = null;
+      if (pending.autosave && !reconcileDirtyTracking("flush-pending-submit-after-config")) {
+        logStartState("flush-pending-submit-after-config:skip-no-change", {
+          trigger: pending.trigger,
+          autosave: pending.autosave,
+          forceSubmit: pending.forceSubmit,
+          requestedAt: pending.requestedAt
+        });
+        return;
+      }
       logStartState("flush-pending-submit-after-config", {
         trigger: pending.trigger,
         autosave: pending.autosave,
@@ -4771,6 +4780,26 @@ function renderSubmitOutputs(payload) {
         || buildDeletedFields().length > 0
         || buildModifiedFields().length > 0
       );
+    }
+
+    function reconcileDirtyTracking(reason = "") {
+      if (!state.config || !Array.isArray(state.config.fields)) {
+        return isFormDirty;
+      }
+      const recomputedDirty = computeDirtyState();
+      if (!recomputedDirty && (isFormDirty || changedFieldKeys.size > 0 || hasChangesSinceStartOpen)) {
+        traceAutosave("reconcile-dirty-tracking:cleared", {
+          reason,
+          prevIsFormDirty: isFormDirty,
+          prevChangedKeyCount: changedFieldKeys.size,
+          prevHasChangesSinceStartOpen: hasChangesSinceStartOpen
+        });
+        clearChangedTracking();
+        hasChangesSinceStartOpen = false;
+        persistStartFlowState();
+      }
+      isFormDirty = recomputedDirty;
+      return recomputedDirty;
     }
 
     function queueStartCloseAutosave(trigger, reason = "") {
@@ -5068,6 +5097,7 @@ function renderSubmitOutputs(payload) {
       const startSignal = readStartSignalValue();
       const editingSignal = readEditingSignalValue();
       const editContextActive = isEditAutosaveContextActive();
+      reconcileDirtyTracking(`maybeRunAutosaveOnStartClose:${trigger}`);
       if (!isFormDirty) return;
       if (isFormSaving) return;
 
@@ -5182,6 +5212,7 @@ function renderSubmitOutputs(payload) {
           isEditPanelOpen = false;
           applyVersionVisibility();
         }
+        reconcileDirtyTracking("evaluateStartSignalTransition:close");
         const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
         logStartState("close", {
@@ -5239,6 +5270,7 @@ function renderSubmitOutputs(payload) {
       }
 
       if (lastEditingParamWasTrue && !editingSignal) {
+        reconcileDirtyTracking("evaluateEditingSignalTransition:close");
         const hasDirtyIndicators = isFormDirty || changedFieldKeys.size > 0 || hasChangesSinceStartOpen;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
         traceAutosave("editing-close", { editingSignal, hasDirtyIndicators, shouldSubmit });
@@ -5314,7 +5346,11 @@ function renderSubmitOutputs(payload) {
         const hasPersistedDirtyTracking = Boolean(persistedChangedTracking?.keys?.length)
           || Boolean(persistedChangedTracking?.hadEditModeDirtyChange)
           || Boolean(persistedChangedTracking?.changedValues?.size);
-        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking;
+        const hasLiveDirtyIndicators = reconcileDirtyTracking("initAutosaveStartWatcher:remount-close")
+          || changedFieldKeys.size > 0
+          || hasChangesSinceStartOpen;
+        const hadChangesBeforeRemount = hasLiveDirtyIndicators
+          && (Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking);
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
           hasChangesSinceStartOpen = false;
