@@ -580,7 +580,8 @@
   function calculateHeight() {
     const viewport = window.innerHeight || 800;
     const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
-    return Math.max(420, Math.min(wrapperHeight - 120, viewport - 180));
+    const reservedSpace = 84;
+    return Math.max(420, Math.min(wrapperHeight - reservedSpace, viewport - 150));
   }
 
   function mountHandsontable() {
