@@ -271,11 +271,20 @@
   padding: 8px 12px !important;
   height: 34px !important;
   vertical-align: middle !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   transition: background-color 180ms ease;
 }
 
+#dynamic-table-wrapper .handsontable td > * {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 #dynamic-table-wrapper .handsontable tbody tr:hover td {
-  background: #f3f4f6 !important;
+  background: #f7f8fa !important;
 }
 
 #dynamic-table-wrapper .dt-img-thumb { display: none; }
