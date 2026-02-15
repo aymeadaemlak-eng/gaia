@@ -2579,7 +2579,6 @@
         formActions.style.display = "none";
       }
       const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
-      traceAutosave("apply-version-visibility", collectInlineEditDiagnostics({ isEditUiActive }));
       if (rootElement) {
         rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
@@ -2695,9 +2694,7 @@
     function updateInlineEditToggleUi() {
       if (!toggleInlineEditBtn) return;
       const canOpen = canOpenInlineEditPanel();
-      traceAutosave("inline-toggle-ui", collectInlineEditDiagnostics({ canOpen }));
       if (!canOpen && isEditPanelOpen) {
-        traceAutosave("inline-toggle-ui-force-close", collectInlineEditDiagnostics({ reason: "cannot-open-now" }));
         isEditPanelOpen = false;
         applyVersionVisibility();
       }
@@ -2720,8 +2717,14 @@
       updateInlineEditToggleUi();
       applyVersionVisibility();
       if (isEditPanelOpen) {
-        applyEditModePayloadIfReady(true);
+        const payloadAppliedNow = applyEditModePayloadIfReady(true);
         ensureEditModePayloadPolling(true);
+        if (state.config && (String(state.config.mode || "").trim().toLowerCase() === "edit")) {
+          runEditModeFilterRender();
+        }
+        traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
+      } else {
+        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({}));
       }
       evaluateEditingSignalTransition();
     }
@@ -4675,10 +4678,6 @@ function renderSubmitOutputs(payload) {
       const text = String(editingValue ?? "").trim().toLowerCase();
       if (text === "true" || text === "1") return true;
       if (text === "false" || text === "0") return false;
-      const maybeNull = editingValue === null || editingValue === undefined || text === "";
-      if (maybeNull) {
-        traceAutosave("editing-signal-null", collectInlineEditDiagnostics({ editingValue }));
-      }
       return null;
     }
 
@@ -5160,13 +5159,6 @@ function renderSubmitOutputs(payload) {
       updateInlineEditToggleUi();
       if (startSignal === null) return;
 
-      logStartState("tick", {
-        startSignal,
-        changedKeyCount: changedFieldKeys.size,
-        hasChangesSinceStartOpen,
-        shouldSubmitIfClose: Boolean(lastStartParamWasTrue && !startSignal && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving)
-      });
-
       const signalText = String(Boolean(startSignal));
       if (lastStartLoggedState !== signalText) {
         lastStartLoggedState = signalText;
@@ -5592,7 +5584,6 @@ function renderSubmitOutputs(payload) {
     }
 
     function applyEditModePayloadIfReady(forceEditMode = false) {
-      traceAutosave("edit-payload-check", collectInlineEditDiagnostics({ forceEditMode }));
       if (!IS_EDITING_MODE && !forceEditMode && !isEditPanelOpen) return false;
       const payload = readEditModePayloadSources();
       const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
@@ -5863,7 +5854,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function runEditModeFilterRender() {
-      if (!IS_EDITING_MODE || !state.config) return;
+      if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
       const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
       const stageMap = new Map();
