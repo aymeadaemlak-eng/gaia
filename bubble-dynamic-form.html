@@ -4949,23 +4949,53 @@ function renderSubmitOutputs(payload) {
       return modeHint;
     }
 
+
+    function isEditAutosaveContextActive() {
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const editingSignal = readEditingSignalValue();
+      return Boolean(
+        IS_EDITING_MODE
+        || editingSignal === true
+        || configMode === "edit"
+        || lastChangedMode === "edit"
+        || hadEditModeDirtyChange
+        || hasEnteredEditSession
+      );
+    }
+
     function maybeRunAutosaveOnStartClose(trigger = "unknown") {
       const now = Date.now();
       const startSignal = readStartSignalValue();
       const editingSignal = readEditingSignalValue();
+      const editContextActive = isEditAutosaveContextActive();
       if (!isFormDirty) return;
       if (isFormSaving) return;
-      if (startSignal === true || editingSignal === true) {
+
+      const shouldDeferForSessionOpen = editContextActive
+        ? editingSignal === true
+        : startSignal === true;
+
+      if (shouldDeferForSessionOpen) {
         traceAutosave("autosave-deferred-session-open", {
           trigger,
           startSignal,
           editingSignal,
-          reason: startSignal === true ? "start-true" : "editing-true"
+          editContextActive,
+          gate: editContextActive ? "editing" : "start",
+          reason: editContextActive ? "editing-true" : "start-true"
         });
         return;
       }
+
       if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
       lastAutosaveAt = now;
+      traceAutosave("autosave-allowed-session-gate", {
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        gate: editContextActive ? "editing" : "start"
+      });
       runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
 
