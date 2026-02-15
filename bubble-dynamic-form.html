@@ -5351,14 +5351,13 @@ function renderSubmitOutputs(payload) {
 
       const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage]));
       const stageKeys = [];
+      if (stageMap.has("Ungrouped")) stageKeys.push("Ungrouped");
       (editModeStageOrder || []).forEach((stageKey) => {
         if (stageKeys.includes(stageKey)) return;
-        if (String(stageKey) === "Ungrouped") return;
         if (stageMap.has(stageKey)) stageKeys.push(stageKey);
       });
       Array.from(stageMap.keys()).forEach((stageKey) => {
         if (stageKeys.includes(stageKey)) return;
-        if (String(stageKey) === "Ungrouped") return;
         stageKeys.push(stageKey);
       });
 
@@ -5377,13 +5376,17 @@ function renderSubmitOutputs(payload) {
       }
 
       const wrappersByKey = new Map();
+      Object.keys(state.fieldRefs || {}).forEach((fieldKey) => {
+        const wrapper = state.fieldRefs?.[fieldKey]?.wrapper;
+        if (wrapper) wrappersByKey.set(fieldKey, wrapper);
+      });
       const wrapperPool = [
         ...Array.from(formEl.querySelectorAll('.field-wrapper')),
         ...(editModeRoot ? Array.from(editModeRoot.querySelectorAll('.field-wrapper')) : [])
       ];
       wrapperPool.forEach((wrapper) => {
         const key = wrapper.dataset.fieldKey || "";
-        if (key) wrappersByKey.set(key, wrapper);
+        if (key && !wrappersByKey.has(key)) wrappersByKey.set(key, wrapper);
       });
 
       if (editQuickFields) editQuickFields.innerHTML = "";
@@ -5441,7 +5444,11 @@ function renderSubmitOutputs(payload) {
         if (editStageTabs) editStageTabs.appendChild(btn);
       });
 
-      const selectedFields = stageMap.get(editSelectedStage) || [];
+      const quickKeys = new Set(quickItems.map((field) => field.key));
+      const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => {
+        if (String(editSelectedStage) !== "Ungrouped") return true;
+        return !quickKeys.has(field.key);
+      });
       const selectedStageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editSelectedStage);
       const activeProcessIndexForSelected = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
       const selectedStageStatus = getProcessStageStatus(selectedStageMetaIndex, activeProcessIndexForSelected);
@@ -6578,6 +6585,7 @@ function renderSubmitOutputs(payload) {
 
         state.fieldRefs[field.key] = {
           field,
+          wrapper,
           control,
           inputEl,
           setValue,
