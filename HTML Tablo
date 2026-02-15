@@ -24,7 +24,7 @@
 
 #dynamic-table-wrapper {
   width: 100%;
-  min-height: min(900px, calc(100vh - 140px));
+  min-height: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -69,9 +69,9 @@
 
 #hot-container {
   flex: 1;
-  min-height: 360px;
-  height: calc(100vh - 320px);
-  max-height: 680px;
+  min-height: 220px;
+  height: auto;
+  max-height: none;
   border: 1px solid var(--dt-border);
   border-radius: 12px;
   overflow: hidden;
@@ -222,6 +222,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 24px;
+  flex-shrink: 0;
   padding-top: 10px;
   border-top: 1px solid var(--dt-border);
   font-size: 13px;
@@ -665,7 +667,9 @@
   function calculateHeight() {
     const viewport = window.innerHeight || 800;
     const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
-    return Math.max(420, Math.min(wrapperHeight - 120, viewport - 180));
+    const reservedSpace = 130; // search + custom scrollbar + footer + paddings
+    const computed = wrapperHeight - reservedSpace;
+    return Math.max(220, Math.min(computed, viewport - 170));
   }
 
   function mountHandsontable() {
