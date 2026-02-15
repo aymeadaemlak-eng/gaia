@@ -1,3 +1,5 @@
+}</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -585,18 +587,18 @@
   }
 
   function getAdaptiveTableHeight() {
-    const containerHeight = els.container ? els.container.clientHeight : 0;
-    const rowCount = Array.isArray(state.displayRows) ? state.displayRows.length : 0;
-    const headerHeight = 34;
-    const rowHeight = 24;
-    const scrollbarReserve = 14;
-    const contentHeight = headerHeight + (rowCount * rowHeight) + scrollbarReserve;
+    if (!els.container) return 320;
 
+    const containerHeight = Math.floor(els.container.clientHeight || 0);
     if (containerHeight > 0) {
-      return Math.max(260, Math.min(containerHeight, contentHeight));
+      return Math.max(260, containerHeight);
     }
 
-    return Math.max(260, contentHeight);
+    const wrapperHeight = Math.floor(els.wrapper?.clientHeight || 0);
+    const topHeight = Math.floor(els.search?.closest('.dt-top')?.offsetHeight || 0);
+    const fallbackHeight = wrapperHeight - topHeight - 14;
+
+    return Math.max(260, fallbackHeight || 320);
   }
 
   function mountHandsontable() {
@@ -694,10 +696,21 @@
 
   function attachResizeListener() {
     if (!els.wrapper || els.wrapper.dataset.resizeAttached === 'true') return;
-    window.addEventListener('resize', () => {
+
+    const refreshHeight = () => {
       if (!state.hot) return;
       state.hot.updateSettings({ height: getAdaptiveTableHeight() });
-    });
+    };
+
+    window.addEventListener('resize', refreshHeight);
+
+    if (typeof ResizeObserver === 'function' && els.container) {
+      const observer = new ResizeObserver(refreshHeight);
+      observer.observe(els.container);
+      observer.observe(els.wrapper);
+      els.wrapper.__dtResizeObserver = observer;
+    }
+
     els.wrapper.dataset.resizeAttached = 'true';
   }
 
