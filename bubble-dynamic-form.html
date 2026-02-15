@@ -1982,9 +1982,6 @@
     let isEditPanelOpen = false;
     let hasEnteredInlineEditPanel = false;
     let hadInlineEditDirtyChange = false;
-    let isInlineEditingLatched = false;
-    let inlineEditingOverrideWasPresent = false;
-    let inlineEditingOverridePreviousValue;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2671,45 +2668,11 @@
       toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
     }
 
-    function applyInlineEditingOverride() {
-      const inputs = window.BUBBLE_INPUTS || (window.BUBBLE_INPUTS = {});
-      inlineEditingOverrideWasPresent = Object.prototype.hasOwnProperty.call(inputs, "editing");
-      inlineEditingOverridePreviousValue = inputs.editing;
-      inputs.editing = true;
-    }
-
-    function restoreInlineEditingOverride() {
-      const inputs = window.BUBBLE_INPUTS || (window.BUBBLE_INPUTS = {});
-      if (inlineEditingOverrideWasPresent) {
-        inputs.editing = inlineEditingOverridePreviousValue;
-      } else {
-        try {
-          delete inputs.editing;
-        } catch (error) {
-          inputs.editing = undefined;
-        }
-      }
-      inlineEditingOverrideWasPresent = false;
-      inlineEditingOverridePreviousValue = undefined;
-    }
-
     function setInlineEditPanelOpen(nextOpen) {
       const desired = Boolean(nextOpen);
-      if (desired && !canOpenInlineEditPanel()) {
-        isEditPanelOpen = false;
-        isInlineEditingLatched = false;
-        restoreInlineEditingOverride();
-        updateInlineEditToggleUi();
-        applyVersionVisibility();
-        return;
-      }
+      const inputs = window.BUBBLE_INPUTS || (window.BUBBLE_INPUTS = {});
+      inputs.editing = desired ? true : null;
       isEditPanelOpen = desired;
-      isInlineEditingLatched = desired;
-      if (desired) {
-        applyInlineEditingOverride();
-      } else {
-        restoreInlineEditingOverride();
-      }
       if (isEditPanelOpen) {
         hasEnteredInlineEditPanel = true;
         hasEnteredEditSession = true;
@@ -2720,6 +2683,7 @@
         applyEditModePayloadIfReady(true);
         ensureEditModePayloadPolling(true);
       }
+      evaluateEditingSignalTransition();
     }
 
     function updateActionBarUi() {
@@ -4665,15 +4629,6 @@ function renderSubmitOutputs(payload) {
     }
 
     function readEditingSignalValue() {
-      if (isInlineEditingLatched) {
-        const startSignal = readStartSignalValue();
-        if (startSignal === false) {
-          isInlineEditingLatched = false;
-          restoreInlineEditingOverride();
-          return false;
-        }
-        return true;
-      }
       const editingValue = window.BUBBLE_INPUTS?.editing;
       if (editingValue === true || editingValue === 1) return true;
       if (editingValue === false || editingValue === 0) return false;
@@ -5185,8 +5140,6 @@ function renderSubmitOutputs(payload) {
       }
 
       if (lastStartParamWasTrue && !startSignal) {
-        isInlineEditingLatched = false;
-        restoreInlineEditingOverride();
         if (isEditPanelOpen) {
           isEditPanelOpen = false;
           applyVersionVisibility();
