@@ -107,8 +107,13 @@
 }
 
 #dynamic-table-wrapper .dt-icon-btn {
-  width: 34px;
+  width: 36px;
   padding: 0;
+  font-size: 15px;
+}
+
+#dynamic-table-wrapper #dt-btn-search {
+  font-size: 18px;
 }
 
 #dynamic-table-wrapper .dt-icon-btn:hover,
@@ -203,6 +208,24 @@
 
 #dynamic-table-wrapper .dt-action-group {
   position: relative;
+}
+
+#dynamic-table-wrapper .dt-settings-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 170px;
+  border-radius: 10px;
+  border: 1px solid var(--dt-border-strong);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  display: none;
+  z-index: 130;
+}
+
+#dynamic-table-wrapper .dt-settings-menu.is-open {
+  display: block;
 }
 
 #dynamic-table-wrapper #hot-container {
@@ -328,6 +351,13 @@
         </div>
         <div class="dt-toolbar-right">
           <div class="dt-action-group">
+            <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false">⚙</button>
+            <div id="dt-settings-menu" class="dt-settings-menu" role="menu" aria-hidden="true">
+              <button id="dt-settings-import" class="dt-field-item" type="button">Import</button>
+              <button id="dt-settings-export" class="dt-field-item" type="button">Export</button>
+            </div>
+          </div>
+          <div class="dt-action-group">
             <button id="dt-btn-field" class="dt-action-btn" type="button" aria-expanded="false">Field ▾</button>
             <div id="dt-field-menu" class="dt-field-menu" role="menu" aria-hidden="true">
               <button class="dt-field-item" type="button">Add field</button>
@@ -368,6 +398,10 @@
     searchWrap: document.getElementById('dt-search-wrap'),
     searchToggleButton: document.getElementById('dt-btn-search'),
     sortButton: document.getElementById('dt-btn-sort'),
+    settingsButton: document.getElementById('dt-btn-settings'),
+    settingsMenu: document.getElementById('dt-settings-menu'),
+    settingsImportButton: document.getElementById('dt-settings-import'),
+    settingsExportButton: document.getElementById('dt-settings-export'),
     newButton: document.getElementById('dt-btn-new'),
     fieldButton: document.getElementById('dt-btn-field'),
     fieldMenu: document.getElementById('dt-field-menu'),
@@ -1030,6 +1064,41 @@
             plugin.clearSort();
           }
         }
+      });
+    }
+
+    if (els.settingsButton && els.settingsMenu) {
+      els.settingsButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = els.settingsMenu.classList.toggle('is-open');
+        els.settingsButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        els.settingsMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      });
+
+      if (els.settingsImportButton) {
+        els.settingsImportButton.addEventListener('click', () => {
+          importData();
+          els.settingsMenu.classList.remove('is-open');
+          els.settingsButton.setAttribute('aria-expanded', 'false');
+          els.settingsMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
+      if (els.settingsExportButton) {
+        els.settingsExportButton.addEventListener('click', () => {
+          exportData();
+          els.settingsMenu.classList.remove('is-open');
+          els.settingsButton.setAttribute('aria-expanded', 'false');
+          els.settingsMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
+      document.addEventListener('click', event => {
+        if (!els.settingsMenu.classList.contains('is-open')) return;
+        if (event.target.closest('#dt-settings-menu') || event.target.closest('#dt-btn-settings')) return;
+        els.settingsMenu.classList.remove('is-open');
+        els.settingsButton.setAttribute('aria-expanded', 'false');
+        els.settingsMenu.setAttribute('aria-hidden', 'true');
       });
     }
 
