@@ -4931,6 +4931,9 @@ function renderSubmitOutputs(payload) {
           validMap: state.validMap,
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
+        if (IS_EDITING_MODE) {
+          maybeRunAutosaveOnStartClose();
+        }
       }, 500);
     }
 
