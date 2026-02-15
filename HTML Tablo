@@ -8,14 +8,14 @@
 <style>
 
 :root {
-  --dt-bg: #f7f7f5;
-  --dt-surface: #ffffff;
-  --dt-border: #ececec;
-  --dt-border-strong: #dbdbd8;
-  --dt-primary: #2383e2;
-  --dt-text: #37352f;
-  --dt-muted: #787774;
-  --dt-highlight: #f1f8ff;
+  --dt-bg: #ffffff;
+  --dt-surface: #f8fbff;
+  --dt-border: #dbe3f1;
+  --dt-border-strong: #bcc7de;
+  --dt-primary: #0a63ff;
+  --dt-text: #1e293b;
+  --dt-muted: #75869e;
+  --dt-highlight: #e5efff;
 }
 
 * {
@@ -24,87 +24,76 @@
 
 #dynamic-table-wrapper {
   width: 100%;
-  min-height: 860px;
+  min-height: min(900px, calc(100vh - 140px));
+  height: 100%;
   display: flex;
   flex-direction: column;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--dt-text);
-  background: transparent;
 }
 
 .dt-inner {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--dt-bg);
-  border: 1px solid transparent;
-  border-radius: 14px;
-  padding: 10px 10px 0;
-  gap: 10px;
+  border: 1px solid var(--dt-border);
+  border-radius: 16px;
+  padding: 18px;
+  gap: 14px;
 }
 
 .dt-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .dt-search {
   flex: 1;
-  height: 38px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: 1px solid var(--dt-border);
   font-size: 14px;
-  color: var(--dt-text);
   background: #fff;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
-}
-
-.dt-search::placeholder {
-  color: #9b9a97;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .dt-search:focus {
   outline: none;
-  border-color: rgba(35, 131, 226, 0.5);
-  box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.14);
+  border-color: var(--dt-primary);
+  box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
 }
 
 #hot-container {
   flex: 1;
   min-height: 360px;
+  height: calc(100vh - 320px);
+  max-height: 680px;
   border: 1px solid var(--dt-border);
   border-radius: 12px;
   overflow: hidden;
   background: var(--dt-surface);
 }
 
-.handsontable th,
+.handsontable th {
+  background: var(--dt-surface) !important;
+  color: var(--dt-muted) !important;
+  font-weight: 600 !important;
+  border-right: 1px solid var(--dt-border) !important;
+}
+
 .handsontable td {
   border-right: 1px solid var(--dt-border) !important;
   border-bottom: 1px solid var(--dt-border) !important;
-}
-
-.handsontable th {
-  background: #fff !important;
-  color: var(--dt-muted) !important;
-  font-weight: 500 !important;
-}
-
-.handsontable td {
   color: var(--dt-text) !important;
   font-size: 13px;
-  background: #fff !important;
 }
 
 .handsontable tr:nth-child(even) td {
-  background: #fff !important;
-}
-
-.handsontable tbody tr:hover td {
-  background: #f7f7f6 !important;
+  background: #fbfdff !important;
 }
 
 .dt-img-thumb {
@@ -118,7 +107,7 @@
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  background: #eef6ff;
+  background: #f1f5f9;
   color: var(--dt-primary);
   font-weight: 700;
   font-size: 14px;
@@ -126,21 +115,19 @@
 }
 
 .handsontable .currentRow td,
-.handsontable td.area,
-.handsontable td.current {
+.handsontable td.area {
   background: var(--dt-highlight) !important;
 }
 
 .handsontable thead th {
   position: relative;
   overflow: visible !important;
-  padding: 5px 8px !important;
+  padding: 4px 8px !important;
   background: #fff !important;
   z-index: 30 !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-  color: var(--dt-muted) !important;
-  text-transform: none;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--dt-text) !important;
 }
 
 .handsontable thead th .relative {
@@ -153,7 +140,7 @@
 .handsontable thead th .htDropdownMenuButton {
   position: absolute;
   top: 50%;
-  right: 2px;
+  right: 1px;
   width: 16px;
   height: 16px;
   margin: 0;
@@ -163,14 +150,8 @@
   transform: translateY(-50%);
   z-index: 40;
   pointer-events: auto;
-  opacity: .7;
-  background: #fff;
-  border-radius: 4px;
-}
-
-.handsontable thead th:hover .htDropdownMenuButton {
   opacity: 1;
-  background: #f5f5f4;
+  background: #fff;
 }
 
 .handsontable thead th .colHeader {
@@ -182,8 +163,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 14px;
+  padding-right: 12px;
   color: inherit;
+}
+
+.handsontable .ht_master .wtHolder {
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: #c3ccdd #f4f7fc;
 }
 
 .handsontable .ht_master .wtHolder::-webkit-scrollbar {
@@ -192,19 +181,22 @@
 }
 
 .handsontable .ht_master .wtHolder::-webkit-scrollbar-thumb {
-  background: #d9d9d6;
+  background: #c3ccdd;
   border-radius: 999px;
+  border: 2px solid #f4f7fc;
+}
+
+.handsontable .ht_master .wtHolder::-webkit-scrollbar-track {
+  background: #f4f7fc;
 }
 
 .dt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 36px;
-  padding: 0 2px;
-  border-top: 1px solid transparent;
-  font-size: 12px;
-  color: #9b9a97;
+  padding-top: 10px;
+  border-top: 1px solid var(--dt-border);
+  font-size: 13px;
 }
 
 </style>
