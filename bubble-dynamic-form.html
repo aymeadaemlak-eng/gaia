@@ -2579,6 +2579,7 @@
         formActions.style.display = "none";
       }
       const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
+      traceAutosave("apply-version-visibility", collectInlineEditDiagnostics({ isEditUiActive }));
       if (rootElement) {
         rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
@@ -2656,10 +2657,47 @@
       return hasStage || hasAll;
     }
 
+    function collectInlineEditDiagnostics(extra = {}) {
+      const payload = readEditModePayloadSources();
+      const startSignal = readStartSignalValue();
+      const editingRaw = window.BUBBLE_INPUTS?.editing;
+      let editingSignal = null;
+      if (editingRaw === true || editingRaw === 1) editingSignal = true;
+      else if (editingRaw === false || editingRaw === 0) editingSignal = false;
+      else {
+        const text = String(editingRaw ?? "").trim().toLowerCase();
+        if (text === "true" || text === "1") editingSignal = true;
+        else if (text === "false" || text === "0") editingSignal = false;
+      }
+      const uniqueId = readCurrentUniqueId();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      const mode = String(state.config?.mode || "").trim().toLowerCase();
+      const hasConfigFields = Array.isArray(state.config?.fields) ? state.config.fields.length : 0;
+      return {
+        startSignal,
+        editingSignal,
+        rawEditingInput: window.BUBBLE_INPUTS?.editing,
+        isEditPanelOpen,
+        canOpenInlineEditPanel: Boolean(startSignal && uniqueId && (hasStage || hasAll)),
+        uniqueId,
+        hasStagePayload: hasStage,
+        hasAllPayload: hasAll,
+        stagePayloadCount: hasStage ? payload.stageGroups.length : 0,
+        allPayloadCount: hasAll ? payload.allFields.length : 0,
+        configMode: mode,
+        configFieldCount: hasConfigFields,
+        editModePayloadLoaded,
+        ...extra
+      };
+    }
+
     function updateInlineEditToggleUi() {
       if (!toggleInlineEditBtn) return;
       const canOpen = canOpenInlineEditPanel();
+      traceAutosave("inline-toggle-ui", collectInlineEditDiagnostics({ canOpen }));
       if (!canOpen && isEditPanelOpen) {
+        traceAutosave("inline-toggle-ui-force-close", collectInlineEditDiagnostics({ reason: "cannot-open-now" }));
         isEditPanelOpen = false;
         applyVersionVisibility();
       }
@@ -2670,9 +2708,11 @@
 
     function setInlineEditPanelOpen(nextOpen) {
       const desired = Boolean(nextOpen);
+      traceAutosave("inline-toggle-click", collectInlineEditDiagnostics({ desired }));
       const inputs = window.BUBBLE_INPUTS || (window.BUBBLE_INPUTS = {});
       inputs.editing = desired ? true : null;
       isEditPanelOpen = desired;
+      traceAutosave("inline-toggle-applied-editing", collectInlineEditDiagnostics({ desired }));
       if (isEditPanelOpen) {
         hasEnteredInlineEditPanel = true;
         hasEnteredEditSession = true;
@@ -4635,6 +4675,10 @@ function renderSubmitOutputs(payload) {
       const text = String(editingValue ?? "").trim().toLowerCase();
       if (text === "true" || text === "1") return true;
       if (text === "false" || text === "0") return false;
+      const maybeNull = editingValue === null || editingValue === undefined || text === "";
+      if (maybeNull) {
+        traceAutosave("editing-signal-null", collectInlineEditDiagnostics({ editingValue }));
+      }
       return null;
     }
 
@@ -5548,6 +5592,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function applyEditModePayloadIfReady(forceEditMode = false) {
+      traceAutosave("edit-payload-check", collectInlineEditDiagnostics({ forceEditMode }));
       if (!IS_EDITING_MODE && !forceEditMode && !isEditPanelOpen) return false;
       const payload = readEditModePayloadSources();
       const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
