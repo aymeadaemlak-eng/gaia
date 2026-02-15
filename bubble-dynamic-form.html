@@ -464,6 +464,13 @@
 #bdf-root .field-control.invalid {
       border-color: rgba(224, 90, 90, 0.55);
       box-shadow: none;
+      background: rgba(224, 90, 90, 0.06);
+    }
+
+#bdf-root .field-control.invalid .field-input,
+#bdf-root .field-control.invalid select,
+#bdf-root .field-control.invalid textarea {
+      color: #b42318;
     }
 
 #bdf-root .field-input,
@@ -4271,6 +4278,20 @@ function renderSubmitOutputs(payload) {
       return hasPredictedData && hasAiUsage ? "Stage complated/HITL" : "Stage complated";
     }
 
+    function isValidEmailAddress(value) {
+      const email = String(value || "").trim();
+      if (!email) return false;
+      if (email.length > 254) return false;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return false;
+      const [localPart, domainPart] = email.split("@");
+      if (!localPart || !domainPart) return false;
+      if (localPart.startsWith(".") || localPart.endsWith(".")) return false;
+      if (domainPart.startsWith(".") || domainPart.endsWith(".")) return false;
+      if (localPart.includes("..") || domainPart.includes("..")) return false;
+      if (!domainPart.includes(".")) return false;
+      return true;
+    }
+
     function validateField(field, value) {
       if (isFieldRequired(field) && isEmptyValue(value)) {
         if (field.type === "boolean") {
@@ -4279,7 +4300,7 @@ function renderSubmitOutputs(payload) {
         return "Bu alan zorunlu.";
       }
       if (field.type === "email" && value) {
-        if (!String(value).includes("@")) return "Geçerli bir e-posta girin.";
+        if (!isValidEmailAddress(value)) return "Geçerli bir e-posta girin.";
       }
       if (field.type === "phone" && value) {
         if (!/\d{10,}/.test(String(value).replace(/\D/g, ""))) return "Telefon formatı hatalı.";
@@ -6266,7 +6287,7 @@ function renderSubmitOutputs(payload) {
             state.touched[field.key] = true;
             let value = event.target.value;
             if (field.type === "email" && value) {
-              value = value.toLowerCase();
+              value = value.trim().toLowerCase();
               event.target.value = value;
             }
             if (field.type === "phone" && value && field.ui?.autoTrPrefix) {
@@ -7273,16 +7294,22 @@ function renderSubmitOutputs(payload) {
       }
       const error = state.errors[field.key] || "";
       errorText.textContent = error;
-      if (error) {
-        control.classList.add("invalid");
-      } else {
-        control.classList.remove("invalid");
+      const hasError = Boolean(error);
+      control.classList.toggle("invalid", hasError);
+      const fieldRef = state.fieldRefs?.[field.key];
+      if (fieldRef?.wrapper) {
+        fieldRef.wrapper.classList.toggle("invalid", hasError);
+      }
+      const inputRef = fieldRef?.inputEl;
+      if (inputRef && inputRef.setAttribute) {
+        inputRef.setAttribute("aria-invalid", hasError ? "true" : "false");
       }
       updateSubmitState(state.config);
     }
 
     function updateSubmitState(config) {
       console.info(`[updateSubmitState:start] ${JSON.stringify({ fieldCount: (config.fields || []).length })}`);
+      const validationSummary = { missingRequired: 0, invalid: 0 };
       const isValid = (config.fields || []).every((field) => {
         let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
@@ -7291,23 +7318,26 @@ function renderSubmitOutputs(payload) {
             validationValue = ["__file_selected__"];
           }
         }
-        if (isFieldRequired(field)) {
-          const fieldOk = !isEmptyValue(validationValue);
-          if (!fieldOk) {
-            console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
-          }
-          return fieldOk;
+        const error = validateField(field, validationValue);
+        if (!error) return true;
+
+        if (isFieldRequired(field) && isEmptyValue(validationValue)) {
+          validationSummary.missingRequired += 1;
+          console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
+        } else {
+          validationSummary.invalid += 1;
+          console.info(`[updateSubmitState:invalid] ${JSON.stringify({ fieldKey: field.key, label: field.label, error })}`);
         }
-        return true;
+        return false;
       });
       if (config.requiredPolicy === "strict") {
         submitBtn.disabled = !isValid;
-        submitBtn.title = isValid ? "" : "Zorunlu alanları doldurun";
+        submitBtn.title = isValid ? "" : "Zorunlu alanları doldurun veya hatalı alanları düzeltin";
       } else {
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
-      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy })}`);
+      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy, validationSummary })}`);
     }
 
     function focusFirstInvalid() {
