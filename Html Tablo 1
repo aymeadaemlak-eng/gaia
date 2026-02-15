@@ -51,16 +51,23 @@
   gap: 12px;
 }
 
-#dynamic-table-wrapper .dt-top-controls {
+#dynamic-table-wrapper .dt-top-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+#dynamic-table-wrapper .dt-top-right {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
-  width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 #dynamic-table-wrapper .dt-search {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   padding: 10px 14px;
   border-radius: 12px;
@@ -68,6 +75,29 @@
   font-size: 14px;
   background: #fff;
   transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+#dynamic-table-wrapper .dt-action-btn {
+  border: 1px solid var(--dt-border);
+  background: #fff;
+  color: var(--dt-text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+#dynamic-table-wrapper .dt-action-btn:hover {
+  border-color: var(--dt-primary);
+}
+
+#dynamic-table-wrapper .dt-action-btn:focus-visible {
+  outline: none;
+  border-color: var(--dt-primary);
+  box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
 }
 
 #dynamic-table-wrapper .dt-search:focus {
@@ -205,9 +235,15 @@
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
     <div class="dt-top">
-      <div class="dt-top-controls">
+      <div class="dt-top-left">
         <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+      </div>
+      <div class="dt-top-right">
         <span id="selection-count" class="dt-selection-chip">Öğe seçilmedi</span>
+        <button id="dt-btn-create" class="dt-action-btn" type="button">Create</button>
+        <button id="dt-btn-delete" class="dt-action-btn" type="button">Delete</button>
+        <button id="dt-btn-import" class="dt-action-btn" type="button">Import</button>
+        <button id="dt-btn-export" class="dt-action-btn" type="button">Export</button>
       </div>
     </div>
     <div id="hot-container"></div>
@@ -237,6 +273,10 @@
     container: document.getElementById('hot-container'),
     search: document.getElementById('dt-search'),
     selectionText: document.getElementById('selection-count'),
+    createButton: document.getElementById('dt-btn-create'),
+    deleteButton: document.getElementById('dt-btn-delete'),
+    importButton: document.getElementById('dt-btn-import'),
+    exportButton: document.getElementById('dt-btn-export'),
     totals: document.getElementById('footer-totals')
   };
 
@@ -810,6 +850,39 @@
     return ids;
   }
 
+  function create() {
+    if (typeof window.bubble_fn_create === 'function') {
+      window.bubble_fn_create();
+    }
+  }
+
+  function importData() {
+    if (typeof window.bubble_fn_import === 'function') {
+      window.bubble_fn_import();
+    }
+  }
+
+  function exportData() {
+    if (typeof window.bubble_fn_export === 'function') {
+      window.bubble_fn_export();
+    }
+  }
+
+  function attachActionButtons() {
+    if (els.createButton) {
+      els.createButton.addEventListener('click', create);
+    }
+    if (els.deleteButton) {
+      els.deleteButton.addEventListener('click', deleteSelected);
+    }
+    if (els.importButton) {
+      els.importButton.addEventListener('click', importData);
+    }
+    if (els.exportButton) {
+      els.exportButton.addEventListener('click', exportData);
+    }
+  }
+
   window.dynamicTable = {
     setTableData,
     refreshTable,
@@ -818,6 +891,9 @@
     start,
     edit,
     save,
+    create,
+    import: importData,
+    export: exportData,
     delete: deleteSelected
   };
 
@@ -828,8 +904,12 @@
   window.start = start;
   window.edit = edit;
   window.save = save;
+  window.create = create;
+  window.importData = importData;
+  window.exportData = exportData;
   window.deleteSelected = deleteSelected;
 
+  attachActionButtons();
   autoInitialize();
 })();
 </script>
