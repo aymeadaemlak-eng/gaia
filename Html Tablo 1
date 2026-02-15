@@ -584,6 +584,21 @@
     els.container.dataset.doubleClickAttached = 'true';
   }
 
+  function getAdaptiveTableHeight() {
+    const containerHeight = els.container ? els.container.clientHeight : 0;
+    const rowCount = Array.isArray(state.displayRows) ? state.displayRows.length : 0;
+    const headerHeight = 34;
+    const rowHeight = 24;
+    const scrollbarReserve = 14;
+    const contentHeight = headerHeight + (rowCount * rowHeight) + scrollbarReserve;
+
+    if (containerHeight > 0) {
+      return Math.max(260, Math.min(containerHeight, contentHeight));
+    }
+
+    return Math.max(260, contentHeight);
+  }
+
   function mountHandsontable() {
     if (!els.container) {
       console.warn('Handsontable container missing');
@@ -615,7 +630,7 @@
       },
       colHeaders: state.columns.map(col => col.header),
       rowHeaders: true,
-      height: '100%',
+      height: getAdaptiveTableHeight(),
       width: '100%',
       manualColumnResize: true,
       manualColumnMove: false,
@@ -681,7 +696,7 @@
     if (!els.wrapper || els.wrapper.dataset.resizeAttached === 'true') return;
     window.addEventListener('resize', () => {
       if (!state.hot) return;
-      state.hot.updateSettings({ height: '100%' });
+      state.hot.updateSettings({ height: getAdaptiveTableHeight() });
     });
     els.wrapper.dataset.resizeAttached = 'true';
   }
