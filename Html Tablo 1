@@ -24,7 +24,8 @@
 
 #dynamic-table-wrapper {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -32,13 +33,14 @@
 }
 
 #dynamic-table-wrapper .dt-inner {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--dt-bg);
   border: 0px solid var(--dt-border);
   border-radius: 0px;
-  padding: 0px;
+  padding: 0px 0px 8px;
   gap: 14px;
 }
 
@@ -91,12 +93,24 @@
 }
 
 #dynamic-table-wrapper #hot-container {
-  flex: 1;
-  min-height: 360px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   border: 1px solid var(--dt-border);
   border-radius: 12px;
   overflow: hidden;
   background: var(--dt-surface);
+}
+
+#dynamic-table-wrapper #hot-container > .handsontable,
+#dynamic-table-wrapper #hot-container > div {
+  height: 100% !important;
+}
+
+#dynamic-table-wrapper #hot-container .wtHolder,
+#dynamic-table-wrapper #hot-container .wtHider,
+#dynamic-table-wrapper #hot-container .wtSpreader {
+  min-height: 100%;
 }
 
 #dynamic-table-wrapper .handsontable th {
@@ -578,18 +592,6 @@
     els.container.dataset.doubleClickAttached = 'true';
   }
 
-  function calculateHeight() {
-    const viewport = window.innerHeight || 800;
-    const containerHeight = els.container ? els.container.clientHeight : 0;
-    if (containerHeight > 0) {
-      return Math.max(420, containerHeight);
-    }
-
-    const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
-    const reservedSpace = 84;
-    return Math.max(420, Math.min(wrapperHeight - reservedSpace, viewport - 150));
-  }
-
   function mountHandsontable() {
     if (!els.container) {
       console.warn('Handsontable container missing');
@@ -621,7 +623,7 @@
       },
       colHeaders: state.columns.map(col => col.header),
       rowHeaders: true,
-      height: calculateHeight(),
+      height: '100%',
       width: '100%',
       manualColumnResize: true,
       manualColumnMove: false,
@@ -687,7 +689,7 @@
     if (!els.wrapper || els.wrapper.dataset.resizeAttached === 'true') return;
     window.addEventListener('resize', () => {
       if (!state.hot) return;
-      state.hot.updateSettings({ height: calculateHeight() });
+      state.hot.updateSettings({ height: '100%' });
     });
     els.wrapper.dataset.resizeAttached = 'true';
   }
