@@ -4770,15 +4770,26 @@ function renderSubmitOutputs(payload) {
       isFormSaving = true;
       activeSubmitAttemptId += 1;
       const submitAttemptId = activeSubmitAttemptId;
+      const resolvedModeHint = modeHint || (autosave ? lastChangedMode : "");
       armSubmitLockTimeout({ submitAttemptId, trigger, autosave });
+      traceAutosave("runSubmitFlow:lock-armed", collectEditContextSnapshot({
+        autosave,
+        forceSubmit,
+        trigger,
+        submitAttemptId,
+        resolvedModeHint,
+        startSignal: readStartSignalValue(),
+        pendingStartCloseAutosave: Boolean(pendingStartCloseAutosave)
+      }));
       if (autosave) {
         triggeredActionUniqueId = "";
       }
 
-      ensureTaskStartTimestamp();
-      validateAll();
-      const firstInvalidKey = focusFirstInvalid();
-      const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
+      try {
+        ensureTaskStartTimestamp();
+        validateAll();
+        const firstInvalidKey = focusFirstInvalid();
+        const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
       if (invalidCount > 0) {
         summaryBox.style.display = "block";
         summaryBox.textContent = `${invalidCount} alan eksik veya hatalı.`;
@@ -4787,8 +4798,7 @@ function renderSubmitOutputs(payload) {
       }
 
       const exportPayload = buildExportJson();
-      const submitModeHint = modeHint || (autosave ? lastChangedMode : "");
-      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: submitModeHint });
+      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
       traceAutosave("runSubmitFlow:payload-built", {
         trigger,
         output1: submitOutputsPayload.output1,
@@ -4847,6 +4857,18 @@ function renderSubmitOutputs(payload) {
       }
 
       hasPendingUniqueIdSubmit = false;
+      } catch (error) {
+        traceAutosave("runSubmitFlow:pre-submit-failed", collectEditContextSnapshot({
+          autosave,
+          forceSubmit,
+          trigger,
+          submitAttemptId,
+          resolvedModeHint,
+          error: error?.message || String(error)
+        }));
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
+        console.error("submit preflight failed", error);
+      }
     }
 
     function shouldResetAfterSubmit({ autosave }) {
@@ -7017,7 +7039,7 @@ function renderSubmitOutputs(payload) {
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field='${firstInvalid}']`);
+      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field="${CSS.escape(firstInvalid)}"]`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -7044,7 +7066,7 @@ function renderSubmitOutputs(payload) {
         }
         state.errors[field.key] = validateField(field, validationValue);
         state.validMap[field.key] = !state.errors[field.key];
-        const control = qs(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
+        const control = qs(`#error-${CSS.escape(field.key)}`)?.parentElement?.querySelector(".field-control");
         if (control) updateError(control, field);
       });
     }
