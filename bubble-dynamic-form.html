@@ -1737,7 +1737,6 @@
           </div>
           <div class="edit-mode-toolbar">
             <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
-            <button id="inlineEditCollapseBtn" type="button" class="ghost" style="display:none;">Show less</button>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editModeLoading" class="edit-mode-loading">
@@ -2259,7 +2258,6 @@
     const formEl = byId("dynamicForm");
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
-    const inlineEditCollapseBtn = byId("inlineEditCollapseBtn");
     const editSearchEmpty = byId("editSearchEmpty");
     const editProgressWrap = byId("editProgressWrap");
     const editProgressTrack = byId("editProgressTrack");
@@ -2596,9 +2594,6 @@
       }
       if (formEl) {
         formEl.style.display = isEditUiActive ? "none" : "grid";
-      }
-      if (inlineEditCollapseBtn) {
-        inlineEditCollapseBtn.style.display = isEditPanelOpen && !IS_EDITING_MODE ? "inline-flex" : "none";
       }
       if (!isEditUiActive) {
         if (editQuickSection) editQuickSection.style.display = "none";
@@ -7372,13 +7367,6 @@ function renderSubmitOutputs(payload) {
         toggleInlineEditBtn.addEventListener("click", (event) => {
           event.preventDefault();
           setInlineEditPanelOpen(!isEditPanelOpen);
-        });
-      }
-
-      if (inlineEditCollapseBtn) {
-        inlineEditCollapseBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          setInlineEditPanelOpen(false);
         });
       }
 
