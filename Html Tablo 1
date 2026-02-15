@@ -336,19 +336,26 @@
   justify-content: center;
   transform: translateY(-50%);
   z-index: 40;
-  pointer-events: none;
-  opacity: 0;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
   background: transparent;
   transition: opacity 180ms ease;
 }
 
+#dynamic-table-wrapper .handsontable thead th:not(:hover) .htDropdownMenuButton {
+  display: none !important;
+}
+
 #dynamic-table-wrapper .handsontable thead th:hover .htDropdownMenuButton {
-  opacity: 0.55;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 0.55 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .colHeader {
