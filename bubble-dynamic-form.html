@@ -1975,6 +1975,7 @@
     let changedFieldKeys = new Set();
     let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
+    let lastChangedMode = "";
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2746,12 +2747,14 @@ function renderSubmitOutputs(payload) {
       console.info("submitOutputs rendered", safePayload);
     }
 
-    function buildSubmitOutputsPayload({ autosave = false } = {}) {
+    function buildSubmitOutputsPayload({ autosave = false, modeHint = "" } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = (IS_EDITING_MODE && autosave) ? "Edit" : (hasBubbleData ? "Process" : "Create");
+      const effectiveMode = String(modeHint || "").trim().toLowerCase();
+      const isEditAutosave = autosave && (effectiveMode === "edit" || (effectiveMode !== "normal" && isEditingModeNow()));
+      const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -3182,10 +3185,19 @@ function renderSubmitOutputs(payload) {
     }
 
 
+    function isEditingModeNow() {
+      const editingValue = window.BUBBLE_INPUTS?.editing;
+      if (editingValue === true || editingValue === 1) return true;
+      const text = String(editingValue ?? "").trim().toLowerCase();
+      if (text === "true" || text === "1") return true;
+      return IS_EDITING_MODE;
+    }
+
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
       dirtyFields[fieldKey] = true;
+      lastChangedMode = isEditingModeNow() ? "edit" : "normal";
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -3215,6 +3227,7 @@ function renderSubmitOutputs(payload) {
     function clearChangedTracking() {
       clearChangedFieldKeys();
       clearChangedFieldValues();
+      lastChangedMode = "";
       clearPersistedStartChangedTracking();
       persistStartFlowState();
     }
@@ -4551,7 +4564,8 @@ function renderSubmitOutputs(payload) {
         runSubmitFlow({
           autosave: pending.autosave,
           forceSubmit: pending.forceSubmit,
-          trigger: `${pending.trigger}:after-config-ready`
+          trigger: `${pending.trigger}:after-config-ready`,
+          modeHint: pending.modeHint || ""
         });
       }, 0);
     }
@@ -4595,13 +4609,14 @@ function renderSubmitOutputs(payload) {
       return warningMessage;
     }
 
-    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
+    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
       if (!state.config || !Array.isArray(state.config.fields)) {
         pendingSubmitUntilConfigReady = {
           autosave,
           forceSubmit,
           trigger,
+          modeHint,
           requestedAt: new Date().toISOString()
         };
         logStartState("submit-skipped-no-config", {
@@ -4636,7 +4651,8 @@ function renderSubmitOutputs(payload) {
       }
 
       const exportPayload = buildExportJson();
-      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
+      const submitModeHint = modeHint || (autosave ? lastChangedMode : "");
+      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: submitModeHint });
       traceAutosave("runSubmitFlow:payload-built", {
         trigger,
         output1: submitOutputsPayload.output1,
