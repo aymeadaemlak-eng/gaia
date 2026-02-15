@@ -258,13 +258,13 @@
   background: #fff !important;
   color: var(--dt-muted) !important;
   font-weight: 600 !important;
-  border-right: 0 !important;
+  border-right: 1px solid #eef2f6 !important;
   border-bottom: 1px solid #e5e7eb !important;
 }
 
 #dynamic-table-wrapper .handsontable td {
-  border-right: 0 !important;
-  border-bottom: 0 !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
   background: #fff !important;
   color: var(--dt-text) !important;
   font-size: 13px;
