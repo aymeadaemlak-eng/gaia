@@ -168,11 +168,13 @@
 }
 
 .handsontable .ht_master .wtHolder {
-  overflow: auto !important;
+  overflow-x: scroll !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
   scrollbar-color: #c3ccdd #f4f7fc;
+  padding-bottom: 2px;
 }
 
 .handsontable .ht_master .wtHolder::-webkit-scrollbar {
@@ -623,6 +625,7 @@
       rowHeaders: true,
       height: calculateHeight(),
       width: '100%',
+      stretchH: 'none',
       manualColumnResize: true,
       manualColumnMove: false,
       manualRowMove: false,
