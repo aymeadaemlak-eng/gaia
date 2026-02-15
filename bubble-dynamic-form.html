@@ -1986,6 +1986,7 @@
     let hasChangesSinceStartOpen = false;
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
+    let pendingStartCloseAutosave = null;
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
@@ -4629,6 +4630,39 @@ function renderSubmitOutputs(payload) {
       );
     }
 
+    function queueStartCloseAutosave(trigger, reason = "") {
+      pendingStartCloseAutosave = {
+        trigger,
+        reason,
+        queuedAt: new Date().toISOString(),
+        modeHint: getSubmitModeHint()
+      };
+      traceAutosave("queue-start-close-autosave", {
+        trigger,
+        reason,
+        modeHint: pendingStartCloseAutosave.modeHint
+      });
+    }
+
+    function flushQueuedStartCloseAutosave() {
+      if (!pendingStartCloseAutosave) return;
+      if (isFormSaving) return;
+      const pending = pendingStartCloseAutosave;
+      pendingStartCloseAutosave = null;
+      traceAutosave("flush-start-close-autosave", {
+        trigger: pending.trigger,
+        reason: pending.reason,
+        queuedAt: pending.queuedAt,
+        modeHint: pending.modeHint
+      });
+      runSubmitFlow({
+        autosave: true,
+        forceSubmit: true,
+        trigger: `${pending.trigger}:deferred`,
+        modeHint: pending.modeHint || getSubmitModeHint()
+      });
+    }
+
     function handleBeforeUnload(event) {
       const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
       logStartState("beforeunload", {
@@ -4729,6 +4763,7 @@ function renderSubmitOutputs(payload) {
         isFormSaving = false;
         isFormDirty = true;
         flushPendingIncomingAfterSubmit();
+        flushQueuedStartCloseAutosave();
         console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
         return;
       }
@@ -4745,11 +4780,13 @@ function renderSubmitOutputs(payload) {
                 resetFormAfterSuccessfulSubmit();
               }
               flushPendingIncomingAfterSubmit();
+              flushQueuedStartCloseAutosave();
             })
             .catch((error) => {
               isFormSaving = false;
               isFormDirty = true;
               flushPendingIncomingAfterSubmit();
+              flushQueuedStartCloseAutosave();
               console.error("submit failed", error);
             });
           return;
@@ -4760,10 +4797,12 @@ function renderSubmitOutputs(payload) {
           resetFormAfterSuccessfulSubmit();
         }
         flushPendingIncomingAfterSubmit();
+        flushQueuedStartCloseAutosave();
       } catch (error) {
         isFormSaving = false;
         isFormDirty = true;
         flushPendingIncomingAfterSubmit();
+        flushQueuedStartCloseAutosave();
         console.error("submit failed", error);
       }
 
@@ -4917,19 +4956,24 @@ function renderSubmitOutputs(payload) {
           persistStartFlowState();
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close", modeHint: getSubmitModeHint() });
         } else {
+          const skipReason = isFormSaving ? "saving-lock" : "no-detected-change";
           logStartState("close-skip-submit", {
-            reason: isFormSaving ? "saving-lock" : "no-detected-change",
+            reason: skipReason,
             hasChangesSinceStartOpen,
             isFormDirty,
             changedKeyCount: changedFieldKeys.size,
             startOpenSequence
           });
+          if (skipReason === "saving-lock" && hasDirtyIndicators) {
+            queueStartCloseAutosave("start-close", "saving-lock");
+          }
         }
         persistStartFlowState();
         return;
       }
 
       lastStartParamWasTrue = Boolean(startSignal);
+      if (!startSignal) flushQueuedStartCloseAutosave();
       persistStartFlowState();
     }
 
