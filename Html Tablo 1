@@ -45,28 +45,7 @@
 }
 
 #dynamic-table-wrapper .dt-header {
-  padding: 1px 0 0;
-}
-
-#dynamic-table-wrapper .dt-title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 1px 0 4px;
-}
-
-#dynamic-table-wrapper .dt-title {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--dt-text);
-}
-
-#dynamic-table-wrapper .dt-title-context {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--dt-muted);
-  opacity: 0.65;
+  padding: 0;
 }
 
 #dynamic-table-wrapper .dt-toolbar {
@@ -255,21 +234,37 @@
 }
 
 #dynamic-table-wrapper .handsontable th {
-  background: var(--dt-surface) !important;
-  color: var(--dt-muted) !important;
-  font-weight: 600 !important;
-  border-right: 1px solid var(--dt-border) !important;
+  background: #fff !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid #eaecef !important;
 }
 
 #dynamic-table-wrapper .handsontable td {
-  border-right: 1px solid var(--dt-border) !important;
-  border-bottom: 1px solid var(--dt-border) !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
+  background: #fff !important;
   color: var(--dt-text) !important;
   font-size: 13px;
+  padding: 8px 12px !important;
+  height: 34px !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  transition: background-color 180ms ease;
 }
 
-#dynamic-table-wrapper .handsontable tr:nth-child(even) td {
-  background: #fbfdff !important;
+#dynamic-table-wrapper .handsontable td > * {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody tr:hover td {
+  background: #f7f8fa !important;
 }
 
 #dynamic-table-wrapper .dt-img-thumb { display: none; }
@@ -290,18 +285,36 @@
 
 #dynamic-table-wrapper .handsontable .currentRow td,
 #dynamic-table-wrapper .handsontable td.area {
-  background: var(--dt-highlight) !important;
+  background: #eaecef !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
+}
+
+#dynamic-table-wrapper .handsontable .currentRow:hover td,
+#dynamic-table-wrapper .handsontable tr:hover td.area {
+  background: #e6e9ed !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th {
   position: relative;
   overflow: visible !important;
-  padding: 4px 8px !important;
+  min-height: 40px !important;
+  padding: 10px 12px !important;
   background: #fff !important;
   z-index: 30 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   font-size: 13px !important;
-  color: var(--dt-text) !important;
+  color: #374151 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 1px solid #eaecef !important;
+  transition: background-color 180ms ease;
+}
+
+#dynamic-table-wrapper .handsontable thead th:hover {
+  background: rgba(0, 0, 0, 0.03) !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .relative {
@@ -323,9 +336,26 @@
   justify-content: center;
   transform: translateY(-50%);
   z-index: 40;
-  pointer-events: auto;
-  opacity: 1;
-  background: #fff;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: transparent;
+  transition: opacity 180ms ease;
+}
+
+#dynamic-table-wrapper .handsontable thead th:not(:hover) .htDropdownMenuButton {
+  display: none !important;
+}
+
+#dynamic-table-wrapper .handsontable thead th:hover .htDropdownMenuButton {
+  display: flex !important;
+  opacity: 0.55 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:hover {
+  opacity: 1 !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .colHeader {
@@ -337,7 +367,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px;
+  padding-right: 20px;
   color: inherit;
 }
 
@@ -347,10 +377,6 @@
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
     <div class="dt-header">
-      <div class="dt-title-row">
-        <h1 class="dt-title">Dosyalar</h1>
-        <span class="dt-title-context">/ Süreç</span>
-      </div>
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
           <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala">⇅</button>
@@ -360,6 +386,7 @@
           </div>
         </div>
         <div class="dt-toolbar-right">
+          <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="İndir"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
           <div class="dt-action-group">
             <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2"></circle></svg></button>
             <div id="dt-settings-menu" class="dt-settings-menu" role="menu" aria-hidden="true">
@@ -408,6 +435,7 @@
     searchWrap: document.getElementById('dt-search-wrap'),
     searchToggleButton: document.getElementById('dt-btn-search'),
     sortButton: document.getElementById('dt-btn-sort'),
+    downloadButton: document.getElementById('dt-btn-download'),
     settingsButton: document.getElementById('dt-btn-settings'),
     settingsMenu: document.getElementById('dt-settings-menu'),
     settingsImportButton: document.getElementById('dt-settings-import'),
@@ -1064,6 +1092,10 @@
           openSearch();
         }
       });
+    }
+
+    if (els.downloadButton) {
+      els.downloadButton.addEventListener('click', exportData);
     }
 
     if (els.sortButton) {
