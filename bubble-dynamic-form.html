@@ -36,6 +36,9 @@
         ]
       },
       start: false,
+      editing: true,
+      EDITING_STAGE_GROUPS_JSON: [],
+      EDITING_ALL_FIELDS_JSON: [],
       VERSION: true
     };
   </script>
@@ -249,6 +252,15 @@
 
     #bdf-root .field-row.is-file-field .control-stack {
       justify-items: stretch;
+    }
+
+#bdf-root.editing-mode #formContainer {
+      width: 100%;
+      max-width: unset;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
     }
 
 #bdf-root #formContainer {
@@ -1052,7 +1064,288 @@
       color: var(--warning);
       font-size: 0.78rem;
       font-weight: 600;
-    }
+}
+
+#bdf-root .edit-mode-root {
+  display: none;
+  gap: 12px;
+  width: 100%;
+  max-width: unset;
+  flex: 1 1 auto;
+}
+
+#bdf-root .edit-mode-toolbar {
+  display: grid;
+  gap: 8px;
+}
+
+#bdf-root .edit-search-empty {
+  display: none;
+  padding: 8px 10px;
+  border: 1px dashed #f1b5b5;
+  background: #fff7f7;
+  color: #b42318;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#bdf-root .edit-progress-wrap {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+#bdf-root .edit-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+}
+
+#bdf-root .edit-progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-progress-step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: #fff;
+}
+
+#bdf-root .edit-progress-step.completed .edit-progress-step-dot {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+#bdf-root .edit-progress-step.active {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-progress-step.active .edit-progress-step-dot {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
+}
+
+#bdf-root .edit-progress-step.upcoming {
+  opacity: 0.6;
+}
+
+#bdf-root .edit-progress-sep {
+  color: #cbd5e1;
+}
+
+#bdf-root .edit-progress-toggle {
+  justify-self: start;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+#bdf-root .edit-quick-list {
+
+  display: grid;
+  gap: 8px;
+}
+
+#bdf-root .edit-quick-item {
+  min-height: 38px;
+  border: 1px solid #dbe3f2;
+  background: #f8fbff;
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#bdf-root .edit-quick-item:hover {
+  border-color: #93c5fd;
+}
+
+#bdf-root .edit-quick-item-label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-quick-item-value {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#bdf-root .edit-quick-empty {
+  color: #64748b;
+  font-size: 13px;
+  padding: 6px 2px;
+}
+
+#bdf-root .edit-stage-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+#bdf-root .edit-stage-tabs {
+  display: grid;
+  gap: 6px;
+}
+
+#bdf-root .edit-stage-tab {
+  text-align: left;
+  border: 1px solid #d7deeb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  min-height: 40px;
+}
+
+#bdf-root .edit-stage-tab.active {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+#bdf-root .edit-stage-tab.completed {
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+#bdf-root .edit-stage-tab.upcoming {
+  opacity: 0.9;
+  color: #475569;
+}
+
+#bdf-root .edit-stage-panel {
+  border: 1px solid #e6ebf5;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 320px;
+  background: #fff;
+}
+
+#bdf-root .edit-stage-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#bdf-root .edit-stage-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #dbe3f2;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+#bdf-root .edit-stage-chip.completed {
+  color: #1e40af;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+#bdf-root .edit-stage-chip.active {
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+#bdf-root .edit-stage-chip.upcoming {
+  opacity: 0.7;
+}
+
+#bdf-root .edit-stage-status {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 6px;
+  min-height: 18px;
+}
+#bdf-root .edit-stage-fields-skeleton {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#bdf-root .edit-stage-fields-skeleton .line {
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #eef3fb 0%, #e5edf9 50%, #eef3fb 100%);
+  background-size: 220% 100%;
+  animation: bdf-loading 1.2s ease-in-out infinite;
+}
+
+#bdf-root .edit-mode-loading {
+  display: none;
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid #e2e8f3;
+  border-radius: 12px;
+  background: #fafcff;
+  padding: 14px;
+  gap: 12px;
+  align-content: start;
+}
+
+#bdf-root .edit-mode-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d9e2f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: bdf-spin 0.8s linear infinite;
+}
+
+#bdf-root .edit-skeleton-row {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eef3fb 0%, #e5edf9 50%, #eef3fb 100%);
+  background-size: 220% 100%;
+  animation: bdf-loading 1.2s ease-in-out infinite;
+}
+
+#bdf-root .edit-skeleton-row.head { width: 40%; height: 18px; }
+#bdf-root .edit-skeleton-row.wide { width: 100%; }
+#bdf-root .edit-skeleton-row.mid { width: 72%; }
+
+@keyframes bdf-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -20% 0; }
+}
+
+@keyframes bdf-spin {
+  to { transform: rotate(360deg); }
+}
 #bdf-root .summary-box {
       border: 1px solid rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.06);
@@ -1239,6 +1532,19 @@
 #bdf-root .field-row.is-amount-field .control-stack {
         max-width: min(100%, 248px);
       }
+
+#bdf-root .edit-stage-layout {
+        grid-template-columns: 1fr;
+      }
+
+#bdf-root .edit-stage-tabs {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+
+#bdf-root .edit-progress-track {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
 
     @media (max-width: 360px) {
@@ -1361,7 +1667,7 @@
         </div>
       </div>
       <div class="inline-row" style="margin-top: 12px;">
-        <button id="loadSample">Örnek Schema Yükle</button>
+        <button id="loadSample">Schema Yükle</button>
         <button class="secondary" id="renderForm">Render Et</button>
         <button class="ghost" id="clearConsole">Console Temizle</button>
       </div>
@@ -1381,7 +1687,7 @@
         <h2>Dynamic Form</h2>
         <div class="debug-toolbar" id="debugToolbar">
         <div class="toolbar-actions">
-          <button type="button" id="loadColumnJson">Column Yükle (Örnek)</button>
+          <button type="button" id="loadColumnJson">Column Yükle</button>
           <button type="button" class="secondary" id="loadHumanJson">Human JSON Yükle</button>
           <button type="button" class="secondary" id="loadPredictedJson">Predicted JSON Yükle</button>
           <button type="button" class="ghost" id="applyAiToEmpty">AI -> Boş Human Alanlara Uygula</button>
@@ -1400,7 +1706,7 @@
         </div>
         </div>
         <div id="columnWarning" class="debug-warning" style="display:none;">
-          Column JSON yüklenmedi. Debug toolbar üzerinden örnek yükleyin.
+          Column JSON yüklenmedi. Debug toolbar üzerinden yükleyin.
         </div>
       </section>
     </div>
@@ -1423,6 +1729,37 @@
           </div>
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
+        <div id="editModeRoot" class="edit-mode-root">
+          <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
+            <div id="editProgressTrack" class="edit-progress-track"></div>
+            <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
+          </div>
+          <div class="edit-mode-toolbar">
+            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+          </div>
+          <div id="editSearchEmpty" class="edit-search-empty"></div>
+          <div id="editModeLoading" class="edit-mode-loading">
+            <span class="edit-mode-spinner" aria-hidden="true"></span>
+            <span id="editModeLoadingText">Yükleniyor</span>
+            <div class="edit-skeleton-row head"></div>
+            <div class="edit-skeleton-row wide"></div>
+            <div class="edit-skeleton-row mid"></div>
+            <div class="edit-skeleton-row wide"></div>
+          </div>
+          <section id="editQuickSection" style="display:none;">
+            <h3 style="margin:4px 0 8px 0; font-size:14px;">Hızlı Giriş</h3>
+            <div id="editQuickFields" class="edit-quick-list"></div>
+          </section>
+          <div id="editStageLayout" class="edit-stage-layout" style="display:none;">
+            <div id="editStageTabs" class="edit-stage-tabs"></div>
+            <div id="editStagePanel" class="edit-stage-panel">
+              <h3 id="editStageHeading" style="margin:0 0 6px 0; font-size:14px;"></h3>
+              <div id="editStageMeta" class="edit-stage-meta"><span></span><span id="editStageChip" class="edit-stage-chip"></span></div>
+              <div id="editStageStatus" class="edit-stage-status"></div>
+              <div id="editStageFields" class="grid" style="gap:8px;"></div>
+            </div>
+          </div>
+        </div>
         <form id="dynamicForm" class="grid"></form>
         <div class="inline-row" id="formActions" style="margin-top: 12px;">
           <button id="submitBtn" type="submit">Submit</button>
@@ -1462,6 +1799,7 @@
       BDF.DEBUG_MODE = IS_DEBUG_MODE && !IS_VERSION_MODE;
 
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
+      const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true || INITIAL_INPUTS?.editing === 1 || String(INITIAL_INPUTS?.editing || "").trim().toLowerCase() === "true";
 
     let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
     let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
@@ -1635,7 +1973,11 @@
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
+    let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
+    let lastChangedMode = "";
+    let hadEditModeDirtyChange = false;
+    let hasEnteredEditSession = IS_EDITING_MODE;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -1644,6 +1986,12 @@
     let hasChangesSinceStartOpen = false;
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
+    let pendingStartCloseAutosave = null;
+    let hasSeenEditingSignal = false;
+    let lastEditingParamWasTrue = false;
+    let activeSubmitAttemptId = 0;
+    let submitLockTimeoutHandle = null;
+    const SUBMIT_LOCK_TIMEOUT_MS = 15000;
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
@@ -1903,6 +2251,22 @@
     const showInlineHelpInput = byId("showInlineHelp");
     const autoFocusInvalidInput = byId("autoFocusInvalid");
     const formEl = byId("dynamicForm");
+    const editModeRoot = byId("editModeRoot");
+    const editSearchInput = byId("editSearchInput");
+    const editSearchEmpty = byId("editSearchEmpty");
+    const editProgressWrap = byId("editProgressWrap");
+    const editProgressTrack = byId("editProgressTrack");
+    const editProgressToggle = byId("editProgressToggle");
+    const editModeLoading = byId("editModeLoading");
+    const editModeLoadingText = byId("editModeLoadingText");
+    const editQuickSection = byId("editQuickSection");
+    const editQuickFields = byId("editQuickFields");
+    const editStageLayout = byId("editStageLayout");
+    const editStageTabs = byId("editStageTabs");
+    const editStageHeading = byId("editStageHeading");
+    const editStageChip = byId("editStageChip");
+    const editStageStatus = byId("editStageStatus");
+    const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
     const summaryBox = byId("summaryBox");
@@ -1987,6 +2351,22 @@
       columnData: null
     };
 
+    let editModeSearchTerm = "";
+    let editModeDebounceTimer = null;
+    let editModeStageOrder = [];
+    let editModeStageMeta = [];
+    let editSelectedStage = "";
+    let editProcessActiveStageKey = "";
+    let editProcessShowAll = false;
+    let editModePayloadLoaded = false;
+    let lastEditModePayloadSignature = "";
+    let editModePayloadPollTimer = null;
+    let editModeSlowPollTimer = null;
+    let editModeStablePollCount = 0;
+    let editCachedPayloadRawSignature = "";
+    let editCachedPayloadParsed = { stageGroups: null, allFields: null };
+    let editStageRenderSeq = 0;
+
     const defaultSchema = {
       fields: [
         {
@@ -2003,7 +2383,7 @@
           label: "E-posta",
           type: "email",
           required: true,
-          placeholder: "ornek@mail.com"
+          placeholder: "mail@example.com"
         },
         {
           key: "phone",
@@ -2190,8 +2570,27 @@
       if (columnWarning) {
         columnWarning.style.display = debugVisible && !columnJson ? "block" : "none";
       }
-    if (formActions) {
+      if (formActions) {
         formActions.style.display = "none";
+      }
+      if (rootElement) {
+        rootElement.classList.toggle("editing-mode", IS_EDITING_MODE);
+      }
+      if (editModeRoot) {
+        editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
+      }
+      if (IS_EDITING_MODE && !editModePayloadLoaded) {
+        setEditModeLoading(true, "Edit verileri yükleniyor…");
+      }
+      if (actionBar) {
+        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
+      }
+      if (formEl) {
+        formEl.style.display = IS_EDITING_MODE ? "none" : "grid";
+      }
+      if (!IS_EDITING_MODE) {
+        if (editQuickSection) editQuickSection.style.display = "none";
+        if (editStageLayout) editStageLayout.style.display = "none";
       }
       if (formContainer) {
         formContainer.style.display = "block";
@@ -2356,12 +2755,17 @@ function renderSubmitOutputs(payload) {
       console.info("submitOutputs rendered", safePayload);
     }
 
-    function buildSubmitOutputsPayload({ autosave = false } = {}) {
+    function buildSubmitOutputsPayload({ autosave = false, modeHint = "" } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
-      const actionType = hasBubbleData ? "Process" : "Create";
+      const effectiveMode = String(modeHint || "").trim().toLowerCase();
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || isEditingModeNow() || configMode === "edit";
+      const isEditAutosave = autosave && (effectiveMode === "edit" || editContextActive);
+      const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
+      traceAutosave("build-submit-outputs-decision", collectEditContextSnapshot({ autosave, modeHint: effectiveMode, editContextActive, isEditAutosave, actionType, hasBubbleData }));
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -2386,6 +2790,15 @@ function renderSubmitOutputs(payload) {
       } catch (error) {
         return null;
       }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function getCurrentDateTime(config) {
@@ -2708,6 +3121,21 @@ function renderSubmitOutputs(payload) {
       return normalized;
     }
 
+    function sanitizeNumberTyping(raw, { integer = false } = {}) {
+      if (raw === null || raw === undefined) return "";
+      let value = String(raw).replace(/[^0-9,.-]/g, "");
+      value = value.replace(/(?!^)-/g, "");
+      const sepRegex = integer ? /[.,]/g : /[.,]/g;
+      let seenSep = false;
+      value = value.replace(sepRegex, (match) => {
+        if (integer) return "";
+        if (seenSep) return "";
+        seenSep = true;
+        return match;
+      });
+      return value;
+    }
+
     function formatNumberDisplay(value, options = {}) {
       if (value === "" || value === null || value === undefined || Number.isNaN(Number(value))) return "";
       const numeric = Number(value);
@@ -2783,9 +3211,32 @@ function renderSubmitOutputs(payload) {
     }
 
 
+    function isEditingModeNow() {
+      const editingValue = window.BUBBLE_INPUTS?.editing;
+      if (editingValue === true || editingValue === 1) {
+        hasEnteredEditSession = true;
+        return true;
+      }
+      const text = String(editingValue ?? "").trim().toLowerCase();
+      if (text === "true" || text === "1") {
+        hasEnteredEditSession = true;
+        return true;
+      }
+      if (IS_EDITING_MODE) {
+        hasEnteredEditSession = true;
+        return true;
+      }
+      return false;
+    }
+
     function markFieldAsChanged(fieldKey) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
+      dirtyFields[fieldKey] = true;
+      const editingNow = isEditingModeNow();
+      lastChangedMode = editingNow ? "edit" : "normal";
+      if (editingNow || IS_EDITING_MODE) hadEditModeDirtyChange = true;
+      traceAutosave("mark-field-changed", collectEditContextSnapshot({ fieldKey, editingNow }));
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -2798,6 +3249,7 @@ function renderSubmitOutputs(payload) {
 
     function clearChangedFieldKeys() {
       changedFieldKeys = new Set();
+      dirtyFields = {};
     }
 
 
@@ -2814,6 +3266,8 @@ function renderSubmitOutputs(payload) {
     function clearChangedTracking() {
       clearChangedFieldKeys();
       clearChangedFieldValues();
+      lastChangedMode = "";
+      hadEditModeDirtyChange = false;
       clearPersistedStartChangedTracking();
       persistStartFlowState();
     }
@@ -3307,6 +3761,10 @@ function renderSubmitOutputs(payload) {
       Object.keys(state.fieldRefs).forEach((fieldKey) => {
         updateFieldDisplayValue(fieldKey);
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+        if (formEl) formEl.style.display = "none";
+      }
       updateToolbarStatus();
       if (state.config) {
         updateSubmitState(state.config);
@@ -3459,12 +3917,24 @@ function renderSubmitOutputs(payload) {
       };
     }
 
+    function getEditModeBaselinePayload() {
+      const bubbleData = readCurrentBubbleDataObject() || {};
+      const configInitial = state.config?.initialValues || {};
+      return { ...configInitial, ...bubbleData };
+    }
+
     function captureInitialSnapshot() {
       if (initialSnapshot || !state.config) return;
-      initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
+      const baselinePayload = IS_EDITING_MODE ? getEditModeBaselinePayload() : MANUAL_DATA_JSON;
+      initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
     function applyColumnJson(columnData) {
+      traceAutosave("apply-column-json", {
+        isEditingMode: IS_EDITING_MODE,
+        hasColumnData: Boolean(columnData),
+        columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
+      });
       columnJson = columnData;
       if (!columnJson) {
         columnWarning.style.display = "block";
@@ -3519,31 +3989,47 @@ function renderSubmitOutputs(payload) {
       return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
     }
 
-    function buildKeyValueListFromSources() {
-      const entries = [];
-      const base = initialSnapshot || {};
+    function getUniqueChangedFieldDescriptors() {
+      const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+        if (!field?.key) return;
+        if (byKey.has(field.key)) return;
+        byKey.set(field.key, field);
+      });
+      const uniqueFields = Array.from(byKey.values());
+      if (IS_EDITING_MODE) return uniqueFields;
+      return uniqueFields.filter((field) => changedFieldKeys.has(field.key));
+    }
+
+    function buildKeyValueListFromSources() {
+      const entriesByKey = new Map();
+      const base = initialSnapshot || {};
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const rememberedValue = getRememberedChangedValue(field.key);
         const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
         const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
-        entries.push(`"${jsonKey}": ${JSON.stringify(safeValue)}`);
+        entriesByKey.set(jsonKey, `"${jsonKey}": ${JSON.stringify(safeValue)}`);
       });
-      traceAutosave("buildKeyValueListFromSources", { entriesCount: entries.length, entries });
+      const entries = Array.from(entriesByKey.values());
+      traceAutosave("buildKeyValueListFromSources", {
+        entriesCount: entries.length,
+        uniqueKeyCount: entriesByKey.size,
+        entries
+      });
       return entries;
     }
 
     function buildAddedCustomFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -3555,41 +4041,41 @@ function renderSubmitOutputs(payload) {
           const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
           const hasAnyCurrentFileAction = currentUrls.length > 0 || hasNewFiles;
           if (initialUrls.length === 0 && hasAnyCurrentFileAction) {
-            entries.push(field.label || jsonKey);
+            entriesByKey.set(jsonKey, field.label || jsonKey);
           }
           return;
         }
 
         if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
-          entries.push(field.label || jsonKey);
+          entriesByKey.set(jsonKey, field.label || jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function buildDeletedFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
-          entries.push(jsonKey);
+          entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function buildModifiedFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -3603,17 +4089,17 @@ function renderSubmitOutputs(payload) {
           const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
           const hasUrlChange = JSON.stringify(initialUrls) !== JSON.stringify(currentUrls);
           if (hasUrlChange || hasNewFiles) {
-            entries.push(jsonKey);
+            entriesByKey.set(jsonKey, jsonKey);
           }
           return;
         }
 
         if (isEmptyValue(initialValue) || isEmptyValue(currentValue)) return;
         if (areValuesDifferent(initialValue, currentValue)) {
-          entries.push(jsonKey);
+          entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function toStringArray(value) {
@@ -3873,7 +4359,7 @@ function renderSubmitOutputs(payload) {
         loadJsonSafeToForm("human", incomingBubbleData);
         initializeSourceByFieldFromAi();
         refreshAllFields();
-        initialSnapshot = buildBaselineSnapshot(incomingBubbleData);
+        initialSnapshot = buildBaselineSnapshot(IS_EDITING_MODE ? getEditModeBaselinePayload() : incomingBubbleData);
       }
       clearChangedTracking();
       isFormDirty = false;
@@ -3965,6 +4451,9 @@ function renderSubmitOutputs(payload) {
         window.sessionStorage.setItem(START_CHANGED_TRACKING_STORAGE_KEY, JSON.stringify({
           changedKeys: Array.from(changedFieldKeys || []),
           changedValues: Array.from((changedFieldValuesByKey || new Map()).entries()),
+          lastChangedMode,
+          hadEditModeDirtyChange,
+          hasEnteredEditSession,
           time: new Date().toISOString()
         }));
       } catch (error) {
@@ -3988,7 +4477,15 @@ function renderSubmitOutputs(payload) {
         if (!parsed || typeof parsed !== "object") return null;
         const keys = Array.isArray(parsed.changedKeys) ? parsed.changedKeys.filter(Boolean) : [];
         const changedValues = new Map(Array.isArray(parsed.changedValues) ? parsed.changedValues : []);
-        return { keys, changedValues, time: parsed.time || "" };
+        const persistedLastChangedMode = String(parsed.lastChangedMode || "").trim().toLowerCase();
+        return {
+          keys,
+          changedValues,
+          lastChangedMode: persistedLastChangedMode === "edit" ? "edit" : (persistedLastChangedMode === "normal" ? "normal" : ""),
+          hadEditModeDirtyChange: Boolean(parsed.hadEditModeDirtyChange),
+          hasEnteredEditSession: Boolean(parsed.hasEnteredEditSession),
+          time: parsed.time || ""
+        };
       } catch (error) {
         return null;
       }
@@ -4078,6 +4575,17 @@ function renderSubmitOutputs(payload) {
       return readStartSignalSnapshot().value;
     }
 
+    function readEditingSignalValue() {
+      const editingValue = window.BUBBLE_INPUTS?.editing;
+      if (editingValue === true || editingValue === 1) return true;
+      if (editingValue === false || editingValue === 0) return false;
+      const text = String(editingValue ?? "").trim().toLowerCase();
+      if (text === "true" || text === "1") return true;
+      if (text === "false" || text === "0") return false;
+      return null;
+    }
+
+
     function traceAutosave(label, payload = {}) {
       const snapshot = {
         label,
@@ -4094,6 +4602,12 @@ function renderSubmitOutputs(payload) {
         startSignal: readStartSignalValue(),
         lastStartParamWasTrue,
         hasSeenStartSignal,
+        initialEditingMode: IS_EDITING_MODE,
+        liveEditingInput: window.BUBBLE_INPUTS?.editing,
+        configMode: String(state.config?.mode || ""),
+        lastChangedMode,
+        hadEditModeDirtyChange,
+        hasEnteredEditSession,
         ...payload
       };
       console.info(`[BDF_AUTOSAVE_TRACE] ${JSON.stringify(snapshot)}`);
@@ -4139,7 +4653,8 @@ function renderSubmitOutputs(payload) {
         runSubmitFlow({
           autosave: pending.autosave,
           forceSubmit: pending.forceSubmit,
-          trigger: `${pending.trigger}:after-config-ready`
+          trigger: `${pending.trigger}:after-config-ready`,
+          modeHint: pending.modeHint || ""
         });
       }, 0);
     }
@@ -4162,6 +4677,94 @@ function renderSubmitOutputs(payload) {
       );
     }
 
+    function queueStartCloseAutosave(trigger, reason = "") {
+      pendingStartCloseAutosave = {
+        trigger,
+        reason,
+        queuedAt: new Date().toISOString(),
+        modeHint: getSubmitModeHint()
+      };
+      traceAutosave("queue-start-close-autosave", {
+        trigger,
+        reason,
+        modeHint: pendingStartCloseAutosave.modeHint
+      });
+    }
+
+    function flushQueuedStartCloseAutosave() {
+      if (!pendingStartCloseAutosave) return;
+      if (isFormSaving) {
+        traceAutosave("flush-start-close-autosave-skipped", {
+          reason: "saving-lock",
+          trigger: pendingStartCloseAutosave.trigger,
+          queuedAt: pendingStartCloseAutosave.queuedAt
+        });
+        return;
+      }
+      const pending = pendingStartCloseAutosave;
+      pendingStartCloseAutosave = null;
+      traceAutosave("flush-start-close-autosave", {
+        trigger: pending.trigger,
+        reason: pending.reason,
+        queuedAt: pending.queuedAt,
+        modeHint: pending.modeHint
+      });
+      runSubmitFlow({
+        autosave: true,
+        forceSubmit: true,
+        trigger: `${pending.trigger}:deferred`,
+        modeHint: pending.modeHint || getSubmitModeHint()
+      });
+    }
+
+
+    function clearSubmitLockTimeout() {
+      if (submitLockTimeoutHandle) {
+        clearTimeout(submitLockTimeoutHandle);
+        submitLockTimeoutHandle = null;
+      }
+    }
+
+    function armSubmitLockTimeout({ submitAttemptId, trigger, autosave }) {
+      clearSubmitLockTimeout();
+      submitLockTimeoutHandle = setTimeout(() => {
+        if (!isFormSaving || activeSubmitAttemptId !== submitAttemptId) return;
+        traceAutosave("submit-lock-timeout", {
+          trigger,
+          autosave,
+          submitAttemptId,
+          timeoutMs: SUBMIT_LOCK_TIMEOUT_MS,
+          hasPendingStartCloseAutosave: Boolean(pendingStartCloseAutosave)
+        });
+        activeSubmitAttemptId = 0;
+        isFormSaving = false;
+        isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
+        flushQueuedStartCloseAutosave();
+      }, SUBMIT_LOCK_TIMEOUT_MS);
+    }
+
+    function settleSubmitAttempt({ submitAttemptId, autosave, success }) {
+      if (activeSubmitAttemptId !== submitAttemptId) {
+        traceAutosave("submit-attempt-stale-settle", {
+          submitAttemptId,
+          activeSubmitAttemptId,
+          autosave,
+          success
+        });
+        return false;
+      }
+      clearSubmitLockTimeout();
+      activeSubmitAttemptId = 0;
+      isFormSaving = false;
+      isFormDirty = !success;
+      if (success && shouldResetAfterSubmit({ autosave })) {
+        resetFormAfterSuccessfulSubmit();
+      }
+      flushPendingIncomingAfterSubmit();
+      flushQueuedStartCloseAutosave();
+      return true;
+    }
     function handleBeforeUnload(event) {
       const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
       logStartState("beforeunload", {
@@ -4170,7 +4773,7 @@ function renderSubmitOutputs(payload) {
         changedKeyCount: changedFieldKeys.size
       });
       if (shouldSubmitOnUnload) {
-        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload" });
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload", modeHint: getSubmitModeHint() });
       }
       persistStartFlowState();
       if (!isFormDirty) return undefined;
@@ -4183,13 +4786,14 @@ function renderSubmitOutputs(payload) {
       return warningMessage;
     }
 
-    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown" } = {}) {
+    function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
       if (!state.config || !Array.isArray(state.config.fields)) {
         pendingSubmitUntilConfigReady = {
           autosave,
           forceSubmit,
           trigger,
+          modeHint,
           requestedAt: new Date().toISOString()
         };
         logStartState("submit-skipped-no-config", {
@@ -4208,14 +4812,28 @@ function renderSubmitOutputs(payload) {
       }
 
       isFormSaving = true;
+      activeSubmitAttemptId += 1;
+      const submitAttemptId = activeSubmitAttemptId;
+      const resolvedModeHint = modeHint || (autosave ? lastChangedMode : "");
+      armSubmitLockTimeout({ submitAttemptId, trigger, autosave });
+      traceAutosave("runSubmitFlow:lock-armed", collectEditContextSnapshot({
+        autosave,
+        forceSubmit,
+        trigger,
+        submitAttemptId,
+        resolvedModeHint,
+        startSignal: readStartSignalValue(),
+        pendingStartCloseAutosave: Boolean(pendingStartCloseAutosave)
+      }));
       if (autosave) {
         triggeredActionUniqueId = "";
       }
 
-      ensureTaskStartTimestamp();
-      validateAll();
-      const firstInvalidKey = focusFirstInvalid();
-      const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
+      try {
+        ensureTaskStartTimestamp();
+        validateAll();
+        const firstInvalidKey = focusFirstInvalid();
+        const invalidCount = Object.values(state.validMap).filter((val) => !val).length;
       if (invalidCount > 0) {
         summaryBox.style.display = "block";
         summaryBox.textContent = `${invalidCount} alan eksik veya hatalı.`;
@@ -4224,7 +4842,7 @@ function renderSubmitOutputs(payload) {
       }
 
       const exportPayload = buildExportJson();
-      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave });
+      const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
       traceAutosave("runSubmitFlow:payload-built", {
         trigger,
         output1: submitOutputsPayload.output1,
@@ -4257,9 +4875,7 @@ function renderSubmitOutputs(payload) {
 
       const fn = getSubmitFn();
       if (!fn) {
-        isFormSaving = false;
-        isFormDirty = true;
-        flushPendingIncomingAfterSubmit();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
         return;
       }
@@ -4270,55 +4886,117 @@ function renderSubmitOutputs(payload) {
         if (maybePromise && typeof maybePromise.then === "function") {
           maybePromise
             .then(() => {
-              isFormSaving = false;
-              isFormDirty = false;
-              if (shouldResetAfterSubmit({ autosave })) {
-                resetFormAfterSuccessfulSubmit();
-              }
-              flushPendingIncomingAfterSubmit();
+              settleSubmitAttempt({ submitAttemptId, autosave, success: true });
             })
             .catch((error) => {
-              isFormSaving = false;
-              isFormDirty = true;
-              flushPendingIncomingAfterSubmit();
+              settleSubmitAttempt({ submitAttemptId, autosave, success: false });
               console.error("submit failed", error);
             });
           return;
         }
-        isFormSaving = false;
-        isFormDirty = false;
-        if (shouldResetAfterSubmit({ autosave })) {
-          resetFormAfterSuccessfulSubmit();
-        }
-        flushPendingIncomingAfterSubmit();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: true });
       } catch (error) {
-        isFormSaving = false;
-        isFormDirty = true;
-        flushPendingIncomingAfterSubmit();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.error("submit failed", error);
       }
 
       hasPendingUniqueIdSubmit = false;
+      } catch (error) {
+        traceAutosave("runSubmitFlow:pre-submit-failed", collectEditContextSnapshot({
+          autosave,
+          forceSubmit,
+          trigger,
+          submitAttemptId,
+          resolvedModeHint,
+          error: error?.message || String(error)
+        }));
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
+        console.error("submit preflight failed", error);
+      }
     }
 
     function shouldResetAfterSubmit({ autosave }) {
-      if (autosave) return false;
-      const mode = String(state.config?.mode || "").trim().toLowerCase();
-      return mode === "create";
+      return true;
     }
 
     function resetFormAfterSuccessfulSubmit() {
+      hasChangesSinceStartOpen = false;
+      pendingStartCloseAutosave = null;
+      pendingSubmitUntilConfigReady = null;
       resetAllStores();
+      persistStartFlowState();
       summaryBox.style.display = "none";
     }
 
-    function maybeRunAutosaveOnStartClose() {
+    function collectEditContextSnapshot(extra = {}) {
+      return {
+        initialEditingMode: IS_EDITING_MODE,
+        liveEditingInput: window.BUBBLE_INPUTS?.editing,
+        configMode: String(state.config?.mode || "").trim().toLowerCase(),
+        lastChangedMode,
+        hadEditModeDirtyChange,
+        hasEnteredEditSession,
+        ...extra
+      };
+    }
+
+    function getSubmitModeHint() {
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const liveEditingNow = isEditingModeNow();
+      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || liveEditingNow || configMode === "edit";
+      const modeHint = editContextActive ? "edit" : "normal";
+      traceAutosave("submit-mode-hint", collectEditContextSnapshot({ modeHint, liveEditingNow, editContextActive }));
+      return modeHint;
+    }
+
+
+    function isEditAutosaveContextActive() {
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const editingSignal = readEditingSignalValue();
+      return Boolean(
+        IS_EDITING_MODE
+        || editingSignal === true
+        || configMode === "edit"
+        || lastChangedMode === "edit"
+        || hadEditModeDirtyChange
+        || hasEnteredEditSession
+      );
+    }
+
+    function maybeRunAutosaveOnStartClose(trigger = "unknown") {
       const now = Date.now();
+      const startSignal = readStartSignalValue();
+      const editingSignal = readEditingSignalValue();
+      const editContextActive = isEditAutosaveContextActive();
       if (!isFormDirty) return;
       if (isFormSaving) return;
+
+      const shouldDeferForSessionOpen = editContextActive
+        ? editingSignal === true
+        : startSignal === true;
+
+      if (shouldDeferForSessionOpen) {
+        traceAutosave("autosave-deferred-session-open", {
+          trigger,
+          startSignal,
+          editingSignal,
+          editContextActive,
+          gate: editContextActive ? "editing" : "start",
+          reason: editContextActive ? "editing-true" : "start-true"
+        });
+        return;
+      }
+
       if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
       lastAutosaveAt = now;
-      runSubmitFlow({ autosave: true });
+      traceAutosave("autosave-allowed-session-gate", {
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        gate: editContextActive ? "editing" : "start"
+      });
+      runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
 
     function evaluateUniqueIdTransition() {
@@ -4364,8 +5042,8 @@ function renderSubmitOutputs(payload) {
           uniqueIdChanged,
           pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
         });
-        maybeRunAutosaveOnStartClose();
-        runSubmitFlow({ autosave: false, forceSubmit: true });
+        maybeRunAutosaveOnStartClose("uniqueid-dirty-current-first:prefetch");
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "uniqueid-dirty-current-first", modeHint: getSubmitModeHint() });
         if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
           MANUAL_COLUMN_JSON = incomingColumnJson;
         }
@@ -4425,22 +5103,54 @@ function renderSubmitOutputs(payload) {
           });
           hasChangesSinceStartOpen = false;
           persistStartFlowState();
-          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close" });
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close", modeHint: getSubmitModeHint() });
         } else {
+          const skipReason = isFormSaving ? "saving-lock" : "no-detected-change";
           logStartState("close-skip-submit", {
-            reason: isFormSaving ? "saving-lock" : "no-detected-change",
+            reason: skipReason,
             hasChangesSinceStartOpen,
             isFormDirty,
             changedKeyCount: changedFieldKeys.size,
             startOpenSequence
           });
+          if (skipReason === "saving-lock" && hasDirtyIndicators) {
+            queueStartCloseAutosave("start-close", "saving-lock");
+          }
         }
         persistStartFlowState();
         return;
       }
 
       lastStartParamWasTrue = Boolean(startSignal);
+      if (!startSignal) flushQueuedStartCloseAutosave();
       persistStartFlowState();
+    }
+
+    function evaluateEditingSignalTransition() {
+      const editingSignal = readEditingSignalValue();
+      if (editingSignal === null) return;
+
+      if (!hasSeenEditingSignal) {
+        hasSeenEditingSignal = true;
+        lastEditingParamWasTrue = Boolean(editingSignal);
+        traceAutosave("editing-signal-seed", { editingSignal });
+        return;
+      }
+
+      if (lastEditingParamWasTrue && !editingSignal) {
+        const hasDirtyIndicators = isFormDirty || changedFieldKeys.size > 0 || hasChangesSinceStartOpen;
+        const shouldSubmit = hasDirtyIndicators && !isFormSaving;
+        traceAutosave("editing-close", { editingSignal, hasDirtyIndicators, shouldSubmit });
+        lastEditingParamWasTrue = false;
+        if (shouldSubmit) {
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "editing-close", modeHint: getSubmitModeHint() });
+        } else if (hasDirtyIndicators && isFormSaving) {
+          queueStartCloseAutosave("editing-close", "saving-lock");
+        }
+        return;
+      }
+
+      lastEditingParamWasTrue = Boolean(editingSignal);
     }
 
     function initAutosaveStartWatcher() {
@@ -4448,11 +5158,24 @@ function renderSubmitOutputs(payload) {
       const persistedChangedTracking = readPersistedStartChangedTracking();
       const currentDataSignature = readCurrentBubbleDataSignature();
       const startSignal = readStartSignalValue();
+      const editingSignal = readEditingSignalValue();
       if (persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
         changedFieldKeys = new Set(persistedChangedTracking.keys);
         changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
           ? persistedChangedTracking.changedValues
           : new Map();
+        if (persistedChangedTracking.lastChangedMode) {
+          lastChangedMode = persistedChangedTracking.lastChangedMode;
+        }
+        hadEditModeDirtyChange = hadEditModeDirtyChange || Boolean(persistedChangedTracking.hadEditModeDirtyChange);
+        hasEnteredEditSession = hasEnteredEditSession || Boolean(persistedChangedTracking.hasEnteredEditSession) || lastChangedMode === "edit";
+        traceAutosave("hydrate-persisted-edit-context", collectEditContextSnapshot({
+          persistedAt: persistedChangedTracking.time || "",
+          persistedLastChangedMode: persistedChangedTracking.lastChangedMode || "",
+          persistedHadEditModeDirtyChange: Boolean(persistedChangedTracking.hadEditModeDirtyChange),
+          persistedHasEnteredEditSession: Boolean(persistedChangedTracking.hasEnteredEditSession),
+          changedKeyCount: changedFieldKeys.size
+        }));
         logStartState("hydrate-persisted-changed-tracking", {
           changedKeyCount: changedFieldKeys.size,
           persistedAt: persistedChangedTracking.time || ""
@@ -4461,6 +5184,11 @@ function renderSubmitOutputs(payload) {
       if (persistedStartFlowState) {
         startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
       }
+      if (editingSignal !== null) {
+        hasSeenEditingSignal = true;
+        lastEditingParamWasTrue = Boolean(editingSignal);
+      }
+
       if (startSignal !== null) {
         hasSeenStartSignal = true;
         lastStartParamWasTrue = Boolean(startSignal);
@@ -4470,7 +5198,10 @@ function renderSubmitOutputs(payload) {
         logStartState("seed", { startSignal, startOpenSequence });
 
         const wasOpenBeforeRemount = Boolean(persistedStartFlowState?.lastStartParamWasTrue);
-        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen);
+        const hasPersistedDirtyTracking = Boolean(persistedChangedTracking?.keys?.length)
+          || Boolean(persistedChangedTracking?.hadEditModeDirtyChange)
+          || Boolean(persistedChangedTracking?.changedValues?.size);
+        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking;
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
           hasChangesSinceStartOpen = false;
@@ -4482,9 +5213,19 @@ function renderSubmitOutputs(payload) {
           logStartState("remount-close-trigger-submit", {
             persistedStartFlowState,
             changedKeyCount: changedFieldKeys.size,
-            trigger: "start-close-remount"
+            trigger: "start-close-remount",
+            hadChangesBeforeRemount,
+            hasPersistedDirtyTracking
           });
-          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount" });
+          traceAutosave("remount-close-context", collectEditContextSnapshot({
+            trigger: "start-close-remount",
+            persistedLastStartParamWasTrue: Boolean(persistedStartFlowState?.lastStartParamWasTrue),
+            persistedHasChanges: Boolean(persistedStartFlowState?.hasChangesSinceStartOpen),
+            hasPersistedDirtyTracking,
+            hadChangesBeforeRemount,
+            changedKeyCount: changedFieldKeys.size
+          }));
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
         }
         persistStartFlowState();
       }
@@ -4497,6 +5238,7 @@ function renderSubmitOutputs(payload) {
         window.history.pushState = function pushStatePatched(...args) {
           const result = originalPushState(...args);
           evaluateStartSignalTransition();
+          evaluateEditingSignalTransition();
           return result;
         };
       }
@@ -4506,6 +5248,7 @@ function renderSubmitOutputs(payload) {
         window.history.replaceState = function replaceStatePatched(...args) {
           const result = originalReplaceState(...args);
           evaluateStartSignalTransition();
+          evaluateEditingSignalTransition();
           return result;
         };
       }
@@ -4513,7 +5256,10 @@ function renderSubmitOutputs(payload) {
       window.addEventListener("popstate", evaluateStartSignalTransition);
       window.addEventListener("hashchange", evaluateStartSignalTransition);
       window.addEventListener("beforeunload", handleBeforeUnload);
-      setInterval(evaluateStartSignalTransition, 300);
+      setInterval(() => {
+        evaluateStartSignalTransition();
+        evaluateEditingSignalTransition();
+      }, 300);
     }
 
     function debounceFormChange() {
@@ -4526,8 +5272,623 @@ function renderSubmitOutputs(payload) {
           validMap: state.validMap,
           isFormValid: Object.values(state.validMap).every(Boolean)
         });
+        if (IS_EDITING_MODE) {
+          maybeRunAutosaveOnStartClose("debounce-form-change");
+        }
       }, 500);
     }
+
+    function setEditModeLoading(isLoading, message = "") {
+      if (!editModeLoading) return;
+      editModeLoading.style.display = isLoading ? "grid" : "none";
+      if (editQuickSection) editQuickSection.style.display = isLoading ? "none" : "block";
+      if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
+      if (editProgressWrap) editProgressWrap.style.display = isLoading ? "none" : editProgressWrap.style.display;
+      if (editModeLoadingText && message) {
+        editModeLoadingText.textContent = message;
+      }
+    }
+
+    function parseIncomingJson(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!trimmed) return null;
+        try {
+          return JSON.parse(trimmed);
+        } catch (error) {
+          return null;
+        }
+      }
+      return rawValue;
+    }
+
+    function readEditModePayloadSources() {
+      const source = window.BUBBLE_INPUTS || {};
+      const stageRaw = source.editSchemaJson ?? source.editUiSchema ?? source.EDITING_STAGE_GROUPS_JSON ?? source.editingStageGroups ?? source.editing_stage_groups ?? null;
+      const allRaw = source.EDITING_ALL_FIELDS_JSON ?? source.editingAllFields ?? source.editing_all_fields ?? null;
+      const rawSignature = `${typeof stageRaw}:${String(stageRaw ?? "").slice(0, 50000)}||${typeof allRaw}:${String(allRaw ?? "").slice(0, 50000)}`;
+      if (rawSignature === editCachedPayloadRawSignature) {
+        return editCachedPayloadParsed;
+      }
+      const parsed = {
+        stageGroups: parseIncomingJson(stageRaw),
+        allFields: parseIncomingJson(allRaw)
+      };
+      editCachedPayloadRawSignature = rawSignature;
+      editCachedPayloadParsed = parsed;
+      return parsed;
+    }
+
+    function buildEditPayloadSignature(payload) {
+      try {
+        const stage = payload?.stageGroups || [];
+        const all = payload?.allFields || [];
+        return `${JSON.stringify(stage).length}:${JSON.stringify(all).length}`;
+      } catch (error) {
+        return `${Date.now()}`;
+      }
+    }
+
+    function getStageKey(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return `name:${normalizedName.toLocaleLowerCase("tr-TR")}`;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `order:${orderNumber}`;
+      return `fallback:${fallbackIndex}`;
+    }
+
+    function getStageLabel(name, order, fallbackIndex = 0) {
+      const normalizedName = String(name || "").trim();
+      if (normalizedName) return normalizedName;
+      const orderNumber = Number(order);
+      if (Number.isFinite(orderNumber)) return `Stage ${orderNumber}`;
+      return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function normalizeEditFieldItem(item, index, stageName = "", stageKey = "") {
+      const raw = item && typeof item === "object" ? item : { value: item };
+      const key = String(raw.id || raw.key || raw.fieldName || raw.name || raw.header || raw.label || `field_${index + 1}`).trim();
+      const label = String(raw.header || raw.label || raw.fieldName || raw.name || key).trim() || key;
+      const normalized = normalizeColumnType(raw.type || "text", raw.multiple || raw.allowMultiple);
+      const type = String(normalized.type || raw.type || "text").toLowerCase();
+      const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? raw.default ?? "";
+      const sourceOptions = Array.isArray(raw.source) ? raw.source : [];
+      const options = Array.isArray(raw.options) ? raw.options : sourceOptions;
+      return {
+        key,
+        fieldName: key,
+        label,
+        type,
+        displayType: normalized.displayType || raw.type || "text",
+        required: normalizeStageType(raw.stageType || "optional") === "mandatory" || Boolean(raw.required),
+        stageType: raw.stageType || "optional",
+        allowMultiple: Boolean(raw.multiple || raw.allowMultiple),
+        readOnly: Boolean(raw.readOnly),
+        options: options.map((opt) => {
+          if (typeof opt === "object" && opt) {
+            const value = String(opt.value ?? opt.id ?? opt.label ?? "").trim();
+            const label = String(opt.label ?? opt.value ?? opt.id ?? "").trim();
+            return { value, label };
+          }
+          const text = String(opt ?? "").trim();
+          return { value: text, label: text };
+        }).filter((opt) => opt.value),
+        default: raw.default ?? "",
+        ui: raw.ui || {},
+        _stageName: stageName,
+        _stageKey: stageKey,
+        _initialValue: value
+      };
+    }
+
+    function buildConfigFromEditPayload(payload) {
+      const stageGroups = Array.isArray(payload?.stageGroups) ? payload.stageGroups : [];
+      const allFields = Array.isArray(payload?.allFields) ? payload.allFields : [];
+      const list = [];
+      editModeStageOrder = [];
+      editModeStageMeta = [];
+
+      if (stageGroups.length) {
+        const sortedGroups = [...stageGroups].sort((a, b) => Number(a?.stage?.order || 0) - Number(b?.stage?.order || 0));
+        sortedGroups.forEach((group, groupIndex) => {
+          const stageName = String(group?.stage?.name || "").trim();
+          const stageOrder = Number(group?.stage?.order);
+          const stageKey = getStageKey(stageName, stageOrder, groupIndex);
+          const stageLabel = getStageLabel(stageName, stageOrder, groupIndex);
+          const fields = Array.isArray(group?.fields) ? group.fields : [];
+          if (!fields.length) return;
+          const normalizedFields = [];
+          fields.forEach((field, index) => {
+            if (isInnerStageType(field?.stageType)) return;
+            normalizedFields.push(normalizeEditFieldItem(field, index, stageLabel, stageKey));
+          });
+          if (!normalizedFields.length) return;
+          editModeStageOrder.push(stageKey);
+          editModeStageMeta.push({ key: stageKey, name: stageName, order: Number.isFinite(stageOrder) ? stageOrder : null, label: stageLabel });
+          normalizedFields.forEach((field) => list.push(field));
+        });
+      }
+
+      if (allFields.length) {
+        const map = new Map(list.map((field) => [field.key, field]));
+        allFields.forEach((field, index) => {
+          if (isInnerStageType(field?.stageType)) return;
+          const normalized = normalizeEditFieldItem(field, index, "Ungrouped", "Ungrouped");
+          if (!map.has(normalized.key)) {
+            list.push(normalized);
+            map.set(normalized.key, normalized);
+          } else {
+            const existing = map.get(normalized.key);
+            if (isEmptyValue(existing?._initialValue) && !isEmptyValue(normalized._initialValue)) {
+              existing._initialValue = normalized._initialValue;
+            }
+          }
+        });
+      }
+      if (!list.length) return null;
+
+      const initialValues = {};
+      list.forEach((field) => {
+        initialValues[field.key] = field._initialValue;
+      });
+
+      return {
+        fields: list.map((field) => {
+          const next = {
+            ...field,
+            editStageName: field._stageName || "Ungrouped",
+            editStageKey: field._stageKey || "Ungrouped"
+          };
+          delete next._initialValue;
+          return next;
+        }),
+        currentDateTimeISO: defaultSchema.currentDateTimeISO,
+        locale: "tr-TR",
+        timezone: "Europe/Istanbul",
+        mode: "edit",
+        initialValues,
+        requiredPolicy: "soft",
+        showInlineHelp: false,
+        autoFocusFirstInvalid: false
+      };
+    }
+
+    function hydrateEditHumanDataFromBubble(config) {
+      const sourceObj = readCurrentBubbleDataObject() || {};
+      const fields = Array.isArray(config?.fields) ? config.fields : [];
+      if (!fields.length) return;
+      const indexMap = new Map();
+      fields.forEach((field) => {
+        const aliases = [field.key, field.fieldName, field.label]
+          .map((v) => String(v || "").trim())
+          .filter(Boolean);
+        aliases.forEach((alias) => {
+          if (!indexMap.has(alias)) indexMap.set(alias, field.key);
+          const lower = alias.toLocaleLowerCase("tr-TR");
+          if (!indexMap.has(lower)) indexMap.set(lower, field.key);
+        });
+      });
+
+      Object.entries(sourceObj).forEach(([rawKey, rawValue]) => {
+        const key = String(rawKey || "").trim();
+        if (!key) return;
+        const direct = indexMap.get(key) || indexMap.get(key.toLocaleLowerCase("tr-TR"));
+        if (!direct) return;
+        humanData[direct] = rawValue;
+        sourceByField[direct] = "human";
+      });
+    }
+
+    function applyEditModePayloadIfReady(forceEditMode = false) {
+      if (!IS_EDITING_MODE && !forceEditMode) return false;
+      const payload = readEditModePayloadSources();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      if (!hasStage && !hasAll) {
+        editModeStablePollCount = 0;
+        traceAutosave("edit-payload-waiting", { hasStage, hasAll });
+        setEditModeLoading(true, "Edit verileri bekleniyor…");
+        return false;
+      }
+
+      const signature = buildEditPayloadSignature(payload);
+      if (editModePayloadLoaded && signature === lastEditModePayloadSignature) {
+        editModeStablePollCount += 1;
+        traceAutosave("edit-payload-stable", { signature });
+        setEditModeLoading(false);
+        return true;
+      }
+
+      const config = buildConfigFromEditPayload(payload);
+      if (!config) {
+        editModeStablePollCount = 0;
+        traceAutosave("edit-payload-invalid", { signature });
+        setEditModeLoading(true, "Edit verisi çözümlenemedi…");
+        return false;
+      }
+
+      humanData = { ...(humanData || {}), ...(config.initialValues || {}) };
+      hydrateEditHumanDataFromBubble(config);
+      Object.keys(config.initialValues || {}).forEach((key) => {
+        if (!sourceByField[key]) sourceByField[key] = "human";
+      });
+      state.config = config;
+      columnJson = {
+        columns: config.fields.map((field) => ({
+          fieldName: field.fieldName || field.key,
+          header: field.label,
+          type: field.type,
+          stageType: field.stageType || "optional",
+          required: Boolean(field.required),
+          multiple: Boolean(field.allowMultiple),
+          ui: field.ui || {}
+        })),
+        mode: "edit",
+        currentDateTimeISO: config.currentDateTimeISO,
+        locale: config.locale,
+        timezone: config.timezone
+      };
+      lastEditModePayloadSignature = signature;
+      editModePayloadLoaded = true;
+      hasEnteredEditSession = true;
+      traceAutosave("edit-payload-applied", { signature, fieldCount: Array.isArray(config.fields) ? config.fields.length : 0 });
+      editModeStablePollCount = 0;
+      editProcessShowAll = false;
+      setEditModeLoading(false);
+      renderForm(config);
+      flushPendingSubmitAfterConfigReady();
+      return true;
+    }
+
+    function ensureEditModePayloadPolling(forceEditMode = false) {
+      if (!IS_EDITING_MODE && !forceEditMode) return;
+      const startFastPolling = () => {
+        if (editModeSlowPollTimer) {
+          clearInterval(editModeSlowPollTimer);
+          editModeSlowPollTimer = null;
+        }
+        if (editModePayloadPollTimer) return;
+        editModePayloadPollTimer = setInterval(() => {
+          applyEditModePayloadIfReady(forceEditMode);
+          if (editModeStablePollCount >= 8) {
+            clearInterval(editModePayloadPollTimer);
+            editModePayloadPollTimer = null;
+            editModeSlowPollTimer = setInterval(() => {
+              const before = lastEditModePayloadSignature;
+              const applied = applyEditModePayloadIfReady(forceEditMode);
+              const changed = before !== lastEditModePayloadSignature;
+              if (!applied || changed) {
+                if (editModeSlowPollTimer) {
+                  clearInterval(editModeSlowPollTimer);
+                  editModeSlowPollTimer = null;
+                }
+                startFastPolling();
+              }
+            }, 2500);
+          }
+        }, 300);
+      };
+      if (editModePayloadPollTimer || editModeSlowPollTimer) return;
+      startFastPolling();
+    }
+
+    function resolveActiveProcessStageKey(stageMeta) {
+      const dataObj = readCurrentBubbleDataObject() || {};
+      const rawStage = dataObj.stage;
+      if (rawStage === null || rawStage === undefined || rawStage === "") return "";
+      const stageText = String(rawStage).trim();
+      const stageTextLower = stageText.toLocaleLowerCase("tr-TR");
+
+      const byName = stageMeta.find((item) => String(item.name || "").trim().toLocaleLowerCase("tr-TR") === stageTextLower);
+      if (byName) return byName.key;
+
+      const numericValue = Number(rawStage);
+      if (Number.isFinite(numericValue)) {
+        const byOrder = stageMeta.find((item) => Number(item.order) === numericValue);
+        if (byOrder) return byOrder.key;
+      }
+      return "unknown";
+    }
+
+    function getProcessStageStatus(stageIndex, activeIndex) {
+      if (activeIndex < 0) return "upcoming";
+      if (stageIndex < activeIndex) return "completed";
+      if (stageIndex === activeIndex) return "active";
+      return "upcoming";
+    }
+
+    function getStageDisplayLabel(stageMetaByKey, stageKey, fallbackIndex = 0) {
+      if (String(stageKey) === "Ungrouped") return "Unassigned";
+      const meta = stageMetaByKey.get(stageKey) || null;
+      const label = String(meta?.label || meta?.name || "").trim();
+      if (label) return label;
+      const order = Number(meta?.order);
+      if (Number.isFinite(order)) return `Stage ${order}`;
+      return `Stage ${fallbackIndex + 1}`;
+    }
+
+    function isQuickEntryEligible(field) {
+      const type = String(field?.type || field?.displayType || "").toLocaleLowerCase("tr-TR").trim();
+      const blocked = ["file", "image", "multifile", "multiline", "textarea", "text (long)", "dropdown", "checkbox", "radio", "switch", "toggle"];
+      if (blocked.some((item) => type.includes(item))) return false;
+      return true;
+    }
+
+    function fuzzySimilarityScore(haystack, needle) {
+      if (!needle) return 0;
+      let matches = 0;
+      let cursor = 0;
+      for (let i = 0; i < haystack.length && cursor < needle.length; i += 1) {
+        if (haystack[i] === needle[cursor]) {
+          matches += 1;
+          cursor += 1;
+        }
+      }
+      if (!matches) return 0;
+      return matches / needle.length;
+    }
+
+    function quickFieldSearchScore(field, term) {
+      if (!term) return 0;
+      const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
+      const label = String(field.label || "").toLocaleLowerCase("tr-TR");
+      const targets = [id, label];
+      let best = 0;
+      targets.forEach((target) => {
+        if (!target) return;
+        if (target.startsWith(term)) best = Math.max(best, 300 + (term.length / Math.max(target.length, 1)));
+        else if (target.includes(term)) best = Math.max(best, 200 + (term.length / Math.max(target.length, 1)));
+        else best = Math.max(best, 100 * fuzzySimilarityScore(target, term));
+      });
+      return best;
+    }
+
+    function stageNameSearchScore(stageLabel, term) {
+      const target = String(stageLabel || "").toLocaleLowerCase("tr-TR");
+      if (!term || !target) return 0;
+      if (target.startsWith(term)) return 300 + (term.length / Math.max(target.length, 1));
+      if (target.includes(term)) return 200 + (term.length / Math.max(target.length, 1));
+      return 100 * fuzzySimilarityScore(target, term);
+    }
+
+    function renderEditProgress(stageMeta) {
+      if (!editProgressWrap || !editProgressTrack) return;
+      editProgressTrack.innerHTML = "";
+      if (!stageMeta.length) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeKey = resolveActiveProcessStageKey(stageMeta);
+      editProcessActiveStageKey = activeKey;
+      if (!activeKey) {
+        editProgressWrap.style.display = "none";
+        return;
+      }
+
+      const activeIndex = stageMeta.findIndex((item) => item.key === activeKey);
+      const visibleStages = (editProcessShowAll || activeIndex < 0)
+        ? stageMeta
+        : stageMeta.slice(0, activeIndex + 1);
+
+      visibleStages.forEach((stage, index) => {
+        const realIndex = stageMeta.findIndex((item) => item.key === stage.key);
+        const status = getProcessStageStatus(realIndex, activeIndex);
+        const step = document.createElement("div");
+        step.className = `edit-progress-step ${status}`;
+        const dot = document.createElement("span");
+        dot.className = "edit-progress-step-dot";
+        dot.textContent = status === "completed" ? "✓" : String(realIndex + 1);
+        const label = document.createElement("span");
+        label.textContent = stage.label;
+        step.append(dot, label);
+        editProgressTrack.appendChild(step);
+        if (index < visibleStages.length - 1) {
+          const sep = document.createElement("span");
+          sep.className = "edit-progress-sep";
+          sep.textContent = "—";
+          editProgressTrack.appendChild(sep);
+        }
+      });
+
+      if (editProgressToggle) {
+        if (activeIndex >= 0 && stageMeta.length > activeIndex + 1) {
+          editProgressToggle.style.display = "inline-flex";
+          editProgressToggle.textContent = editProcessShowAll ? "Daha az göster" : "Tüm süreç";
+        } else {
+          editProgressToggle.style.display = "none";
+        }
+      }
+
+      editProgressWrap.style.display = "grid";
+    }
+
+    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0 }) {
+      editStageRenderSeq += 1;
+      const renderSeq = editStageRenderSeq;
+      if (editStageStatus) {
+        editStageStatus.textContent = selectedFields.length ? "İçerik yükleniyor…" : "Bu aşamada gösterilecek alan yok.";
+      }
+      if (editStageFields) {
+        editStageFields.innerHTML = selectedFields.length
+          ? '<div class="edit-stage-fields-skeleton"><div class="line"></div><div class="line"></div><div class="line"></div></div>'
+          : '';
+      }
+      let cursor = 0;
+      const chunkSize = 4;
+      const total = selectedFields.length;
+      let appended = 0;
+      const pump = () => {
+        if (renderSeq !== editStageRenderSeq) return;
+        if (stageKey !== editSelectedStage) return;
+        if (!editStageFields) return;
+        if (cursor === 0) editStageFields.innerHTML = "";
+        const limit = Math.min(cursor + chunkSize, total);
+        for (let i = cursor; i < limit; i += 1) {
+          const wrapper = wrappersByKey.get(selectedFields[i].key);
+          if (wrapper) {
+            editStageFields.appendChild(wrapper);
+            appended += 1;
+          }
+        }
+        cursor = limit;
+        if (cursor < total) {
+          requestAnimationFrame(pump);
+          return;
+        }
+        if (editStageStatus) {
+          editStageStatus.textContent = total ? `${appended}/${total} alan listelendi.` : "Bu aşamada gösterilecek alan yok.";
+        }
+        if (appended < total && retryCount < 3) {
+          setTimeout(() => {
+            if (stageKey !== editSelectedStage) return;
+            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1 });
+          }, 180);
+        }
+      };
+      requestAnimationFrame(pump);
+    }
+
+    function runEditModeFilterRender() {
+      if (!IS_EDITING_MODE || !state.config) return;
+      const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
+      const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
+      const stageMap = new Map();
+      fields.forEach((field) => {
+        const stageKey = String(field.editStageKey || "Ungrouped");
+        if (!stageMap.has(stageKey)) stageMap.set(stageKey, []);
+        stageMap.get(stageKey).push(field);
+      });
+
+      const stageLabelByKey = new Map((editModeStageMeta || []).map((stage) => [stage.key, stage]));
+      const stageKeys = [];
+      if (stageMap.has("Ungrouped")) stageKeys.push("Ungrouped");
+      (editModeStageOrder || []).forEach((stageKey) => {
+        if (stageKeys.includes(stageKey)) return;
+        if (stageMap.has(stageKey)) stageKeys.push(stageKey);
+      });
+      Array.from(stageMap.keys()).forEach((stageKey) => {
+        if (stageKeys.includes(stageKey)) return;
+        stageKeys.push(stageKey);
+      });
+
+      if (term && stageKeys.length > 1) {
+        const pinnedTop = stageKeys[0] === "Ungrouped" ? ["Ungrouped"] : [];
+        const sortable = pinnedTop.length ? stageKeys.slice(1) : [...stageKeys];
+        sortable.sort((a, b) => {
+          const aScore = stageNameSearchScore(getStageDisplayLabel(stageLabelByKey, a, 0), term);
+          const bScore = stageNameSearchScore(getStageDisplayLabel(stageLabelByKey, b, 0), term);
+          if (bScore !== aScore) return bScore - aScore;
+          return 0;
+        });
+        stageKeys.splice(0, stageKeys.length, ...(pinnedTop.length ? [...pinnedTop, ...sortable] : sortable));
+      }
+
+      const filteredCountByStage = new Map();
+      stageKeys.forEach((stageKey) => {
+        const count = (stageMap.get(stageKey) || []).length;
+        filteredCountByStage.set(stageKey, count);
+      });
+
+      const firstWithFields = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
+      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
+        editSelectedStage = firstWithFields || stageKeys[0] || "";
+      }
+      if (editStageLayout) {
+        editStageLayout.style.display = stageKeys.length ? "grid" : "none";
+      }
+
+      const wrappersByKey = new Map();
+      Object.keys(state.fieldRefs || {}).forEach((fieldKey) => {
+        const wrapper = state.fieldRefs?.[fieldKey]?.wrapper;
+        if (wrapper) wrappersByKey.set(fieldKey, wrapper);
+      });
+      const wrapperPool = [
+        ...Array.from(formEl.querySelectorAll('.field-wrapper')),
+        ...(editModeRoot ? Array.from(editModeRoot.querySelectorAll('.field-wrapper')) : [])
+      ];
+      wrapperPool.forEach((wrapper) => {
+        const key = wrapper.dataset.fieldKey || "";
+        if (key && !wrappersByKey.has(key)) wrappersByKey.set(key, wrapper);
+      });
+
+      if (editQuickFields) editQuickFields.innerHTML = "";
+      if (editStageTabs) editStageTabs.innerHTML = "";
+      if (editStageHeading) {
+        editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
+      }
+
+      const unassignedFields = (stageMap.get("Ungrouped") || []).filter((field) => isQuickEntryEligible(field));
+      const quickCandidates = term
+        ? unassignedFields
+          .map((field, index) => ({ field, index, score: quickFieldSearchScore(field, term) }))
+          .filter((item) => item.score > 0)
+          .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+          .map((item) => item.field)
+        : unassignedFields;
+      const quickItems = [];
+      for (const field of quickCandidates) {
+        if (quickItems.some((x) => x.key === field.key)) continue;
+        quickItems.push(field);
+        if (quickItems.length >= 5) break;
+      }
+
+      if (editSearchEmpty) {
+        editSearchEmpty.style.display = "none";
+        editSearchEmpty.textContent = "";
+      }
+      if (editQuickFields) {
+        if (!quickItems.length) {
+          editQuickFields.innerHTML = '<div class="edit-quick-empty">Uygun alan bulunamadı</div>';
+        } else {
+          editQuickFields.innerHTML = "";
+          quickItems.forEach((field) => {
+            const wrapper = wrappersByKey.get(field.key);
+            if (wrapper) editQuickFields.appendChild(wrapper);
+          });
+        }
+      }
+
+      const activeProcessIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
+      stageKeys.forEach((stageKey, visibleIndex) => {
+        const stageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === stageKey);
+        const status = getProcessStageStatus(stageMetaIndex, activeProcessIndex);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `edit-stage-tab ${status}`;
+        const count = filteredCountByStage.get(stageKey) || 0;
+        btn.textContent = `${getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex)} (${count})`;
+        if (stageKey === editSelectedStage) btn.classList.add('active');
+        if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
+        btn.addEventListener('click', () => {
+          editSelectedStage = stageKey;
+          runEditModeFilterRender();
+        });
+        if (editStageTabs) editStageTabs.appendChild(btn);
+      });
+
+      const quickKeys = new Set(quickItems.map((field) => field.key));
+      const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => {
+        if (String(editSelectedStage) !== "Ungrouped") return true;
+        return !quickKeys.has(field.key);
+      });
+      const selectedStageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editSelectedStage);
+      const activeProcessIndexForSelected = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
+      const selectedStageStatus = getProcessStageStatus(selectedStageMetaIndex, activeProcessIndexForSelected);
+      if (editStageChip) {
+        editStageChip.className = `edit-stage-chip ${selectedStageStatus}`;
+        const statusLabel = selectedStageStatus === "active" ? "Current" : (selectedStageStatus === "completed" ? "Completed" : "Pending");
+        editStageChip.textContent = statusLabel;
+      }
+      renderSelectedStageFieldsProgressively({ stageKey: editSelectedStage, selectedFields, wrappersByKey });
+
+      renderEditProgress(editModeStageMeta || []);
+      const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
+      if (activeTab) activeTab.scrollIntoView({ block: 'nearest' });
+    }
+
+
 
     function renderForm(config) {
       formEl.innerHTML = "";
@@ -4540,10 +5901,20 @@ function renderSubmitOutputs(payload) {
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
+      if (IS_EDITING_MODE) {
+        if (actionBar) actionBar.style.display = "none";
+        if (formEl) formEl.style.display = "none";
+      } else {
+        if (actionBar) actionBar.style.display = "";
+        if (formEl) formEl.style.display = "grid";
+      }
+
       let previousGroup = null;
       config.fields.forEach((field, index) => {
+
         const wrapper = document.createElement("div");
         wrapper.className = "field-wrapper";
+        wrapper.dataset.fieldKey = field.key;
 
         const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
@@ -4736,7 +6107,11 @@ function renderSubmitOutputs(payload) {
           inputEl.addEventListener("input", (event) => {
             if (["integer", "decimal", "currency", "percent", "number"].includes(field.type)) {
               const raw = event.target.value;
-              setFieldValue(field.key, normalizeNumberInput(raw), field, raw);
+              const sanitizedRaw = sanitizeNumberTyping(raw, { integer: field.type === "integer" });
+              if (sanitizedRaw !== raw) {
+                event.target.value = sanitizedRaw;
+              }
+              setFieldValue(field.key, normalizeNumberInput(sanitizedRaw), field, sanitizedRaw);
             } else {
               setFieldValue(field.key, event.target.value, field);
             }
@@ -5638,6 +7013,7 @@ function renderSubmitOutputs(payload) {
 
         state.fieldRefs[field.key] = {
           field,
+          wrapper,
           control,
           inputEl,
           setValue,
@@ -5661,6 +7037,9 @@ function renderSubmitOutputs(payload) {
           }, 0);
         }
       });
+      if (IS_EDITING_MODE) {
+        runEditModeFilterRender();
+      }
       updateToolbarStatus();
       updateSubmitState(config);
       captureInitialSnapshot();
@@ -5789,7 +7168,7 @@ function renderSubmitOutputs(payload) {
     function focusFirstInvalid() {
       const firstInvalid = Object.keys(state.validMap).find((key) => !state.validMap[key]);
       if (!firstInvalid) return null;
-      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field='${firstInvalid}']`);
+      const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field="${CSS.escape(firstInvalid)}"]`);
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus();
@@ -5816,7 +7195,7 @@ function renderSubmitOutputs(payload) {
         }
         state.errors[field.key] = validateField(field, validationValue);
         state.validMap[field.key] = !state.errors[field.key];
-        const control = qs(`#error-${field.key}`)?.parentElement?.querySelector(".field-control");
+        const control = qs(`#error-${CSS.escape(field.key)}`)?.parentElement?.querySelector(".field-control");
         if (control) updateError(control, field);
       });
     }
@@ -5917,6 +7296,24 @@ function renderSubmitOutputs(payload) {
         closeActionMenu();
       });
 
+
+      if (editSearchInput) {
+        editSearchInput.addEventListener("input", (event) => {
+          const nextTerm = String(event?.target?.value || "");
+          if (editModeDebounceTimer) clearTimeout(editModeDebounceTimer);
+          editModeDebounceTimer = setTimeout(() => {
+            editModeSearchTerm = nextTerm;
+            runEditModeFilterRender();
+          }, 200);
+        });
+      }
+
+      if (editProgressToggle) {
+        editProgressToggle.addEventListener("click", () => {
+          editProcessShowAll = !editProcessShowAll;
+          runEditModeFilterRender();
+        });
+      }
 
       safeOn("#dynamicForm", "submit", (event) => {
         event.preventDefault();
@@ -6091,7 +7488,27 @@ function renderSubmitOutputs(payload) {
     applyVersionVisibility();
     syncActionOptions();
     initLateIncomingDataSync();
-    if (columnJson) {
+    const hasStagePayloadInput = Boolean(INITIAL_INPUTS?.editSchemaJson || INITIAL_INPUTS?.editUiSchema || INITIAL_INPUTS?.EDITING_STAGE_GROUPS_JSON || INITIAL_INPUTS?.editingStageGroups || INITIAL_INPUTS?.editing_stage_groups);
+    const hasAllFieldsPayloadInput = Boolean(INITIAL_INPUTS?.EDITING_ALL_FIELDS_JSON || INITIAL_INPUTS?.editingAllFields || INITIAL_INPUTS?.editing_all_fields);
+    const hasEditPayloadInput = hasStagePayloadInput || hasAllFieldsPayloadInput;
+    const shouldUseEditPayloadBootstrap = IS_EDITING_MODE || (hasEnteredEditSession && hasEditPayloadInput);
+    traceAutosave("edit-session-bootstrap", {
+      initialEditingMode: IS_EDITING_MODE,
+      initialEditingInput: INITIAL_INPUTS?.editing,
+      hasStagePayloadInput,
+      hasAllFieldsPayloadInput,
+      hasColumnJsonInput: Boolean(INITIAL_INPUTS?.COLUMN_JSON || INITIAL_INPUTS?.column_json),
+      hasBubbleDataInput: Boolean(INITIAL_INPUTS?.BUBBLE_DATA_JSON || INITIAL_INPUTS?.bubble_data_json),
+      shouldUseEditPayloadBootstrap
+    });
+    if (shouldUseEditPayloadBootstrap) {
+      const payloadAppliedNow = applyEditModePayloadIfReady(!IS_EDITING_MODE);
+      if (!payloadAppliedNow) {
+        formContainer.style.display = "block";
+        if (formEl) formEl.innerHTML = "";
+      }
+      ensureEditModePayloadPolling(!IS_EDITING_MODE);
+    } else if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
