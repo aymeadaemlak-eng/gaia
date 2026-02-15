@@ -45,28 +45,7 @@
 }
 
 #dynamic-table-wrapper .dt-header {
-  padding: 1px 0 0;
-}
-
-#dynamic-table-wrapper .dt-title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 1px 0 4px;
-}
-
-#dynamic-table-wrapper .dt-title {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--dt-text);
-}
-
-#dynamic-table-wrapper .dt-title-context {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--dt-muted);
-  opacity: 0.65;
+  padding: 0;
 }
 
 #dynamic-table-wrapper .dt-toolbar {
@@ -371,10 +350,6 @@
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
     <div class="dt-header">
-      <div class="dt-title-row">
-        <h1 class="dt-title">Dosyalar</h1>
-        <span class="dt-title-context">/ Süreç</span>
-      </div>
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
           <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala">⇅</button>
