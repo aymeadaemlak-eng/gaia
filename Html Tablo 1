@@ -397,8 +397,8 @@
           <div class="dt-action-group">
             <button id="dt-btn-field" class="dt-action-btn" type="button" aria-expanded="false">Field ▾</button>
             <div id="dt-field-menu" class="dt-field-menu" role="menu" aria-hidden="true">
-              <button class="dt-field-item" type="button">Add field</button>
-              <button class="dt-field-item" type="button">Manage fields</button>
+              <button id="dt-field-add" class="dt-field-item" type="button">Add field</button>
+              <button id="dt-field-manage" class="dt-field-item" type="button">Manage fields</button>
             </div>
           </div>
           <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button">+ New</button>
@@ -443,6 +443,8 @@
     newButton: document.getElementById('dt-btn-new'),
     fieldButton: document.getElementById('dt-btn-field'),
     fieldMenu: document.getElementById('dt-field-menu'),
+    fieldAddButton: document.getElementById('dt-field-add'),
+    fieldManageButton: document.getElementById('dt-field-manage'),
     totals: document.getElementById('footer-totals')
   };
 
@@ -1054,11 +1056,9 @@
   }
 
   function deleteSelected() {
-    const ids = getSelectedUniqueIds();
     if (typeof window.bubble_fn_delete === 'function') {
-      window.bubble_fn_delete(ids);
+      window.bubble_fn_delete();
     }
-    return ids;
   }
 
   function create() {
@@ -1076,6 +1076,18 @@
   function exportData() {
     if (typeof window.bubble_fn_export === 'function') {
       window.bubble_fn_export();
+    }
+  }
+
+  function addField() {
+    if (typeof window.bubble_fn_add_field === 'function') {
+      window.bubble_fn_add_field();
+    }
+  }
+
+  function manageField() {
+    if (typeof window.bubble_fn_manage_field === 'function') {
+      window.bubble_fn_manage_field();
     }
   }
 
@@ -1152,6 +1164,24 @@
         els.fieldMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
       });
 
+      if (els.fieldAddButton) {
+        els.fieldAddButton.addEventListener('click', () => {
+          addField();
+          els.fieldMenu.classList.remove('is-open');
+          els.fieldButton.setAttribute('aria-expanded', 'false');
+          els.fieldMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
+      if (els.fieldManageButton) {
+        els.fieldManageButton.addEventListener('click', () => {
+          manageField();
+          els.fieldMenu.classList.remove('is-open');
+          els.fieldButton.setAttribute('aria-expanded', 'false');
+          els.fieldMenu.setAttribute('aria-hidden', 'true');
+        });
+      }
+
       document.addEventListener('click', event => {
         if (!els.fieldMenu.classList.contains('is-open')) return;
         if (event.target.closest('#dt-field-menu') || event.target.closest('#dt-btn-field')) return;
@@ -1173,6 +1203,8 @@
     create,
     import: importData,
     export: exportData,
+    addField,
+    manageField,
     delete: deleteSelected
   };
 
@@ -1186,6 +1218,8 @@
   window.create = create;
   window.importData = importData;
   window.exportData = exportData;
+  window.addField = addField;
+  window.manageField = manageField;
   window.deleteSelected = deleteSelected;
 
   attachActionButtons();
