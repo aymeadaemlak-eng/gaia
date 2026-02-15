@@ -1724,6 +1724,7 @@
               <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
               <div id="actionMenu" class="action-menu"></div>
             </div>
+            <button id="toggleInlineEdit" type="button" class="ghost" style="display:none;">Show more</button>
             <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
             <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
           </div>
@@ -1978,6 +1979,9 @@
     let lastChangedMode = "";
     let hadEditModeDirtyChange = false;
     let hasEnteredEditSession = IS_EDITING_MODE;
+    let isEditPanelOpen = false;
+    let hasEnteredInlineEditPanel = false;
+    let hadInlineEditDirtyChange = false;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2278,6 +2282,7 @@
     const actionChevronBtn = byId("actionChevronBtn");
     const actionMenu = byId("actionMenu");
     const predictedActionBtn = byId("predictedActionBtn");
+    const toggleInlineEditBtn = byId("toggleInlineEdit");
     const actionEmptyMsg = byId("actionEmptyMsg");
     const consoleEl = byId("eventConsole");
     const submitOutputsEl = byId("submitOutputs");
@@ -2573,22 +2578,23 @@
       if (formActions) {
         formActions.style.display = "none";
       }
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
       if (rootElement) {
-        rootElement.classList.toggle("editing-mode", IS_EDITING_MODE);
+        rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
       if (editModeRoot) {
-        editModeRoot.style.display = IS_EDITING_MODE ? "grid" : "none";
+        editModeRoot.style.display = isEditUiActive ? "grid" : "none";
       }
-      if (IS_EDITING_MODE && !editModePayloadLoaded) {
+      if (isEditUiActive && !editModePayloadLoaded) {
         setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
       if (actionBar) {
-        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
+        actionBar.style.display = isEditUiActive ? "none" : "";
       }
       if (formEl) {
-        formEl.style.display = IS_EDITING_MODE ? "none" : "grid";
+        formEl.style.display = isEditUiActive ? "none" : "grid";
       }
-      if (!IS_EDITING_MODE) {
+      if (!isEditUiActive) {
         if (editQuickSection) editQuickSection.style.display = "none";
         if (editStageLayout) editStageLayout.style.display = "none";
       }
@@ -2639,6 +2645,90 @@
       if (actionMenu) actionMenu.classList.remove("open");
     }
 
+    function canOpenInlineEditPanel() {
+      const startSignal = readStartSignalValue();
+      if (!startSignal) return false;
+      const uniqueId = readCurrentUniqueId();
+      if (!uniqueId) return false;
+      const payload = readEditModePayloadSources();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      return hasStage || hasAll;
+    }
+
+    function collectInlineEditDiagnostics(extra = {}) {
+      const payload = readEditModePayloadSources();
+      const startSignal = readStartSignalValue();
+      const editingRaw = window.BUBBLE_INPUTS?.editing;
+      let editingSignal = null;
+      if (editingRaw === true || editingRaw === 1) editingSignal = true;
+      else if (editingRaw === false || editingRaw === 0) editingSignal = false;
+      else {
+        const text = String(editingRaw ?? "").trim().toLowerCase();
+        if (text === "true" || text === "1") editingSignal = true;
+        else if (text === "false" || text === "0") editingSignal = false;
+      }
+      const uniqueId = readCurrentUniqueId();
+      const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
+      const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
+      const mode = String(state.config?.mode || "").trim().toLowerCase();
+      const hasConfigFields = Array.isArray(state.config?.fields) ? state.config.fields.length : 0;
+      return {
+        startSignal,
+        editingSignal,
+        rawEditingInput: window.BUBBLE_INPUTS?.editing,
+        isEditPanelOpen,
+        canOpenInlineEditPanel: Boolean(startSignal && uniqueId && (hasStage || hasAll)),
+        uniqueId,
+        hasStagePayload: hasStage,
+        hasAllPayload: hasAll,
+        stagePayloadCount: hasStage ? payload.stageGroups.length : 0,
+        allPayloadCount: hasAll ? payload.allFields.length : 0,
+        configMode: mode,
+        configFieldCount: hasConfigFields,
+        editModePayloadLoaded,
+        ...extra
+      };
+    }
+
+    function updateInlineEditToggleUi() {
+      if (!toggleInlineEditBtn) return;
+      const canOpen = canOpenInlineEditPanel();
+      if (!canOpen && isEditPanelOpen) {
+        isEditPanelOpen = false;
+        applyVersionVisibility();
+      }
+      toggleInlineEditBtn.style.display = canOpen ? "inline-flex" : "none";
+      toggleInlineEditBtn.disabled = !canOpen;
+      toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
+    }
+
+    function setInlineEditPanelOpen(nextOpen) {
+      const desired = Boolean(nextOpen);
+      traceAutosave("inline-toggle-click", collectInlineEditDiagnostics({ desired }));
+      const inputs = window.BUBBLE_INPUTS || (window.BUBBLE_INPUTS = {});
+      inputs.editing = desired ? true : null;
+      isEditPanelOpen = desired;
+      traceAutosave("inline-toggle-applied-editing", collectInlineEditDiagnostics({ desired }));
+      if (isEditPanelOpen) {
+        hasEnteredInlineEditPanel = true;
+        hasEnteredEditSession = true;
+      }
+      updateInlineEditToggleUi();
+      applyVersionVisibility();
+      if (isEditPanelOpen) {
+        const payloadAppliedNow = applyEditModePayloadIfReady(true);
+        ensureEditModePayloadPolling(true);
+        if (state.config && (String(state.config.mode || "").trim().toLowerCase() === "edit")) {
+          runEditModeFilterRender();
+        }
+        traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
+      } else {
+        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({}));
+      }
+      evaluateEditingSignalTransition();
+    }
+
     function updateActionBarUi() {
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
       syncDefaultActionLabelFromData();
@@ -2654,6 +2744,7 @@
       if (actionEmptyMsg) {
         actionEmptyMsg.style.display = "none";
       }
+      updateInlineEditToggleUi();
 
       const predictedActionName = getPredictedActionName();
       const matched = hasOptions
@@ -3212,13 +3303,12 @@ function renderSubmitOutputs(payload) {
 
 
     function isEditingModeNow() {
-      const editingValue = window.BUBBLE_INPUTS?.editing;
-      if (editingValue === true || editingValue === 1) {
+      if (isEditPanelOpen) {
         hasEnteredEditSession = true;
         return true;
       }
-      const text = String(editingValue ?? "").trim().toLowerCase();
-      if (text === "true" || text === "1") {
+      const editingSignal = readEditingSignalValue();
+      if (editingSignal === true) {
         hasEnteredEditSession = true;
         return true;
       }
@@ -3236,6 +3326,7 @@ function renderSubmitOutputs(payload) {
       const editingNow = isEditingModeNow();
       lastChangedMode = editingNow ? "edit" : "normal";
       if (editingNow || IS_EDITING_MODE) hadEditModeDirtyChange = true;
+      if (isEditPanelOpen) hadInlineEditDirtyChange = true;
       traceAutosave("mark-field-changed", collectEditContextSnapshot({ fieldKey, editingNow }));
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
@@ -3268,6 +3359,7 @@ function renderSubmitOutputs(payload) {
       clearChangedFieldValues();
       lastChangedMode = "";
       hadEditModeDirtyChange = false;
+      hadInlineEditDirtyChange = false;
       clearPersistedStartChangedTracking();
       persistStartFlowState();
     }
@@ -4454,6 +4546,8 @@ function renderSubmitOutputs(payload) {
           lastChangedMode,
           hadEditModeDirtyChange,
           hasEnteredEditSession,
+          hadInlineEditDirtyChange,
+          hasEnteredInlineEditPanel,
           time: new Date().toISOString()
         }));
       } catch (error) {
@@ -4484,6 +4578,8 @@ function renderSubmitOutputs(payload) {
           lastChangedMode: persistedLastChangedMode === "edit" ? "edit" : (persistedLastChangedMode === "normal" ? "normal" : ""),
           hadEditModeDirtyChange: Boolean(parsed.hadEditModeDirtyChange),
           hasEnteredEditSession: Boolean(parsed.hasEnteredEditSession),
+          hadInlineEditDirtyChange: Boolean(parsed.hadInlineEditDirtyChange),
+          hasEnteredInlineEditPanel: Boolean(parsed.hasEnteredInlineEditPanel),
           time: parsed.time || ""
         };
       } catch (error) {
@@ -4936,6 +5032,9 @@ function renderSubmitOutputs(payload) {
         lastChangedMode,
         hadEditModeDirtyChange,
         hasEnteredEditSession,
+        isEditPanelOpen,
+        hadInlineEditDirtyChange,
+        hasEnteredInlineEditPanel,
         ...extra
       };
     }
@@ -4960,6 +5059,7 @@ function renderSubmitOutputs(payload) {
         || lastChangedMode === "edit"
         || hadEditModeDirtyChange
         || hasEnteredEditSession
+        || isEditPanelOpen
       );
     }
 
@@ -5056,14 +5156,8 @@ function renderSubmitOutputs(payload) {
 
     function evaluateStartSignalTransition() {
       const startSignal = readStartSignalValue();
+      updateInlineEditToggleUi();
       if (startSignal === null) return;
-
-      logStartState("tick", {
-        startSignal,
-        changedKeyCount: changedFieldKeys.size,
-        hasChangesSinceStartOpen,
-        shouldSubmitIfClose: Boolean(lastStartParamWasTrue && !startSignal && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving)
-      });
 
       const signalText = String(Boolean(startSignal));
       if (lastStartLoggedState !== signalText) {
@@ -5082,6 +5176,10 @@ function renderSubmitOutputs(payload) {
       }
 
       if (lastStartParamWasTrue && !startSignal) {
+        if (isEditPanelOpen) {
+          isEditPanelOpen = false;
+          applyVersionVisibility();
+        }
         const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
         logStartState("close", {
@@ -5127,6 +5225,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function evaluateEditingSignalTransition() {
+      if (readStartSignalValue() === true) return;
       const editingSignal = readEditingSignalValue();
       if (editingSignal === null) return;
 
@@ -5169,11 +5268,15 @@ function renderSubmitOutputs(payload) {
         }
         hadEditModeDirtyChange = hadEditModeDirtyChange || Boolean(persistedChangedTracking.hadEditModeDirtyChange);
         hasEnteredEditSession = hasEnteredEditSession || Boolean(persistedChangedTracking.hasEnteredEditSession) || lastChangedMode === "edit";
+        hadInlineEditDirtyChange = hadInlineEditDirtyChange || Boolean(persistedChangedTracking.hadInlineEditDirtyChange);
+        hasEnteredInlineEditPanel = hasEnteredInlineEditPanel || Boolean(persistedChangedTracking.hasEnteredInlineEditPanel);
         traceAutosave("hydrate-persisted-edit-context", collectEditContextSnapshot({
           persistedAt: persistedChangedTracking.time || "",
           persistedLastChangedMode: persistedChangedTracking.lastChangedMode || "",
           persistedHadEditModeDirtyChange: Boolean(persistedChangedTracking.hadEditModeDirtyChange),
           persistedHasEnteredEditSession: Boolean(persistedChangedTracking.hasEnteredEditSession),
+          persistedHadInlineEditDirtyChange: Boolean(persistedChangedTracking.hadInlineEditDirtyChange),
+          persistedHasEnteredInlineEditPanel: Boolean(persistedChangedTracking.hasEnteredInlineEditPanel),
           changedKeyCount: changedFieldKeys.size
         }));
         logStartState("hydrate-persisted-changed-tracking", {
@@ -5481,7 +5584,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function applyEditModePayloadIfReady(forceEditMode = false) {
-      if (!IS_EDITING_MODE && !forceEditMode) return false;
+      if (!IS_EDITING_MODE && !forceEditMode && !isEditPanelOpen) return false;
       const payload = readEditModePayloadSources();
       const hasStage = Array.isArray(payload?.stageGroups) && payload.stageGroups.length > 0;
       const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
@@ -5542,7 +5645,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function ensureEditModePayloadPolling(forceEditMode = false) {
-      if (!IS_EDITING_MODE && !forceEditMode) return;
+      if (!IS_EDITING_MODE && !forceEditMode && !isEditPanelOpen) return;
       const startFastPolling = () => {
         if (editModeSlowPollTimer) {
           clearInterval(editModeSlowPollTimer);
@@ -5751,7 +5854,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function runEditModeFilterRender() {
-      if (!IS_EDITING_MODE || !state.config) return;
+      if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
       const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
       const stageMap = new Map();
@@ -5901,13 +6004,9 @@ function renderSubmitOutputs(payload) {
       state.fieldRefs = {};
       summaryBox.style.display = "none";
 
-      if (IS_EDITING_MODE) {
-        if (actionBar) actionBar.style.display = "none";
-        if (formEl) formEl.style.display = "none";
-      } else {
-        if (actionBar) actionBar.style.display = "";
-        if (formEl) formEl.style.display = "grid";
-      }
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
+      if (actionBar) actionBar.style.display = isEditUiActive ? "none" : "";
+      if (formEl) formEl.style.display = isEditUiActive ? "none" : "grid";
 
       let previousGroup = null;
       config.fields.forEach((field, index) => {
@@ -7037,7 +7136,7 @@ function renderSubmitOutputs(payload) {
           }, 0);
         }
       });
-      if (IS_EDITING_MODE) {
+      if (IS_EDITING_MODE || isEditPanelOpen) {
         runEditModeFilterRender();
       }
       updateToolbarStatus();
@@ -7280,6 +7379,13 @@ function renderSubmitOutputs(payload) {
         });
       }
 
+      if (toggleInlineEditBtn) {
+        toggleInlineEditBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          setInlineEditPanelOpen(!isEditPanelOpen);
+        });
+      }
+
       if (predictedActionBtn) {
         predictedActionBtn.addEventListener("click", (event) => {
           event.preventDefault();
@@ -7487,11 +7593,12 @@ function renderSubmitOutputs(payload) {
     }
     applyVersionVisibility();
     syncActionOptions();
+    updateInlineEditToggleUi();
     initLateIncomingDataSync();
     const hasStagePayloadInput = Boolean(INITIAL_INPUTS?.editSchemaJson || INITIAL_INPUTS?.editUiSchema || INITIAL_INPUTS?.EDITING_STAGE_GROUPS_JSON || INITIAL_INPUTS?.editingStageGroups || INITIAL_INPUTS?.editing_stage_groups);
     const hasAllFieldsPayloadInput = Boolean(INITIAL_INPUTS?.EDITING_ALL_FIELDS_JSON || INITIAL_INPUTS?.editingAllFields || INITIAL_INPUTS?.editing_all_fields);
     const hasEditPayloadInput = hasStagePayloadInput || hasAllFieldsPayloadInput;
-    const shouldUseEditPayloadBootstrap = IS_EDITING_MODE || (hasEnteredEditSession && hasEditPayloadInput);
+    const shouldUseEditPayloadBootstrap = IS_EDITING_MODE || (hasEnteredEditSession && hasEditPayloadInput && readStartSignalValue() !== true);
     traceAutosave("edit-session-bootstrap", {
       initialEditingMode: IS_EDITING_MODE,
       initialEditingInput: INITIAL_INPUTS?.editing,
