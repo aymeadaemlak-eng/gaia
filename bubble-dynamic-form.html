@@ -2759,6 +2759,7 @@ function renderSubmitOutputs(payload) {
       const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || isEditingModeNow() || configMode === "edit";
       const isEditAutosave = autosave && (effectiveMode === "edit" || editContextActive);
       const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
+      traceAutosave("build-submit-outputs-decision", collectEditContextSnapshot({ autosave, modeHint: effectiveMode, editContextActive, isEditAutosave, actionType, hasBubbleData }));
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
         output1: startTimestamp,
@@ -3214,6 +3215,7 @@ function renderSubmitOutputs(payload) {
       const editingNow = isEditingModeNow();
       lastChangedMode = editingNow ? "edit" : "normal";
       if (editingNow || IS_EDITING_MODE) hadEditModeDirtyChange = true;
+      traceAutosave("mark-field-changed", collectEditContextSnapshot({ fieldKey, editingNow }));
       persistStartChangedTracking();
       if (hasSeenStartSignal && lastStartParamWasTrue) {
         if (!hasChangesSinceStartOpen) {
@@ -4536,6 +4538,12 @@ function renderSubmitOutputs(payload) {
         startSignal: readStartSignalValue(),
         lastStartParamWasTrue,
         hasSeenStartSignal,
+        initialEditingMode: IS_EDITING_MODE,
+        liveEditingInput: window.BUBBLE_INPUTS?.editing,
+        configMode: String(state.config?.mode || ""),
+        lastChangedMode,
+        hadEditModeDirtyChange,
+        hasEnteredEditSession,
         ...payload
       };
       console.info(`[BDF_AUTOSAVE_TRACE] ${JSON.stringify(snapshot)}`);
@@ -4757,10 +4765,25 @@ function renderSubmitOutputs(payload) {
       summaryBox.style.display = "none";
     }
 
+    function collectEditContextSnapshot(extra = {}) {
+      return {
+        initialEditingMode: IS_EDITING_MODE,
+        liveEditingInput: window.BUBBLE_INPUTS?.editing,
+        configMode: String(state.config?.mode || "").trim().toLowerCase(),
+        lastChangedMode,
+        hadEditModeDirtyChange,
+        hasEnteredEditSession,
+        ...extra
+      };
+    }
+
     function getSubmitModeHint() {
       const configMode = String(state.config?.mode || "").trim().toLowerCase();
-      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || isEditingModeNow() || configMode === "edit";
-      return editContextActive ? "edit" : "normal";
+      const liveEditingNow = isEditingModeNow();
+      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || liveEditingNow || configMode === "edit";
+      const modeHint = editContextActive ? "edit" : "normal";
+      traceAutosave("submit-mode-hint", collectEditContextSnapshot({ modeHint, liveEditingNow, editContextActive }));
+      return modeHint;
     }
 
     function maybeRunAutosaveOnStartClose() {
