@@ -3972,31 +3972,47 @@ function renderSubmitOutputs(payload) {
       return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
     }
 
-    function buildKeyValueListFromSources() {
-      const entries = [];
-      const base = initialSnapshot || {};
+    function getUniqueChangedFieldDescriptors() {
+      const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
-        if (!IS_EDITING_MODE && !changedFieldKeys.has(field.key)) return;
+        if (!field?.key) return;
+        if (byKey.has(field.key)) return;
+        byKey.set(field.key, field);
+      });
+      const uniqueFields = Array.from(byKey.values());
+      if (IS_EDITING_MODE) return uniqueFields;
+      return uniqueFields.filter((field) => changedFieldKeys.has(field.key));
+    }
+
+    function buildKeyValueListFromSources() {
+      const entriesByKey = new Map();
+      const base = initialSnapshot || {};
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const rememberedValue = getRememberedChangedValue(field.key);
         const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
         const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
-        entries.push(`"${jsonKey}": ${JSON.stringify(safeValue)}`);
+        entriesByKey.set(jsonKey, `"${jsonKey}": ${JSON.stringify(safeValue)}`);
       });
-      traceAutosave("buildKeyValueListFromSources", { entriesCount: entries.length, entries });
+      const entries = Array.from(entriesByKey.values());
+      traceAutosave("buildKeyValueListFromSources", {
+        entriesCount: entries.length,
+        uniqueKeyCount: entriesByKey.size,
+        entries
+      });
       return entries;
     }
 
     function buildAddedCustomFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -4008,41 +4024,41 @@ function renderSubmitOutputs(payload) {
           const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
           const hasAnyCurrentFileAction = currentUrls.length > 0 || hasNewFiles;
           if (initialUrls.length === 0 && hasAnyCurrentFileAction) {
-            entries.push(field.label || jsonKey);
+            entriesByKey.set(jsonKey, field.label || jsonKey);
           }
           return;
         }
 
         if (!isEmptyValue(currentValue) && isEmptyValue(initialValue)) {
-          entries.push(field.label || jsonKey);
+          entriesByKey.set(jsonKey, field.label || jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function buildDeletedFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
-          entries.push(jsonKey);
+          entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function buildModifiedFields() {
-      const entries = [];
+      const entriesByKey = new Map();
       const base = initialSnapshot || {};
-      (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+      getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const currentValue = getCurrentNormalizedValue(field);
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -4056,17 +4072,17 @@ function renderSubmitOutputs(payload) {
           const hasNewFiles = currentFiles.some((file) => Boolean(file && file.raw));
           const hasUrlChange = JSON.stringify(initialUrls) !== JSON.stringify(currentUrls);
           if (hasUrlChange || hasNewFiles) {
-            entries.push(jsonKey);
+            entriesByKey.set(jsonKey, jsonKey);
           }
           return;
         }
 
         if (isEmptyValue(initialValue) || isEmptyValue(currentValue)) return;
         if (areValuesDifferent(initialValue, currentValue)) {
-          entries.push(jsonKey);
+          entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return entries;
+      return Array.from(entriesByKey.values());
     }
 
     function toStringArray(value) {
