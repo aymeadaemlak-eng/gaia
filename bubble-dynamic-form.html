@@ -3909,6 +3909,11 @@ function renderSubmitOutputs(payload) {
     }
 
     function applyColumnJson(columnData) {
+      traceAutosave("apply-column-json", {
+        isEditingMode: IS_EDITING_MODE,
+        hasColumnData: Boolean(columnData),
+        columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
+      });
       columnJson = columnData;
       if (!columnJson) {
         columnWarning.style.display = "block";
@@ -4958,6 +4963,12 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size,
             trigger: "start-close-remount"
           });
+          traceAutosave("remount-close-context", collectEditContextSnapshot({
+            trigger: "start-close-remount",
+            persistedLastStartParamWasTrue: Boolean(persistedStartFlowState?.lastStartParamWasTrue),
+            persistedHasChanges: Boolean(persistedStartFlowState?.hasChangesSinceStartOpen),
+            changedKeyCount: changedFieldKeys.size
+          }));
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
         }
         persistStartFlowState();
@@ -5215,6 +5226,7 @@ function renderSubmitOutputs(payload) {
       const hasAll = Array.isArray(payload?.allFields) && payload.allFields.length > 0;
       if (!hasStage && !hasAll) {
         editModeStablePollCount = 0;
+        traceAutosave("edit-payload-waiting", { hasStage, hasAll });
         setEditModeLoading(true, "Edit verileri bekleniyor…");
         return false;
       }
@@ -5222,6 +5234,7 @@ function renderSubmitOutputs(payload) {
       const signature = buildEditPayloadSignature(payload);
       if (editModePayloadLoaded && signature === lastEditModePayloadSignature) {
         editModeStablePollCount += 1;
+        traceAutosave("edit-payload-stable", { signature });
         setEditModeLoading(false);
         return true;
       }
@@ -5229,6 +5242,7 @@ function renderSubmitOutputs(payload) {
       const config = buildConfigFromEditPayload(payload);
       if (!config) {
         editModeStablePollCount = 0;
+        traceAutosave("edit-payload-invalid", { signature });
         setEditModeLoading(true, "Edit verisi çözümlenemedi…");
         return false;
       }
@@ -5257,6 +5271,7 @@ function renderSubmitOutputs(payload) {
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
       hasEnteredEditSession = true;
+      traceAutosave("edit-payload-applied", { signature, fieldCount: Array.isArray(config.fields) ? config.fields.length : 0 });
       editModeStablePollCount = 0;
       editProcessShowAll = false;
       setEditModeLoading(false);
@@ -7208,6 +7223,14 @@ function renderSubmitOutputs(payload) {
     applyVersionVisibility();
     syncActionOptions();
     initLateIncomingDataSync();
+    traceAutosave("edit-session-bootstrap", {
+      initialEditingMode: IS_EDITING_MODE,
+      initialEditingInput: INITIAL_INPUTS?.editing,
+      hasStagePayloadInput: Boolean(INITIAL_INPUTS?.editSchemaJson || INITIAL_INPUTS?.editUiSchema || INITIAL_INPUTS?.EDITING_STAGE_GROUPS_JSON || INITIAL_INPUTS?.editingStageGroups || INITIAL_INPUTS?.editing_stage_groups),
+      hasAllFieldsPayloadInput: Boolean(INITIAL_INPUTS?.EDITING_ALL_FIELDS_JSON || INITIAL_INPUTS?.editingAllFields || INITIAL_INPUTS?.editing_all_fields),
+      hasColumnJsonInput: Boolean(INITIAL_INPUTS?.COLUMN_JSON || INITIAL_INPUTS?.column_json),
+      hasBubbleDataInput: Boolean(INITIAL_INPUTS?.BUBBLE_DATA_JSON || INITIAL_INPUTS?.bubble_data_json)
+    });
     if (IS_EDITING_MODE) {
       const payloadAppliedNow = applyEditModePayloadIfReady();
       if (!payloadAppliedNow) {
