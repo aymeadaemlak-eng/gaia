@@ -5179,6 +5179,14 @@ function renderSubmitOutputs(payload) {
       return true;
     }
 
+    function ensureEditModePayloadPolling() {
+      if (!IS_EDITING_MODE) return;
+      if (editModePayloadPollTimer) return;
+      editModePayloadPollTimer = setInterval(() => {
+        applyEditModePayloadIfReady();
+      }, 300);
+    }
+
     function resolveActiveProcessStageKey(stageMeta) {
       const dataObj = readCurrentBubbleDataObject() || {};
       const rawStage = dataObj.stage;
@@ -5302,7 +5310,7 @@ function renderSubmitOutputs(payload) {
       editProgressWrap.style.display = "grid";
     }
 
-    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey }) {
+    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0 }) {
       editStageRenderSeq += 1;
       const renderSeq = editStageRenderSeq;
       if (editStageStatus) {
@@ -5316,6 +5324,7 @@ function renderSubmitOutputs(payload) {
       let cursor = 0;
       const chunkSize = 4;
       const total = selectedFields.length;
+      let appended = 0;
       const pump = () => {
         if (renderSeq !== editStageRenderSeq) return;
         if (stageKey !== editSelectedStage) return;
@@ -5324,7 +5333,10 @@ function renderSubmitOutputs(payload) {
         const limit = Math.min(cursor + chunkSize, total);
         for (let i = cursor; i < limit; i += 1) {
           const wrapper = wrappersByKey.get(selectedFields[i].key);
-          if (wrapper) editStageFields.appendChild(wrapper);
+          if (wrapper) {
+            editStageFields.appendChild(wrapper);
+            appended += 1;
+          }
         }
         cursor = limit;
         if (cursor < total) {
@@ -5332,7 +5344,13 @@ function renderSubmitOutputs(payload) {
           return;
         }
         if (editStageStatus) {
-          editStageStatus.textContent = total ? `${total} alan listelendi.` : "Bu aşamada gösterilecek alan yok.";
+          editStageStatus.textContent = total ? `${appended}/${total} alan listelendi.` : "Bu aşamada gösterilecek alan yok.";
+        }
+        if (appended < total && retryCount < 3) {
+          setTimeout(() => {
+            if (stageKey !== editSelectedStage) return;
+            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1 });
+          }, 180);
         }
       };
       requestAnimationFrame(pump);
@@ -7065,14 +7083,8 @@ function renderSubmitOutputs(payload) {
       if (!payloadAppliedNow) {
         formContainer.style.display = "block";
         if (formEl) formEl.innerHTML = "";
-        editModePayloadPollTimer = setInterval(() => {
-          const applied = applyEditModePayloadIfReady();
-          if (applied && editModePayloadPollTimer) {
-            clearInterval(editModePayloadPollTimer);
-            editModePayloadPollTimer = null;
-          }
-        }, 300);
       }
+      ensureEditModePayloadPolling();
     } else if (columnJson) {
       applyColumnJson(columnJson);
       setTimeout(() => {
