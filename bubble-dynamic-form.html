@@ -5169,6 +5169,8 @@ function renderSubmitOutputs(payload) {
       if (!lastStartParamWasTrue && startSignal) {
         lastStartParamWasTrue = true;
         startOpenSequence += 1;
+        clearChangedTracking();
+        isFormDirty = false;
         hasChangesSinceStartOpen = false;
         logStartState("open", { startSignal, startOpenSequence, changedKeyCount: changedFieldKeys.size });
         persistStartFlowState();
@@ -5258,7 +5260,15 @@ function renderSubmitOutputs(payload) {
       const currentDataSignature = readCurrentBubbleDataSignature();
       const startSignal = readStartSignalValue();
       const editingSignal = readEditingSignalValue();
-      if (persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
+      const shouldHydratePersistedChanges = Boolean(
+        (persistedStartFlowState && persistedStartFlowState.lastStartParamWasTrue)
+        || startSignal === true
+        || editingSignal === true
+      );
+      if (!shouldHydratePersistedChanges && persistedChangedTracking?.keys?.length) {
+        clearPersistedStartChangedTracking();
+      }
+      if (shouldHydratePersistedChanges && persistedChangedTracking && Array.isArray(persistedChangedTracking.keys) && persistedChangedTracking.keys.length) {
         changedFieldKeys = new Set(persistedChangedTracking.keys);
         changedFieldValuesByKey = persistedChangedTracking.changedValues instanceof Map
           ? persistedChangedTracking.changedValues
