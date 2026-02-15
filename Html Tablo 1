@@ -45,25 +45,25 @@
 }
 
 #dynamic-table-wrapper .dt-header {
-  padding: 6px 4px 0;
+  padding: 2px 0 0;
 }
 
 #dynamic-table-wrapper .dt-title-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 4px 6px 12px;
+  gap: 8px;
+  padding: 2px 0 8px;
 }
 
 #dynamic-table-wrapper .dt-title {
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--dt-text);
 }
 
 #dynamic-table-wrapper .dt-title-context {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--dt-muted);
   opacity: 0.65;
@@ -90,7 +90,7 @@
 
 #dynamic-table-wrapper .dt-icon-btn,
 #dynamic-table-wrapper .dt-action-btn {
-  height: 34px;
+  height: 44px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
@@ -107,13 +107,23 @@
 }
 
 #dynamic-table-wrapper .dt-icon-btn {
-  width: 36px;
+  width: 46px;
   padding: 0;
-  font-size: 15px;
+  font-size: 20px;
 }
 
 #dynamic-table-wrapper #dt-btn-search {
-  font-size: 18px;
+  font-size: 24px;
+}
+
+#dynamic-table-wrapper .dt-svg-icon {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 #dynamic-table-wrapper .dt-icon-btn:hover,
@@ -351,7 +361,7 @@
         </div>
         <div class="dt-toolbar-right">
           <div class="dt-action-group">
-            <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false">⚙</button>
+            <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2"></circle></svg></button>
             <div id="dt-settings-menu" class="dt-settings-menu" role="menu" aria-hidden="true">
               <button id="dt-settings-import" class="dt-field-item" type="button">Import</button>
               <button id="dt-settings-export" class="dt-field-item" type="button">Export</button>
