@@ -5016,7 +5016,10 @@ function renderSubmitOutputs(payload) {
         logStartState("seed", { startSignal, startOpenSequence });
 
         const wasOpenBeforeRemount = Boolean(persistedStartFlowState?.lastStartParamWasTrue);
-        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen);
+        const hasPersistedDirtyTracking = Boolean(persistedChangedTracking?.keys?.length)
+          || Boolean(persistedChangedTracking?.hadEditModeDirtyChange)
+          || Boolean(persistedChangedTracking?.changedValues?.size);
+        const hadChangesBeforeRemount = Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking;
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
           hasChangesSinceStartOpen = false;
@@ -5028,12 +5031,16 @@ function renderSubmitOutputs(payload) {
           logStartState("remount-close-trigger-submit", {
             persistedStartFlowState,
             changedKeyCount: changedFieldKeys.size,
-            trigger: "start-close-remount"
+            trigger: "start-close-remount",
+            hadChangesBeforeRemount,
+            hasPersistedDirtyTracking
           });
           traceAutosave("remount-close-context", collectEditContextSnapshot({
             trigger: "start-close-remount",
             persistedLastStartParamWasTrue: Boolean(persistedStartFlowState?.lastStartParamWasTrue),
             persistedHasChanges: Boolean(persistedStartFlowState?.hasChangesSinceStartOpen),
+            hasPersistedDirtyTracking,
+            hadChangesBeforeRemount,
             changedKeyCount: changedFieldKeys.size
           }));
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
