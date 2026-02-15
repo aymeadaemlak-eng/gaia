@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css" />
 
 <style>
-:root {
+#dynamic-table-wrapper {
   --dt-bg: #ffffff;
   --dt-surface: #f8fbff;
   --dt-border: #dbe3f1;
@@ -17,21 +17,24 @@
   --dt-highlight: #e5efff;
 }
 
-* {
+#dynamic-table-wrapper,
+#dynamic-table-wrapper * {
   box-sizing: border-box;
 }
 
 #dynamic-table-wrapper {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--dt-text);
 }
 
-.dt-inner {
-  flex: 1;
+#dynamic-table-wrapper .dt-inner {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--dt-bg);
@@ -41,15 +44,24 @@
   gap: 14px;
 }
 
-.dt-top {
+#dynamic-table-wrapper .dt-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.dt-search {
+#dynamic-table-wrapper .dt-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+}
+
+#dynamic-table-wrapper .dt-search {
   flex: 1;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--dt-border);
@@ -58,44 +70,66 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.dt-search:focus {
+#dynamic-table-wrapper .dt-search:focus {
   outline: none;
   border-color: var(--dt-primary);
   box-shadow: 0 0 0 3px rgba(10, 99, 255, 0.14);
 }
 
-#hot-container {
-  flex: 1;
-  min-height: 360px;
+
+#dynamic-table-wrapper .dt-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 170px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border);
+  background: #fff;
+  color: var(--dt-muted);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#dynamic-table-wrapper #hot-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   border: 1px solid var(--dt-border);
   border-radius: 12px;
   overflow: hidden;
   background: var(--dt-surface);
 }
 
-.handsontable th {
+#dynamic-table-wrapper #hot-container > .handsontable,
+#dynamic-table-wrapper #hot-container > div {
+  height: 100% !important;
+}
+
+#dynamic-table-wrapper .handsontable th {
   background: var(--dt-surface) !important;
   color: var(--dt-muted) !important;
   font-weight: 600 !important;
   border-right: 1px solid var(--dt-border) !important;
 }
 
-.handsontable td {
+#dynamic-table-wrapper .handsontable td {
   border-right: 1px solid var(--dt-border) !important;
   border-bottom: 1px solid var(--dt-border) !important;
   color: var(--dt-text) !important;
   font-size: 13px;
 }
 
-.handsontable tr:nth-child(even) td {
+#dynamic-table-wrapper .handsontable tr:nth-child(even) td {
   background: #fbfdff !important;
 }
 
-.dt-img-thumb {
+#dynamic-table-wrapper .dt-img-thumb {
   display: none;
 }
 
-.dt-check {
+#dynamic-table-wrapper .dt-check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -109,12 +143,12 @@
   line-height: 1;
 }
 
-.handsontable .currentRow td,
-.handsontable td.area {
+#dynamic-table-wrapper .handsontable .currentRow td,
+#dynamic-table-wrapper .handsontable td.area {
   background: var(--dt-highlight) !important;
 }
 
-.handsontable thead th {
+#dynamic-table-wrapper .handsontable thead th {
   position: relative;
   overflow: visible !important;
   padding: 4px 8px !important;
@@ -125,14 +159,14 @@
   color: var(--dt-text) !important;
 }
 
-.handsontable thead th .relative {
+#dynamic-table-wrapper .handsontable thead th .relative {
   position: relative;
   overflow: visible;
   display: block;
   padding: 0;
 }
 
-.handsontable thead th .htDropdownMenuButton {
+#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton {
   position: absolute;
   top: 50%;
   right: 1px;
@@ -149,7 +183,7 @@
   background: #fff;
 }
 
-.handsontable thead th .colHeader {
+#dynamic-table-wrapper .handsontable thead th .colHeader {
   display: block;
   line-height: 18px;
   position: relative;
@@ -163,25 +197,21 @@
 }
 
 
-.dt-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 10px;
-  border-top: 1px solid var(--dt-border);
-  font-size: 13px;
+#dynamic-table-wrapper .dt-footer {
+  display: none;
 }
 </style>
 
 <div id="dynamic-table-wrapper">
   <div class="dt-inner">
     <div class="dt-top">
-      <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+      <div class="dt-top-controls">
+        <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
+        <span id="selection-count" class="dt-selection-chip">Öğe seçilmedi</span>
+      </div>
     </div>
     <div id="hot-container"></div>
-    <div class="dt-footer">
-      <span id="selection-count">Öğe seçilmedi</span>
-    </div>
+    <div class="dt-footer"></div>
   </div>
 </div>
 
@@ -556,10 +586,19 @@
     els.container.dataset.doubleClickAttached = 'true';
   }
 
-  function calculateHeight() {
-    const viewport = window.innerHeight || 800;
-    const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
-    return Math.max(420, Math.min(wrapperHeight - 120, viewport - 180));
+  function getAdaptiveTableHeight() {
+    if (!els.container) return 320;
+
+    const containerHeight = Math.floor(els.container.clientHeight || 0);
+    if (containerHeight > 0) {
+      return Math.max(260, containerHeight);
+    }
+
+    const wrapperHeight = Math.floor(els.wrapper?.clientHeight || 0);
+    const topHeight = Math.floor(els.search?.closest('.dt-top')?.offsetHeight || 0);
+    const fallbackHeight = wrapperHeight - topHeight - 14;
+
+    return Math.max(260, fallbackHeight || 320);
   }
 
   function mountHandsontable() {
@@ -593,7 +632,7 @@
       },
       colHeaders: state.columns.map(col => col.header),
       rowHeaders: true,
-      height: calculateHeight(),
+      height: getAdaptiveTableHeight(),
       width: '100%',
       manualColumnResize: true,
       manualColumnMove: false,
@@ -655,6 +694,26 @@
     els.search.dataset.listenerAttached = 'true';
   }
 
+  function attachResizeListener() {
+    if (!els.wrapper || els.wrapper.dataset.resizeAttached === 'true') return;
+
+    const refreshHeight = () => {
+      if (!state.hot) return;
+      state.hot.updateSettings({ height: getAdaptiveTableHeight() });
+    };
+
+    window.addEventListener('resize', refreshHeight);
+
+    if (typeof ResizeObserver === 'function' && els.container) {
+      const observer = new ResizeObserver(refreshHeight);
+      observer.observe(els.container);
+      observer.observe(els.wrapper);
+      els.wrapper.__dtResizeObserver = observer;
+    }
+
+    els.wrapper.dataset.resizeAttached = 'true';
+  }
+
   function setTableData(data, columns) {
     log('setTableData', { rows: Array.isArray(data) ? data.length : 0, columns: Array.isArray(columns) ? columns.length : 0 });
     if (!Array.isArray(data) || !Array.isArray(columns) || columns.length === 0) {
@@ -666,6 +725,7 @@
     state.columns = sanitizeColumns(columns);
     loadDisplayRows(buildDisplayRows(state.rawRows));
     attachSearchListener();
+    attachResizeListener();
   }
 
   function refreshTable(data) {
