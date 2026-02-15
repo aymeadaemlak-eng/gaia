@@ -45,14 +45,14 @@
 }
 
 #dynamic-table-wrapper .dt-header {
-  padding: 2px 0 0;
+  padding: 1px 0 0;
 }
 
 #dynamic-table-wrapper .dt-title-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 2px 0 8px;
+  gap: 7px;
+  padding: 1px 0 4px;
 }
 
 #dynamic-table-wrapper .dt-title {
@@ -70,12 +70,12 @@
 }
 
 #dynamic-table-wrapper .dt-toolbar {
-  min-height: 52px;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 8px 6px;
+  gap: 10px;
+  padding: 5px 4px;
   border-top: 1px solid rgba(15, 23, 42, 0.04);
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   background: #fff;
@@ -85,12 +85,12 @@
 #dynamic-table-wrapper .dt-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 #dynamic-table-wrapper .dt-icon-btn,
 #dynamic-table-wrapper .dt-action-btn {
-  height: 44px;
+  height: 40px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
@@ -107,18 +107,18 @@
 }
 
 #dynamic-table-wrapper .dt-icon-btn {
-  width: 46px;
+  width: 40px;
   padding: 0;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 #dynamic-table-wrapper #dt-btn-search {
-  font-size: 24px;
+  font-size: 21px;
 }
 
 #dynamic-table-wrapper .dt-svg-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.8;
