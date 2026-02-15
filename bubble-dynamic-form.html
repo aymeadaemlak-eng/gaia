@@ -1977,6 +1977,7 @@
     let changedFieldValuesByKey = new Map();
     let lastChangedMode = "";
     let hadEditModeDirtyChange = false;
+    let hasEnteredEditSession = IS_EDITING_MODE;
     let lastObservedDataSignature = "";
     let pendingIncomingDataSignature = "";
     let lastStartParamWasTrue = false;
@@ -2754,8 +2755,9 @@ function renderSubmitOutputs(payload) {
       const baseOutput4 = buildOutput4String() || "";
       const hasBubbleData = hasExistingBubbleData();
       const effectiveMode = String(modeHint || "").trim().toLowerCase();
-      const editContextActive = hadEditModeDirtyChange || IS_EDITING_MODE || isEditingModeNow();
-      const isEditAutosave = autosave && (effectiveMode === "edit" || (effectiveMode !== "normal" && editContextActive));
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || isEditingModeNow() || configMode === "edit";
+      const isEditAutosave = autosave && (effectiveMode === "edit" || editContextActive);
       const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       return {
@@ -3189,10 +3191,20 @@ function renderSubmitOutputs(payload) {
 
     function isEditingModeNow() {
       const editingValue = window.BUBBLE_INPUTS?.editing;
-      if (editingValue === true || editingValue === 1) return true;
+      if (editingValue === true || editingValue === 1) {
+        hasEnteredEditSession = true;
+        return true;
+      }
       const text = String(editingValue ?? "").trim().toLowerCase();
-      if (text === "true" || text === "1") return true;
-      return IS_EDITING_MODE;
+      if (text === "true" || text === "1") {
+        hasEnteredEditSession = true;
+        return true;
+      }
+      if (IS_EDITING_MODE) {
+        hasEnteredEditSession = true;
+        return true;
+      }
+      return false;
     }
 
     function markFieldAsChanged(fieldKey) {
@@ -5215,6 +5227,7 @@ function renderSubmitOutputs(payload) {
       };
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
+      hasEnteredEditSession = true;
       editModeStablePollCount = 0;
       editProcessShowAll = false;
       setEditModeLoading(false);
