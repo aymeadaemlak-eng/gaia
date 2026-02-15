@@ -1987,6 +1987,9 @@
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
     let pendingStartCloseAutosave = null;
+    let activeSubmitAttemptId = 0;
+    let submitLockTimeoutHandle = null;
+    const SUBMIT_LOCK_TIMEOUT_MS = 15000;
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
@@ -4670,6 +4673,54 @@ function renderSubmitOutputs(payload) {
       });
     }
 
+
+    function clearSubmitLockTimeout() {
+      if (submitLockTimeoutHandle) {
+        clearTimeout(submitLockTimeoutHandle);
+        submitLockTimeoutHandle = null;
+      }
+    }
+
+    function armSubmitLockTimeout({ submitAttemptId, trigger, autosave }) {
+      clearSubmitLockTimeout();
+      submitLockTimeoutHandle = setTimeout(() => {
+        if (!isFormSaving || activeSubmitAttemptId !== submitAttemptId) return;
+        traceAutosave("submit-lock-timeout", {
+          trigger,
+          autosave,
+          submitAttemptId,
+          timeoutMs: SUBMIT_LOCK_TIMEOUT_MS,
+          hasPendingStartCloseAutosave: Boolean(pendingStartCloseAutosave)
+        });
+        activeSubmitAttemptId = 0;
+        isFormSaving = false;
+        isFormDirty = true;
+        flushPendingIncomingAfterSubmit();
+        flushQueuedStartCloseAutosave();
+      }, SUBMIT_LOCK_TIMEOUT_MS);
+    }
+
+    function settleSubmitAttempt({ submitAttemptId, autosave, success }) {
+      if (activeSubmitAttemptId !== submitAttemptId) {
+        traceAutosave("submit-attempt-stale-settle", {
+          submitAttemptId,
+          activeSubmitAttemptId,
+          autosave,
+          success
+        });
+        return false;
+      }
+      clearSubmitLockTimeout();
+      activeSubmitAttemptId = 0;
+      isFormSaving = false;
+      isFormDirty = !success;
+      if (success && shouldResetAfterSubmit({ autosave })) {
+        resetFormAfterSuccessfulSubmit();
+      }
+      flushPendingIncomingAfterSubmit();
+      flushQueuedStartCloseAutosave();
+      return true;
+    }
     function handleBeforeUnload(event) {
       const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
       logStartState("beforeunload", {
@@ -4717,6 +4768,9 @@ function renderSubmitOutputs(payload) {
       }
 
       isFormSaving = true;
+      activeSubmitAttemptId += 1;
+      const submitAttemptId = activeSubmitAttemptId;
+      armSubmitLockTimeout({ submitAttemptId, trigger, autosave });
       if (autosave) {
         triggeredActionUniqueId = "";
       }
@@ -4767,10 +4821,7 @@ function renderSubmitOutputs(payload) {
 
       const fn = getSubmitFn();
       if (!fn) {
-        isFormSaving = false;
-        isFormDirty = true;
-        flushPendingIncomingAfterSubmit();
-        flushQueuedStartCloseAutosave();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.warn("bubble_fn_submit bulunamadı (window/parent/top)");
         return;
       }
@@ -4781,35 +4832,17 @@ function renderSubmitOutputs(payload) {
         if (maybePromise && typeof maybePromise.then === "function") {
           maybePromise
             .then(() => {
-              isFormSaving = false;
-              isFormDirty = false;
-              if (shouldResetAfterSubmit({ autosave })) {
-                resetFormAfterSuccessfulSubmit();
-              }
-              flushPendingIncomingAfterSubmit();
-              flushQueuedStartCloseAutosave();
+              settleSubmitAttempt({ submitAttemptId, autosave, success: true });
             })
             .catch((error) => {
-              isFormSaving = false;
-              isFormDirty = true;
-              flushPendingIncomingAfterSubmit();
-              flushQueuedStartCloseAutosave();
+              settleSubmitAttempt({ submitAttemptId, autosave, success: false });
               console.error("submit failed", error);
             });
           return;
         }
-        isFormSaving = false;
-        isFormDirty = false;
-        if (shouldResetAfterSubmit({ autosave })) {
-          resetFormAfterSuccessfulSubmit();
-        }
-        flushPendingIncomingAfterSubmit();
-        flushQueuedStartCloseAutosave();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: true });
       } catch (error) {
-        isFormSaving = false;
-        isFormDirty = true;
-        flushPendingIncomingAfterSubmit();
-        flushQueuedStartCloseAutosave();
+        settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.error("submit failed", error);
       }
 
