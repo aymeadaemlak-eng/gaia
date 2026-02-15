@@ -1730,14 +1730,14 @@
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <div id="editModeRoot" class="edit-mode-root">
-          <div class="edit-mode-toolbar">
-            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
-          </div>
-          <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
             <div id="editProgressTrack" class="edit-progress-track"></div>
             <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
           </div>
+          <div class="edit-mode-toolbar">
+            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+          </div>
+          <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editModeLoading" class="edit-mode-loading">
             <span class="edit-mode-spinner" aria-hidden="true"></span>
             <span id="editModeLoadingText">Yükleniyor</span>
@@ -3928,7 +3928,7 @@ function renderSubmitOutputs(payload) {
       const entries = [];
       const base = initialSnapshot || {};
       (state.config?.fields || []).forEach((field) => {
-        if (!changedFieldKeys.has(field.key)) return;
+        if (!IS_EDITING_MODE && !changedFieldKeys.has(field.key)) return;
         const jsonKey = field.key;
         const rememberedValue = getRememberedChangedValue(field.key);
         const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
@@ -5298,6 +5298,14 @@ function renderSubmitOutputs(payload) {
       return best;
     }
 
+    function stageNameSearchScore(stageLabel, term) {
+      const target = String(stageLabel || "").toLocaleLowerCase("tr-TR");
+      if (!term || !target) return 0;
+      if (target.startsWith(term)) return 300 + (term.length / Math.max(target.length, 1));
+      if (target.includes(term)) return 200 + (term.length / Math.max(target.length, 1));
+      return 100 * fuzzySimilarityScore(target, term);
+    }
+
     function renderEditProgress(stageMeta) {
       if (!editProgressWrap || !editProgressTrack) return;
       editProgressTrack.innerHTML = "";
@@ -5418,6 +5426,18 @@ function renderSubmitOutputs(payload) {
         if (stageKeys.includes(stageKey)) return;
         stageKeys.push(stageKey);
       });
+
+      if (term && stageKeys.length > 1) {
+        const pinnedTop = stageKeys[0] === "Ungrouped" ? ["Ungrouped"] : [];
+        const sortable = pinnedTop.length ? stageKeys.slice(1) : [...stageKeys];
+        sortable.sort((a, b) => {
+          const aScore = stageNameSearchScore(getStageDisplayLabel(stageLabelByKey, a, 0), term);
+          const bScore = stageNameSearchScore(getStageDisplayLabel(stageLabelByKey, b, 0), term);
+          if (bScore !== aScore) return bScore - aScore;
+          return 0;
+        });
+        stageKeys.splice(0, stageKeys.length, ...(pinnedTop.length ? [...pinnedTop, ...sortable] : sortable));
+      }
 
       const filteredCountByStage = new Map();
       stageKeys.forEach((stageKey) => {
