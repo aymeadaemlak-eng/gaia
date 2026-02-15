@@ -268,8 +268,8 @@
   background: #fff !important;
   color: var(--dt-text) !important;
   font-size: 13px;
-  padding: 10px 12px !important;
-  height: 42px !important;
+  padding: 8px 12px !important;
+  height: 34px !important;
   vertical-align: middle !important;
   transition: background-color 180ms ease;
 }
@@ -297,6 +297,15 @@
 #dynamic-table-wrapper .handsontable .currentRow td,
 #dynamic-table-wrapper .handsontable td.area {
   background: #eaecef !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
+}
+
+#dynamic-table-wrapper .handsontable .currentRow:hover td,
+#dynamic-table-wrapper .handsontable tr:hover td.area {
+  background: #e6e9ed !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #edf1f5 !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th {
