@@ -4613,7 +4613,7 @@ function renderSubmitOutputs(payload) {
         changedKeyCount: changedFieldKeys.size
       });
       if (shouldSubmitOnUnload) {
-        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload" });
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload", modeHint: getSubmitModeHint() });
       }
       persistStartFlowState();
       if (!isFormDirty) return undefined;
@@ -4757,13 +4757,19 @@ function renderSubmitOutputs(payload) {
       summaryBox.style.display = "none";
     }
 
+    function getSubmitModeHint() {
+      const configMode = String(state.config?.mode || "").trim().toLowerCase();
+      const editContextActive = hadEditModeDirtyChange || hasEnteredEditSession || isEditingModeNow() || configMode === "edit";
+      return editContextActive ? "edit" : "normal";
+    }
+
     function maybeRunAutosaveOnStartClose() {
       const now = Date.now();
       if (!isFormDirty) return;
       if (isFormSaving) return;
       if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
       lastAutosaveAt = now;
-      runSubmitFlow({ autosave: true });
+      runSubmitFlow({ autosave: true, modeHint: getSubmitModeHint() });
     }
 
     function evaluateUniqueIdTransition() {
@@ -4810,7 +4816,7 @@ function renderSubmitOutputs(payload) {
           pendingIncomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
         });
         maybeRunAutosaveOnStartClose();
-        runSubmitFlow({ autosave: false, forceSubmit: true });
+        runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "uniqueid-dirty-current-first", modeHint: getSubmitModeHint() });
         if (incomingColumnJson && Array.isArray(incomingColumnJson.columns)) {
           MANUAL_COLUMN_JSON = incomingColumnJson;
         }
@@ -4870,7 +4876,7 @@ function renderSubmitOutputs(payload) {
           });
           hasChangesSinceStartOpen = false;
           persistStartFlowState();
-          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close" });
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close", modeHint: getSubmitModeHint() });
         } else {
           logStartState("close-skip-submit", {
             reason: isFormSaving ? "saving-lock" : "no-detected-change",
@@ -4929,7 +4935,7 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size,
             trigger: "start-close-remount"
           });
-          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount" });
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
         }
         persistStartFlowState();
       }
