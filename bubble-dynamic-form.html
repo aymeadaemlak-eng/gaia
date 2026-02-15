@@ -4646,7 +4646,14 @@ function renderSubmitOutputs(payload) {
 
     function flushQueuedStartCloseAutosave() {
       if (!pendingStartCloseAutosave) return;
-      if (isFormSaving) return;
+      if (isFormSaving) {
+        traceAutosave("flush-start-close-autosave-skipped", {
+          reason: "saving-lock",
+          trigger: pendingStartCloseAutosave.trigger,
+          queuedAt: pendingStartCloseAutosave.queuedAt
+        });
+        return;
+      }
       const pending = pendingStartCloseAutosave;
       pendingStartCloseAutosave = null;
       traceAutosave("flush-start-close-autosave", {
