@@ -69,7 +69,7 @@
 
 #hot-container {
   flex: 1;
-  min-height: 220px;
+  min-height: 160px;
   height: auto;
   max-height: none;
   border: 1px solid var(--dt-border);
@@ -78,31 +78,6 @@
   background: var(--dt-surface);
 }
 
-.dt-horizontal-scroll {
-  height: 12px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #c3ccdd #f4f7fc;
-}
-
-.dt-horizontal-scroll::-webkit-scrollbar {
-  height: 10px;
-}
-
-.dt-horizontal-scroll::-webkit-scrollbar-thumb {
-  background: #c3ccdd;
-  border-radius: 999px;
-  border: 2px solid #f4f7fc;
-}
-
-.dt-horizontal-scroll::-webkit-scrollbar-track {
-  background: #f4f7fc;
-}
-
-.dt-horizontal-scroll-inner {
-  height: 1px;
-}
 
 .handsontable th {
   background: var(--dt-surface) !important;
@@ -194,13 +169,11 @@
 }
 
 .handsontable .ht_master .wtHolder {
-  overflow-x: scroll !important;
-  overflow-y: auto !important;
+  overflow: auto !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
   scrollbar-color: #c3ccdd #f4f7fc;
-  padding-bottom: 2px;
 }
 
 .handsontable .ht_master .wtHolder::-webkit-scrollbar {
@@ -237,7 +210,6 @@
       <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
     </div>
     <div id="hot-container"></div>
-    <div id="dt-horizontal-scroll" class="dt-horizontal-scroll"><div id="dt-horizontal-scroll-inner" class="dt-horizontal-scroll-inner"></div></div>
     <div class="dt-footer">
       <span id="selection-count">Öğe seçilmedi</span>
     </div>
@@ -258,65 +230,16 @@
     columns: [],
     displayRows: [],
     selection: new Set(),
-    selectionOrder: [],
-    syncLock: false
+    selectionOrder: []
   };
 
   const els = {
     wrapper: document.getElementById('dynamic-table-wrapper'),
     container: document.getElementById('hot-container'),
-    horizontalScroll: document.getElementById('dt-horizontal-scroll'),
-    horizontalScrollInner: document.getElementById('dt-horizontal-scroll-inner'),
     search: document.getElementById('dt-search'),
     selectionText: document.getElementById('selection-count'),
     totals: document.getElementById('footer-totals')
   };
-
-  function getWtHolder() {
-    return els.container?.querySelector('.wtHolder') || null;
-  }
-
-  function syncHorizontalScrollbarWidth() {
-    const holder = getWtHolder();
-    if (!holder || !els.horizontalScroll || !els.horizontalScrollInner) return;
-    const contentWidth = Math.max(holder.scrollWidth, holder.clientWidth + 1);
-    els.horizontalScrollInner.style.width = `${contentWidth}px`;
-  }
-
-  function bindHorizontalScrollbarSync() {
-    if (!els.horizontalScroll || els.horizontalScroll.dataset.bound === 'true') return;
-
-    els.horizontalScroll.addEventListener('scroll', () => {
-      if (state.syncLock) return;
-      const holder = getWtHolder();
-      if (!holder) return;
-      state.syncLock = true;
-      holder.scrollLeft = els.horizontalScroll.scrollLeft;
-      state.syncLock = false;
-    });
-
-    els.horizontalScroll.dataset.bound = 'true';
-  }
-
-  function attachHolderScrollSync() {
-    const holder = getWtHolder();
-    if (!holder || holder.dataset.bound === 'true') return;
-
-    holder.addEventListener('scroll', () => {
-      if (state.syncLock || !els.horizontalScroll) return;
-      state.syncLock = true;
-      els.horizontalScroll.scrollLeft = holder.scrollLeft;
-      state.syncLock = false;
-    });
-
-    holder.dataset.bound = 'true';
-  }
-
-  function setupHorizontalScrollbar() {
-    bindHorizontalScrollbarSync();
-    attachHolderScrollSync();
-    syncHorizontalScrollbarWidth();
-  }
 
   const UNIQUE_KEYS = ['uniqueid', 'unique_id', 'unique', 'id', 'Id', 'ID'];
   const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
@@ -666,10 +589,14 @@
 
   function calculateHeight() {
     const viewport = window.innerHeight || 800;
-    const wrapperHeight = els.wrapper ? els.wrapper.offsetHeight : viewport * 0.7;
-    const reservedSpace = 130; // search + custom scrollbar + footer + paddings
-    const computed = wrapperHeight - reservedSpace;
-    return Math.max(220, Math.min(computed, viewport - 170));
+    const wrapperHeight = els.wrapper?.clientHeight || viewport * 0.7;
+    const topHeight = els.wrapper?.querySelector('.dt-top')?.offsetHeight || 0;
+    const footerHeight = els.wrapper?.querySelector('.dt-footer')?.offsetHeight || 0;
+    const innerStyles = els.wrapper ? getComputedStyle(els.wrapper.querySelector('.dt-inner') || els.wrapper) : null;
+    const verticalGap = innerStyles ? parseFloat(innerStyles.rowGap || innerStyles.gap || '0') : 0;
+    const reserved = topHeight + footerHeight + (verticalGap * 2) + 40;
+    const computed = wrapperHeight - reserved;
+    return Math.max(160, Math.min(computed, viewport - 170));
   }
 
   function mountHandsontable() {
@@ -718,9 +645,7 @@
       afterFilter: () => {
         updateFooter();
         handleSelection();
-      },
-      afterRender: () => setupHorizontalScrollbar(),
-      afterColumnResize: () => setupHorizontalScrollbar()
+      }
     };
 
     if (state.hot) {
@@ -729,10 +654,6 @@
       state.hot = new Handsontable(els.container, settings);
     }
 
-    requestAnimationFrame(() => {
-      setupHorizontalScrollbar();
-      setTimeout(setupHorizontalScrollbar, 80);
-    });
 
     updateFooter();
     attachDoubleClickListener();
