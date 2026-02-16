@@ -375,11 +375,6 @@
   background: #f8fafc;
 }
 
-#dynamic-table-wrapper .dt-column-menu.is-filter-mode #dt-column-menu-sort,
-#dynamic-table-wrapper .dt-column-menu.is-sort-mode #dt-column-menu-filter {
-  display: none;
-}
-
 #dynamic-table-wrapper #hot-container {
   flex: 1 1 auto;
   min-height: 0;
@@ -702,7 +697,8 @@
     activeHeaderColumn: null,
     columnMenuOpenedAt: 0,
     filterConfigs: {},
-    filterDraft: null
+    filterDraft: null,
+    submenuCloseTimer: null
   };
 
   const els = {
@@ -1541,6 +1537,7 @@
 
   function closeColumnMenu() {
     if (!els.columnMenu) return;
+    clearSubmenuCloseTimer();
     hideFilterPanel();
     hideSortPanel();
     els.columnMenu.classList.remove('is-open', 'is-filter-mode', 'is-sort-mode');
@@ -1575,6 +1572,25 @@
     els.columnMenu.setAttribute('aria-hidden', 'false');
   }
 
+
+
+  function clearSubmenuCloseTimer() {
+    if (!state.submenuCloseTimer) return;
+    clearTimeout(state.submenuCloseTimer);
+    state.submenuCloseTimer = null;
+  }
+
+  function hideAllSubmenus() {
+    hideFilterPanel();
+    hideSortPanel();
+  }
+
+  function scheduleSubmenuClose() {
+    clearSubmenuCloseTimer();
+    state.submenuCloseTimer = setTimeout(() => {
+      hideAllSubmenus();
+    }, 160);
+  }
 
   function positionSubmenu(panelEl, triggerEl) {
     if (!panelEl || !els.columnMenu) return;
@@ -1932,6 +1948,53 @@
         if (!Number.isInteger(state.activeHeaderColumn)) return;
         applyColumnSortOrder(state.activeHeaderColumn, 'desc');
         closeColumnMenu();
+      });
+    }
+
+    if (els.columnMenu) {
+      els.columnMenu.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+
+      els.columnMenu.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToSubmenu = !!(next && (next.closest('#dt-filter-panel') || next.closest('#dt-sort-panel')));
+        if (!movingToSubmenu) {
+          scheduleSubmenuClose();
+        }
+      });
+
+      els.columnMenu.addEventListener('mouseover', event => {
+        const item = event.target.closest('.dt-column-menu-item');
+        if (!item) return;
+        if (item.id === 'dt-column-menu-filter' || item.id === 'dt-column-menu-sort') return;
+        hideAllSubmenus();
+      });
+    }
+
+    if (els.filterPanel) {
+      els.filterPanel.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+      els.filterPanel.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToMenu = !!(next && next.closest('#dt-column-menu'));
+        if (!movingToMenu) {
+          scheduleSubmenuClose();
+        }
+      });
+    }
+
+    if (els.sortPanel) {
+      els.sortPanel.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+      els.sortPanel.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToMenu = !!(next && next.closest('#dt-column-menu'));
+        if (!movingToMenu) {
+          scheduleSubmenuClose();
+        }
       });
     }
 
