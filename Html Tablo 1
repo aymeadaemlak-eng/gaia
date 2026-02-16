@@ -1672,6 +1672,7 @@
 
     if (els.filterConditionValueInput) {
       els.filterConditionValueInput.style.display = showPrimaryValue ? '' : 'none';
+      els.filterConditionValueInput.disabled = !showPrimaryValue;
     }
 
     if (els.filterOperatorRow) {
@@ -1684,6 +1685,7 @@
 
     if (els.filterConditionValueInput2) {
       els.filterConditionValueInput2.style.display = showSecondaryValue ? '' : 'none';
+      els.filterConditionValueInput2.disabled = !showSecondaryValue;
     }
 
     if (!hasPrimaryCondition) {
