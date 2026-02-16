@@ -368,26 +368,37 @@
 }
 
 
-#dynamic-table-wrapper .dt-table-end-actions {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  height: 30px;
+
+#dynamic-table-wrapper .dt-colheader-content {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding-left: 2px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px #edf1f5;
-  z-index: 95;
-  pointer-events: auto;
+  min-width: 0;
+  width: 100%;
 }
 
-#dynamic-table-wrapper .dt-table-end-actions .dt-icon-btn {
-  width: 28px;
-  height: 28px;
+#dynamic-table-wrapper .dt-colheader-actions {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+#dynamic-table-wrapper .dt-header-action-btn {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
   font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-header-action-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
 }
 
 #dynamic-table-wrapper .dt-header-label {
@@ -438,10 +449,6 @@
       </div>
     </div>
     <div id="hot-container"></div>
-    <div id="dt-table-end-actions" class="dt-table-end-actions" aria-label="Field actions">
-      <button id="dt-btn-add-field" class="dt-icon-btn" type="button" aria-label="Add field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
-      <button id="dt-btn-manage-field" class="dt-icon-btn" type="button" aria-label="Manage field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg></button>
-    </div>
     <div id="dt-column-menu" class="dt-column-menu" role="menu" aria-hidden="true">
       <div class="dt-column-menu-title" id="dt-column-menu-title">Field menu</div>
       <button id="dt-column-menu-add" class="dt-column-menu-item" type="button">Add field</button>
@@ -484,10 +491,7 @@
     deleteButton: document.getElementById('dt-btn-delete'),
     importButton: document.getElementById('dt-btn-import'),
     downloadButton: document.getElementById('dt-btn-download'),
-    addFieldButton: document.getElementById('dt-btn-add-field'),
-    manageFieldButton: document.getElementById('dt-btn-manage-field'),
     newButton: document.getElementById('dt-btn-new'),
-    tableEndActions: document.getElementById('dt-table-end-actions'),
     columnMenu: document.getElementById('dt-column-menu'),
     columnMenuTitle: document.getElementById('dt-column-menu-title'),
     columnMenuAddButton: document.getElementById('dt-column-menu-add'),
@@ -910,12 +914,16 @@
     return typeMetaMap[normalized] || typeMetaMap.text;
   }
 
-  function renderColumnHeader(column) {
+  function renderColumnHeader(column, index) {
     const meta = getColumnTypeMeta(column?.type);
     const icon = iconKeyGlyphMap[meta.iconKey] || iconKeyGlyphMap.text;
     const title = escapeHtml(column?.header || 'Field');
     const typeLabel = escapeHtml(meta?.label || 'Text');
-    return `<span class="dt-header-label"><span class="dt-type-icon" aria-hidden="true" title="${typeLabel}">${icon}</span><span class="dt-header-text">${title}</span></span>`;
+    const isLast = index === Math.max(0, state.columns.length - 1);
+    const actions = isLast
+      ? '<span class=\"dt-colheader-actions\"><button class=\"dt-header-action-btn\" data-header-action=\"add\" type=\"button\" aria-label=\"Add field\">+</button><button class=\"dt-header-action-btn\" data-header-action=\"manage\" type=\"button\" aria-label=\"Manage field\">···</button></span>'
+      : '';
+    return `<span class=\"dt-colheader-content\"><span class=\"dt-header-label\"><span class=\"dt-type-icon\" aria-hidden=\"true\" title=\"${typeLabel}\">${icon}</span><span class=\"dt-header-text\">${title}</span></span>${actions}</span>`;
   }
 
   function getAdaptiveTableHeight() {
@@ -933,55 +941,6 @@
     return Math.max(260, fallbackHeight || 320);
   }
 
-  function positionTableEndActions() {
-    if (!els.tableEndActions || !els.wrapper) return;
-
-    const wrapperRect = els.wrapper.getBoundingClientRect();
-    const fallbackRect = els.container?.getBoundingClientRect?.();
-    const maxLeft = Math.max(8, wrapperRect.width - 64);
-    const lastColIndex = Math.max(0, (state.columns?.length || 1) - 1);
-
-    const selector = '.ht_clone_top thead tr:last-child th[data-col], .handsontable:not(.ht_clone_top):not(.ht_clone_left) thead tr:last-child th[data-col]';
-    const allHeaders = Array.from(els.wrapper.querySelectorAll(selector))
-      .filter(th => th.offsetParent !== null);
-
-    const exactLastColHeaders = allHeaders.filter(th => {
-      const raw = th.getAttribute('data-col');
-      const idx = raw === null ? NaN : parseInt(raw, 10);
-      return Number.isInteger(idx) && idx === lastColIndex;
-    });
-
-    const chooseByRightMost = list => {
-      if (!list || list.length === 0) return null;
-      return list
-        .slice()
-        .sort((a, b) => a.getBoundingClientRect().right - b.getBoundingClientRect().right)
-        .pop();
-    };
-
-    const lastHeader = chooseByRightMost(exactLastColHeaders) || chooseByRightMost(allHeaders);
-
-    if (!lastHeader) {
-      if (!fallbackRect) {
-        els.tableEndActions.style.display = 'none';
-        return;
-      }
-      const fallbackLeft = Math.max(8, Math.min((fallbackRect.right - wrapperRect.left) - 64, maxLeft));
-      const fallbackTop = Math.max(6, fallbackRect.top - wrapperRect.top + 5);
-      els.tableEndActions.style.display = 'inline-flex';
-      els.tableEndActions.style.left = `${fallbackLeft}px`;
-      els.tableEndActions.style.top = `${fallbackTop}px`;
-      return;
-    }
-
-    const rect = lastHeader.getBoundingClientRect();
-    const left = Math.max(8, Math.min(rect.right - wrapperRect.left + 4, maxLeft));
-    const top = Math.max(6, rect.top - wrapperRect.top + 5);
-
-    els.tableEndActions.style.display = 'inline-flex';
-    els.tableEndActions.style.left = `${left}px`;
-    els.tableEndActions.style.top = `${top}px`;
-  }
 
   function mountHandsontable() {
     if (!els.container) {
@@ -1012,7 +971,7 @@
         }
         return meta;
       },
-      colHeaders: index => renderColumnHeader(state.columns[index]),
+      colHeaders: index => renderColumnHeader(state.columns[index], index),
       rowHeaders: true,
       height: getAdaptiveTableHeight(),
       width: '100%',
@@ -1032,18 +991,14 @@
         if (!coords || coords.row !== -1 || coords.col < 0) return;
         const target = event?.target;
         if (!target) return;
-        if (!target.closest('.colHeader') && !target.closest('.dt-header-label') && !target.closest('.dt-header-text') && !target.closest('.dt-type-icon')) return;
+        if (target.closest('.dt-header-action-btn')) return;
+        if (!target.closest('.colHeader') && !target.closest('.dt-header-label') && !target.closest('.dt-header-text') && !target.closest('.dt-type-icon') && !target.closest('.dt-colheader-content')) return;
         const headerLabel = state.columns[coords.col]?.header || '';
         openColumnMenu(coords.col, TD?.getBoundingClientRect?.() || target.getBoundingClientRect(), headerLabel);
       },
       afterFilter: () => {
         updateFooter();
         handleSelection();
-      },
-      afterRender: () => {
-        positionTableEndActions();
-        setTimeout(positionTableEndActions, 0);
-        setTimeout(positionTableEndActions, 120);
       }
     };
 
@@ -1055,9 +1010,6 @@
 
     updateFooter();
     attachDoubleClickListener();
-    positionTableEndActions();
-    setTimeout(positionTableEndActions, 0);
-    setTimeout(positionTableEndActions, 120);
   }
 
   function loadDisplayRows(rows) {
@@ -1393,12 +1345,20 @@
       els.downloadButton.addEventListener('click', exportData);
     }
 
-    if (els.addFieldButton) {
-      els.addFieldButton.addEventListener('click', addField);
-    }
 
-    if (els.manageFieldButton) {
-      els.manageFieldButton.addEventListener('click', manageField);
+    if (els.container) {
+      els.container.addEventListener('click', event => {
+        const actionBtn = event.target.closest('.dt-header-action-btn');
+        if (!actionBtn) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const action = actionBtn.getAttribute('data-header-action');
+        if (action === 'add') {
+          addField();
+        } else if (action === 'manage') {
+          manageField();
+        }
+      }, true);
     }
 
     if (els.sortButton) {
@@ -1458,29 +1418,9 @@
 
     window.addEventListener('resize', () => {
       closeColumnMenu();
-      positionTableEndActions();
-      setTimeout(positionTableEndActions, 0);
-      setTimeout(positionTableEndActions, 120);
-    });
+          });
 
-    const bindTableScroll = () => {
-      const holders = els.wrapper ? els.wrapper.querySelectorAll('.wtHolder') : [];
-      holders.forEach(holder => {
-        if (holder.dataset.dtEndActionsBound === 'true') return;
-        holder.addEventListener('scroll', positionTableEndActions, { passive: true });
-        holder.dataset.dtEndActionsBound = 'true';
-      });
-    };
 
-    bindTableScroll();
-    setTimeout(bindTableScroll, 0);
-
-    if (els.container && els.container.dataset.dtObserverBound !== 'true' && typeof MutationObserver === 'function') {
-      const observer = new MutationObserver(() => positionTableEndActions());
-      observer.observe(els.container, { subtree: true, childList: true });
-      els.container.__dtHeaderObserver = observer;
-      els.container.dataset.dtObserverBound = 'true';
-    }
 
   }
 
