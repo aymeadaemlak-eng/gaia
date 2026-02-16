@@ -503,6 +503,19 @@
 
   const UNIQUE_KEYS = ['uniqueid', 'unique_id', 'unique', 'id', 'Id', 'ID'];
   const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
+  const UI_ACTIONS_COL_ID = '__dt_actions__';
+
+  function getUiActionsColumn() {
+    return {
+      id: UI_ACTIONS_COL_ID,
+      header: '',
+      width: 56,
+      readOnly: true,
+      type: 'text',
+      sourceKeys: [UI_ACTIONS_COL_ID],
+      __uiOnly: true
+    };
+  }
 
   function sanitizeColumns(columns) {
     if (!Array.isArray(columns)) return [];
@@ -914,16 +927,12 @@
     return typeMetaMap[normalized] || typeMetaMap.text;
   }
 
-  function renderColumnHeader(column, index) {
+  function renderColumnHeader(column) {
     const meta = getColumnTypeMeta(column?.type);
     const icon = iconKeyGlyphMap[meta.iconKey] || iconKeyGlyphMap.text;
     const title = escapeHtml(column?.header || 'Field');
     const typeLabel = escapeHtml(meta?.label || 'Text');
-    const isLast = index === Math.max(0, state.columns.length - 1);
-    const actions = isLast
-      ? '<span class=\"dt-colheader-actions\"><button class=\"dt-header-action-btn\" data-header-action=\"add\" type=\"button\" aria-label=\"Add field\">+</button><button class=\"dt-header-action-btn\" data-header-action=\"manage\" type=\"button\" aria-label=\"Manage field\">···</button></span>'
-      : '';
-    return `<span class=\"dt-colheader-content\"><span class=\"dt-header-label\"><span class=\"dt-type-icon\" aria-hidden=\"true\" title=\"${typeLabel}\">${icon}</span><span class=\"dt-header-text\">${title}</span></span>${actions}</span>`;
+    return `<span class="dt-colheader-content"><span class="dt-header-label"><span class="dt-type-icon" aria-hidden="true" title="${typeLabel}">${icon}</span><span class="dt-header-text">${title}</span></span></span>`;
   }
 
   function getAdaptiveTableHeight() {
@@ -948,9 +957,22 @@
       return;
     }
 
+    const visibleColumns = [...state.columns, getUiActionsColumn()];
+
     const settings = {
       data: state.displayRows,
-      columns: state.columns.map(col => {
+      columns: visibleColumns.map(col => {
+        if (col.__uiOnly) {
+          return {
+            data: UI_ACTIONS_COL_ID,
+            readOnly: true,
+            width: col.width,
+            renderer: (instance, td) => {
+              td.innerHTML = '';
+            }
+          };
+        }
+
         const renderer = typeof getSafeRenderer === 'function' ? getSafeRenderer(col) : null;
         return {
           data: col.id,
@@ -960,7 +982,8 @@
         };
       }),
       cells: (row, col) => {
-        const column = state.columns[col];
+        const column = visibleColumns[col];
+        if (!column || column.__uiOnly) return {};
         const colType = (column?.type || '').toLowerCase();
         const rowData = state.displayRows?.[row];
         const cellValue = rowData ? rowData[column?.id] : undefined;
@@ -971,7 +994,13 @@
         }
         return meta;
       },
-      colHeaders: index => renderColumnHeader(state.columns[index], index),
+      colHeaders: index => {
+        const col = visibleColumns[index];
+        if (col?.__uiOnly) {
+          return '<span class="dt-colheader-content" style="justify-content:flex-end;"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field">···</button></span></span>';
+        }
+        return renderColumnHeader(col);
+      },
       rowHeaders: true,
       height: getAdaptiveTableHeight(),
       width: '100%',
@@ -989,6 +1018,7 @@
       afterSelectionEnd: handleSelection,
       afterOnCellMouseDown: (event, coords, TD) => {
         if (!coords || coords.row !== -1 || coords.col < 0) return;
+        if (coords.col >= state.columns.length) return;
         const target = event?.target;
         if (!target) return;
         if (target.closest('.dt-header-action-btn')) return;
@@ -1292,6 +1322,7 @@
 
   function cycleColumnSort(columnIndex) {
     if (!state.hot || !Number.isInteger(columnIndex)) return;
+    if (columnIndex >= state.columns.length) return;
     const sortingPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('columnSorting') : null;
     if (!sortingPlugin) return;
 
