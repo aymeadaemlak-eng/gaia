@@ -8,7 +8,7 @@
 <style>
 #dynamic-table-wrapper {
   --dt-bg: #ffffff;
-  --dt-surface: #f8fbff;
+  --dt-surface: #ffffff;
   --dt-border: #e8ebf2;
   --dt-border-strong: #d7deea;
   --dt-primary: #2383e2;
@@ -173,6 +173,10 @@
   border-color: #fecaca;
 }
 
+#dynamic-table-wrapper .dt-hidden {
+  display: none !important;
+}
+
 #dynamic-table-wrapper .dt-column-menu {
   position: absolute;
   top: 0;
@@ -222,6 +226,157 @@
   border: 0;
   border-top: 1px solid #edf1f5;
   margin: 5px 0;
+}
+
+
+#dynamic-table-wrapper .dt-filter-panel {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: 300px;
+  max-width: 320px;
+  display: none;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+  padding: 10px;
+  z-index: 260;
+}
+
+#dynamic-table-wrapper .dt-filter-panel.is-open {
+  display: block;
+}
+
+#dynamic-table-wrapper .dt-filter-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-select,
+#dynamic-table-wrapper .dt-filter-search {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+#dynamic-table-wrapper .dt-filter-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 12px;
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+
+#dynamic-table-wrapper .dt-filter-operator-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #111827;
+}
+
+#dynamic-table-wrapper .dt-filter-operator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-link {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+#dynamic-table-wrapper .dt-filter-values {
+  max-height: 150px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 10px;
+}
+
+#dynamic-table-wrapper .dt-filter-value-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#dynamic-table-wrapper .dt-filter-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-filter-btn--primary {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
+}
+
+
+#dynamic-table-wrapper .dt-sort-panel {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: 220px;
+  display: none;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+  padding: 8px;
+  z-index: 260;
+}
+
+#dynamic-table-wrapper .dt-sort-panel.is-open {
+  display: block;
+}
+
+#dynamic-table-wrapper .dt-sort-option {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-sort-option + .dt-sort-option {
+  margin-top: 8px;
+}
+
+#dynamic-table-wrapper .dt-sort-option:hover {
+  background: #f8fafc;
 }
 
 #dynamic-table-wrapper #hot-container {
@@ -377,30 +532,40 @@
 }
 
 #dynamic-table-wrapper .dt-colheader-actions {
-  margin-left: 8px;
+  margin-left: 0;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
 #dynamic-table-wrapper .dt-colheader-content--actions {
-  justify-content: flex-end;
+  justify-content: flex-start;
   width: 100%;
   min-width: 86px;
-  padding-right: 2px;
+  padding-left: 4px;
 }
 
 #dynamic-table-wrapper .dt-header-action-btn {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: #6b7280;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1;
   cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-header-action-btn--manage {
+  font-size: 0;
+}
+
+#dynamic-table-wrapper .dt-manage-dots {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
 }
 
 #dynamic-table-wrapper .dt-header-action-btn:hover {
@@ -463,6 +628,55 @@
       <hr class="dt-column-menu-divider" />
       <button id="dt-column-menu-filter" class="dt-column-menu-item" type="button"><span>Filter</span><span>›</span></button>
       <button id="dt-column-menu-sort" class="dt-column-menu-item" type="button"><span>Sort</span><span>›</span></button>
+      <div id="dt-sort-panel" class="dt-sort-panel">
+        <button id="dt-sort-asc" class="dt-sort-option" type="button">Sort ascending</button>
+        <button id="dt-sort-desc" class="dt-sort-option" type="button">Sort descending</button>
+      </div>
+      <div id="dt-filter-panel" class="dt-filter-panel">
+        <label class="dt-filter-label" for="dt-filter-condition">Filter by condition:</label>
+        <select id="dt-filter-condition" class="dt-filter-select">
+          <option value="none">None</option>
+          <option value="empty">Is empty</option>
+          <option value="not_empty">Is not empty</option>
+          <option value="eq">Is equal to</option>
+          <option value="neq">Is not equal to</option>
+          <option value="begins_with">Begins with</option>
+          <option value="ends_with">Ends with</option>
+          <option value="contains">Contains</option>
+          <option value="not_contains">Does not contain</option>
+        </select>
+        <input id="dt-filter-condition-value" class="dt-filter-search" type="text" placeholder="Value" autocomplete="off" />
+
+        <div id="dt-filter-operator-row" class="dt-filter-operator-row">
+          <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-and" value="and" checked />And</label>
+          <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-or" value="or" />Or</label>
+        </div>
+
+        <select id="dt-filter-condition-2" class="dt-filter-select">
+          <option value="none">None</option>
+          <option value="empty">Is empty</option>
+          <option value="not_empty">Is not empty</option>
+          <option value="eq">Is equal to</option>
+          <option value="neq">Is not equal to</option>
+          <option value="begins_with">Begins with</option>
+          <option value="ends_with">Ends with</option>
+          <option value="contains">Contains</option>
+          <option value="not_contains">Does not contain</option>
+        </select>
+        <input id="dt-filter-condition-value-2" class="dt-filter-search" type="text" placeholder="Value" autocomplete="off" />
+
+        <label class="dt-filter-label" for="dt-filter-search">Filter by value:</label>
+        <input id="dt-filter-search" class="dt-filter-search" type="text" placeholder="Search" autocomplete="off" />
+        <div class="dt-filter-toolbar">
+          <button id="dt-filter-select-all" type="button" class="dt-filter-link">Select all</button>
+          <button id="dt-filter-clear" type="button" class="dt-filter-link">Clear</button>
+        </div>
+        <div id="dt-filter-values" class="dt-filter-values"></div>
+        <div class="dt-filter-actions">
+          <button id="dt-filter-cancel" type="button" class="dt-filter-btn">Cancel</button>
+          <button id="dt-filter-ok" type="button" class="dt-filter-btn dt-filter-btn--primary">OK</button>
+        </div>
+      </div>
     </div>
     <div class="dt-footer"></div>
   </div>
@@ -485,7 +699,10 @@
     selectionOrder: [],
     isSearchOpen: false,
     activeHeaderColumn: null,
-    columnMenuOpenedAt: 0
+    columnMenuOpenedAt: 0,
+    filterConfigs: {},
+    filterDraft: null,
+    submenuCloseTimer: null
   };
 
   const els = {
@@ -505,12 +722,31 @@
     columnMenuManageButton: document.getElementById('dt-column-menu-manage'),
     columnMenuFilterButton: document.getElementById('dt-column-menu-filter'),
     columnMenuSortButton: document.getElementById('dt-column-menu-sort'),
+    sortPanel: document.getElementById('dt-sort-panel'),
+    sortAscButton: document.getElementById('dt-sort-asc'),
+    sortDescButton: document.getElementById('dt-sort-desc'),
+    filterPanel: document.getElementById('dt-filter-panel'),
+    filterConditionSelect: document.getElementById('dt-filter-condition'),
+    filterConditionValueInput: document.getElementById('dt-filter-condition-value'),
+    filterOperatorRow: document.getElementById('dt-filter-operator-row'),
+    filterOperatorAnd: document.getElementById('dt-filter-op-and'),
+    filterOperatorOr: document.getElementById('dt-filter-op-or'),
+    filterConditionSelect2: document.getElementById('dt-filter-condition-2'),
+    filterConditionValueInput2: document.getElementById('dt-filter-condition-value-2'),
+    filterSearchInput: document.getElementById('dt-filter-search'),
+    filterValuesWrap: document.getElementById('dt-filter-values'),
+    filterSelectAllButton: document.getElementById('dt-filter-select-all'),
+    filterClearButton: document.getElementById('dt-filter-clear'),
+    filterCancelButton: document.getElementById('dt-filter-cancel'),
+    filterOkButton: document.getElementById('dt-filter-ok'),
     totals: document.getElementById('footer-totals')
   };
 
   const UNIQUE_KEYS = ['uniqueid', 'unique_id', 'unique', 'id', 'Id', 'ID'];
   const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
   const UI_ACTIONS_COL_ID = '__dt_actions__';
+  const BLANK_VALUE_TOKEN = '__DT_BLANK__';
+  const COLUMN_WIDTH_MULTIPLIER = 1.25;
 
   function getUiActionsColumn() {
     return {
@@ -539,7 +775,7 @@
       sanitized.push({
         id,
         header: col?.header || col?.title || col?.label || id,
-        width: col?.columnWidth || col?.width || Math.min(Math.max((col?.header || id).length * 9 + 60, 140), 420),
+        width: Math.round((col?.columnWidth || col?.width || Math.min(Math.max((col?.header || id).length * 9 + 60, 140), 420)) * COLUMN_WIDTH_MULTIPLIER),
         readOnly: col?.readOnly !== false,
         type: (col?.type || 'text').toLowerCase(),
         sourceKeys: [id, col?.data, col?.field, col?.key, col?.header, col?.title, col?.label, col?.name].filter(Boolean)
@@ -785,6 +1021,13 @@
     els.selectionText.textContent = count === 0 ? 'Öğe seçilmedi' : `${count} öğe seçili`;
   }
 
+
+  function updateDeleteButtonVisibility() {
+    if (!els.deleteButton) return;
+    const hasSelection = state.selection.size > 0;
+    els.deleteButton.classList.toggle('dt-hidden', !hasSelection);
+  }
+
   function handleSelection() {
     if (!state.hot) return;
     const ranges = state.hot.getSelectedRange();
@@ -807,9 +1050,11 @@
     }
 
     updateSelectionText();
+    updateDeleteButtonVisibility();
     if (typeof window.bubble_fn_hasSelection === 'function') {
       window.bubble_fn_hasSelection(state.selection.size > 0);
     }
+    publishSelectedUniqueIds();
   }
 
   function prioritizeSelection(sourceIndex) {
@@ -826,10 +1071,12 @@
     ];
     if (appended) {
       updateSelectionText();
+      updateDeleteButtonVisibility();
       if (typeof window.bubble_fn_hasSelection === 'function') {
         window.bubble_fn_hasSelection(true);
       }
     }
+    publishSelectedUniqueIds();
   }
 
   function handleDoubleClick(event) {
@@ -1004,7 +1251,7 @@
       colHeaders: index => {
         const col = visibleColumns[index];
         if (col?.__uiOnly) {
-          return '<span class="dt-colheader-content dt-colheader-content--actions"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field" title="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field" title="Manage field">⋯</button></span></span>';
+          return '<span class="dt-colheader-content dt-colheader-content--actions"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field" title="Add field">+</button><button class="dt-header-action-btn dt-header-action-btn--manage" data-header-action="manage" type="button" aria-label="Manage field" title="Manage field"><svg class="dt-manage-dots" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="18" cy="12" r="1.9"></circle></svg></button></span></span>';
         }
         return renderColumnHeader(col);
       },
@@ -1057,6 +1304,8 @@
     state.selection.clear();
     state.selectionOrder = [];
     updateSelectionText();
+    updateDeleteButtonVisibility();
+    publishSelectedUniqueIds();
   }
 
   function applySearch(term) {
@@ -1177,6 +1426,8 @@
     state.selection.clear();
     state.selectionOrder = [];
     updateSelectionText();
+    updateDeleteButtonVisibility();
+    publishSelectedUniqueIds();
     if (state.hot) {
       try { state.hot.deselectCell(); } catch (err) {}
     }
@@ -1200,17 +1451,33 @@
 
   function getSelectedUniqueIds() {
     const ids = [];
+    const seen = new Set();
     state.selectionOrder.forEach(index => {
       if (!state.selection.has(index)) return;
       const raw = state.rawRows[index];
       if (!raw) return;
       for (const key of UNIQUE_KEYS) {
         if (raw[key] !== undefined && raw[key] !== null && raw[key] !== '') {
-          ids.push(String(raw[key]));
+          const idValue = String(raw[key]);
+          if (!seen.has(idValue)) {
+            seen.add(idValue);
+            ids.push(idValue);
+          }
           return;
         }
       }
     });
+    return ids;
+  }
+
+  function publishSelectedUniqueIds() {
+    const ids = getSelectedUniqueIds();
+    if (typeof window.bubble_fn_selected_unique_ids === 'function') {
+      window.bubble_fn_selected_unique_ids(ids);
+    }
+    if (typeof window.bubble_fn_selected_count === 'function') {
+      window.bubble_fn_selected_count(ids.length);
+    }
     return ids;
   }
 
@@ -1286,7 +1553,10 @@
 
   function closeColumnMenu() {
     if (!els.columnMenu) return;
-    els.columnMenu.classList.remove('is-open');
+    clearSubmenuCloseTimer();
+    hideFilterPanel();
+    hideSortPanel();
+    els.columnMenu.classList.remove('is-open', 'is-filter-mode', 'is-sort-mode');
     els.columnMenu.setAttribute('aria-hidden', 'true');
     state.activeHeaderColumn = null;
   }
@@ -1311,31 +1581,258 @@
 
     els.columnMenu.style.left = `${left}px`;
     els.columnMenu.style.top = `${top}px`;
+    hideFilterPanel();
+    hideSortPanel();
+    els.columnMenu.classList.remove('is-filter-mode', 'is-sort-mode');
     els.columnMenu.classList.add('is-open');
     els.columnMenu.setAttribute('aria-hidden', 'false');
   }
 
 
-  function applyColumnFilter(columnIndex) {
-    if (!state.hot || !Number.isInteger(columnIndex)) return;
-    const column = state.columns[columnIndex];
-    const currentHeader = column?.header || `Field ${columnIndex + 1}`;
-    const typed = window.prompt(`${currentHeader} için filtre (contains). Temizlemek için boş bırakın:`, '');
-    if (typed === null) return;
 
-    const filterPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('filters') : null;
+  function clearSubmenuCloseTimer() {
+    if (!state.submenuCloseTimer) return;
+    clearTimeout(state.submenuCloseTimer);
+    state.submenuCloseTimer = null;
+  }
+
+  function hideAllSubmenus() {
+    hideFilterPanel();
+    hideSortPanel();
+  }
+
+  function scheduleSubmenuClose() {
+    clearSubmenuCloseTimer();
+    state.submenuCloseTimer = setTimeout(() => {
+      hideAllSubmenus();
+    }, 160);
+  }
+
+  function positionSubmenu(panelEl, triggerEl) {
+    if (!panelEl || !els.columnMenu) return;
+    const menuWidth = els.columnMenu.offsetWidth || 220;
+    panelEl.style.left = `${menuWidth + 8}px`;
+    const top = Math.max(0, (triggerEl?.offsetTop || 0) - 6);
+    panelEl.style.top = `${top}px`;
+  }
+
+  function hideSortPanel() {
+    if (els.sortPanel) {
+      els.sortPanel.classList.remove('is-open');
+    }
+    if (els.columnMenu) {
+      els.columnMenu.classList.remove('is-sort-mode');
+    }
+  }
+
+  function openSortPanel() {
+    hideFilterPanel();
+    positionSubmenu(els.sortPanel, els.columnMenuSortButton);
+    if (els.sortPanel) {
+      els.sortPanel.classList.add('is-open');
+    }
+    if (els.columnMenu) {
+      els.columnMenu.classList.add('is-sort-mode');
+      els.columnMenu.classList.remove('is-filter-mode');
+    }
+  }
+
+  function applyColumnSortOrder(columnIndex, sortOrder) {
+    if (!state.hot || !Number.isInteger(columnIndex)) return;
+    if (columnIndex >= state.columns.length) return;
+    const sortingPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('columnSorting') : null;
+    if (!sortingPlugin) return;
+
+    try {
+      sortingPlugin.sort({ column: columnIndex, sortOrder });
+    } catch (err) {
+      console.warn('Sort apply failed', err);
+    }
+  }
+
+
+  function hideFilterPanel() {
+    if (els.filterPanel) {
+      els.filterPanel.classList.remove('is-open');
+    }
+    if (els.columnMenu) {
+      els.columnMenu.classList.remove('is-filter-mode');
+    }
+    state.filterDraft = null;
+  }
+
+  function getColumnDistinctValues(columnIndex) {
+    const values = [];
+    const seen = new Set();
+    state.rawRows.forEach(row => {
+      const value = pickValue(row, state.columns[columnIndex]);
+      const isBlank = value === null || value === undefined || value === '';
+      const raw = isBlank ? BLANK_VALUE_TOKEN : String(value);
+      if (seen.has(raw)) return;
+      seen.add(raw);
+      values.push({
+        raw,
+        label: isBlank ? '(Blank cells)' : String(value)
+      });
+    });
+    return values.sort((a, b) => a.label.localeCompare(b.label, 'tr'));
+  }
+
+  function renderFilterValueList() {
+    if (!els.filterValuesWrap || !state.filterDraft) return;
+    const term = String(els.filterSearchInput?.value || '').toLocaleLowerCase('tr-TR');
+    const filtered = state.filterDraft.allValues.filter(item => item.label.toLocaleLowerCase('tr-TR').includes(term));
+    els.filterValuesWrap.innerHTML = filtered.map(item => {
+      const checked = state.filterDraft.selectedValues.has(item.raw) ? 'checked' : '';
+      const safeLabel = escapeHtml(item.label);
+      const safeRaw = escapeHtml(item.raw);
+      return `<label class="dt-filter-value-item"><input type="checkbox" class="dt-filter-value-checkbox" data-value="${safeRaw}" ${checked} /><span>${safeLabel}</span></label>`;
+    }).join('');
+  }
+
+  function conditionNeedsValue(condition) {
+    return condition !== 'none' && condition !== 'empty' && condition !== 'not_empty';
+  }
+
+  function syncFilterPanelVisibility() {
+    if (!state.filterDraft) return;
+
+    const hasPrimaryCondition = state.filterDraft.condition !== 'none';
+    const showPrimaryValue = conditionNeedsValue(state.filterDraft.condition);
+    const showSecondarySelect = hasPrimaryCondition;
+    const showSecondaryValue = hasPrimaryCondition && conditionNeedsValue(state.filterDraft.condition2 || 'none');
+
+    if (els.filterConditionValueInput) {
+      els.filterConditionValueInput.style.display = showPrimaryValue ? '' : 'none';
+      els.filterConditionValueInput.disabled = !showPrimaryValue;
+    }
+
+    if (els.filterOperatorRow) {
+      els.filterOperatorRow.style.display = showSecondarySelect ? 'flex' : 'none';
+    }
+
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.style.display = showSecondarySelect ? '' : 'none';
+    }
+
+    if (els.filterConditionValueInput2) {
+      els.filterConditionValueInput2.style.display = showSecondaryValue ? '' : 'none';
+      els.filterConditionValueInput2.disabled = !showSecondaryValue;
+    }
+
+    if (!hasPrimaryCondition) {
+      state.filterDraft.operator = 'and';
+      state.filterDraft.condition2 = 'none';
+      state.filterDraft.valueTerm2 = '';
+      if (els.filterOperatorAnd) els.filterOperatorAnd.checked = true;
+      if (els.filterOperatorOr) els.filterOperatorOr.checked = false;
+      if (els.filterConditionSelect2) els.filterConditionSelect2.value = 'none';
+      if (els.filterConditionValueInput2) els.filterConditionValueInput2.value = '';
+    }
+  }
+
+  function openFilterPanel(columnIndex) {
+    if (!Number.isInteger(columnIndex) || columnIndex < 0) return;
+    const existing = state.filterConfigs[columnIndex] || { condition: 'none', condition2: 'none', operator: 'and', values: null };
+    const allValues = getColumnDistinctValues(columnIndex);
+    const allRawValues = allValues.map(item => item.raw);
+    const selectedValues = new Set(Array.isArray(existing.values) && existing.values.length ? existing.values : allRawValues);
+    state.filterDraft = {
+      columnIndex,
+      condition: existing.condition || 'none',
+      valueTerm: existing.valueTerm || '',
+      condition2: existing.condition2 || 'none',
+      valueTerm2: existing.valueTerm2 || '',
+      operator: existing.operator || 'and',
+      allValues,
+      selectedValues
+    };
+
+    if (els.filterConditionSelect) {
+      els.filterConditionSelect.value = state.filterDraft.condition;
+    }
+    if (els.filterConditionValueInput) {
+      const disabled = !conditionNeedsValue(state.filterDraft.condition);
+      els.filterConditionValueInput.disabled = disabled;
+      els.filterConditionValueInput.value = state.filterDraft.valueTerm || '';
+    }
+    if (els.filterOperatorAnd) {
+      els.filterOperatorAnd.checked = state.filterDraft.operator !== 'or';
+    }
+    if (els.filterOperatorOr) {
+      els.filterOperatorOr.checked = state.filterDraft.operator === 'or';
+    }
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.value = state.filterDraft.condition2 || 'none';
+    }
+    if (els.filterConditionValueInput2) {
+      const disabled2 = !conditionNeedsValue(state.filterDraft.condition2 || 'none');
+      els.filterConditionValueInput2.disabled = disabled2;
+      els.filterConditionValueInput2.value = state.filterDraft.valueTerm2 || '';
+    }
+    if (els.filterSearchInput) {
+      els.filterSearchInput.value = '';
+    }
+    syncFilterPanelVisibility();
+    renderFilterValueList();
+    hideSortPanel();
+    positionSubmenu(els.filterPanel, els.columnMenuFilterButton);
+    if (els.filterPanel) {
+      els.filterPanel.classList.add('is-open');
+    }
+    if (els.columnMenu) {
+      els.columnMenu.classList.add('is-filter-mode');
+      els.columnMenu.classList.remove('is-sort-mode');
+    }
+  }
+
+  function applyAllColumnFilters() {
+    if (!state.hot || typeof state.hot.getPlugin !== 'function') return;
+    const filterPlugin = state.hot.getPlugin('filters');
     if (!filterPlugin) return;
 
     try {
-      filterPlugin.removeConditions(columnIndex);
-      const term = String(typed).trim();
-      if (term) {
-        filterPlugin.addCondition(columnIndex, 'contains', [term]);
+      for (let colIndex = 0; colIndex < state.columns.length; colIndex += 1) {
+        filterPlugin.removeConditions(colIndex);
       }
+
+      Object.keys(state.filterConfigs).forEach(key => {
+        const col = Number(key);
+        const config = state.filterConfigs[key];
+        if (!Number.isInteger(col) || !config) return;
+
+        if (config.condition && config.condition !== 'none') {
+          if (config.condition === 'empty' || config.condition === 'not_empty') {
+            filterPlugin.addCondition(col, config.condition, []);
+          } else {
+            filterPlugin.addCondition(col, config.condition, [config.valueTerm || '']);
+          }
+        }
+
+        if (config.condition2 && config.condition2 !== 'none') {
+          const op = config.operator === 'or' ? 'disjunction' : 'conjunction';
+          if (config.condition2 === 'empty' || config.condition2 === 'not_empty') {
+            filterPlugin.addCondition(col, config.condition2, [], op);
+          } else {
+            filterPlugin.addCondition(col, config.condition2, [config.valueTerm2 || ''], op);
+          }
+        }
+
+        if (Array.isArray(config.values) && config.values.length) {
+          const normalizedValues = config.values.map(value => value === BLANK_VALUE_TOKEN ? '' : value);
+          filterPlugin.addCondition(col, 'by_value', [normalizedValues]);
+        }
+      });
+
       filterPlugin.filter();
     } catch (err) {
       console.warn('Filter apply failed', err);
     }
+  }
+
+
+  function applyColumnFilter(columnIndex) {
+    openFilterPanel(columnIndex);
   }
 
   function cycleColumnSort(columnIndex) {
@@ -1436,19 +1933,196 @@
     }
 
     if (els.columnMenuFilterButton) {
-      els.columnMenuFilterButton.addEventListener('click', () => {
+      const openFilterFromMenu = () => {
         if (Number.isInteger(state.activeHeaderColumn)) {
           applyColumnFilter(state.activeHeaderColumn);
         }
+      };
+      els.columnMenuFilterButton.addEventListener('click', openFilterFromMenu);
+      els.columnMenuFilterButton.addEventListener('mouseenter', openFilterFromMenu);
+    }
+
+    if (els.columnMenuSortButton) {
+      const openSortFromMenu = () => {
+        if (!Number.isInteger(state.activeHeaderColumn)) return;
+        openSortPanel();
+      };
+      els.columnMenuSortButton.addEventListener('click', openSortFromMenu);
+      els.columnMenuSortButton.addEventListener('mouseenter', openSortFromMenu);
+    }
+
+    if (els.sortAscButton) {
+      els.sortAscButton.addEventListener('click', () => {
+        if (!Number.isInteger(state.activeHeaderColumn)) return;
+        applyColumnSortOrder(state.activeHeaderColumn, 'asc');
         closeColumnMenu();
       });
     }
 
-    if (els.columnMenuSortButton) {
-      els.columnMenuSortButton.addEventListener('click', () => {
-        if (Number.isInteger(state.activeHeaderColumn)) {
-          cycleColumnSort(state.activeHeaderColumn);
+    if (els.sortDescButton) {
+      els.sortDescButton.addEventListener('click', () => {
+        if (!Number.isInteger(state.activeHeaderColumn)) return;
+        applyColumnSortOrder(state.activeHeaderColumn, 'desc');
+        closeColumnMenu();
+      });
+    }
+
+    if (els.columnMenu) {
+      els.columnMenu.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+
+      els.columnMenu.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToSubmenu = !!(next && (next.closest('#dt-filter-panel') || next.closest('#dt-sort-panel')));
+        if (!movingToSubmenu) {
+          scheduleSubmenuClose();
         }
+      });
+
+      els.columnMenu.addEventListener('mouseover', event => {
+        const item = event.target.closest('.dt-column-menu-item');
+        if (!item) return;
+        if (item.id === 'dt-column-menu-filter' || item.id === 'dt-column-menu-sort') return;
+        hideAllSubmenus();
+      });
+    }
+
+    if (els.filterPanel) {
+      els.filterPanel.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+      els.filterPanel.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToMenu = !!(next && next.closest('#dt-column-menu'));
+        if (!movingToMenu) {
+          scheduleSubmenuClose();
+        }
+      });
+    }
+
+    if (els.sortPanel) {
+      els.sortPanel.addEventListener('mouseenter', () => {
+        clearSubmenuCloseTimer();
+      });
+      els.sortPanel.addEventListener('mouseleave', event => {
+        const next = event.relatedTarget;
+        const movingToMenu = !!(next && next.closest('#dt-column-menu'));
+        if (!movingToMenu) {
+          scheduleSubmenuClose();
+        }
+      });
+    }
+
+    if (els.filterSearchInput) {
+      els.filterSearchInput.addEventListener('input', renderFilterValueList);
+    }
+
+    if (els.filterConditionSelect) {
+      els.filterConditionSelect.addEventListener('change', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.condition = event.target.value || 'none';
+        if (!conditionNeedsValue(state.filterDraft.condition)) {
+          state.filterDraft.valueTerm = '';
+          if (els.filterConditionValueInput) {
+            els.filterConditionValueInput.value = '';
+          }
+        }
+        syncFilterPanelVisibility();
+      });
+    }
+
+    if (els.filterConditionValueInput) {
+      els.filterConditionValueInput.addEventListener('input', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.valueTerm = event.target.value || '';
+      });
+    }
+
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.addEventListener('change', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.condition2 = event.target.value || 'none';
+        if (!conditionNeedsValue(state.filterDraft.condition2 || 'none')) {
+          state.filterDraft.valueTerm2 = '';
+          if (els.filterConditionValueInput2) {
+            els.filterConditionValueInput2.value = '';
+          }
+        }
+        syncFilterPanelVisibility();
+      });
+    }
+
+    if (els.filterConditionValueInput2) {
+      els.filterConditionValueInput2.addEventListener('input', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.valueTerm2 = event.target.value || '';
+      });
+    }
+
+    if (els.filterOperatorAnd) {
+      els.filterOperatorAnd.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'and';
+      });
+    }
+
+    if (els.filterOperatorOr) {
+      els.filterOperatorOr.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'or';
+      });
+    }
+
+    if (els.filterValuesWrap) {
+      els.filterValuesWrap.addEventListener('change', event => {
+        const checkbox = event.target.closest('.dt-filter-value-checkbox');
+        if (!checkbox || !state.filterDraft) return;
+        const value = checkbox.getAttribute('data-value') || '';
+        if (checkbox.checked) {
+          state.filterDraft.selectedValues.add(value);
+        } else {
+          state.filterDraft.selectedValues.delete(value);
+        }
+      });
+    }
+
+    if (els.filterSelectAllButton) {
+      els.filterSelectAllButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        state.filterDraft.selectedValues = new Set(state.filterDraft.allValues.map(item => item.raw));
+        renderFilterValueList();
+      });
+    }
+
+    if (els.filterClearButton) {
+      els.filterClearButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        state.filterDraft.selectedValues.clear();
+        renderFilterValueList();
+      });
+    }
+
+    if (els.filterCancelButton) {
+      els.filterCancelButton.addEventListener('click', () => {
+        hideFilterPanel();
+      });
+    }
+
+    if (els.filterOkButton) {
+      els.filterOkButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        const { columnIndex, condition, selectedValues, allValues } = state.filterDraft;
+        const normalizedValues = Array.from(selectedValues);
+        state.filterConfigs[columnIndex] = {
+          condition: condition || 'none',
+          valueTerm: (state.filterDraft.valueTerm || '').trim(),
+          condition2: state.filterDraft.condition2 || 'none',
+          valueTerm2: (state.filterDraft.valueTerm2 || '').trim(),
+          operator: state.filterDraft.operator || 'and',
+          values: normalizedValues.length === allValues.length ? null : normalizedValues
+        };
+        applyAllColumnFilters();
         closeColumnMenu();
       });
     }
@@ -1467,9 +2141,7 @@
 
     window.addEventListener('resize', () => {
       closeColumnMenu();
-          });
-
-
+    });
 
   }
 
@@ -1479,6 +2151,7 @@
     refreshTable,
     clearSelection,
     getSelectedUniqueIds,
+    publishSelectedUniqueIds,
     start,
     edit,
     save,
@@ -1494,6 +2167,7 @@
   window.refreshTable = refreshTable;
   window.clearSelection = clearSelection;
   window.getSelectedUniqueIds = getSelectedUniqueIds;
+  window.publishSelectedUniqueIds = publishSelectedUniqueIds;
   window.start = start;
   window.edit = edit;
   window.save = save;
@@ -1505,6 +2179,7 @@
   window.deleteSelected = deleteSelected;
 
   attachActionButtons();
+  updateDeleteButtonVisibility();
   syncButtonTitles();
   autoInitialize();
 })();
