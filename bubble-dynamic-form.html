@@ -264,6 +264,8 @@
     }
 
 #bdf-root #formContainer {
+      width: 100%;
+      max-width: 464px;
       height: 680px;
       overflow-y: auto;
       overflow-x: hidden;
@@ -1133,70 +1135,6 @@
   font-weight: 600;
 }
 
-#bdf-root .edit-progress-wrap {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-}
-
-#bdf-root .edit-progress-track {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 2px;
-}
-
-#bdf-root .edit-progress-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748b;
-  white-space: nowrap;
-}
-
-#bdf-root .edit-progress-step-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  background: #fff;
-}
-
-#bdf-root .edit-progress-step.completed .edit-progress-step-dot {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-}
-
-#bdf-root .edit-progress-step.active {
-  color: #1d4ed8;
-  font-weight: 600;
-}
-
-#bdf-root .edit-progress-step.active .edit-progress-step-dot {
-  border-color: #1d4ed8;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
-}
-
-#bdf-root .edit-progress-step.upcoming {
-  opacity: 0.6;
-}
-
-#bdf-root .edit-progress-sep {
-  color: #cbd5e1;
-}
-
-#bdf-root .edit-progress-toggle {
-  justify-self: start;
-  font-size: 12px;
-  padding: 4px 8px;
-}
-
 #bdf-root .edit-stage-layout {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
@@ -1569,6 +1507,9 @@
         max-width: min(100%, 248px);
       }
 
+    }
+
+    @media (max-width: 360px) {
 #bdf-root .edit-stage-layout {
         grid-template-columns: 1fr;
       }
@@ -1577,13 +1518,6 @@
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       }
 
-#bdf-root .edit-progress-track {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    @media (max-width: 360px) {
 #bdf-root .field-row {
         flex-direction: column;
         align-items: stretch;
@@ -1767,10 +1701,6 @@
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <div id="editModeRoot" class="edit-mode-root">
-          <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
-            <div id="editProgressTrack" class="edit-progress-track"></div>
-            <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
-          </div>
           <div class="edit-mode-toolbar">
             <div class="edit-search-input-wrap">
               <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
@@ -2296,9 +2226,6 @@
     const editSearchClear = byId("editSearchClear");
     const editSearchSummary = byId("editSearchSummary");
     const editSearchEmpty = byId("editSearchEmpty");
-    const editProgressWrap = byId("editProgressWrap");
-    const editProgressTrack = byId("editProgressTrack");
-    const editProgressToggle = byId("editProgressToggle");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
     const editStageLayout = byId("editStageLayout");
@@ -2398,7 +2325,6 @@
     let editModeStageMeta = [];
     let editSelectedStage = "";
     let editProcessActiveStageKey = "";
-    let editProcessShowAll = false;
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -5475,7 +5401,6 @@ function renderSubmitOutputs(payload) {
       if (!editModeLoading) return;
       editModeLoading.style.display = isLoading ? "grid" : "none";
       if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
-      if (editProgressWrap) editProgressWrap.style.display = isLoading ? "none" : editProgressWrap.style.display;
       if (editModeLoadingText && message) {
         editModeLoadingText.textContent = message;
       }
@@ -5761,7 +5686,6 @@ function renderSubmitOutputs(payload) {
       hasEnteredEditSession = true;
       traceAutosave("edit-payload-applied", { signature, fieldCount: Array.isArray(config.fields) ? config.fields.length : 0 });
       editModeStablePollCount = 0;
-      editProcessShowAll = false;
       setEditModeLoading(false);
       renderForm(config);
       flushPendingSubmitAfterConfigReady();
@@ -5916,58 +5840,6 @@ function renderSubmitOutputs(payload) {
       if (target.startsWith(term)) return 300 + (term.length / Math.max(target.length, 1));
       if (target.includes(term)) return 200 + (term.length / Math.max(target.length, 1));
       return 100 * fuzzySimilarityScore(target, term);
-    }
-
-    function renderEditProgress(stageMeta) {
-      if (!editProgressWrap || !editProgressTrack) return;
-      editProgressTrack.innerHTML = "";
-      if (!stageMeta.length) {
-        editProgressWrap.style.display = "none";
-        return;
-      }
-
-      const activeKey = resolveActiveProcessStageKey(stageMeta);
-      editProcessActiveStageKey = activeKey;
-      if (!activeKey) {
-        editProgressWrap.style.display = "none";
-        return;
-      }
-
-      const activeIndex = stageMeta.findIndex((item) => item.key === activeKey);
-      const visibleStages = (editProcessShowAll || activeIndex < 0)
-        ? stageMeta
-        : stageMeta.slice(0, activeIndex + 1);
-
-      visibleStages.forEach((stage, index) => {
-        const realIndex = stageMeta.findIndex((item) => item.key === stage.key);
-        const status = getProcessStageStatus(realIndex, activeIndex);
-        const step = document.createElement("div");
-        step.className = `edit-progress-step ${status}`;
-        const dot = document.createElement("span");
-        dot.className = "edit-progress-step-dot";
-        dot.textContent = status === "completed" ? "✓" : String(realIndex + 1);
-        const label = document.createElement("span");
-        label.textContent = stage.label;
-        step.append(dot, label);
-        editProgressTrack.appendChild(step);
-        if (index < visibleStages.length - 1) {
-          const sep = document.createElement("span");
-          sep.className = "edit-progress-sep";
-          sep.textContent = "—";
-          editProgressTrack.appendChild(sep);
-        }
-      });
-
-      if (editProgressToggle) {
-        if (activeIndex >= 0 && stageMeta.length > activeIndex + 1) {
-          editProgressToggle.style.display = "inline-flex";
-          editProgressToggle.textContent = editProcessShowAll ? "Daha az göster" : "Tüm süreç";
-        } else {
-          editProgressToggle.style.display = "none";
-        }
-      }
-
-      editProgressWrap.style.display = "grid";
     }
 
     function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0, searchTerm = "", showColumnDataDivider = false, searchMode = false }) {
@@ -6191,9 +6063,6 @@ function renderSubmitOutputs(payload) {
         retryCount: 0
       });
 
-      renderEditProgress(editModeStageMeta || []);
-      const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
-      if (activeTab) activeTab.scrollIntoView({ block: 'nearest' });
     }
 
 
@@ -7637,13 +7506,6 @@ function renderSubmitOutputs(payload) {
           editModeSearchTerm = "";
           runEditModeFilterRender();
           editSearchInput.focus();
-        });
-      }
-
-      if (editProgressToggle) {
-        editProgressToggle.addEventListener("click", () => {
-          editProcessShowAll = !editProcessShowAll;
-          runEditModeFilterRender();
         });
       }
 
