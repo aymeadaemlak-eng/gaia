@@ -934,18 +934,33 @@
   function positionTableEndActions() {
     if (!els.tableEndActions || !els.wrapper) return;
 
-    const topHeaders = els.wrapper.querySelectorAll('.ht_clone_top thead tr:last-child th[data-col]');
-    const candidates = Array.from(topHeaders).filter(th => th.offsetParent !== null);
-    const lastHeader = candidates[candidates.length - 1];
+    const selector = '.ht_clone_top thead tr:last-child th[data-col], .handsontable:not(.ht_clone_top):not(.ht_clone_left) thead tr:last-child th[data-col]';
+    const allHeaders = Array.from(els.wrapper.querySelectorAll(selector));
+
+    const visibleHeaders = allHeaders
+      .filter(th => th.offsetParent !== null)
+      .sort((a, b) => a.getBoundingClientRect().right - b.getBoundingClientRect().right);
+
+    const lastHeader = visibleHeaders[visibleHeaders.length - 1];
 
     if (!lastHeader) {
-      els.tableEndActions.style.display = 'none';
+      const fallbackRect = els.container?.getBoundingClientRect?.();
+      const wrapperRect = els.wrapper.getBoundingClientRect();
+      if (!fallbackRect) {
+        els.tableEndActions.style.display = 'none';
+        return;
+      }
+      const fallbackLeft = Math.max(8, Math.min((fallbackRect.right - wrapperRect.left) - 64, wrapperRect.width - 64));
+      const fallbackTop = Math.max(6, fallbackRect.top - wrapperRect.top + 5);
+      els.tableEndActions.style.display = 'inline-flex';
+      els.tableEndActions.style.left = `${fallbackLeft}px`;
+      els.tableEndActions.style.top = `${fallbackTop}px`;
       return;
     }
 
     const wrapperRect = els.wrapper.getBoundingClientRect();
     const rect = lastHeader.getBoundingClientRect();
-    const left = Math.max(8, rect.right - wrapperRect.left + 4);
+    const left = Math.max(8, Math.min(rect.right - wrapperRect.left + 4, wrapperRect.width - 64));
     const top = Math.max(6, rect.top - wrapperRect.top + 5);
 
     els.tableEndActions.style.display = 'inline-flex';
@@ -1009,6 +1024,11 @@
       afterFilter: () => {
         updateFooter();
         handleSelection();
+      },
+      afterRender: () => {
+        positionTableEndActions();
+    setTimeout(positionTableEndActions, 0);
+    setTimeout(positionTableEndActions, 120);
       }
     };
 
@@ -1021,6 +1041,8 @@
     updateFooter();
     attachDoubleClickListener();
     positionTableEndActions();
+    setTimeout(positionTableEndActions, 0);
+    setTimeout(positionTableEndActions, 120);
   }
 
   function loadDisplayRows(rows) {
@@ -1422,6 +1444,8 @@
     window.addEventListener('resize', () => {
       closeColumnMenu();
       positionTableEndActions();
+    setTimeout(positionTableEndActions, 0);
+    setTimeout(positionTableEndActions, 120);
     });
 
     const bindTableScroll = () => {
@@ -1435,6 +1459,13 @@
 
     bindTableScroll();
     setTimeout(bindTableScroll, 0);
+
+    if (els.container && els.container.dataset.dtObserverBound !== 'true' && typeof MutationObserver === 'function') {
+      const observer = new MutationObserver(() => positionTableEndActions());
+      observer.observe(els.container, { subtree: true, childList: true });
+      els.container.__dtHeaderObserver = observer;
+      els.container.dataset.dtObserverBound = 'true';
+    }
 
   }
 
