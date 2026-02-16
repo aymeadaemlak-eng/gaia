@@ -144,6 +144,11 @@
       box-sizing: border-box;
     }
 
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
 
 #bdf-root.editing-mode {
       --form-container-max-width: 100%;
@@ -953,28 +958,10 @@
       margin-bottom: 12px;
     }
 
-#bdf-root .action-meta {
-      display: grid;
-      gap: 2px;
-      min-width: 88px;
-    }
-
-#bdf-root .action-meta-title {
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: #64748b;
-      letter-spacing: 0.01em;
-    }
-
-#bdf-root .action-meta-subtitle {
-      font-size: 0.72rem;
-      color: #94a3b8;
-    }
-
 #bdf-root .action-main {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: flex-start;
       gap: 8px;
       flex: 1;
       min-width: 0;
@@ -1517,14 +1504,15 @@
 
 #bdf-root .card {
         border-radius: 0;
-        padding: 10px 0;
-        border-left: 0;
-        border-right: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
       }
 
 #bdf-root #formContainer {
-        padding-left: 0;
-        padding-right: 0;
+        max-width: none;
+        margin-inline: 0;
+        padding: 0;
       }
 
 #bdf-root .edit-mode-root,
@@ -1534,8 +1522,8 @@
       }
 
 #bdf-root .field-row {
-        padding-left: 8px;
-        padding-right: 8px;
+        padding-left: 0;
+        padding-right: 0;
       }
 
 #bdf-root .field-label {
@@ -1544,19 +1532,17 @@
       }
 
 #bdf-root .edit-stage-panel {
-        border-left: 0;
-        border-right: 0;
+        border: 0;
         border-radius: 0;
-        padding-left: 8px;
-        padding-right: 8px;
+        padding: 0;
       }
 
 #bdf-root .action-bar {
-        border-left: 0;
-        border-right: 0;
+        border: 0;
         border-radius: 0;
-        padding-left: 8px;
-        padding-right: 8px;
+        padding: 0;
+        margin-bottom: 8px;
+        box-shadow: none;
       }
     }
 
@@ -1735,10 +1721,6 @@
     <section class="card">
       <div id="formContainer">
         <div id="actionBar" class="action-bar">
-          <div class="action-meta">
-            <span class="action-meta-title">Aksiyon</span>
-            <span class="action-meta-subtitle">Süreç adımını seçin</span>
-          </div>
           <div class="action-main">
             <div class="action-split" id="actionSplit">
               <button id="actionTriggerBtn" type="button" class="action-trigger-btn">Aksiyon seç</button>
@@ -2717,12 +2699,9 @@
     function updateInlineEditToggleUi() {
       if (!toggleInlineEditBtn) return;
       const canOpen = canOpenInlineEditPanel();
-      if (!canOpen && isEditPanelOpen) {
-        isEditPanelOpen = false;
-        applyVersionVisibility();
-      }
-      toggleInlineEditBtn.style.display = canOpen ? "inline-flex" : "none";
-      toggleInlineEditBtn.disabled = !canOpen;
+      const shouldShow = canOpen || isEditPanelOpen;
+      toggleInlineEditBtn.style.display = shouldShow ? "inline-flex" : "none";
+      toggleInlineEditBtn.disabled = !canOpen && !isEditPanelOpen;
       toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
     }
 
@@ -5933,6 +5912,20 @@ function renderSubmitOutputs(payload) {
       requestAnimationFrame(pump);
     }
 
+    function clearEditSearchState() {
+      if (editModeDebounceTimer) {
+        clearTimeout(editModeDebounceTimer);
+        editModeDebounceTimer = null;
+      }
+      editModeSearchTerm = "";
+      if (editSearchInput) editSearchInput.value = "";
+      if (editSearchClear) editSearchClear.style.display = "none";
+      if (editSearchEmpty) {
+        editSearchEmpty.style.display = "none";
+        editSearchEmpty.textContent = "";
+      }
+    }
+
     function runEditModeFilterRender() {
       if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
       const rawTerm = String(editModeSearchTerm || "").trim();
@@ -6029,6 +6022,7 @@ function renderSubmitOutputs(payload) {
         if (stageKey === editSelectedStage) btn.classList.add('active');
         if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
         btn.addEventListener('click', () => {
+          clearEditSearchState();
           editSelectedStage = stageKey;
           runEditModeFilterRender();
         });
@@ -7552,6 +7546,7 @@ function renderSubmitOutputs(payload) {
         editStageSelect.addEventListener("change", (event) => {
           const nextStage = String(event?.target?.value || "").trim();
           if (!nextStage) return;
+          clearEditSearchState();
           editSelectedStage = nextStage;
           runEditModeFilterRender();
         });
