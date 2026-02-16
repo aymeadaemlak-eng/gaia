@@ -380,14 +380,14 @@
   margin-left: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 0 0 auto;
 }
 
 #dynamic-table-wrapper .dt-colheader-content--actions {
   justify-content: flex-end;
   width: 100%;
-  min-width: 68px;
+  min-width: 86px;
   padding-right: 2px;
 }
 
@@ -441,17 +441,17 @@
     <div class="dt-header">
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
-          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala">⇅</button>
-          <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama">⌕</button>
+          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala" title="Sort">⇅</button>
+          <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama" title="Search">⌕</button>
           <div id="dt-search-wrap" class="dt-search-wrap">
             <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
           </div>
         </div>
         <div class="dt-toolbar-right">
-          <button id="dt-btn-delete" class="dt-icon-btn dt-icon-btn-danger" type="button" aria-label="Sil"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 12h10l1-12"></path><path d="M9 7V5h6v2"></path></svg></button>
-          <button id="dt-btn-import" class="dt-icon-btn" type="button" aria-label="Import"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V9"></path><path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path><path d="M5 19h14"></path></svg></button>
-          <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="Export"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
-          <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button">+ New</button>
+          <button id="dt-btn-delete" class="dt-icon-btn dt-icon-btn-danger" type="button" aria-label="Sil" title="Delete"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 12h10l1-12"></path><path d="M9 7V5h6v2"></path></svg></button>
+          <button id="dt-btn-import" class="dt-icon-btn" type="button" aria-label="Import" title="Import"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V9"></path><path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path><path d="M5 19h14"></path></svg></button>
+          <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="Export" title="Export"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
+          <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button" title="New">+ New</button>
         </div>
       </div>
     </div>
@@ -516,7 +516,7 @@
     return {
       id: UI_ACTIONS_COL_ID,
       header: '',
-      width: 74,
+      width: 92,
       readOnly: true,
       type: 'text',
       sourceKeys: [UI_ACTIONS_COL_ID],
@@ -1004,7 +1004,7 @@
       colHeaders: index => {
         const col = visibleColumns[index];
         if (col?.__uiOnly) {
-          return '<span class="dt-colheader-content dt-colheader-content--actions"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field">···</button></span></span>';
+          return '<span class="dt-colheader-content dt-colheader-content--actions"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field" title="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field" title="Manage field">⋯</button></span></span>';
         }
         return renderColumnHeader(col);
       },
@@ -1047,6 +1047,7 @@
 
     updateFooter();
     attachDoubleClickListener();
+    syncButtonTitles();
   }
 
   function loadDisplayRows(rows) {
@@ -1273,6 +1274,16 @@
     }
   }
 
+  function syncButtonTitles() {
+    if (!els.wrapper) return;
+    const buttons = els.wrapper.querySelectorAll('button[aria-label]');
+    buttons.forEach(btn => {
+      if (!btn.getAttribute('title')) {
+        btn.setAttribute('title', btn.getAttribute('aria-label'));
+      }
+    });
+  }
+
   function closeColumnMenu() {
     if (!els.columnMenu) return;
     els.columnMenu.classList.remove('is-open');
@@ -1494,6 +1505,7 @@
   window.deleteSelected = deleteSelected;
 
   attachActionButtons();
+  syncButtonTitles();
   autoInitialize();
 })();
 </script>
