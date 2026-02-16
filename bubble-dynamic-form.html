@@ -135,7 +135,6 @@
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
       --form-container-max-width: 464px;
-      --form-card-max-width: 464px;
       font-size: 14px;
       color: var(--text);
     }
@@ -148,7 +147,6 @@
 
 #bdf-root.editing-mode {
       --form-container-max-width: 100%;
-      --form-card-max-width: 100%;
     }
 
 
@@ -174,11 +172,6 @@
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
-
-#bdf-root #formCard {
-      width: 100%;
-      max-width: var(--form-card-max-width, 464px);
-    }
 
     #bdf-root h1,
     #bdf-root h2,
@@ -279,7 +272,7 @@
 
 #bdf-root #formContainer {
       width: 100%;
-      max-width: var(--form-container-max-width, 100%);
+      max-width: var(--form-container-max-width, 464px);
       height: 680px;
       overflow-y: auto;
       overflow-x: hidden;
@@ -1656,7 +1649,7 @@
       </section>
     </div>
 
-    <section class="card" id="formCard">
+    <section class="card">
       <div id="formContainer">
         <div id="actionBar" class="action-bar">
           <div class="action-meta">
