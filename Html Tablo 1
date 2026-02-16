@@ -161,60 +161,67 @@
   box-shadow: 0 0 0 3px rgba(35, 131, 226, 0.14);
 }
 
-#dynamic-table-wrapper .dt-field-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 170px;
-  border-radius: 10px;
-  border: 1px solid var(--dt-border-strong);
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-  padding: 6px;
-  display: none;
-  z-index: 120;
+
+
+#dynamic-table-wrapper .dt-icon-btn-danger {
+  color: #dc2626;
 }
 
-#dynamic-table-wrapper .dt-field-menu.is-open {
+#dynamic-table-wrapper .dt-icon-btn-danger:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+#dynamic-table-wrapper .dt-column-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 220px;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border-strong);
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+  padding: 6px;
+  display: none;
+  z-index: 250;
+}
+
+#dynamic-table-wrapper .dt-column-menu.is-open {
   display: block;
 }
 
-#dynamic-table-wrapper .dt-field-item {
+#dynamic-table-wrapper .dt-column-menu-item {
   width: 100%;
-  text-align: left;
   border: 0;
   background: transparent;
-  border-radius: 7px;
-  padding: 7px 8px;
+  color: #2f3437;
+  text-align: left;
+  border-radius: 8px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 13px;
-  color: var(--dt-text);
+  font-weight: 500;
   cursor: pointer;
 }
 
-#dynamic-table-wrapper .dt-field-item:hover {
-  background: #f6f8fb;
+#dynamic-table-wrapper .dt-column-menu-item:hover {
+  background: #f5f7fa;
 }
 
-#dynamic-table-wrapper .dt-action-group {
-  position: relative;
+#dynamic-table-wrapper .dt-column-menu-title {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 6px 10px 4px;
 }
 
-#dynamic-table-wrapper .dt-settings-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 170px;
-  border-radius: 10px;
-  border: 1px solid var(--dt-border-strong);
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-  padding: 6px;
-  display: none;
-  z-index: 130;
-}
-
-#dynamic-table-wrapper .dt-settings-menu.is-open {
-  display: block;
+#dynamic-table-wrapper .dt-column-menu-divider {
+  border: 0;
+  border-top: 1px solid #edf1f5;
+  margin: 5px 0;
 }
 
 #dynamic-table-wrapper #hot-container {
@@ -343,19 +350,8 @@
   transition: opacity 180ms ease;
 }
 
-#dynamic-table-wrapper .handsontable thead th:not(:hover) .htDropdownMenuButton {
+#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton {
   display: none !important;
-}
-
-#dynamic-table-wrapper .handsontable thead th:hover .htDropdownMenuButton {
-  display: flex !important;
-  opacity: 0.55 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-}
-
-#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:hover {
-  opacity: 1 !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .colHeader {
@@ -386,26 +382,24 @@
           </div>
         </div>
         <div class="dt-toolbar-right">
-          <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="İndir"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
-          <div class="dt-action-group">
-            <button id="dt-btn-settings" class="dt-icon-btn" type="button" aria-label="Ayarlar" aria-expanded="false"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2"></circle></svg></button>
-            <div id="dt-settings-menu" class="dt-settings-menu" role="menu" aria-hidden="true">
-              <button id="dt-settings-import" class="dt-field-item" type="button">Import</button>
-              <button id="dt-settings-export" class="dt-field-item" type="button">Export</button>
-            </div>
-          </div>
-          <div class="dt-action-group">
-            <button id="dt-btn-field" class="dt-action-btn" type="button" aria-expanded="false">Field ▾</button>
-            <div id="dt-field-menu" class="dt-field-menu" role="menu" aria-hidden="true">
-              <button id="dt-field-add" class="dt-field-item" type="button">Add field</button>
-              <button id="dt-field-manage" class="dt-field-item" type="button">Manage fields</button>
-            </div>
-          </div>
+          <button id="dt-btn-delete" class="dt-icon-btn dt-icon-btn-danger" type="button" aria-label="Sil"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 12h10l1-12"></path><path d="M9 7V5h6v2"></path></svg></button>
+          <button id="dt-btn-import" class="dt-icon-btn" type="button" aria-label="Import"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V9"></path><path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path><path d="M5 19h14"></path></svg></button>
+          <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="Export"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
+          <button id="dt-btn-add-field" class="dt-icon-btn" type="button" aria-label="Add field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+          <button id="dt-btn-manage-field" class="dt-icon-btn" type="button" aria-label="Manage field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg></button>
           <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button">+ New</button>
         </div>
       </div>
     </div>
     <div id="hot-container"></div>
+    <div id="dt-column-menu" class="dt-column-menu" role="menu" aria-hidden="true">
+      <div class="dt-column-menu-title" id="dt-column-menu-title">Field menu</div>
+      <button id="dt-column-menu-add" class="dt-column-menu-item" type="button">Add field</button>
+      <button id="dt-column-menu-manage" class="dt-column-menu-item" type="button">Manage field</button>
+      <hr class="dt-column-menu-divider" />
+      <button id="dt-column-menu-filter" class="dt-column-menu-item" type="button"><span>Filter</span><span>›</span></button>
+      <button id="dt-column-menu-sort" class="dt-column-menu-item" type="button"><span>Sort</span><span>›</span></button>
+    </div>
     <div class="dt-footer"></div>
   </div>
 </div>
@@ -425,7 +419,8 @@
     displayRows: [],
     selection: new Set(),
     selectionOrder: [],
-    isSearchOpen: false
+    isSearchOpen: false,
+    activeHeaderColumn: null
   };
 
   const els = {
@@ -435,16 +430,18 @@
     searchWrap: document.getElementById('dt-search-wrap'),
     searchToggleButton: document.getElementById('dt-btn-search'),
     sortButton: document.getElementById('dt-btn-sort'),
+    deleteButton: document.getElementById('dt-btn-delete'),
+    importButton: document.getElementById('dt-btn-import'),
     downloadButton: document.getElementById('dt-btn-download'),
-    settingsButton: document.getElementById('dt-btn-settings'),
-    settingsMenu: document.getElementById('dt-settings-menu'),
-    settingsImportButton: document.getElementById('dt-settings-import'),
-    settingsExportButton: document.getElementById('dt-settings-export'),
+    addFieldButton: document.getElementById('dt-btn-add-field'),
+    manageFieldButton: document.getElementById('dt-btn-manage-field'),
     newButton: document.getElementById('dt-btn-new'),
-    fieldButton: document.getElementById('dt-btn-field'),
-    fieldMenu: document.getElementById('dt-field-menu'),
-    fieldAddButton: document.getElementById('dt-field-add'),
-    fieldManageButton: document.getElementById('dt-field-manage'),
+    columnMenu: document.getElementById('dt-column-menu'),
+    columnMenuTitle: document.getElementById('dt-column-menu-title'),
+    columnMenuAddButton: document.getElementById('dt-column-menu-add'),
+    columnMenuManageButton: document.getElementById('dt-column-menu-manage'),
+    columnMenuFilterButton: document.getElementById('dt-column-menu-filter'),
+    columnMenuSortButton: document.getElementById('dt-column-menu-sort'),
     totals: document.getElementById('footer-totals')
   };
 
@@ -846,8 +843,11 @@
       manualColumnMove: false,
       manualRowMove: false,
       filters: true,
-      dropdownMenu: true,
-      columnSorting: true,
+      dropdownMenu: false,
+      columnSorting: {
+        indicator: true,
+        headerAction: false
+      },
       selectionMode: 'multiple',
       licenseKey: 'non-commercial-and-evaluation',
       afterSelectionEnd: handleSelection,
@@ -1091,6 +1091,132 @@
     }
   }
 
+  function closeColumnMenu() {
+    if (!els.columnMenu) return;
+    els.columnMenu.classList.remove('is-open');
+    els.columnMenu.setAttribute('aria-hidden', 'true');
+    state.activeHeaderColumn = null;
+  }
+
+  function openColumnMenu(columnIndex, anchorRect, headerLabel) {
+    if (!els.columnMenu || !els.wrapper || !Number.isInteger(columnIndex) || columnIndex < 0) return;
+
+    state.activeHeaderColumn = columnIndex;
+
+    if (els.columnMenuTitle) {
+      const safeTitle = headerLabel && String(headerLabel).trim() ? String(headerLabel) : `Field ${columnIndex + 1}`;
+      els.columnMenuTitle.textContent = safeTitle;
+    }
+
+    const wrapperRect = els.wrapper.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(anchorRect.left - wrapperRect.left, 6),
+      Math.max(wrapperRect.width - 236, 6)
+    );
+    const top = Math.max(anchorRect.bottom - wrapperRect.top + 4, 6);
+
+    els.columnMenu.style.left = `${left}px`;
+    els.columnMenu.style.top = `${top}px`;
+    els.columnMenu.classList.add('is-open');
+    els.columnMenu.setAttribute('aria-hidden', 'false');
+  }
+
+  function getHeaderColumnFromEvent(event) {
+    if (!event?.target) return null;
+    const th = event.target.closest('th');
+    if (!th) return null;
+
+    const dataCol = th.getAttribute('data-col');
+    if (dataCol !== null) {
+      const parsed = parseInt(dataCol, 10);
+      if (Number.isInteger(parsed) && parsed >= 0) return { index: parsed, rect: th.getBoundingClientRect() };
+    }
+
+    const classMatch = (th.className || '').match(/\bcol(\d+)\b/);
+    if (classMatch) {
+      const parsed = parseInt(classMatch[1], 10);
+      if (Number.isInteger(parsed) && parsed >= 0) return { index: parsed, rect: th.getBoundingClientRect() };
+    }
+
+    return null;
+  }
+
+  function applyColumnFilter(columnIndex) {
+    if (!state.hot || !Number.isInteger(columnIndex)) return;
+    const column = state.columns[columnIndex];
+    const currentHeader = column?.header || `Field ${columnIndex + 1}`;
+    const typed = window.prompt(`${currentHeader} için filtre (contains). Temizlemek için boş bırakın:`, '');
+    if (typed === null) return;
+
+    const filterPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('filters') : null;
+    if (!filterPlugin) return;
+
+    try {
+      filterPlugin.removeConditions(columnIndex);
+      const term = String(typed).trim();
+      if (term) {
+        filterPlugin.addCondition(columnIndex, 'contains', [term]);
+      }
+      filterPlugin.filter();
+    } catch (err) {
+      console.warn('Filter apply failed', err);
+    }
+  }
+
+  function cycleColumnSort(columnIndex) {
+    if (!state.hot || !Number.isInteger(columnIndex)) return;
+    const sortingPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('columnSorting') : null;
+    if (!sortingPlugin) return;
+
+    const current = typeof sortingPlugin.getSortConfig === 'function' ? sortingPlugin.getSortConfig() : null;
+    let nextOrder = 'asc';
+
+    if (current && !Array.isArray(current) && current.column === columnIndex) {
+      if (current.sortOrder === 'asc') {
+        nextOrder = 'desc';
+      } else if (current.sortOrder === 'desc') {
+        nextOrder = '';
+      }
+    }
+
+    try {
+      if (!nextOrder) {
+        if (typeof sortingPlugin.clearSort === 'function') sortingPlugin.clearSort();
+      } else {
+        sortingPlugin.sort({ column: columnIndex, sortOrder: nextOrder });
+      }
+    } catch (err) {
+      console.warn('Sort apply failed', err);
+    }
+  }
+
+  function attachHeaderMenuListener() {
+    if (!els.container || els.container.dataset.headerMenuAttached === 'true') return;
+
+    els.container.addEventListener('click', event => {
+      const headerInfo = getHeaderColumnFromEvent(event);
+      if (!headerInfo || !state.hot) return;
+
+      const isHeaderLabel = event.target.closest('.colHeader');
+      if (!isHeaderLabel) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const headerLabel = state.columns[headerInfo.index]?.header || '';
+      openColumnMenu(headerInfo.index, headerInfo.rect, headerLabel);
+    }, true);
+
+    document.addEventListener('click', event => {
+      if (!els.columnMenu?.classList.contains('is-open')) return;
+      if (event.target.closest('#dt-column-menu')) return;
+      closeColumnMenu();
+    });
+
+    window.addEventListener('resize', closeColumnMenu);
+    els.container.dataset.headerMenuAttached = 'true';
+  }
+
   function attachActionButtons() {
     if (els.newButton) {
       els.newButton.addEventListener('click', create);
@@ -1106,8 +1232,24 @@
       });
     }
 
+    if (els.deleteButton) {
+      els.deleteButton.addEventListener('click', deleteSelected);
+    }
+
+    if (els.importButton) {
+      els.importButton.addEventListener('click', importData);
+    }
+
     if (els.downloadButton) {
       els.downloadButton.addEventListener('click', exportData);
+    }
+
+    if (els.addFieldButton) {
+      els.addFieldButton.addEventListener('click', addField);
+    }
+
+    if (els.manageFieldButton) {
+      els.manageFieldButton.addEventListener('click', manageField);
     }
 
     if (els.sortButton) {
@@ -1121,76 +1263,41 @@
       });
     }
 
-    if (els.settingsButton && els.settingsMenu) {
-      els.settingsButton.addEventListener('click', event => {
-        event.stopPropagation();
-        const isOpen = els.settingsMenu.classList.toggle('is-open');
-        els.settingsButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        els.settingsMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-      });
-
-      if (els.settingsImportButton) {
-        els.settingsImportButton.addEventListener('click', () => {
-          importData();
-          els.settingsMenu.classList.remove('is-open');
-          els.settingsButton.setAttribute('aria-expanded', 'false');
-          els.settingsMenu.setAttribute('aria-hidden', 'true');
-        });
-      }
-
-      if (els.settingsExportButton) {
-        els.settingsExportButton.addEventListener('click', () => {
-          exportData();
-          els.settingsMenu.classList.remove('is-open');
-          els.settingsButton.setAttribute('aria-expanded', 'false');
-          els.settingsMenu.setAttribute('aria-hidden', 'true');
-        });
-      }
-
-      document.addEventListener('click', event => {
-        if (!els.settingsMenu.classList.contains('is-open')) return;
-        if (event.target.closest('#dt-settings-menu') || event.target.closest('#dt-btn-settings')) return;
-        els.settingsMenu.classList.remove('is-open');
-        els.settingsButton.setAttribute('aria-expanded', 'false');
-        els.settingsMenu.setAttribute('aria-hidden', 'true');
+    if (els.columnMenuAddButton) {
+      els.columnMenuAddButton.addEventListener('click', () => {
+        addField();
+        closeColumnMenu();
       });
     }
 
-    if (els.fieldButton && els.fieldMenu) {
-      els.fieldButton.addEventListener('click', event => {
-        event.stopPropagation();
-        const isOpen = els.fieldMenu.classList.toggle('is-open');
-        els.fieldButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        els.fieldMenu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-      });
-
-      if (els.fieldAddButton) {
-        els.fieldAddButton.addEventListener('click', () => {
-          addField();
-          els.fieldMenu.classList.remove('is-open');
-          els.fieldButton.setAttribute('aria-expanded', 'false');
-          els.fieldMenu.setAttribute('aria-hidden', 'true');
-        });
-      }
-
-      if (els.fieldManageButton) {
-        els.fieldManageButton.addEventListener('click', () => {
-          manageField();
-          els.fieldMenu.classList.remove('is-open');
-          els.fieldButton.setAttribute('aria-expanded', 'false');
-          els.fieldMenu.setAttribute('aria-hidden', 'true');
-        });
-      }
-
-      document.addEventListener('click', event => {
-        if (!els.fieldMenu.classList.contains('is-open')) return;
-        if (event.target.closest('#dt-field-menu') || event.target.closest('#dt-btn-field')) return;
-        els.fieldMenu.classList.remove('is-open');
-        els.fieldButton.setAttribute('aria-expanded', 'false');
-        els.fieldMenu.setAttribute('aria-hidden', 'true');
+    if (els.columnMenuManageButton) {
+      els.columnMenuManageButton.addEventListener('click', () => {
+        manageField();
+        closeColumnMenu();
       });
     }
+
+    if (els.columnMenuFilterButton) {
+      els.columnMenuFilterButton.addEventListener('click', () => {
+        if (Number.isInteger(state.activeHeaderColumn)) {
+          applyColumnFilter(state.activeHeaderColumn);
+        }
+        closeColumnMenu();
+      });
+    }
+
+    if (els.columnMenuSortButton) {
+      els.columnMenuSortButton.addEventListener('click', () => {
+        if (Number.isInteger(state.activeHeaderColumn)) {
+          cycleColumnSort(state.activeHeaderColumn);
+        }
+        closeColumnMenu();
+      });
+    }
+
+    attachHeaderMenuListener();
   }
+
 
   window.dynamicTable = {
     setTableData,
