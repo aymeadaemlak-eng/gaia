@@ -134,6 +134,7 @@
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
+      --form-container-max-width: 100%;
       font-size: 14px;
       color: var(--text);
     }
@@ -265,7 +266,7 @@
 
 #bdf-root #formContainer {
       width: 100%;
-      max-width: 464px;
+      max-width: var(--form-container-max-width, 100%);
       height: 680px;
       overflow-y: auto;
       overflow-x: hidden;
