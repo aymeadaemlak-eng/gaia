@@ -482,9 +482,8 @@
       box-shadow: none;
     }
 
-#bdf-root .field-input,
-#bdf-root select,
-#bdf-root textarea {
+#bdf-root .field-input:not(textarea),
+#bdf-root select {
       width: 100%;
       border: none;
       height: var(--field-control-height);
@@ -520,7 +519,44 @@
     }
 
 #bdf-root textarea.field-input {
+      width: 100%;
+      border: none;
+      height: auto;
       resize: vertical;
+      min-height: 72px;
+      padding: 8px 10px;
+      line-height: 1.45;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      background: transparent;
+      color: #111827;
+      outline: none;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+#bdf-root .field-row.is-multiline-field {
+      align-items: flex-start;
+      height: auto;
+      min-height: 0;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+#bdf-root .field-row.is-multiline-field .field-label {
+      justify-content: flex-start;
+      padding-top: 7px;
+      white-space: normal;
+    }
+
+#bdf-root .field-row.is-multiline-field .label-top {
+      min-height: 0;
+      align-items: flex-start;
+    }
+
+#bdf-root .field-row.is-multiline-field .control-stack {
+      align-items: stretch;
       min-height: 72px;
     }
 
@@ -558,11 +594,13 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
       padding: 12px;
       display: none;
+      pointer-events: none;
       z-index: 30;
     }
 
 #bdf-root .picker-popover.open {
       display: grid;
+      pointer-events: auto;
       gap: 10px;
     }
 
@@ -1024,11 +1062,13 @@
       box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
       display: none;
       padding: 4px;
+      pointer-events: none;
       z-index: 20;
     }
 
 #bdf-root .action-menu.open {
       display: grid;
+      pointer-events: auto;
       gap: 2px;
     }
 
@@ -1450,6 +1490,12 @@
 
 #bdf-root .field-row {
         gap: 10px;
+      }
+
+#bdf-root .field-input,
+#bdf-root select,
+#bdf-root textarea {
+        font-size: 16px;
       }
 
 #bdf-root .field-label {
@@ -6129,6 +6175,7 @@ function renderSubmitOutputs(payload) {
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
         const isFileField = ["file", "multifile", "image"].includes(normalizedType);
+        const isMultilineField = ["textarea", "json"].includes(normalizedType);
         const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
         if (currentGroup === "date" && previousGroup === "amount") {
           wrapper.classList.add("group-break-date");
@@ -6140,6 +6187,7 @@ function renderSubmitOutputs(payload) {
         if (isAmountField) row.classList.add("is-amount-field");
         if (isDateField) row.classList.add("is-date-field");
         if (isFileField) row.classList.add("is-file-field");
+        if (isMultilineField) row.classList.add("is-multiline-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
