@@ -134,7 +134,8 @@
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
-      --form-container-max-width: 100%;
+      --form-container-max-width: 464px;
+      --form-card-max-width: 464px;
       font-size: 14px;
       color: var(--text);
     }
@@ -142,6 +143,12 @@
     #bdf-root,
     #bdf-root * {
       box-sizing: border-box;
+    }
+
+
+#bdf-root.editing-mode {
+      --form-container-max-width: 100%;
+      --form-card-max-width: 100%;
     }
 
 
@@ -165,6 +172,12 @@
       border-radius: 16px;
       padding: 20px;
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    }
+
+
+#bdf-root #formCard {
+      width: 100%;
+      max-width: var(--form-card-max-width, 464px);
     }
 
     #bdf-root h1,
@@ -1119,7 +1132,7 @@
 
 #bdf-root .edit-stage-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
   gap: 10px;
   align-items: start;
 }
@@ -1643,7 +1656,7 @@
       </section>
     </div>
 
-    <section class="card">
+    <section class="card" id="formCard">
       <div id="formContainer">
         <div id="actionBar" class="action-bar">
           <div class="action-meta">
