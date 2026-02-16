@@ -226,10 +226,18 @@
 
 
 #dynamic-table-wrapper .dt-filter-panel {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: 300px;
+  max-width: 320px;
   display: none;
-  border-top: 1px solid #edf1f5;
-  margin-top: 6px;
-  padding: 8px 8px 4px;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+  padding: 10px;
+  z-index: 260;
 }
 
 #dynamic-table-wrapper .dt-filter-panel.is-open {
@@ -261,6 +269,22 @@
   font-size: 12px;
   margin-top: -4px;
   margin-bottom: 6px;
+}
+
+
+#dynamic-table-wrapper .dt-filter-operator-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #111827;
+}
+
+#dynamic-table-wrapper .dt-filter-operator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #dynamic-table-wrapper .dt-filter-link {
@@ -314,10 +338,17 @@
 
 
 #dynamic-table-wrapper .dt-sort-panel {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: 220px;
   display: none;
-  border-top: 1px solid #edf1f5;
-  margin-top: 6px;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
   padding: 8px;
+  z-index: 260;
 }
 
 #dynamic-table-wrapper .dt-sort-panel.is-open {
@@ -606,16 +637,35 @@
         <label class="dt-filter-label" for="dt-filter-condition">Filter by condition:</label>
         <select id="dt-filter-condition" class="dt-filter-select">
           <option value="none">None</option>
-          <option value="contains">Contains</option>
-          <option value="not_contains">Does not contain</option>
+          <option value="empty">Is empty</option>
+          <option value="not_empty">Is not empty</option>
+          <option value="eq">Is equal to</option>
+          <option value="neq">Is not equal to</option>
           <option value="begins_with">Begins with</option>
           <option value="ends_with">Ends with</option>
-          <option value="eq">Equals</option>
-          <option value="neq">Not equal</option>
-          <option value="empty">Empty</option>
-          <option value="not_empty">Not empty</option>
+          <option value="contains">Contains</option>
+          <option value="not_contains">Does not contain</option>
         </select>
-        <input id="dt-filter-condition-value" class="dt-filter-search" type="text" placeholder="Condition value" autocomplete="off" />
+        <input id="dt-filter-condition-value" class="dt-filter-search" type="text" placeholder="Value" autocomplete="off" />
+
+        <div class="dt-filter-operator-row">
+          <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-and" value="and" checked />And</label>
+          <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-or" value="or" />Or</label>
+        </div>
+
+        <select id="dt-filter-condition-2" class="dt-filter-select">
+          <option value="none">None</option>
+          <option value="empty">Is empty</option>
+          <option value="not_empty">Is not empty</option>
+          <option value="eq">Is equal to</option>
+          <option value="neq">Is not equal to</option>
+          <option value="begins_with">Begins with</option>
+          <option value="ends_with">Ends with</option>
+          <option value="contains">Contains</option>
+          <option value="not_contains">Does not contain</option>
+        </select>
+        <input id="dt-filter-condition-value-2" class="dt-filter-search" type="text" placeholder="Value" autocomplete="off" />
+
         <label class="dt-filter-label" for="dt-filter-search">Filter by value:</label>
         <input id="dt-filter-search" class="dt-filter-search" type="text" placeholder="Search" autocomplete="off" />
         <div class="dt-filter-toolbar">
@@ -678,6 +728,10 @@
     filterPanel: document.getElementById('dt-filter-panel'),
     filterConditionSelect: document.getElementById('dt-filter-condition'),
     filterConditionValueInput: document.getElementById('dt-filter-condition-value'),
+    filterOperatorAnd: document.getElementById('dt-filter-op-and'),
+    filterOperatorOr: document.getElementById('dt-filter-op-or'),
+    filterConditionSelect2: document.getElementById('dt-filter-condition-2'),
+    filterConditionValueInput2: document.getElementById('dt-filter-condition-value-2'),
     filterSearchInput: document.getElementById('dt-filter-search'),
     filterValuesWrap: document.getElementById('dt-filter-values'),
     filterSelectAllButton: document.getElementById('dt-filter-select-all'),
@@ -1521,14 +1575,26 @@
   }
 
 
+  function positionSubmenu(panelEl, triggerEl) {
+    if (!panelEl || !els.columnMenu) return;
+    const menuWidth = els.columnMenu.offsetWidth || 220;
+    panelEl.style.left = `${menuWidth + 8}px`;
+    const top = Math.max(0, (triggerEl?.offsetTop || 0) - 6);
+    panelEl.style.top = `${top}px`;
+  }
+
   function hideSortPanel() {
     if (els.sortPanel) {
       els.sortPanel.classList.remove('is-open');
+    }
+    if (els.columnMenu) {
+      els.columnMenu.classList.remove('is-sort-mode');
     }
   }
 
   function openSortPanel() {
     hideFilterPanel();
+    positionSubmenu(els.sortPanel, els.columnMenuSortButton);
     if (els.sortPanel) {
       els.sortPanel.classList.add('is-open');
     }
@@ -1593,7 +1659,7 @@
 
   function openFilterPanel(columnIndex) {
     if (!Number.isInteger(columnIndex) || columnIndex < 0) return;
-    const existing = state.filterConfigs[columnIndex] || { condition: 'none', values: null };
+    const existing = state.filterConfigs[columnIndex] || { condition: 'none', condition2: 'none', operator: 'and', values: null };
     const allValues = getColumnDistinctValues(columnIndex);
     const allRawValues = allValues.map(item => item.raw);
     const selectedValues = new Set(Array.isArray(existing.values) && existing.values.length ? existing.values : allRawValues);
@@ -1601,6 +1667,9 @@
       columnIndex,
       condition: existing.condition || 'none',
       valueTerm: existing.valueTerm || '',
+      condition2: existing.condition2 || 'none',
+      valueTerm2: existing.valueTerm2 || '',
+      operator: existing.operator || 'and',
       allValues,
       selectedValues
     };
@@ -1611,15 +1680,28 @@
     if (els.filterConditionValueInput) {
       const disabled = state.filterDraft.condition === 'none' || state.filterDraft.condition === 'empty' || state.filterDraft.condition === 'not_empty';
       els.filterConditionValueInput.disabled = disabled;
-    }
-    if (els.filterConditionValueInput) {
       els.filterConditionValueInput.value = state.filterDraft.valueTerm || '';
+    }
+    if (els.filterOperatorAnd) {
+      els.filterOperatorAnd.checked = state.filterDraft.operator !== 'or';
+    }
+    if (els.filterOperatorOr) {
+      els.filterOperatorOr.checked = state.filterDraft.operator === 'or';
+    }
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.value = state.filterDraft.condition2 || 'none';
+    }
+    if (els.filterConditionValueInput2) {
+      const disabled2 = state.filterDraft.condition2 === 'none' || state.filterDraft.condition2 === 'empty' || state.filterDraft.condition2 === 'not_empty';
+      els.filterConditionValueInput2.disabled = disabled2;
+      els.filterConditionValueInput2.value = state.filterDraft.valueTerm2 || '';
     }
     if (els.filterSearchInput) {
       els.filterSearchInput.value = '';
     }
     renderFilterValueList();
     hideSortPanel();
+    positionSubmenu(els.filterPanel, els.columnMenuFilterButton);
     if (els.filterPanel) {
       els.filterPanel.classList.add('is-open');
     }
@@ -1649,6 +1731,15 @@
             filterPlugin.addCondition(col, config.condition, []);
           } else {
             filterPlugin.addCondition(col, config.condition, [config.valueTerm || '']);
+          }
+        }
+
+        if (config.condition2 && config.condition2 !== 'none') {
+          const op = config.operator === 'or' ? 'disjunction' : 'conjunction';
+          if (config.condition2 === 'empty' || config.condition2 === 'not_empty') {
+            filterPlugin.addCondition(col, config.condition2, [], op);
+          } else {
+            filterPlugin.addCondition(col, config.condition2, [config.valueTerm2 || ''], op);
           }
         }
 
@@ -1819,6 +1910,38 @@
       });
     }
 
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.addEventListener('change', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.condition2 = event.target.value || 'none';
+        if (els.filterConditionValueInput2) {
+          const disabled = state.filterDraft.condition2 === 'none' || state.filterDraft.condition2 === 'empty' || state.filterDraft.condition2 === 'not_empty';
+          els.filterConditionValueInput2.disabled = disabled;
+        }
+      });
+    }
+
+    if (els.filterConditionValueInput2) {
+      els.filterConditionValueInput2.addEventListener('input', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.valueTerm2 = event.target.value || '';
+      });
+    }
+
+    if (els.filterOperatorAnd) {
+      els.filterOperatorAnd.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'and';
+      });
+    }
+
+    if (els.filterOperatorOr) {
+      els.filterOperatorOr.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'or';
+      });
+    }
+
     if (els.filterValuesWrap) {
       els.filterValuesWrap.addEventListener('change', event => {
         const checkbox = event.target.closest('.dt-filter-value-checkbox');
@@ -1862,6 +1985,9 @@
         state.filterConfigs[columnIndex] = {
           condition: condition || 'none',
           valueTerm: (state.filterDraft.valueTerm || '').trim(),
+          condition2: state.filterDraft.condition2 || 'none',
+          valueTerm2: (state.filterDraft.valueTerm2 || '').trim(),
+          operator: state.filterDraft.operator || 'and',
           values: normalizedValues.length === allValues.length ? null : normalizedValues
         };
         applyAllColumnFilters();
