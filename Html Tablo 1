@@ -224,6 +224,94 @@
   margin: 5px 0;
 }
 
+
+#dynamic-table-wrapper .dt-filter-panel {
+  display: none;
+  border-top: 1px solid #edf1f5;
+  margin-top: 6px;
+  padding: 8px 8px 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-panel.is-open {
+  display: block;
+}
+
+#dynamic-table-wrapper .dt-filter-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-select,
+#dynamic-table-wrapper .dt-filter-search {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+#dynamic-table-wrapper .dt-filter-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 12px;
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+#dynamic-table-wrapper .dt-filter-link {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+
+#dynamic-table-wrapper .dt-filter-values {
+  max-height: 150px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 10px;
+}
+
+#dynamic-table-wrapper .dt-filter-value-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+#dynamic-table-wrapper .dt-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#dynamic-table-wrapper .dt-filter-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#dynamic-table-wrapper .dt-filter-btn--primary {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
+}
+
 #dynamic-table-wrapper #hot-container {
   flex: 1 1 auto;
   min-height: 0;
@@ -334,31 +422,24 @@
 #dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton {
   position: absolute;
   top: 50%;
-  right: 4px;
-  width: 18px;
-  height: 18px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translateY(-50%);
   z-index: 40;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: auto;
-  border-radius: 4px;
-  transition: opacity 160ms ease, background-color 160ms ease;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: transparent;
+  transition: opacity 180ms ease;
 }
 
-#dynamic-table-wrapper .handsontable thead th:hover .htDropdownMenuButton,
-#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:focus,
-#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:hover {
-  opacity: 1;
-  visibility: visible;
-}
-
-#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton:hover {
-  background: #e5e7eb;
+#dynamic-table-wrapper .handsontable thead th .htDropdownMenuButton {
+  display: none !important;
 }
 
 #dynamic-table-wrapper .handsontable thead th .colHeader {
@@ -470,6 +551,32 @@
       <hr class="dt-column-menu-divider" />
       <button id="dt-column-menu-filter" class="dt-column-menu-item" type="button"><span>Filter</span><span>›</span></button>
       <button id="dt-column-menu-sort" class="dt-column-menu-item" type="button"><span>Sort</span><span>›</span></button>
+      <div id="dt-filter-panel" class="dt-filter-panel">
+        <label class="dt-filter-label" for="dt-filter-condition">Filter by condition:</label>
+        <select id="dt-filter-condition" class="dt-filter-select">
+          <option value="none">None</option>
+          <option value="contains">Contains</option>
+          <option value="not_contains">Does not contain</option>
+          <option value="begins_with">Begins with</option>
+          <option value="ends_with">Ends with</option>
+          <option value="eq">Equals</option>
+          <option value="neq">Not equal</option>
+          <option value="empty">Empty</option>
+          <option value="not_empty">Not empty</option>
+        </select>
+        <input id="dt-filter-condition-value" class="dt-filter-search" type="text" placeholder="Condition value" autocomplete="off" />
+        <label class="dt-filter-label" for="dt-filter-search">Filter by value:</label>
+        <input id="dt-filter-search" class="dt-filter-search" type="text" placeholder="Search" autocomplete="off" />
+        <div class="dt-filter-toolbar">
+          <button id="dt-filter-select-all" type="button" class="dt-filter-link">Select all</button>
+          <button id="dt-filter-clear" type="button" class="dt-filter-link">Clear</button>
+        </div>
+        <div id="dt-filter-values" class="dt-filter-values"></div>
+        <div class="dt-filter-actions">
+          <button id="dt-filter-cancel" type="button" class="dt-filter-btn">Cancel</button>
+          <button id="dt-filter-ok" type="button" class="dt-filter-btn dt-filter-btn--primary">OK</button>
+        </div>
+      </div>
     </div>
     <div class="dt-footer"></div>
   </div>
@@ -492,7 +599,9 @@
     selectionOrder: [],
     isSearchOpen: false,
     activeHeaderColumn: null,
-    columnMenuOpenedAt: 0
+    columnMenuOpenedAt: 0,
+    filterConfigs: {},
+    filterDraft: null
   };
 
   const els = {
@@ -512,12 +621,22 @@
     columnMenuManageButton: document.getElementById('dt-column-menu-manage'),
     columnMenuFilterButton: document.getElementById('dt-column-menu-filter'),
     columnMenuSortButton: document.getElementById('dt-column-menu-sort'),
+    filterPanel: document.getElementById('dt-filter-panel'),
+    filterConditionSelect: document.getElementById('dt-filter-condition'),
+    filterConditionValueInput: document.getElementById('dt-filter-condition-value'),
+    filterSearchInput: document.getElementById('dt-filter-search'),
+    filterValuesWrap: document.getElementById('dt-filter-values'),
+    filterSelectAllButton: document.getElementById('dt-filter-select-all'),
+    filterClearButton: document.getElementById('dt-filter-clear'),
+    filterCancelButton: document.getElementById('dt-filter-cancel'),
+    filterOkButton: document.getElementById('dt-filter-ok'),
     totals: document.getElementById('footer-totals')
   };
 
   const UNIQUE_KEYS = ['uniqueid', 'unique_id', 'unique', 'id', 'Id', 'ID'];
   const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
   const UI_ACTIONS_COL_ID = '__dt_actions__';
+  const BLANK_VALUE_TOKEN = '__DT_BLANK__';
 
   function getUiActionsColumn() {
     return {
@@ -1024,7 +1143,7 @@
       manualColumnMove: false,
       manualRowMove: false,
       filters: true,
-      dropdownMenu: true,
+      dropdownMenu: false,
       columnSorting: {
         indicator: true,
         headerAction: false
@@ -1032,12 +1151,15 @@
       selectionMode: 'multiple',
       licenseKey: 'non-commercial-and-evaluation',
       afterSelectionEnd: handleSelection,
-      afterOnCellMouseDown: (event, coords) => {
+      afterOnCellMouseDown: (event, coords, TD) => {
         if (!coords || coords.row !== -1 || coords.col < 0) return;
         if (coords.col >= state.columns.length) return;
         const target = event?.target;
         if (!target) return;
         if (target.closest('.dt-header-action-btn')) return;
+        if (!target.closest('.colHeader') && !target.closest('.dt-header-label') && !target.closest('.dt-header-text') && !target.closest('.dt-type-icon') && !target.closest('.dt-colheader-content')) return;
+        const headerLabel = state.columns[coords.col]?.header || '';
+        openColumnMenu(coords.col, TD?.getBoundingClientRect?.() || target.getBoundingClientRect(), headerLabel);
       },
       afterFilter: () => {
         updateFooter();
@@ -1310,6 +1432,7 @@
 
   function closeColumnMenu() {
     if (!els.columnMenu) return;
+    hideFilterPanel();
     els.columnMenu.classList.remove('is-open');
     els.columnMenu.setAttribute('aria-hidden', 'true');
     state.activeHeaderColumn = null;
@@ -1335,31 +1458,119 @@
 
     els.columnMenu.style.left = `${left}px`;
     els.columnMenu.style.top = `${top}px`;
+    hideFilterPanel();
     els.columnMenu.classList.add('is-open');
     els.columnMenu.setAttribute('aria-hidden', 'false');
   }
 
 
-  function applyColumnFilter(columnIndex) {
-    if (!state.hot || !Number.isInteger(columnIndex)) return;
-    const column = state.columns[columnIndex];
-    const currentHeader = column?.header || `Field ${columnIndex + 1}`;
-    const typed = window.prompt(`${currentHeader} için filtre (contains). Temizlemek için boş bırakın:`, '');
-    if (typed === null) return;
+  function hideFilterPanel() {
+    if (els.filterPanel) {
+      els.filterPanel.classList.remove('is-open');
+    }
+    state.filterDraft = null;
+  }
 
-    const filterPlugin = typeof state.hot.getPlugin === 'function' ? state.hot.getPlugin('filters') : null;
+  function getColumnDistinctValues(columnIndex) {
+    const values = [];
+    const seen = new Set();
+    state.rawRows.forEach(row => {
+      const value = pickValue(row, state.columns[columnIndex]);
+      const isBlank = value === null || value === undefined || value === '';
+      const raw = isBlank ? BLANK_VALUE_TOKEN : String(value);
+      if (seen.has(raw)) return;
+      seen.add(raw);
+      values.push({
+        raw,
+        label: isBlank ? '(Blank cells)' : String(value)
+      });
+    });
+    return values.sort((a, b) => a.label.localeCompare(b.label, 'tr'));
+  }
+
+  function renderFilterValueList() {
+    if (!els.filterValuesWrap || !state.filterDraft) return;
+    const term = String(els.filterSearchInput?.value || '').toLocaleLowerCase('tr-TR');
+    const filtered = state.filterDraft.allValues.filter(item => item.label.toLocaleLowerCase('tr-TR').includes(term));
+    els.filterValuesWrap.innerHTML = filtered.map(item => {
+      const checked = state.filterDraft.selectedValues.has(item.raw) ? 'checked' : '';
+      const safeLabel = escapeHtml(item.label);
+      const safeRaw = escapeHtml(item.raw);
+      return `<label class="dt-filter-value-item"><input type="checkbox" class="dt-filter-value-checkbox" data-value="${safeRaw}" ${checked} /><span>${safeLabel}</span></label>`;
+    }).join('');
+  }
+
+  function openFilterPanel(columnIndex) {
+    if (!Number.isInteger(columnIndex) || columnIndex < 0) return;
+    const existing = state.filterConfigs[columnIndex] || { condition: 'none', values: null };
+    const allValues = getColumnDistinctValues(columnIndex);
+    const allRawValues = allValues.map(item => item.raw);
+    const selectedValues = new Set(Array.isArray(existing.values) && existing.values.length ? existing.values : allRawValues);
+    state.filterDraft = {
+      columnIndex,
+      condition: existing.condition || 'none',
+      valueTerm: existing.valueTerm || '',
+      allValues,
+      selectedValues
+    };
+
+    if (els.filterConditionSelect) {
+      els.filterConditionSelect.value = state.filterDraft.condition;
+    }
+    if (els.filterConditionValueInput) {
+      const disabled = state.filterDraft.condition === 'none' || state.filterDraft.condition === 'empty' || state.filterDraft.condition === 'not_empty';
+      els.filterConditionValueInput.disabled = disabled;
+    }
+    if (els.filterConditionValueInput) {
+      els.filterConditionValueInput.value = state.filterDraft.valueTerm || '';
+    }
+    if (els.filterSearchInput) {
+      els.filterSearchInput.value = '';
+    }
+    renderFilterValueList();
+    if (els.filterPanel) {
+      els.filterPanel.classList.add('is-open');
+    }
+  }
+
+  function applyAllColumnFilters() {
+    if (!state.hot || typeof state.hot.getPlugin !== 'function') return;
+    const filterPlugin = state.hot.getPlugin('filters');
     if (!filterPlugin) return;
 
     try {
-      filterPlugin.removeConditions(columnIndex);
-      const term = String(typed).trim();
-      if (term) {
-        filterPlugin.addCondition(columnIndex, 'contains', [term]);
+      for (let colIndex = 0; colIndex < state.columns.length; colIndex += 1) {
+        filterPlugin.removeConditions(colIndex);
       }
+
+      Object.keys(state.filterConfigs).forEach(key => {
+        const col = Number(key);
+        const config = state.filterConfigs[key];
+        if (!Number.isInteger(col) || !config) return;
+
+        if (config.condition && config.condition !== 'none') {
+          if (config.condition === 'empty' || config.condition === 'not_empty') {
+            filterPlugin.addCondition(col, config.condition, []);
+          } else {
+            filterPlugin.addCondition(col, config.condition, [config.valueTerm || '']);
+          }
+        }
+
+        if (Array.isArray(config.values) && config.values.length) {
+          const normalizedValues = config.values.map(value => value === BLANK_VALUE_TOKEN ? '' : value);
+          filterPlugin.addCondition(col, 'by_value', [normalizedValues]);
+        }
+      });
+
       filterPlugin.filter();
     } catch (err) {
       console.warn('Filter apply failed', err);
     }
+  }
+
+
+  function applyColumnFilter(columnIndex) {
+    openFilterPanel(columnIndex);
   }
 
   function cycleColumnSort(columnIndex) {
@@ -1444,6 +1655,125 @@
         }
       });
     }
+
+    if (els.columnMenuAddButton) {
+      els.columnMenuAddButton.addEventListener('click', () => {
+        addField();
+        closeColumnMenu();
+      });
+    }
+
+    if (els.columnMenuManageButton) {
+      els.columnMenuManageButton.addEventListener('click', () => {
+        manageField();
+        closeColumnMenu();
+      });
+    }
+
+    if (els.columnMenuFilterButton) {
+      els.columnMenuFilterButton.addEventListener('click', () => {
+        if (Number.isInteger(state.activeHeaderColumn)) {
+          applyColumnFilter(state.activeHeaderColumn);
+        }
+      });
+    }
+
+    if (els.columnMenuSortButton) {
+      els.columnMenuSortButton.addEventListener('click', () => {
+        if (Number.isInteger(state.activeHeaderColumn)) {
+          cycleColumnSort(state.activeHeaderColumn);
+        }
+        closeColumnMenu();
+      });
+    }
+
+    if (els.filterSearchInput) {
+      els.filterSearchInput.addEventListener('input', renderFilterValueList);
+    }
+
+    if (els.filterConditionSelect) {
+      els.filterConditionSelect.addEventListener('change', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.condition = event.target.value || 'none';
+        if (els.filterConditionValueInput) {
+          const disabled = state.filterDraft.condition === 'none' || state.filterDraft.condition === 'empty' || state.filterDraft.condition === 'not_empty';
+          els.filterConditionValueInput.disabled = disabled;
+        }
+      });
+    }
+
+    if (els.filterConditionValueInput) {
+      els.filterConditionValueInput.addEventListener('input', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.valueTerm = event.target.value || '';
+      });
+    }
+
+    if (els.filterValuesWrap) {
+      els.filterValuesWrap.addEventListener('change', event => {
+        const checkbox = event.target.closest('.dt-filter-value-checkbox');
+        if (!checkbox || !state.filterDraft) return;
+        const value = checkbox.getAttribute('data-value') || '';
+        if (checkbox.checked) {
+          state.filterDraft.selectedValues.add(value);
+        } else {
+          state.filterDraft.selectedValues.delete(value);
+        }
+      });
+    }
+
+    if (els.filterSelectAllButton) {
+      els.filterSelectAllButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        state.filterDraft.selectedValues = new Set(state.filterDraft.allValues.map(item => item.raw));
+        renderFilterValueList();
+      });
+    }
+
+    if (els.filterClearButton) {
+      els.filterClearButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        state.filterDraft.selectedValues.clear();
+        renderFilterValueList();
+      });
+    }
+
+    if (els.filterCancelButton) {
+      els.filterCancelButton.addEventListener('click', () => {
+        hideFilterPanel();
+      });
+    }
+
+    if (els.filterOkButton) {
+      els.filterOkButton.addEventListener('click', () => {
+        if (!state.filterDraft) return;
+        const { columnIndex, condition, selectedValues, allValues } = state.filterDraft;
+        const normalizedValues = Array.from(selectedValues);
+        state.filterConfigs[columnIndex] = {
+          condition: condition || 'none',
+          valueTerm: (state.filterDraft.valueTerm || '').trim(),
+          values: normalizedValues.length === allValues.length ? null : normalizedValues
+        };
+        applyAllColumnFilters();
+        closeColumnMenu();
+      });
+    }
+
+    document.addEventListener('click', event => {
+      if (!els.columnMenu?.classList.contains('is-open')) return;
+      if (event.target.closest('#dt-column-menu')) return;
+      if (Date.now() - (state.columnMenuOpenedAt || 0) < 220) return;
+      closeColumnMenu();
+    });
+
+    if (els.columnMenu) {
+      els.columnMenu.addEventListener('mousedown', event => event.stopPropagation());
+      els.columnMenu.addEventListener('click', event => event.stopPropagation());
+    }
+
+    window.addEventListener('resize', () => {
+      closeColumnMenu();
+    });
 
   }
 
