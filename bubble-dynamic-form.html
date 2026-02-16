@@ -1226,29 +1226,9 @@
   min-height: 18px;
 }
 
-#bdf-root .edit-stage-fields-divider {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 8px;
-  margin-bottom: 6px;
-}
-
-#bdf-root .edit-stage-fields-divider span {
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
 #bdf-root .field-wrapper.search-result {
   border-left: 2px solid #93c5fd;
   padding-left: 10px;
-}
-
-#bdf-root .edit-search-match-meta {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #64748b;
 }
 
 #bdf-root mark.edit-search-highlight {
@@ -5812,8 +5792,6 @@ function renderSubmitOutputs(payload) {
       if (!wrapper) return;
       wrapper.classList.remove("search-result");
       const labelEl = wrapper.querySelector('.label-text');
-      const metaPrev = wrapper.querySelector('.edit-search-match-meta');
-      if (metaPrev) metaPrev.remove();
       if (labelEl) {
         labelEl.textContent = String(field.label || field.key || "");
       }
@@ -5822,16 +5800,6 @@ function renderSubmitOutputs(payload) {
       if (labelEl) {
         labelEl.innerHTML = renderHighlightedText(String(field.label || field.key || ""), term);
       }
-      const targets = getFieldSearchTargets(field);
-      const matches = targets
-        .filter((item) => String(item.value || "").toLocaleLowerCase("tr-TR").includes(String(term).toLocaleLowerCase("tr-TR")))
-        .map((item) => `${item.key}: ${renderHighlightedText(item.value, term)}`);
-      if (!matches.length) return;
-      const host = wrapper.querySelector('.field-label') || wrapper;
-      const meta = document.createElement('div');
-      meta.className = 'edit-search-match-meta';
-      meta.innerHTML = `🔎 ${matches.join(' · ')}`;
-      host.appendChild(meta);
     }
 
     function stageNameSearchScore(stageLabel, term) {
@@ -5842,7 +5810,7 @@ function renderSubmitOutputs(payload) {
       return 100 * fuzzySimilarityScore(target, term);
     }
 
-    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0, searchTerm = "", showColumnDataDivider = false, searchMode = false }) {
+    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0, searchTerm = "", searchMode = false }) {
       editStageRenderSeq += 1;
       const renderSeq = editStageRenderSeq;
       if (editStageStatus) {
@@ -5859,7 +5827,6 @@ function renderSubmitOutputs(payload) {
       const chunkSize = 4;
       const total = selectedFields.length;
       let appended = 0;
-      let dividerRendered = false;
       const pump = () => {
         if (renderSeq !== editStageRenderSeq) return;
         if (stageKey !== editSelectedStage) return;
@@ -5870,13 +5837,6 @@ function renderSubmitOutputs(payload) {
           const field = selectedFields[i];
           const wrapper = wrappersByKey.get(field.key);
           if (wrapper) {
-            if (showColumnDataDivider && !searchMode && !dividerRendered && i > 0 && !field.editInColumnData) {
-              const divider = document.createElement('div');
-              divider.className = 'edit-stage-fields-divider';
-              divider.innerHTML = '<span>Column data</span>';
-              editStageFields.appendChild(divider);
-              dividerRendered = true;
-            }
             applySearchResultDecoration({ wrapper, field, term: searchTerm });
             editStageFields.appendChild(wrapper);
             appended += 1;
@@ -5893,7 +5853,7 @@ function renderSubmitOutputs(payload) {
         if (appended < total && retryCount < 3) {
           setTimeout(() => {
             if (stageKey !== editSelectedStage) return;
-            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1, searchTerm, showColumnDataDivider, searchMode });
+            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1, searchTerm, searchMode });
           }, 180);
         }
       };
@@ -6059,7 +6019,6 @@ function renderSubmitOutputs(payload) {
         wrappersByKey,
         searchTerm: term,
         searchMode,
-        showColumnDataDivider: String(editSelectedStage) === "Ungrouped" && !searchMode,
         retryCount: 0
       });
 
