@@ -367,6 +367,51 @@
   color: inherit;
 }
 
+
+#dynamic-table-wrapper .dt-table-end-actions {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  background: linear-gradient(to right, rgba(255,255,255,0), #fff 18px, #fff 100%);
+  z-index: 90;
+}
+
+#dynamic-table-wrapper .dt-table-end-actions .dt-icon-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+#dynamic-table-wrapper .dt-header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+#dynamic-table-wrapper .dt-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  color: #6b7280;
+  flex: 0 0 auto;
+}
+
+#dynamic-table-wrapper .dt-header-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #dynamic-table-wrapper .dt-footer { display: none; }
 </style>
 
@@ -385,13 +430,15 @@
           <button id="dt-btn-delete" class="dt-icon-btn dt-icon-btn-danger" type="button" aria-label="Sil"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 12h10l1-12"></path><path d="M9 7V5h6v2"></path></svg></button>
           <button id="dt-btn-import" class="dt-icon-btn" type="button" aria-label="Import"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V9"></path><path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path><path d="M5 19h14"></path></svg></button>
           <button id="dt-btn-download" class="dt-icon-btn" type="button" aria-label="Export"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v10"></path><path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path><path d="M5 18h14"></path></svg></button>
-          <button id="dt-btn-add-field" class="dt-icon-btn" type="button" aria-label="Add field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
-          <button id="dt-btn-manage-field" class="dt-icon-btn" type="button" aria-label="Manage field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg></button>
           <button id="dt-btn-new" class="dt-action-btn dt-action-btn-primary" type="button">+ New</button>
         </div>
       </div>
     </div>
     <div id="hot-container"></div>
+    <div id="dt-table-end-actions" class="dt-table-end-actions" aria-label="Field actions">
+      <button id="dt-btn-add-field" class="dt-icon-btn" type="button" aria-label="Add field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+      <button id="dt-btn-manage-field" class="dt-icon-btn" type="button" aria-label="Manage field"><svg class="dt-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18" cy="12" r="1.6"></circle></svg></button>
+    </div>
     <div id="dt-column-menu" class="dt-column-menu" role="menu" aria-hidden="true">
       <div class="dt-column-menu-title" id="dt-column-menu-title">Field menu</div>
       <button id="dt-column-menu-add" class="dt-column-menu-item" type="button">Add field</button>
@@ -791,6 +838,52 @@
     els.container.dataset.doubleClickAttached = 'true';
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getColumnTypeIcon(type) {
+    const t = String(type || 'text').toLocaleLowerCase('tr-TR');
+    const iconMap = {
+      text: 'Aa',
+      long_text: '≡',
+      number: '123',
+      numeric: '123',
+      date: '🗓',
+      datetime: '🕒',
+      time: '🕒',
+      phone: '📞',
+      tel: '📞',
+      email: '✉',
+      url: '🔗',
+      link: '🔗',
+      checkbox: '☑',
+      boolean: '☑',
+      file: '📎',
+      image: '🖼',
+      currency: '₺',
+      select: '▤',
+      option: '▤',
+      status: '◉',
+      relation: '↔',
+      formula: '∑',
+      user: '👤',
+      person: '👤'
+    };
+    return iconMap[t] || 'Aa';
+  }
+
+  function renderColumnHeader(column) {
+    const icon = getColumnTypeIcon(column?.type);
+    const title = escapeHtml(column?.header || 'Field');
+    return `<span class="dt-header-label"><span class="dt-type-icon" aria-hidden="true">${icon}</span><span class="dt-header-text">${title}</span></span>`;
+  }
+
   function getAdaptiveTableHeight() {
     if (!els.container) return 320;
 
@@ -835,7 +928,7 @@
         }
         return meta;
       },
-      colHeaders: state.columns.map(col => col.header),
+      colHeaders: index => renderColumnHeader(state.columns[index]),
       rowHeaders: true,
       height: getAdaptiveTableHeight(),
       width: '100%',
@@ -851,6 +944,14 @@
       selectionMode: 'multiple',
       licenseKey: 'non-commercial-and-evaluation',
       afterSelectionEnd: handleSelection,
+      afterOnCellMouseDown: (event, coords, TD) => {
+        if (!coords || coords.row !== -1 || coords.col < 0) return;
+        const target = event?.target;
+        if (!target) return;
+        if (!target.closest('.colHeader') && !target.closest('.dt-header-label') && !target.closest('.dt-header-text') && !target.closest('.dt-type-icon')) return;
+        const headerLabel = state.columns[coords.col]?.header || '';
+        openColumnMenu(coords.col, TD?.getBoundingClientRect?.() || target.getBoundingClientRect(), headerLabel);
+      },
       afterFilter: () => {
         updateFooter();
         handleSelection();
@@ -1121,25 +1222,6 @@
     els.columnMenu.setAttribute('aria-hidden', 'false');
   }
 
-  function getHeaderColumnFromEvent(event) {
-    if (!event?.target) return null;
-    const th = event.target.closest('th');
-    if (!th) return null;
-
-    const dataCol = th.getAttribute('data-col');
-    if (dataCol !== null) {
-      const parsed = parseInt(dataCol, 10);
-      if (Number.isInteger(parsed) && parsed >= 0) return { index: parsed, rect: th.getBoundingClientRect() };
-    }
-
-    const classMatch = (th.className || '').match(/\bcol(\d+)\b/);
-    if (classMatch) {
-      const parsed = parseInt(classMatch[1], 10);
-      if (Number.isInteger(parsed) && parsed >= 0) return { index: parsed, rect: th.getBoundingClientRect() };
-    }
-
-    return null;
-  }
 
   function applyColumnFilter(columnIndex) {
     if (!state.hot || !Number.isInteger(columnIndex)) return;
@@ -1190,32 +1272,6 @@
     }
   }
 
-  function attachHeaderMenuListener() {
-    if (!els.container || els.container.dataset.headerMenuAttached === 'true') return;
-
-    els.container.addEventListener('click', event => {
-      const headerInfo = getHeaderColumnFromEvent(event);
-      if (!headerInfo || !state.hot) return;
-
-      const isHeaderLabel = event.target.closest('.colHeader');
-      if (!isHeaderLabel) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const headerLabel = state.columns[headerInfo.index]?.header || '';
-      openColumnMenu(headerInfo.index, headerInfo.rect, headerLabel);
-    }, true);
-
-    document.addEventListener('click', event => {
-      if (!els.columnMenu?.classList.contains('is-open')) return;
-      if (event.target.closest('#dt-column-menu')) return;
-      closeColumnMenu();
-    });
-
-    window.addEventListener('resize', closeColumnMenu);
-    els.container.dataset.headerMenuAttached = 'true';
-  }
 
   function attachActionButtons() {
     if (els.newButton) {
@@ -1295,7 +1351,14 @@
       });
     }
 
-    attachHeaderMenuListener();
+    document.addEventListener('click', event => {
+      if (!els.columnMenu?.classList.contains('is-open')) return;
+      if (event.target.closest('#dt-column-menu')) return;
+      closeColumnMenu();
+    });
+
+    window.addEventListener('resize', closeColumnMenu);
+
   }
 
 
