@@ -594,11 +594,13 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
       padding: 12px;
       display: none;
+      pointer-events: none;
       z-index: 30;
     }
 
 #bdf-root .picker-popover.open {
       display: grid;
+      pointer-events: auto;
       gap: 10px;
     }
 
@@ -1060,11 +1062,13 @@
       box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
       display: none;
       padding: 4px;
+      pointer-events: none;
       z-index: 20;
     }
 
 #bdf-root .action-menu.open {
       display: grid;
+      pointer-events: auto;
       gap: 2px;
     }
 
@@ -1486,6 +1490,12 @@
 
 #bdf-root .field-row {
         gap: 10px;
+      }
+
+#bdf-root .field-input,
+#bdf-root select,
+#bdf-root textarea {
+        font-size: 16px;
       }
 
 #bdf-root .field-label {
