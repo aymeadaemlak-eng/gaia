@@ -1106,25 +1106,6 @@
   color: #1d4ed8;
 }
 
-#bdf-root .edit-search-summary {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #334155;
-}
-
-#bdf-root .edit-search-chip {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #c7d2fe;
-  color: #1e3a8a;
-  background: #eef2ff;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-weight: 600;
-}
-
 #bdf-root .edit-search-empty {
   display: none;
   padding: 8px 10px;
@@ -1687,7 +1668,6 @@
               <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
-            <div id="editSearchSummary" class="edit-search-summary"></div>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editModeLoading" class="edit-mode-loading">
@@ -2205,7 +2185,6 @@
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
     const editSearchClear = byId("editSearchClear");
-    const editSearchSummary = byId("editSearchSummary");
     const editSearchEmpty = byId("editSearchEmpty");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
@@ -5939,12 +5918,6 @@ function renderSubmitOutputs(payload) {
       if (editSearchEmpty) {
         editSearchEmpty.style.display = "none";
         editSearchEmpty.textContent = "";
-      }
-      if (editSearchSummary) {
-        editSearchSummary.style.display = searchMode ? "flex" : "none";
-        editSearchSummary.innerHTML = searchMode
-          ? `<span>Arama sonuçları: ${fields.filter((field) => fieldSearchScore(field, term) > 0).length}</span><span class="edit-search-chip">${rawTerm}</span>`
-          : "";
       }
       if (editSearchClear) {
         editSearchClear.style.display = rawTerm ? "inline-flex" : "none";
