@@ -1667,8 +1667,8 @@
 
     const hasPrimaryCondition = state.filterDraft.condition !== 'none';
     const showPrimaryValue = conditionNeedsValue(state.filterDraft.condition);
-    const showSecondarySelect = false;
-    const showSecondaryValue = false;
+    const showSecondarySelect = hasPrimaryCondition;
+    const showSecondaryValue = hasPrimaryCondition && conditionNeedsValue(state.filterDraft.condition2 || 'none');
 
     if (els.filterConditionValueInput) {
       els.filterConditionValueInput.style.display = showPrimaryValue ? '' : 'none';
@@ -1686,18 +1686,20 @@
       els.filterConditionValueInput2.style.display = showSecondaryValue ? '' : 'none';
     }
 
-    state.filterDraft.operator = 'and';
-    state.filterDraft.condition2 = 'none';
-    state.filterDraft.valueTerm2 = '';
-    if (els.filterOperatorAnd) els.filterOperatorAnd.checked = true;
-    if (els.filterOperatorOr) els.filterOperatorOr.checked = false;
-    if (els.filterConditionSelect2) els.filterConditionSelect2.value = 'none';
-    if (els.filterConditionValueInput2) els.filterConditionValueInput2.value = '';
+    if (!hasPrimaryCondition) {
+      state.filterDraft.operator = 'and';
+      state.filterDraft.condition2 = 'none';
+      state.filterDraft.valueTerm2 = '';
+      if (els.filterOperatorAnd) els.filterOperatorAnd.checked = true;
+      if (els.filterOperatorOr) els.filterOperatorOr.checked = false;
+      if (els.filterConditionSelect2) els.filterConditionSelect2.value = 'none';
+      if (els.filterConditionValueInput2) els.filterConditionValueInput2.value = '';
+    }
   }
 
   function openFilterPanel(columnIndex) {
     if (!Number.isInteger(columnIndex) || columnIndex < 0) return;
-    const existing = state.filterConfigs[columnIndex] || { condition: 'none', values: null };
+    const existing = state.filterConfigs[columnIndex] || { condition: 'none', condition2: 'none', operator: 'and', values: null };
     const allValues = getColumnDistinctValues(columnIndex);
     const allRawValues = allValues.map(item => item.raw);
     const selectedValues = new Set(Array.isArray(existing.values) && existing.values.length ? existing.values : allRawValues);
@@ -1770,6 +1772,15 @@
             filterPlugin.addCondition(col, config.condition, []);
           } else {
             filterPlugin.addCondition(col, config.condition, [config.valueTerm || '']);
+          }
+        }
+
+        if (config.condition2 && config.condition2 !== 'none') {
+          const op = config.operator === 'or' ? 'disjunction' : 'conjunction';
+          if (config.condition2 === 'empty' || config.condition2 === 'not_empty') {
+            filterPlugin.addCondition(col, config.condition2, [], op);
+          } else {
+            filterPlugin.addCondition(col, config.condition2, [config.valueTerm2 || ''], op);
           }
         }
 
@@ -1947,6 +1958,41 @@
       });
     }
 
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.addEventListener('change', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.condition2 = event.target.value || 'none';
+        if (!conditionNeedsValue(state.filterDraft.condition2 || 'none')) {
+          state.filterDraft.valueTerm2 = '';
+          if (els.filterConditionValueInput2) {
+            els.filterConditionValueInput2.value = '';
+          }
+        }
+        syncFilterPanelVisibility();
+      });
+    }
+
+    if (els.filterConditionValueInput2) {
+      els.filterConditionValueInput2.addEventListener('input', event => {
+        if (!state.filterDraft) return;
+        state.filterDraft.valueTerm2 = event.target.value || '';
+      });
+    }
+
+    if (els.filterOperatorAnd) {
+      els.filterOperatorAnd.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'and';
+      });
+    }
+
+    if (els.filterOperatorOr) {
+      els.filterOperatorOr.addEventListener('change', event => {
+        if (!state.filterDraft || !event.target.checked) return;
+        state.filterDraft.operator = 'or';
+      });
+    }
+
     if (els.filterValuesWrap) {
       els.filterValuesWrap.addEventListener('change', event => {
         const checkbox = event.target.closest('.dt-filter-value-checkbox');
@@ -1990,6 +2036,9 @@
         state.filterConfigs[columnIndex] = {
           condition: condition || 'none',
           valueTerm: (state.filterDraft.valueTerm || '').trim(),
+          condition2: state.filterDraft.condition2 || 'none',
+          valueTerm2: (state.filterDraft.valueTerm2 || '').trim(),
+          operator: state.filterDraft.operator || 'and',
           values: normalizedValues.length === allValues.length ? null : normalizedValues
         };
         applyAllColumnFilters();
