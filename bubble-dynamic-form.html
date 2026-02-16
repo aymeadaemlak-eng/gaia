@@ -134,6 +134,7 @@
       --field-group-gap: clamp(12px, 1.6vw, 16px);
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
+      --form-container-max-width: 464px;
       font-size: 14px;
       color: var(--text);
     }
@@ -141,6 +142,11 @@
     #bdf-root,
     #bdf-root * {
       box-sizing: border-box;
+    }
+
+
+#bdf-root.editing-mode {
+      --form-container-max-width: 100%;
     }
 
 
@@ -165,6 +171,7 @@
       padding: 20px;
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
+
 
     #bdf-root h1,
     #bdf-root h2,
@@ -261,13 +268,17 @@
       max-height: none;
       overflow: visible;
       padding-right: 0;
+      margin-inline: 0;
     }
 
 #bdf-root #formContainer {
+      width: 100%;
+      max-width: var(--form-container-max-width, 464px);
       height: 680px;
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
+      margin-inline: auto;
     }
 
 #bdf-root .field-control.file-field-control {
@@ -1079,6 +1090,30 @@
   gap: 8px;
 }
 
+#bdf-root .edit-search-input-wrap {
+  position: relative;
+}
+
+#bdf-root .edit-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 6px;
+  display: none;
+}
+
+#bdf-root .edit-search-clear:hover {
+  background: #eef2ff;
+  color: #1d4ed8;
+}
+
 #bdf-root .edit-search-empty {
   display: none;
   padding: 8px 10px;
@@ -1090,120 +1125,9 @@
   font-weight: 600;
 }
 
-#bdf-root .edit-progress-wrap {
-  display: grid;
-  gap: 8px;
-  align-items: center;
-}
-
-#bdf-root .edit-progress-track {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 2px;
-}
-
-#bdf-root .edit-progress-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748b;
-  white-space: nowrap;
-}
-
-#bdf-root .edit-progress-step-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  background: #fff;
-}
-
-#bdf-root .edit-progress-step.completed .edit-progress-step-dot {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-}
-
-#bdf-root .edit-progress-step.active {
-  color: #1d4ed8;
-  font-weight: 600;
-}
-
-#bdf-root .edit-progress-step.active .edit-progress-step-dot {
-  border-color: #1d4ed8;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
-}
-
-#bdf-root .edit-progress-step.upcoming {
-  opacity: 0.6;
-}
-
-#bdf-root .edit-progress-sep {
-  color: #cbd5e1;
-}
-
-#bdf-root .edit-progress-toggle {
-  justify-self: start;
-  font-size: 12px;
-  padding: 4px 8px;
-}
-
-#bdf-root .edit-quick-list {
-
-  display: grid;
-  gap: 8px;
-}
-
-#bdf-root .edit-quick-item {
-  min-height: 38px;
-  border: 1px solid #dbe3f2;
-  background: #f8fbff;
-  border-radius: 11px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#bdf-root .edit-quick-item:hover {
-  border-color: #93c5fd;
-}
-
-#bdf-root .edit-quick-item-label {
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#bdf-root .edit-quick-item-value {
-  margin-left: auto;
-  color: #64748b;
-  font-size: 12px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#bdf-root .edit-quick-empty {
-  color: #64748b;
-  font-size: 13px;
-  padding: 6px 2px;
-}
-
 #bdf-root .edit-stage-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
   gap: 10px;
   align-items: start;
 }
@@ -1290,6 +1214,26 @@
   color: #64748b;
   margin-bottom: 6px;
   min-height: 18px;
+}
+
+#bdf-root .field-wrapper.search-result {
+  border-left: 2px solid #93c5fd;
+  padding-left: 10px;
+}
+
+#bdf-root mark.edit-search-highlight {
+  background: rgba(250, 204, 21, 0.28);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+#bdf-root .edit-stage-fields.search-transition {
+  animation: bdf-search-shift 160ms ease;
+}
+
+@keyframes bdf-search-shift {
+  from { opacity: 0.0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 #bdf-root .edit-stage-fields-skeleton {
   display: grid;
@@ -1533,6 +1477,9 @@
         max-width: min(100%, 248px);
       }
 
+    }
+
+    @media (max-width: 360px) {
 #bdf-root .edit-stage-layout {
         grid-template-columns: 1fr;
       }
@@ -1541,13 +1488,6 @@
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       }
 
-#bdf-root .edit-progress-track {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    @media (max-width: 360px) {
 #bdf-root .field-row {
         flex-direction: column;
         align-items: stretch;
@@ -1731,12 +1671,11 @@
         </div>
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <div id="editModeRoot" class="edit-mode-root">
-          <div id="editProgressWrap" class="edit-progress-wrap" style="display:none;">
-            <div id="editProgressTrack" class="edit-progress-track"></div>
-            <button id="editProgressToggle" type="button" class="ghost edit-progress-toggle" style="display:none;">Tüm süreç</button>
-          </div>
           <div class="edit-mode-toolbar">
-            <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (id / header)" />
+            <div class="edit-search-input-wrap">
+              <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
+              <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
+            </div>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
           <div id="editModeLoading" class="edit-mode-loading">
@@ -1747,10 +1686,6 @@
             <div class="edit-skeleton-row mid"></div>
             <div class="edit-skeleton-row wide"></div>
           </div>
-          <section id="editQuickSection" style="display:none;">
-            <h3 style="margin:4px 0 8px 0; font-size:14px;">Hızlı Giriş</h3>
-            <div id="editQuickFields" class="edit-quick-list"></div>
-          </section>
           <div id="editStageLayout" class="edit-stage-layout" style="display:none;">
             <div id="editStageTabs" class="edit-stage-tabs"></div>
             <div id="editStagePanel" class="edit-stage-panel">
@@ -2257,14 +2192,10 @@
     const formEl = byId("dynamicForm");
     const editModeRoot = byId("editModeRoot");
     const editSearchInput = byId("editSearchInput");
+    const editSearchClear = byId("editSearchClear");
     const editSearchEmpty = byId("editSearchEmpty");
-    const editProgressWrap = byId("editProgressWrap");
-    const editProgressTrack = byId("editProgressTrack");
-    const editProgressToggle = byId("editProgressToggle");
     const editModeLoading = byId("editModeLoading");
     const editModeLoadingText = byId("editModeLoadingText");
-    const editQuickSection = byId("editQuickSection");
-    const editQuickFields = byId("editQuickFields");
     const editStageLayout = byId("editStageLayout");
     const editStageTabs = byId("editStageTabs");
     const editStageHeading = byId("editStageHeading");
@@ -2362,7 +2293,6 @@
     let editModeStageMeta = [];
     let editSelectedStage = "";
     let editProcessActiveStageKey = "";
-    let editProcessShowAll = false;
     let editModePayloadLoaded = false;
     let lastEditModePayloadSignature = "";
     let editModePayloadPollTimer = null;
@@ -2585,6 +2515,15 @@
       if (editModeRoot) {
         editModeRoot.style.display = isEditUiActive ? "grid" : "none";
       }
+      if (isEditUiActive && editSearchInput) {
+        requestAnimationFrame(() => {
+          try {
+            editSearchInput.focus({ preventScroll: true });
+          } catch (error) {
+            editSearchInput.focus();
+          }
+        });
+      }
       if (isEditUiActive && !editModePayloadLoaded) {
         setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
@@ -2595,7 +2534,6 @@
         formEl.style.display = isEditUiActive ? "none" : "grid";
       }
       if (!isEditUiActive) {
-        if (editQuickSection) editQuickSection.style.display = "none";
         if (editStageLayout) editStageLayout.style.display = "none";
       }
       if (formContainer) {
@@ -5430,9 +5368,7 @@ function renderSubmitOutputs(payload) {
     function setEditModeLoading(isLoading, message = "") {
       if (!editModeLoading) return;
       editModeLoading.style.display = isLoading ? "grid" : "none";
-      if (editQuickSection) editQuickSection.style.display = isLoading ? "none" : "block";
       if (editStageLayout) editStageLayout.style.display = isLoading ? "none" : "grid";
-      if (editProgressWrap) editProgressWrap.style.display = isLoading ? "none" : editProgressWrap.style.display;
       if (editModeLoadingText && message) {
         editModeLoadingText.textContent = message;
       }
@@ -5504,6 +5440,7 @@ function renderSubmitOutputs(payload) {
       const value = raw.value ?? raw.currentValue ?? raw.fieldValue ?? raw.default ?? "";
       const sourceOptions = Array.isArray(raw.source) ? raw.source : [];
       const options = Array.isArray(raw.options) ? raw.options : sourceOptions;
+      const header = String(raw.header || raw.fieldHeader || raw.columnHeader || "").trim();
       return {
         key,
         fieldName: key,
@@ -5527,7 +5464,10 @@ function renderSubmitOutputs(payload) {
         ui: raw.ui || {},
         _stageName: stageName,
         _stageKey: stageKey,
-        _initialValue: value
+        _initialValue: value,
+        _searchHeader: header,
+        _isInColumnData: false,
+        _columnOrder: Number.POSITIVE_INFINITY
       };
     }
 
@@ -5577,6 +5517,33 @@ function renderSubmitOutputs(payload) {
       }
       if (!list.length) return null;
 
+      const columnDataColumns = Array.isArray(columnJson?.columns) ? columnJson.columns : [];
+      const normalizeSearchToken = (value) => String(value || "").trim().toLocaleLowerCase("tr-TR");
+      const columnLookup = new Map();
+      columnDataColumns.forEach((column, index) => {
+        const aliases = [column?.id, column?.key, column?.fieldName, column?.name, column?.header, column?.label]
+          .map(normalizeSearchToken)
+          .filter(Boolean);
+        aliases.forEach((alias) => {
+          if (!columnLookup.has(alias)) columnLookup.set(alias, index);
+        });
+      });
+
+      list.forEach((field, index) => {
+        const aliases = [field.key, field.fieldName, field.label, field._searchHeader]
+          .map(normalizeSearchToken)
+          .filter(Boolean);
+        let matchedOrder = Number.POSITIVE_INFINITY;
+        aliases.forEach((alias) => {
+          if (columnLookup.has(alias)) {
+            matchedOrder = Math.min(matchedOrder, Number(columnLookup.get(alias)));
+          }
+        });
+        field._isInColumnData = Number.isFinite(matchedOrder);
+        field._columnOrder = Number.isFinite(matchedOrder) ? matchedOrder : Number.POSITIVE_INFINITY;
+        field._sourceOrder = index;
+      });
+
       const initialValues = {};
       list.forEach((field) => {
         initialValues[field.key] = field._initialValue;
@@ -5587,7 +5554,11 @@ function renderSubmitOutputs(payload) {
           const next = {
             ...field,
             editStageName: field._stageName || "Ungrouped",
-            editStageKey: field._stageKey || "Ungrouped"
+            editStageKey: field._stageKey || "Ungrouped",
+            editInColumnData: Boolean(field._isInColumnData),
+            editColumnOrder: Number.isFinite(field._columnOrder) ? field._columnOrder : Number.POSITIVE_INFINITY,
+            editSourceOrder: Number.isFinite(field._sourceOrder) ? field._sourceOrder : 0,
+            searchHeader: field._searchHeader || ""
           };
           delete next._initialValue;
           return next;
@@ -5683,7 +5654,6 @@ function renderSubmitOutputs(payload) {
       hasEnteredEditSession = true;
       traceAutosave("edit-payload-applied", { signature, fieldCount: Array.isArray(config.fields) ? config.fields.length : 0 });
       editModeStablePollCount = 0;
-      editProcessShowAll = false;
       setEditModeLoading(false);
       renderForm(config);
       flushPendingSubmitAfterConfigReady();
@@ -5748,20 +5718,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function getStageDisplayLabel(stageMetaByKey, stageKey, fallbackIndex = 0) {
-      if (String(stageKey) === "Ungrouped") return "Unassigned";
+      if (String(stageKey) === "Ungrouped") return "Tüm alanlar";
       const meta = stageMetaByKey.get(stageKey) || null;
       const label = String(meta?.label || meta?.name || "").trim();
       if (label) return label;
       const order = Number(meta?.order);
       if (Number.isFinite(order)) return `Stage ${order}`;
       return `Stage ${fallbackIndex + 1}`;
-    }
-
-    function isQuickEntryEligible(field) {
-      const type = String(field?.type || field?.displayType || "").toLocaleLowerCase("tr-TR").trim();
-      const blocked = ["file", "image", "multifile", "multiline", "textarea", "text (long)", "dropdown", "checkbox", "radio", "switch", "toggle"];
-      if (blocked.some((item) => type.includes(item))) return false;
-      return true;
     }
 
     function fuzzySimilarityScore(haystack, needle) {
@@ -5778,19 +5741,53 @@ function renderSubmitOutputs(payload) {
       return matches / needle.length;
     }
 
-    function quickFieldSearchScore(field, term) {
+    function getFieldSearchTargets(field) {
+      const id = String(field?.key || field?.fieldName || "").trim();
+      const label = String(field?.label || "").trim();
+      const header = String(field?.searchHeader || field?.header || "").trim();
+      return [
+        { key: "id", value: id },
+        { key: "ad", value: label },
+        { key: "header", value: header }
+      ].filter((item) => item.value);
+    }
+
+    function fieldSearchScore(field, term) {
       if (!term) return 0;
-      const id = String(field.key || field.fieldName || "").toLocaleLowerCase("tr-TR");
-      const label = String(field.label || "").toLocaleLowerCase("tr-TR");
-      const targets = [id, label];
+      const targets = getFieldSearchTargets(field).map((item) => item.value.toLocaleLowerCase("tr-TR"));
       let best = 0;
       targets.forEach((target) => {
         if (!target) return;
         if (target.startsWith(term)) best = Math.max(best, 300 + (term.length / Math.max(target.length, 1)));
-        else if (target.includes(term)) best = Math.max(best, 200 + (term.length / Math.max(target.length, 1)));
+        else if (target.includes(term)) best = Math.max(best, 220 + (term.length / Math.max(target.length, 1)));
         else best = Math.max(best, 100 * fuzzySimilarityScore(target, term));
       });
       return best;
+    }
+
+    function escapeRegExp(value) {
+      return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function renderHighlightedText(text, term) {
+      const source = String(text || "");
+      if (!source || !term) return source;
+      const rx = new RegExp(`(${escapeRegExp(term)})`, "ig");
+      return source.replace(rx, '<mark class="edit-search-highlight">$1</mark>');
+    }
+
+    function applySearchResultDecoration({ wrapper, field, term }) {
+      if (!wrapper) return;
+      wrapper.classList.remove("search-result");
+      const labelEl = wrapper.querySelector('.label-text');
+      if (labelEl) {
+        labelEl.textContent = String(field.label || field.key || "");
+      }
+      if (!term) return;
+      wrapper.classList.add("search-result");
+      if (labelEl) {
+        labelEl.innerHTML = renderHighlightedText(String(field.label || field.key || ""), term);
+      }
     }
 
     function stageNameSearchScore(stageLabel, term) {
@@ -5801,59 +5798,7 @@ function renderSubmitOutputs(payload) {
       return 100 * fuzzySimilarityScore(target, term);
     }
 
-    function renderEditProgress(stageMeta) {
-      if (!editProgressWrap || !editProgressTrack) return;
-      editProgressTrack.innerHTML = "";
-      if (!stageMeta.length) {
-        editProgressWrap.style.display = "none";
-        return;
-      }
-
-      const activeKey = resolveActiveProcessStageKey(stageMeta);
-      editProcessActiveStageKey = activeKey;
-      if (!activeKey) {
-        editProgressWrap.style.display = "none";
-        return;
-      }
-
-      const activeIndex = stageMeta.findIndex((item) => item.key === activeKey);
-      const visibleStages = (editProcessShowAll || activeIndex < 0)
-        ? stageMeta
-        : stageMeta.slice(0, activeIndex + 1);
-
-      visibleStages.forEach((stage, index) => {
-        const realIndex = stageMeta.findIndex((item) => item.key === stage.key);
-        const status = getProcessStageStatus(realIndex, activeIndex);
-        const step = document.createElement("div");
-        step.className = `edit-progress-step ${status}`;
-        const dot = document.createElement("span");
-        dot.className = "edit-progress-step-dot";
-        dot.textContent = status === "completed" ? "✓" : String(realIndex + 1);
-        const label = document.createElement("span");
-        label.textContent = stage.label;
-        step.append(dot, label);
-        editProgressTrack.appendChild(step);
-        if (index < visibleStages.length - 1) {
-          const sep = document.createElement("span");
-          sep.className = "edit-progress-sep";
-          sep.textContent = "—";
-          editProgressTrack.appendChild(sep);
-        }
-      });
-
-      if (editProgressToggle) {
-        if (activeIndex >= 0 && stageMeta.length > activeIndex + 1) {
-          editProgressToggle.style.display = "inline-flex";
-          editProgressToggle.textContent = editProcessShowAll ? "Daha az göster" : "Tüm süreç";
-        } else {
-          editProgressToggle.style.display = "none";
-        }
-      }
-
-      editProgressWrap.style.display = "grid";
-    }
-
-    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0 }) {
+    function renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount = 0, searchTerm = "", searchMode = false }) {
       editStageRenderSeq += 1;
       const renderSeq = editStageRenderSeq;
       if (editStageStatus) {
@@ -5863,6 +5808,8 @@ function renderSubmitOutputs(payload) {
         editStageFields.innerHTML = selectedFields.length
           ? '<div class="edit-stage-fields-skeleton"><div class="line"></div><div class="line"></div><div class="line"></div></div>'
           : '';
+        editStageFields.classList.remove('search-transition');
+        requestAnimationFrame(() => editStageFields.classList.add('search-transition'));
       }
       let cursor = 0;
       const chunkSize = 4;
@@ -5875,8 +5822,10 @@ function renderSubmitOutputs(payload) {
         if (cursor === 0) editStageFields.innerHTML = "";
         const limit = Math.min(cursor + chunkSize, total);
         for (let i = cursor; i < limit; i += 1) {
-          const wrapper = wrappersByKey.get(selectedFields[i].key);
+          const field = selectedFields[i];
+          const wrapper = wrappersByKey.get(field.key);
           if (wrapper) {
+            applySearchResultDecoration({ wrapper, field, term: searchTerm });
             editStageFields.appendChild(wrapper);
             appended += 1;
           }
@@ -5892,7 +5841,7 @@ function renderSubmitOutputs(payload) {
         if (appended < total && retryCount < 3) {
           setTimeout(() => {
             if (stageKey !== editSelectedStage) return;
-            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1 });
+            renderSelectedStageFieldsProgressively({ stageKey, selectedFields, wrappersByKey, retryCount: retryCount + 1, searchTerm, searchMode });
           }, 180);
         }
       };
@@ -5901,7 +5850,9 @@ function renderSubmitOutputs(payload) {
 
     function runEditModeFilterRender() {
       if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
-      const term = String(editModeSearchTerm || "").trim().toLocaleLowerCase("tr-TR");
+      const rawTerm = String(editModeSearchTerm || "").trim();
+      const term = rawTerm.toLocaleLowerCase("tr-TR");
+      const searchMode = Boolean(term);
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
       const stageMap = new Map();
       fields.forEach((field) => {
@@ -5922,7 +5873,7 @@ function renderSubmitOutputs(payload) {
         stageKeys.push(stageKey);
       });
 
-      if (term && stageKeys.length > 1) {
+      if (searchMode && stageKeys.length > 1) {
         const pinnedTop = stageKeys[0] === "Ungrouped" ? ["Ungrouped"] : [];
         const sortable = pinnedTop.length ? stageKeys.slice(1) : [...stageKeys];
         sortable.sort((a, b) => {
@@ -5936,13 +5887,18 @@ function renderSubmitOutputs(payload) {
 
       const filteredCountByStage = new Map();
       stageKeys.forEach((stageKey) => {
-        const count = (stageMap.get(stageKey) || []).length;
+        const inStage = stageMap.get(stageKey) || [];
+        const count = searchMode
+          ? inStage.filter((field) => fieldSearchScore(field, term) > 0).length
+          : inStage.length;
         filteredCountByStage.set(stageKey, count);
       });
 
       const firstWithFields = stageKeys.find((stageKey) => (filteredCountByStage.get(stageKey) || 0) > 0);
-      if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
-        editSelectedStage = firstWithFields || stageKeys[0] || "";
+      if (searchMode) {
+        editSelectedStage = "Ungrouped";
+      } else if (!editSelectedStage || !stageKeys.includes(editSelectedStage)) {
+        editSelectedStage = stageKeys.includes("Ungrouped") ? "Ungrouped" : (firstWithFields || stageKeys[0] || "");
       }
       if (editStageLayout) {
         editStageLayout.style.display = stageKeys.length ? "grid" : "none";
@@ -5962,41 +5918,17 @@ function renderSubmitOutputs(payload) {
         if (key && !wrappersByKey.has(key)) wrappersByKey.set(key, wrapper);
       });
 
-      if (editQuickFields) editQuickFields.innerHTML = "";
       if (editStageTabs) editStageTabs.innerHTML = "";
       if (editStageHeading) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
-      }
-
-      const unassignedFields = (stageMap.get("Ungrouped") || []).filter((field) => isQuickEntryEligible(field));
-      const quickCandidates = term
-        ? unassignedFields
-          .map((field, index) => ({ field, index, score: quickFieldSearchScore(field, term) }))
-          .filter((item) => item.score > 0)
-          .sort((a, b) => (b.score - a.score) || (a.index - b.index))
-          .map((item) => item.field)
-        : unassignedFields;
-      const quickItems = [];
-      for (const field of quickCandidates) {
-        if (quickItems.some((x) => x.key === field.key)) continue;
-        quickItems.push(field);
-        if (quickItems.length >= 5) break;
       }
 
       if (editSearchEmpty) {
         editSearchEmpty.style.display = "none";
         editSearchEmpty.textContent = "";
       }
-      if (editQuickFields) {
-        if (!quickItems.length) {
-          editQuickFields.innerHTML = '<div class="edit-quick-empty">Uygun alan bulunamadı</div>';
-        } else {
-          editQuickFields.innerHTML = "";
-          quickItems.forEach((field) => {
-            const wrapper = wrappersByKey.get(field.key);
-            if (wrapper) editQuickFields.appendChild(wrapper);
-          });
-        }
+      if (editSearchClear) {
+        editSearchClear.style.display = rawTerm ? "inline-flex" : "none";
       }
 
       const activeProcessIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
@@ -6017,11 +5949,43 @@ function renderSubmitOutputs(payload) {
         if (editStageTabs) editStageTabs.appendChild(btn);
       });
 
-      const quickKeys = new Set(quickItems.map((field) => field.key));
-      const selectedFields = (stageMap.get(editSelectedStage) || []).filter((field) => {
-        if (String(editSelectedStage) !== "Ungrouped") return true;
-        return !quickKeys.has(field.key);
-      });
+      const globallySortedResults = searchMode
+        ? [...fields]
+          .map((field, index) => ({ field, index, score: fieldSearchScore(field, term) }))
+          .filter((item) => item.score > 0)
+          .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+          .map((item) => item.field)
+        : [];
+
+      let selectedFields = [];
+      if (searchMode) {
+        selectedFields = globallySortedResults;
+      } else {
+        const ungroupedFields = [...(stageMap.get(editSelectedStage) || [])];
+        if (String(editSelectedStage) === "Ungrouped") {
+          ungroupedFields.sort((a, b) => {
+            const aIn = a.editInColumnData ? 0 : 1;
+            const bIn = b.editInColumnData ? 0 : 1;
+            if (aIn !== bIn) return aIn - bIn;
+            if (aIn === 0) {
+              const aOrder = Number.isFinite(a.editColumnOrder) ? a.editColumnOrder : Number.POSITIVE_INFINITY;
+              const bOrder = Number.isFinite(b.editColumnOrder) ? b.editColumnOrder : Number.POSITIVE_INFINITY;
+              if (aOrder !== bOrder) return aOrder - bOrder;
+            }
+            const aSource = Number.isFinite(a.editSourceOrder) ? a.editSourceOrder : 0;
+            const bSource = Number.isFinite(b.editSourceOrder) ? b.editSourceOrder : 0;
+            return aSource - bSource;
+          });
+        }
+        selectedFields = ungroupedFields;
+      }
+
+      if (searchMode && !selectedFields.length && editSearchEmpty) {
+        editSearchEmpty.style.display = "block";
+        editSearchEmpty.textContent = "Sonuç bulunamadı";
+      }
+
+
       const selectedStageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === editSelectedStage);
       const activeProcessIndexForSelected = (editModeStageMeta || []).findIndex((stage) => stage.key === editProcessActiveStageKey);
       const selectedStageStatus = getProcessStageStatus(selectedStageMetaIndex, activeProcessIndexForSelected);
@@ -6030,11 +5994,16 @@ function renderSubmitOutputs(payload) {
         const statusLabel = selectedStageStatus === "active" ? "Current" : (selectedStageStatus === "completed" ? "Completed" : "Pending");
         editStageChip.textContent = statusLabel;
       }
-      renderSelectedStageFieldsProgressively({ stageKey: editSelectedStage, selectedFields, wrappersByKey });
 
-      renderEditProgress(editModeStageMeta || []);
-      const activeTab = editStageTabs?.querySelector('[data-active-process="1"]');
-      if (activeTab) activeTab.scrollIntoView({ block: 'nearest' });
+      renderSelectedStageFieldsProgressively({
+        stageKey: editSelectedStage,
+        selectedFields,
+        wrappersByKey,
+        searchTerm: term,
+        searchMode,
+        retryCount: 0
+      });
+
     }
 
 
@@ -7450,20 +7419,34 @@ function renderSubmitOutputs(payload) {
 
 
       if (editSearchInput) {
-        editSearchInput.addEventListener("input", (event) => {
-          const nextTerm = String(event?.target?.value || "");
+        const applySearchTerm = (nextTerm) => {
           if (editModeDebounceTimer) clearTimeout(editModeDebounceTimer);
           editModeDebounceTimer = setTimeout(() => {
-            editModeSearchTerm = nextTerm;
+            editModeSearchTerm = String(nextTerm || "");
             runEditModeFilterRender();
-          }, 200);
+          }, 160);
+        };
+        editSearchInput.addEventListener("input", (event) => {
+          const nextTerm = String(event?.target?.value || "");
+          applySearchTerm(nextTerm);
+        });
+        editSearchInput.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape") return;
+          event.preventDefault();
+          if (editSearchInput.value) {
+            editSearchInput.value = "";
+            applySearchTerm("");
+          }
         });
       }
 
-      if (editProgressToggle) {
-        editProgressToggle.addEventListener("click", () => {
-          editProcessShowAll = !editProcessShowAll;
+      if (editSearchClear) {
+        editSearchClear.addEventListener("click", () => {
+          if (!editSearchInput) return;
+          editSearchInput.value = "";
+          editModeSearchTerm = "";
           runEditModeFilterRender();
+          editSearchInput.focus();
         });
       }
 
