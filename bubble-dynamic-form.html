@@ -135,7 +135,7 @@
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
       --form-container-max-width: 464px;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--text);
     }
 
@@ -490,7 +490,7 @@
       min-height: var(--field-control-height);
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       background: transparent;
       color: #111827;
@@ -527,7 +527,7 @@
       padding: 8px 10px;
       line-height: 1.45;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       background: transparent;
       color: #111827;
@@ -6585,9 +6585,7 @@ function renderSubmitOutputs(payload) {
               updateError(control, field);
               closePopover();
             },
-            onClose: () => {
-              dateInput.focus();
-            }
+            onClose: () => {}
           });
 
           const iconBtn = document.createElement("button");
@@ -6726,9 +6724,7 @@ function renderSubmitOutputs(payload) {
               setFieldValue(field.key, normalized, field, displayValue);
               updateError(control, field);
             },
-            onClose: () => {
-              datetimeInput.focus();
-            }
+            onClose: () => {}
           });
 
           const timeRow = document.createElement("div");
