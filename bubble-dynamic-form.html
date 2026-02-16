@@ -274,6 +274,7 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
+      min-width: min(100%, 450px);
       height: 680px;
       overflow-y: auto;
       overflow-x: hidden;
@@ -944,119 +945,119 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      min-height: 58px;
-      padding: 10px 12px;
-      border: 1px solid #e4e8ee;
-      border-radius: 12px;
+      min-height: 64px;
+      padding: 12px 16px;
+      border: 0;
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: 0;
       background: #f8fafc;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
       margin-bottom: 12px;
     }
 
 #bdf-root .action-meta {
-      display: grid;
-      gap: 2px;
-      min-width: 88px;
+      display: inline-flex;
+      gap: 0;
+      min-width: 54px;
     }
 
 #bdf-root .action-meta-title {
-      font-size: 0.76rem;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 500;
       color: #64748b;
-      letter-spacing: 0.01em;
     }
 
 #bdf-root .action-meta-subtitle {
-      font-size: 0.72rem;
-      color: #94a3b8;
+      display: none;
     }
 
 #bdf-root .action-main {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 12px;
       flex: 1;
       min-width: 0;
     }
 
-#bdf-root .action-split {
+#bdf-root .action-chip-scroll {
       position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+#bdf-root .action-chip-track {
       display: inline-flex;
-      align-items: stretch;
-      border-radius: 10px;
-      overflow: visible;
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      box-shadow: 0 1px 1px rgba(15,23,42,0.04);
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-right: 28px;
+      scrollbar-width: thin;
     }
 
-#bdf-root .action-split button {
-      border-radius: 0;
-      border: none;
-    }
-
-#bdf-root .action-trigger-btn {
+#bdf-root .action-chip {
+      border-radius: 999px;
+      border: 1px solid #e2e8f0;
       background: #ffffff;
+      color: #334155;
+      min-height: 32px;
+      height: 32px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+#bdf-root .action-chip:hover {
+      background: #e9edf2;
+      border-color: #cbd5e1;
       color: #0f172a;
-      min-width: 190px;
-      text-align: left;
-      font-weight: 600;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
     }
 
-#bdf-root .action-chevron-btn {
-      background: #eff6ff;
-      color: #1e3a8a;
-      min-width: 40px;
-      padding: 8px 10px;
-      border-left: 1px solid #cbd5e1;
+#bdf-root .action-chip.active {
+      background: #e8f0fe;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
     }
 
-#bdf-root .action-split button:hover {
-      background: #f1f5f9;
-    }
-
-#bdf-root .action-split button:focus-visible {
+#bdf-root .action-chip:focus-visible,
+#bdf-root .action-header-link:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
-      position: relative;
-      z-index: 1;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
     }
 
-#bdf-root .action-menu {
+#bdf-root .action-chip-scroll::after {
+      content: "";
       position: absolute;
-      top: calc(100% + 4px);
+      top: 0;
       right: 0;
-      min-width: 220px;
-      max-height: 240px;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
-      display: none;
-      padding: 4px;
-      z-index: 20;
+      width: 24px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(248,250,252,0) 0%, #f8fafc 80%);
     }
 
-#bdf-root .action-menu.open {
-      display: grid;
-      gap: 2px;
+#bdf-root .action-header-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
     }
 
-#bdf-root .action-menu-item {
-      width: 100%;
-      text-align: left;
+#bdf-root .action-header-link {
+      border: 0;
       background: transparent;
-      color: var(--text);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 0.82rem;
+      padding: 0;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.2;
     }
 
-#bdf-root .action-menu-item:hover {
-      background: #f1f5f9;
+#bdf-root .action-header-link:hover {
+      color: #0f172a;
     }
 
 #bdf-root .predicted-action-btn {
@@ -1125,6 +1126,88 @@
   font-weight: 600;
 }
 
+#bdf-root .edit-stage-select-wrap {
+  position: relative;
+  display: none;
+}
+
+#bdf-root .edit-stage-select-btn {
+  width: 100%;
+  min-height: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#bdf-root .edit-stage-select-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+#bdf-root .edit-stage-select-caret {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+#bdf-root .edit-stage-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 28;
+  display: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+}
+
+#bdf-root .edit-stage-select-wrap.open .edit-stage-select-menu {
+  display: grid;
+}
+
+#bdf-root .edit-stage-option {
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+#bdf-root .edit-stage-option:hover {
+  background: #eef2f6;
+}
+
+#bdf-root .edit-stage-option.active {
+  background: #e8f0fe;
+  color: #1d4ed8;
+}
+
+#bdf-root .edit-stage-option-count {
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
 #bdf-root .edit-stage-layout {
   display: grid;
   grid-template-columns: minmax(150px, 200px) minmax(0, 1fr);
@@ -1175,6 +1258,20 @@
   background: #fff;
 }
 
+#bdf-root .is-narrow-stage-nav .edit-stage-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#bdf-root .is-narrow-stage-nav .edit-stage-tabs {
+  display: none;
+}
+
+#bdf-root .is-narrow-stage-nav .edit-stage-select-wrap {
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
 #bdf-root .edit-stage-meta {
   display: flex;
   align-items: center;
@@ -1219,6 +1316,25 @@
 #bdf-root .field-wrapper.search-result {
   border-left: 2px solid #93c5fd;
   padding-left: 10px;
+}
+
+#bdf-root #editSearchInput {
+  min-height: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+#bdf-root #editSearchInput::placeholder {
+  color: #94a3b8;
+}
+
+#bdf-root #editSearchInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
 }
 
 #bdf-root mark.edit-search-highlight {
@@ -1464,15 +1580,6 @@
         max-height: 85vh;
       }
 
-#bdf-root .action-bar {
-        align-items: flex-start;
-      }
-
-#bdf-root .action-main {
-        flex-wrap: wrap;
-        justify-content: flex-start;
-      }
-
 #bdf-root .field-row.is-amount-field .control-stack {
         max-width: min(100%, 248px);
       }
@@ -1656,15 +1763,15 @@
         <div id="actionBar" class="action-bar">
           <div class="action-meta">
             <span class="action-meta-title">Aksiyon</span>
-            <span class="action-meta-subtitle">Süreç adımını seçin</span>
           </div>
           <div class="action-main">
-            <div class="action-split" id="actionSplit">
-              <button id="actionTriggerBtn" type="button" class="action-trigger-btn">Aksiyon seç</button>
-              <button id="actionChevronBtn" type="button" class="action-chevron-btn" aria-label="Aksiyon menüsü">▾</button>
-              <div id="actionMenu" class="action-menu"></div>
+            <div class="action-chip-scroll" id="actionChipScroll">
+              <div class="action-chip-track" id="actionChipTrack"></div>
             </div>
-            <button id="toggleInlineEdit" type="button" class="ghost" style="display:none;">Show more</button>
+            <div class="action-header-links">
+              <button id="toggleInlineEdit" type="button" class="action-header-link" style="display:none;">Show more</button>
+              <button id="detailsLink" type="button" class="action-header-link">Detaylar</button>
+            </div>
             <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
             <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
           </div>
@@ -1673,8 +1780,15 @@
         <div id="editModeRoot" class="edit-mode-root">
           <div class="edit-mode-toolbar">
             <div class="edit-search-input-wrap">
-              <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
+              <input id="editSearchInput" class="field-input" type="text" placeholder="Ara: ad, id, header" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
+            </div>
+            <div id="editStageSelectWrap" class="edit-stage-select-wrap">
+              <button id="editStageSelectBtn" class="edit-stage-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="editStageSelectLabel">Tüm alanlar</span>
+                <span class="edit-stage-select-caret" aria-hidden="true">▾</span>
+              </button>
+              <div id="editStageSelectMenu" class="edit-stage-select-menu" role="listbox"></div>
             </div>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
@@ -2198,6 +2312,10 @@
     const editModeLoadingText = byId("editModeLoadingText");
     const editStageLayout = byId("editStageLayout");
     const editStageTabs = byId("editStageTabs");
+    const editStageSelectWrap = byId("editStageSelectWrap");
+    const editStageSelectBtn = byId("editStageSelectBtn");
+    const editStageSelectLabel = byId("editStageSelectLabel");
+    const editStageSelectMenu = byId("editStageSelectMenu");
     const editStageHeading = byId("editStageHeading");
     const editStageChip = byId("editStageChip");
     const editStageStatus = byId("editStageStatus");
@@ -2208,10 +2326,8 @@
     const formContainer = byId("formContainer");
     const formActions = byId("formActions");
     const actionBar = byId("actionBar");
-    const actionSplit = byId("actionSplit");
-    const actionTriggerBtn = byId("actionTriggerBtn");
-    const actionChevronBtn = byId("actionChevronBtn");
-    const actionMenu = byId("actionMenu");
+    const actionChipTrack = byId("actionChipTrack");
+    const detailsLink = byId("detailsLink");
     const predictedActionBtn = byId("predictedActionBtn");
     const toggleInlineEditBtn = byId("toggleInlineEdit");
     const actionEmptyMsg = byId("actionEmptyMsg");
@@ -2301,6 +2417,7 @@
     let editCachedPayloadRawSignature = "";
     let editCachedPayloadParsed = { stageGroups: null, allFields: null };
     let editStageRenderSeq = 0;
+    let isNarrowStageNav = false;
 
     const defaultSchema = {
       fields: [
@@ -2579,10 +2696,6 @@
       return typeof candidate === "string" ? candidate.trim() : "";
     }
 
-    function closeActionMenu() {
-      if (actionMenu) actionMenu.classList.remove("open");
-    }
-
     function canOpenInlineEditPanel() {
       const startSignal = readStartSignalValue();
       if (!startSignal) return false;
@@ -2667,20 +2780,27 @@
       evaluateEditingSignalTransition();
     }
 
+    function buildActionChipOptions() {
+      const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
+      const shouldShowCreateOption = !hasExistingBubbleData();
+      if (!hasOptions) return [];
+      return shouldShowCreateOption
+        ? [{ id: "", name: DEFAULT_CREATE_ACTION_LABEL, description: "Aksiyonsuz oluşturma" }, ...actionOptions]
+        : [...actionOptions];
+    }
+
     function updateActionBarUi() {
       const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
       syncDefaultActionLabelFromData();
       const safeSelectedName = String(selectedActionName || getDefaultActionLabel()).trim() || getDefaultActionLabel();
-      if (actionTriggerBtn) {
-        actionTriggerBtn.disabled = false;
-        actionTriggerBtn.textContent = safeSelectedName;
-      }
-      if (actionChevronBtn) {
-        actionChevronBtn.disabled = !hasOptions;
-        actionChevronBtn.style.display = hasOptions ? "inline-flex" : "none";
+      if (actionChipTrack) {
+        Array.from(actionChipTrack.querySelectorAll('.action-chip')).forEach((chip) => {
+          const chipName = String(chip.dataset.actionName || "").trim();
+          chip.classList.toggle('active', chipName === safeSelectedName);
+        });
       }
       if (actionEmptyMsg) {
-        actionEmptyMsg.style.display = "none";
+        actionEmptyMsg.style.display = hasOptions ? "none" : "inline-flex";
       }
       updateInlineEditToggleUi();
 
@@ -2720,23 +2840,14 @@
       selectedActionId = String(option.id || "").trim();
       selectedActionName = String(option.name || getDefaultActionLabel()).trim() || getDefaultActionLabel();
       updateActionBarUi();
-      closeActionMenu();
       triggerSelectedAction();
     }
 
     function renderActionOptions() {
-      if (!actionMenu) return;
-      actionMenu.innerHTML = "";
-      const hasOptions = Array.isArray(actionOptions) && actionOptions.length > 0;
-      const shouldShowCreateOption = !hasExistingBubbleData();
-      const optionsToRender = hasOptions
-        ? (shouldShowCreateOption
-          ? [{ id: "", name: DEFAULT_CREATE_ACTION_LABEL, description: "Aksiyonsuz oluşturma" }, ...actionOptions]
-          : [...actionOptions])
-        : [];
-
-      if (!hasOptions) {
-        closeActionMenu();
+      if (!actionChipTrack) return;
+      actionChipTrack.innerHTML = "";
+      const optionsToRender = buildActionChipOptions();
+      if (!optionsToRender.length) {
         selectedActionId = "";
         selectedActionName = getDefaultActionLabel();
         updateActionBarUi();
@@ -2744,18 +2855,17 @@
       }
 
       optionsToRender.forEach((option) => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "action-menu-item";
-        if (!option.id) {
-          item.textContent = `${option.name} (Aksiyonsuz oluşturma)`;
-        } else {
-          item.textContent = String(option.name || option.id || "Aksiyon");
-        }
-        item.addEventListener("click", () => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "action-chip";
+        const name = String(option.name || option.id || "Aksiyon");
+        chip.textContent = name;
+        chip.dataset.actionId = String(option.id || "");
+        chip.dataset.actionName = name;
+        chip.addEventListener("click", () => {
           selectActionAndTrigger(option);
         });
-        actionMenu.appendChild(item);
+        actionChipTrack.appendChild(chip);
       });
       updateActionBarUi();
     }
@@ -5848,6 +5958,20 @@ function renderSubmitOutputs(payload) {
       requestAnimationFrame(pump);
     }
 
+    function closeStageSelectMenu() {
+      if (!editStageSelectWrap) return;
+      editStageSelectWrap.classList.remove("open");
+      if (editStageSelectBtn) editStageSelectBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function updateStageNavMode() {
+      if (!rootElement || !formContainer) return;
+      const width = Number(formContainer.clientWidth || 0);
+      isNarrowStageNav = width > 0 && width < 450;
+      rootElement.classList.toggle("is-narrow-stage-nav", isNarrowStageNav);
+      if (!isNarrowStageNav) closeStageSelectMenu();
+    }
+
     function runEditModeFilterRender() {
       if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
       const rawTerm = String(editModeSearchTerm || "").trim();
@@ -5903,6 +6027,7 @@ function renderSubmitOutputs(payload) {
       if (editStageLayout) {
         editStageLayout.style.display = stageKeys.length ? "grid" : "none";
       }
+      updateStageNavMode();
 
       const wrappersByKey = new Map();
       Object.keys(state.fieldRefs || {}).forEach((fieldKey) => {
@@ -5919,8 +6044,12 @@ function renderSubmitOutputs(payload) {
       });
 
       if (editStageTabs) editStageTabs.innerHTML = "";
+      if (editStageSelectMenu) editStageSelectMenu.innerHTML = "";
       if (editStageHeading) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
+      }
+      if (editStageSelectLabel) {
+        editStageSelectLabel.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
       }
 
       if (editSearchEmpty) {
@@ -5935,18 +6064,32 @@ function renderSubmitOutputs(payload) {
       stageKeys.forEach((stageKey, visibleIndex) => {
         const stageMetaIndex = (editModeStageMeta || []).findIndex((stage) => stage.key === stageKey);
         const status = getProcessStageStatus(stageMetaIndex, activeProcessIndex);
+        const count = filteredCountByStage.get(stageKey) || 0;
+        const stageLabel = getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex);
+        const onSelect = () => {
+          editSelectedStage = stageKey;
+          closeStageSelectMenu();
+          runEditModeFilterRender();
+        };
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `edit-stage-tab ${status}`;
-        const count = filteredCountByStage.get(stageKey) || 0;
-        btn.textContent = `${getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex)} (${count})`;
+        btn.textContent = `${stageLabel} (${count})`;
         if (stageKey === editSelectedStage) btn.classList.add('active');
         if (stageKey === editProcessActiveStageKey) btn.dataset.activeProcess = "1";
-        btn.addEventListener('click', () => {
-          editSelectedStage = stageKey;
-          runEditModeFilterRender();
-        });
+        btn.addEventListener('click', onSelect);
         if (editStageTabs) editStageTabs.appendChild(btn);
+
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'edit-stage-option';
+        if (stageKey === editSelectedStage) option.classList.add('active');
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', stageKey === editSelectedStage ? 'true' : 'false');
+        option.innerHTML = `<span>${stageLabel}</span><span class="edit-stage-option-count">${count}</span>`;
+        option.addEventListener('click', onSelect);
+        if (editStageSelectMenu) editStageSelectMenu.appendChild(option);
       });
 
       const globallySortedResults = searchMode
@@ -7373,27 +7516,6 @@ function renderSubmitOutputs(payload) {
 
       initAutosaveStartWatcher();
 
-      if (actionChevronBtn) {
-        actionChevronBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          if (!actionOptions.length) return;
-          actionMenu.classList.toggle("open");
-        });
-      }
-
-      if (actionTriggerBtn) {
-        actionTriggerBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          if (!actionOptions.length) {
-            selectedActionId = "";
-            selectedActionName = getDefaultActionLabel();
-            triggerSelectedAction();
-            return;
-          }
-          triggerSelectedAction();
-        });
-      }
-
       if (toggleInlineEditBtn) {
         toggleInlineEditBtn.addEventListener("click", (event) => {
           event.preventDefault();
@@ -7411,12 +7533,40 @@ function renderSubmitOutputs(payload) {
         });
       }
 
+      if (detailsLink) {
+        detailsLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (!canOpenInlineEditPanel()) return;
+          setInlineEditPanelOpen(true);
+        });
+      }
+
+      if (editStageSelectBtn) {
+        editStageSelectBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (!isNarrowStageNav) return;
+          const isOpen = editStageSelectWrap?.classList.contains("open");
+          if (isOpen) closeStageSelectMenu();
+          else {
+            editStageSelectWrap?.classList.add("open");
+            editStageSelectBtn.setAttribute("aria-expanded", "true");
+          }
+        });
+      }
+
       document.addEventListener("click", (event) => {
-        if (!actionSplit || !actionMenu) return;
-        if (actionSplit.contains(event.target)) return;
-        closeActionMenu();
+        if (!editStageSelectWrap) return;
+        if (editStageSelectWrap.contains(event.target)) return;
+        closeStageSelectMenu();
       });
 
+      if (typeof ResizeObserver === "function" && formContainer) {
+        const observer = new ResizeObserver(() => {
+          updateStageNavMode();
+          if (isEditPanelOpen || IS_EDITING_MODE) runEditModeFilterRender();
+        });
+        observer.observe(formContainer);
+      }
 
       if (editSearchInput) {
         const applySearchTerm = (nextTerm) => {
