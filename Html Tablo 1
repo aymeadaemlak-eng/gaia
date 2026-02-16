@@ -173,6 +173,10 @@
   border-color: #fecaca;
 }
 
+#dynamic-table-wrapper .dt-hidden {
+  display: none !important;
+}
+
 #dynamic-table-wrapper .dt-column-menu {
   position: absolute;
   top: 0;
@@ -742,6 +746,7 @@
   const NUMERIC_HINTS = ['tutar', 'amount', 'toplam', 'ödem', 'bakiye'];
   const UI_ACTIONS_COL_ID = '__dt_actions__';
   const BLANK_VALUE_TOKEN = '__DT_BLANK__';
+  const COLUMN_WIDTH_MULTIPLIER = 1.25;
 
   function getUiActionsColumn() {
     return {
@@ -770,7 +775,7 @@
       sanitized.push({
         id,
         header: col?.header || col?.title || col?.label || id,
-        width: col?.columnWidth || col?.width || Math.min(Math.max((col?.header || id).length * 9 + 60, 140), 420),
+        width: Math.round((col?.columnWidth || col?.width || Math.min(Math.max((col?.header || id).length * 9 + 60, 140), 420)) * COLUMN_WIDTH_MULTIPLIER),
         readOnly: col?.readOnly !== false,
         type: (col?.type || 'text').toLowerCase(),
         sourceKeys: [id, col?.data, col?.field, col?.key, col?.header, col?.title, col?.label, col?.name].filter(Boolean)
@@ -1016,6 +1021,13 @@
     els.selectionText.textContent = count === 0 ? 'Öğe seçilmedi' : `${count} öğe seçili`;
   }
 
+
+  function updateDeleteButtonVisibility() {
+    if (!els.deleteButton) return;
+    const hasSelection = state.selection.size > 0;
+    els.deleteButton.classList.toggle('dt-hidden', !hasSelection);
+  }
+
   function handleSelection() {
     if (!state.hot) return;
     const ranges = state.hot.getSelectedRange();
@@ -1038,6 +1050,7 @@
     }
 
     updateSelectionText();
+    updateDeleteButtonVisibility();
     if (typeof window.bubble_fn_hasSelection === 'function') {
       window.bubble_fn_hasSelection(state.selection.size > 0);
     }
@@ -1058,6 +1071,7 @@
     ];
     if (appended) {
       updateSelectionText();
+      updateDeleteButtonVisibility();
       if (typeof window.bubble_fn_hasSelection === 'function') {
         window.bubble_fn_hasSelection(true);
       }
@@ -1290,6 +1304,7 @@
     state.selection.clear();
     state.selectionOrder = [];
     updateSelectionText();
+    updateDeleteButtonVisibility();
     publishSelectedUniqueIds();
   }
 
@@ -1411,6 +1426,7 @@
     state.selection.clear();
     state.selectionOrder = [];
     updateSelectionText();
+    updateDeleteButtonVisibility();
     publishSelectedUniqueIds();
     if (state.hot) {
       try { state.hot.deselectCell(); } catch (err) {}
@@ -2163,6 +2179,7 @@
   window.deleteSelected = deleteSelected;
 
   attachActionButtons();
+  updateDeleteButtonVisibility();
   syncButtonTitles();
   autoInitialize();
 })();
