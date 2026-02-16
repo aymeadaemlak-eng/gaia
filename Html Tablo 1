@@ -380,13 +380,20 @@
   margin-left: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   flex: 0 0 auto;
 }
 
+#dynamic-table-wrapper .dt-colheader-content--actions {
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 68px;
+  padding-right: 2px;
+}
+
 #dynamic-table-wrapper .dt-header-action-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -509,7 +516,7 @@
     return {
       id: UI_ACTIONS_COL_ID,
       header: '',
-      width: 56,
+      width: 74,
       readOnly: true,
       type: 'text',
       sourceKeys: [UI_ACTIONS_COL_ID],
@@ -997,7 +1004,7 @@
       colHeaders: index => {
         const col = visibleColumns[index];
         if (col?.__uiOnly) {
-          return '<span class="dt-colheader-content" style="justify-content:flex-end;"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field">···</button></span></span>';
+          return '<span class="dt-colheader-content dt-colheader-content--actions"><span class="dt-colheader-actions"><button class="dt-header-action-btn" data-header-action="add" type="button" aria-label="Add field">+</button><button class="dt-header-action-btn" data-header-action="manage" type="button" aria-label="Manage field">···</button></span></span>';
         }
         return renderColumnHeader(col);
       },
