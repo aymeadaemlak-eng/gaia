@@ -379,7 +379,9 @@
   padding-left: 2px;
   background: #fff;
   border-radius: 8px;
+  box-shadow: 0 0 0 1px #edf1f5;
   z-index: 95;
+  pointer-events: auto;
 }
 
 #dynamic-table-wrapper .dt-table-end-actions .dt-icon-btn {
@@ -934,23 +936,37 @@
   function positionTableEndActions() {
     if (!els.tableEndActions || !els.wrapper) return;
 
+    const wrapperRect = els.wrapper.getBoundingClientRect();
+    const fallbackRect = els.container?.getBoundingClientRect?.();
+    const maxLeft = Math.max(8, wrapperRect.width - 64);
+    const lastColIndex = Math.max(0, (state.columns?.length || 1) - 1);
+
     const selector = '.ht_clone_top thead tr:last-child th[data-col], .handsontable:not(.ht_clone_top):not(.ht_clone_left) thead tr:last-child th[data-col]';
-    const allHeaders = Array.from(els.wrapper.querySelectorAll(selector));
+    const allHeaders = Array.from(els.wrapper.querySelectorAll(selector))
+      .filter(th => th.offsetParent !== null);
 
-    const visibleHeaders = allHeaders
-      .filter(th => th.offsetParent !== null)
-      .sort((a, b) => a.getBoundingClientRect().right - b.getBoundingClientRect().right);
+    const exactLastColHeaders = allHeaders.filter(th => {
+      const raw = th.getAttribute('data-col');
+      const idx = raw === null ? NaN : parseInt(raw, 10);
+      return Number.isInteger(idx) && idx === lastColIndex;
+    });
 
-    const lastHeader = visibleHeaders[visibleHeaders.length - 1];
+    const chooseByRightMost = list => {
+      if (!list || list.length === 0) return null;
+      return list
+        .slice()
+        .sort((a, b) => a.getBoundingClientRect().right - b.getBoundingClientRect().right)
+        .pop();
+    };
+
+    const lastHeader = chooseByRightMost(exactLastColHeaders) || chooseByRightMost(allHeaders);
 
     if (!lastHeader) {
-      const fallbackRect = els.container?.getBoundingClientRect?.();
-      const wrapperRect = els.wrapper.getBoundingClientRect();
       if (!fallbackRect) {
         els.tableEndActions.style.display = 'none';
         return;
       }
-      const fallbackLeft = Math.max(8, Math.min((fallbackRect.right - wrapperRect.left) - 64, wrapperRect.width - 64));
+      const fallbackLeft = Math.max(8, Math.min((fallbackRect.right - wrapperRect.left) - 64, maxLeft));
       const fallbackTop = Math.max(6, fallbackRect.top - wrapperRect.top + 5);
       els.tableEndActions.style.display = 'inline-flex';
       els.tableEndActions.style.left = `${fallbackLeft}px`;
@@ -958,9 +974,8 @@
       return;
     }
 
-    const wrapperRect = els.wrapper.getBoundingClientRect();
     const rect = lastHeader.getBoundingClientRect();
-    const left = Math.max(8, Math.min(rect.right - wrapperRect.left + 4, wrapperRect.width - 64));
+    const left = Math.max(8, Math.min(rect.right - wrapperRect.left + 4, maxLeft));
     const top = Math.max(6, rect.top - wrapperRect.top + 5);
 
     els.tableEndActions.style.display = 'inline-flex';
@@ -1027,8 +1042,8 @@
       },
       afterRender: () => {
         positionTableEndActions();
-    setTimeout(positionTableEndActions, 0);
-    setTimeout(positionTableEndActions, 120);
+        setTimeout(positionTableEndActions, 0);
+        setTimeout(positionTableEndActions, 120);
       }
     };
 
@@ -1444,8 +1459,8 @@
     window.addEventListener('resize', () => {
       closeColumnMenu();
       positionTableEndActions();
-    setTimeout(positionTableEndActions, 0);
-    setTimeout(positionTableEndActions, 120);
+      setTimeout(positionTableEndActions, 0);
+      setTimeout(positionTableEndActions, 120);
     });
 
     const bindTableScroll = () => {
