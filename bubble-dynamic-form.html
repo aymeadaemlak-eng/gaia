@@ -1090,6 +1090,21 @@
   gap: 8px;
 }
 
+#bdf-root .edit-stage-select-wrap {
+  display: none;
+}
+
+#bdf-root .edit-stage-select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #d7deeb;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 600;
+  padding: 8px 10px;
+}
+
 #bdf-root .edit-search-input-wrap {
   position: relative;
 }
@@ -1477,6 +1492,72 @@
         max-width: min(100%, 248px);
       }
 
+#bdf-root .edit-stage-layout {
+        grid-template-columns: 1fr;
+      }
+
+#bdf-root .edit-stage-select-wrap {
+        display: block;
+      }
+
+#bdf-root .edit-stage-tabs {
+        display: none;
+      }
+
+    }
+
+    @media (max-width: 450px) {
+#bdf-root {
+        font-size: 13px;
+      }
+
+#bdf-root .page {
+        gap: 0;
+      }
+
+#bdf-root .card {
+        border-radius: 0;
+        padding: 10px 0;
+        border-left: 0;
+        border-right: 0;
+      }
+
+#bdf-root #formContainer {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+#bdf-root .edit-mode-root,
+#bdf-root .edit-stage-panel,
+#bdf-root .field-row {
+        font-size: 12.5px;
+      }
+
+#bdf-root .field-row {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+#bdf-root .field-label {
+        flex-basis: clamp(122px, 38vw, 152px);
+        max-width: clamp(122px, 38vw, 152px);
+      }
+
+#bdf-root .edit-stage-panel {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+#bdf-root .action-bar {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
     }
 
     @media (max-width: 360px) {
@@ -1672,6 +1753,9 @@
         <div id="summaryBox" class="summary-box" style="display:none;"></div>
         <div id="editModeRoot" class="edit-mode-root">
           <div class="edit-mode-toolbar">
+            <div class="edit-stage-select-wrap">
+              <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
+            </div>
             <div class="edit-search-input-wrap">
               <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
@@ -2198,6 +2282,7 @@
     const editModeLoadingText = byId("editModeLoadingText");
     const editStageLayout = byId("editStageLayout");
     const editStageTabs = byId("editStageTabs");
+    const editStageSelect = byId("editStageSelect");
     const editStageHeading = byId("editStageHeading");
     const editStageChip = byId("editStageChip");
     const editStageStatus = byId("editStageStatus");
@@ -5919,6 +6004,7 @@ function renderSubmitOutputs(payload) {
       });
 
       if (editStageTabs) editStageTabs.innerHTML = "";
+      if (editStageSelect) editStageSelect.innerHTML = "";
       if (editStageHeading) {
         editStageHeading.textContent = getStageDisplayLabel(stageLabelByKey, editSelectedStage, 0);
       }
@@ -5947,7 +6033,19 @@ function renderSubmitOutputs(payload) {
           runEditModeFilterRender();
         });
         if (editStageTabs) editStageTabs.appendChild(btn);
+
+        if (editStageSelect) {
+          const option = document.createElement('option');
+          option.value = stageKey;
+          option.textContent = `${getStageDisplayLabel(stageLabelByKey, stageKey, visibleIndex)} (${count})`;
+          option.selected = stageKey === editSelectedStage;
+          editStageSelect.appendChild(option);
+        }
       });
+
+      if (editStageSelect) {
+        editStageSelect.value = editSelectedStage;
+      }
 
       const globallySortedResults = searchMode
         ? [...fields]
@@ -7447,6 +7545,15 @@ function renderSubmitOutputs(payload) {
           editModeSearchTerm = "";
           runEditModeFilterRender();
           editSearchInput.focus();
+        });
+      }
+
+      if (editStageSelect) {
+        editStageSelect.addEventListener("change", (event) => {
+          const nextStage = String(event?.target?.value || "").trim();
+          if (!nextStage) return;
+          editSelectedStage = nextStage;
+          runEditModeFilterRender();
         });
       }
 
