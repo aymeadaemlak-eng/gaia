@@ -370,21 +370,22 @@
 
 #dynamic-table-wrapper .dt-table-end-actions {
   position: absolute;
-  top: 2px;
-  right: 8px;
-  height: 38px;
+  top: 8px;
+  left: 8px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding-left: 8px;
-  background: linear-gradient(to right, rgba(255,255,255,0), #fff 18px, #fff 100%);
-  z-index: 90;
+  gap: 2px;
+  padding-left: 2px;
+  background: #fff;
+  border-radius: 8px;
+  z-index: 95;
 }
 
 #dynamic-table-wrapper .dt-table-end-actions .dt-icon-btn {
-  width: 30px;
-  height: 30px;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
 }
 
 #dynamic-table-wrapper .dt-header-label {
@@ -467,7 +468,8 @@
     selection: new Set(),
     selectionOrder: [],
     isSearchOpen: false,
-    activeHeaderColumn: null
+    activeHeaderColumn: null,
+    columnMenuOpenedAt: 0
   };
 
   const els = {
@@ -483,6 +485,7 @@
     addFieldButton: document.getElementById('dt-btn-add-field'),
     manageFieldButton: document.getElementById('dt-btn-manage-field'),
     newButton: document.getElementById('dt-btn-new'),
+    tableEndActions: document.getElementById('dt-table-end-actions'),
     columnMenu: document.getElementById('dt-column-menu'),
     columnMenuTitle: document.getElementById('dt-column-menu-title'),
     columnMenuAddButton: document.getElementById('dt-column-menu-add'),
@@ -847,41 +850,70 @@
       .replace(/'/g, '&#39;');
   }
 
-  function getColumnTypeIcon(type) {
-    const t = String(type || 'text').toLocaleLowerCase('tr-TR');
-    const iconMap = {
-      text: 'Aa',
-      long_text: '≡',
-      number: '123',
-      numeric: '123',
-      date: '🗓',
-      datetime: '🕒',
-      time: '🕒',
-      phone: '📞',
-      tel: '📞',
-      email: '✉',
-      url: '🔗',
-      link: '🔗',
-      checkbox: '☑',
-      boolean: '☑',
-      file: '📎',
-      image: '🖼',
-      currency: '₺',
-      select: '▤',
-      option: '▤',
-      status: '◉',
-      relation: '↔',
-      formula: '∑',
-      user: '👤',
-      person: '👤'
-    };
-    return iconMap[t] || 'Aa';
+  const typeMetaMap = {
+    text: { iconKey: 'text', label: 'Text' },
+    textarea: { iconKey: 'text', label: 'Textarea' },
+    email: { iconKey: 'text', label: 'Email' },
+    phone: { iconKey: 'text', label: 'Phone' },
+    url: { iconKey: 'text', label: 'URL' },
+    integer: { iconKey: 'hash', label: 'Integer' },
+    number: { iconKey: 'hash', label: 'Number' },
+    decimal: { iconKey: 'hash', label: 'Decimal' },
+    currency: { iconKey: 'hash', label: 'Currency' },
+    percent: { iconKey: 'hash', label: 'Percent' },
+    boolean: { iconKey: 'check', label: 'Boolean' },
+    dropdown: { iconKey: 'chevron', label: 'Dropdown' },
+    date: { iconKey: 'calendar', label: 'Date' },
+    time: { iconKey: 'clock', label: 'Time' },
+    datetime: { iconKey: 'calendar', label: 'Datetime' },
+    file: { iconKey: 'paperclip', label: 'File' },
+    image: { iconKey: 'image', label: 'Image' },
+    multifile: { iconKey: 'paperclip', label: 'Multi file' }
+  };
+
+  const iconKeyGlyphMap = {
+    text: 'Aa',
+    hash: '#',
+    check: '✓',
+    chevron: '▾',
+    calendar: '🗓',
+    clock: '🕒',
+    paperclip: '📎',
+    image: '🖼'
+  };
+
+  function normalizeColumnType(type) {
+    const raw = String(type || 'text').trim().toLocaleLowerCase('tr-TR');
+    if (!raw) return 'text';
+
+    const normalized = raw
+      .replace(/\s+/g, '_')
+      .replace(/[()]/g, '')
+      .replace(/&/g, '_')
+      .replace(/\./g, '_')
+      .replace(/-/g, '_');
+
+    if (normalized === 'reference') return 'text';
+    if (normalized === 'sys_cf' || normalized === 'sys' || normalized === 'action_cf' || normalized === 'action') return 'text';
+    if (normalized === 'text_long' || normalized === 'multiline_text') return 'textarea';
+    if (normalized === 'e_mail') return 'email';
+    if (normalized === 'checkbox') return 'boolean';
+    if (normalized === 'image_pdf' || normalized === 'imageandpdf' || normalized === 'imagepdf') return 'image';
+
+    return typeMetaMap[normalized] ? normalized : 'text';
+  }
+
+  function getColumnTypeMeta(type) {
+    const normalized = normalizeColumnType(type);
+    return typeMetaMap[normalized] || typeMetaMap.text;
   }
 
   function renderColumnHeader(column) {
-    const icon = getColumnTypeIcon(column?.type);
+    const meta = getColumnTypeMeta(column?.type);
+    const icon = iconKeyGlyphMap[meta.iconKey] || iconKeyGlyphMap.text;
     const title = escapeHtml(column?.header || 'Field');
-    return `<span class="dt-header-label"><span class="dt-type-icon" aria-hidden="true">${icon}</span><span class="dt-header-text">${title}</span></span>`;
+    const typeLabel = escapeHtml(meta?.label || 'Text');
+    return `<span class="dt-header-label"><span class="dt-type-icon" aria-hidden="true" title="${typeLabel}">${icon}</span><span class="dt-header-text">${title}</span></span>`;
   }
 
   function getAdaptiveTableHeight() {
@@ -897,6 +929,28 @@
     const fallbackHeight = wrapperHeight - topHeight - 14;
 
     return Math.max(260, fallbackHeight || 320);
+  }
+
+  function positionTableEndActions() {
+    if (!els.tableEndActions || !els.wrapper) return;
+
+    const topHeaders = els.wrapper.querySelectorAll('.ht_clone_top thead tr:last-child th[data-col]');
+    const candidates = Array.from(topHeaders).filter(th => th.offsetParent !== null);
+    const lastHeader = candidates[candidates.length - 1];
+
+    if (!lastHeader) {
+      els.tableEndActions.style.display = 'none';
+      return;
+    }
+
+    const wrapperRect = els.wrapper.getBoundingClientRect();
+    const rect = lastHeader.getBoundingClientRect();
+    const left = Math.max(8, rect.right - wrapperRect.left + 4);
+    const top = Math.max(6, rect.top - wrapperRect.top + 5);
+
+    els.tableEndActions.style.display = 'inline-flex';
+    els.tableEndActions.style.left = `${left}px`;
+    els.tableEndActions.style.top = `${top}px`;
   }
 
   function mountHandsontable() {
@@ -966,6 +1020,7 @@
 
     updateFooter();
     attachDoubleClickListener();
+    positionTableEndActions();
   }
 
   function loadDisplayRows(rows) {
@@ -1203,6 +1258,7 @@
     if (!els.columnMenu || !els.wrapper || !Number.isInteger(columnIndex) || columnIndex < 0) return;
 
     state.activeHeaderColumn = columnIndex;
+    state.columnMenuOpenedAt = Date.now();
 
     if (els.columnMenuTitle) {
       const safeTitle = headerLabel && String(headerLabel).trim() ? String(headerLabel) : `Field ${columnIndex + 1}`;
@@ -1354,10 +1410,31 @@
     document.addEventListener('click', event => {
       if (!els.columnMenu?.classList.contains('is-open')) return;
       if (event.target.closest('#dt-column-menu')) return;
+      if (Date.now() - (state.columnMenuOpenedAt || 0) < 220) return;
       closeColumnMenu();
     });
 
-    window.addEventListener('resize', closeColumnMenu);
+    if (els.columnMenu) {
+      els.columnMenu.addEventListener('mousedown', event => event.stopPropagation());
+      els.columnMenu.addEventListener('click', event => event.stopPropagation());
+    }
+
+    window.addEventListener('resize', () => {
+      closeColumnMenu();
+      positionTableEndActions();
+    });
+
+    const bindTableScroll = () => {
+      const holders = els.wrapper ? els.wrapper.querySelectorAll('.wtHolder') : [];
+      holders.forEach(holder => {
+        if (holder.dataset.dtEndActionsBound === 'true') return;
+        holder.addEventListener('scroll', positionTableEndActions, { passive: true });
+        holder.dataset.dtEndActionsBound = 'true';
+      });
+    };
+
+    bindTableScroll();
+    setTimeout(bindTableScroll, 0);
 
   }
 
