@@ -648,7 +648,7 @@
         </select>
         <input id="dt-filter-condition-value" class="dt-filter-search" type="text" placeholder="Value" autocomplete="off" />
 
-        <div class="dt-filter-operator-row">
+        <div id="dt-filter-operator-row" class="dt-filter-operator-row">
           <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-and" value="and" checked />And</label>
           <label class="dt-filter-operator"><input type="radio" name="dt-filter-operator" id="dt-filter-op-or" value="or" />Or</label>
         </div>
@@ -728,6 +728,7 @@
     filterPanel: document.getElementById('dt-filter-panel'),
     filterConditionSelect: document.getElementById('dt-filter-condition'),
     filterConditionValueInput: document.getElementById('dt-filter-condition-value'),
+    filterOperatorRow: document.getElementById('dt-filter-operator-row'),
     filterOperatorAnd: document.getElementById('dt-filter-op-and'),
     filterOperatorOr: document.getElementById('dt-filter-op-or'),
     filterConditionSelect2: document.getElementById('dt-filter-condition-2'),
@@ -1657,6 +1658,45 @@
     }).join('');
   }
 
+  function conditionNeedsValue(condition) {
+    return condition !== 'none' && condition !== 'empty' && condition !== 'not_empty';
+  }
+
+  function syncFilterPanelVisibility() {
+    if (!state.filterDraft) return;
+
+    const hasPrimaryCondition = state.filterDraft.condition !== 'none';
+    const showPrimaryValue = conditionNeedsValue(state.filterDraft.condition);
+    const showSecondarySelect = hasPrimaryCondition;
+    const showSecondaryValue = hasPrimaryCondition && conditionNeedsValue(state.filterDraft.condition2 || 'none');
+
+    if (els.filterConditionValueInput) {
+      els.filterConditionValueInput.style.display = showPrimaryValue ? '' : 'none';
+    }
+
+    if (els.filterOperatorRow) {
+      els.filterOperatorRow.style.display = showSecondarySelect ? 'flex' : 'none';
+    }
+
+    if (els.filterConditionSelect2) {
+      els.filterConditionSelect2.style.display = showSecondarySelect ? '' : 'none';
+    }
+
+    if (els.filterConditionValueInput2) {
+      els.filterConditionValueInput2.style.display = showSecondaryValue ? '' : 'none';
+    }
+
+    if (!hasPrimaryCondition) {
+      state.filterDraft.operator = 'and';
+      state.filterDraft.condition2 = 'none';
+      state.filterDraft.valueTerm2 = '';
+      if (els.filterOperatorAnd) els.filterOperatorAnd.checked = true;
+      if (els.filterOperatorOr) els.filterOperatorOr.checked = false;
+      if (els.filterConditionSelect2) els.filterConditionSelect2.value = 'none';
+      if (els.filterConditionValueInput2) els.filterConditionValueInput2.value = '';
+    }
+  }
+
   function openFilterPanel(columnIndex) {
     if (!Number.isInteger(columnIndex) || columnIndex < 0) return;
     const existing = state.filterConfigs[columnIndex] || { condition: 'none', condition2: 'none', operator: 'and', values: null };
@@ -1678,7 +1718,7 @@
       els.filterConditionSelect.value = state.filterDraft.condition;
     }
     if (els.filterConditionValueInput) {
-      const disabled = state.filterDraft.condition === 'none' || state.filterDraft.condition === 'empty' || state.filterDraft.condition === 'not_empty';
+      const disabled = !conditionNeedsValue(state.filterDraft.condition);
       els.filterConditionValueInput.disabled = disabled;
       els.filterConditionValueInput.value = state.filterDraft.valueTerm || '';
     }
@@ -1692,13 +1732,14 @@
       els.filterConditionSelect2.value = state.filterDraft.condition2 || 'none';
     }
     if (els.filterConditionValueInput2) {
-      const disabled2 = state.filterDraft.condition2 === 'none' || state.filterDraft.condition2 === 'empty' || state.filterDraft.condition2 === 'not_empty';
+      const disabled2 = !conditionNeedsValue(state.filterDraft.condition2 || 'none');
       els.filterConditionValueInput2.disabled = disabled2;
       els.filterConditionValueInput2.value = state.filterDraft.valueTerm2 || '';
     }
     if (els.filterSearchInput) {
       els.filterSearchInput.value = '';
     }
+    syncFilterPanelVisibility();
     renderFilterValueList();
     hideSortPanel();
     positionSubmenu(els.filterPanel, els.columnMenuFilterButton);
@@ -1896,10 +1937,13 @@
       els.filterConditionSelect.addEventListener('change', event => {
         if (!state.filterDraft) return;
         state.filterDraft.condition = event.target.value || 'none';
-        if (els.filterConditionValueInput) {
-          const disabled = state.filterDraft.condition === 'none' || state.filterDraft.condition === 'empty' || state.filterDraft.condition === 'not_empty';
-          els.filterConditionValueInput.disabled = disabled;
+        if (!conditionNeedsValue(state.filterDraft.condition)) {
+          state.filterDraft.valueTerm = '';
+          if (els.filterConditionValueInput) {
+            els.filterConditionValueInput.value = '';
+          }
         }
+        syncFilterPanelVisibility();
       });
     }
 
@@ -1914,10 +1958,13 @@
       els.filterConditionSelect2.addEventListener('change', event => {
         if (!state.filterDraft) return;
         state.filterDraft.condition2 = event.target.value || 'none';
-        if (els.filterConditionValueInput2) {
-          const disabled = state.filterDraft.condition2 === 'none' || state.filterDraft.condition2 === 'empty' || state.filterDraft.condition2 === 'not_empty';
-          els.filterConditionValueInput2.disabled = disabled;
+        if (!conditionNeedsValue(state.filterDraft.condition2 || 'none')) {
+          state.filterDraft.valueTerm2 = '';
+          if (els.filterConditionValueInput2) {
+            els.filterConditionValueInput2.value = '';
+          }
         }
+        syncFilterPanelVisibility();
       });
     }
 
