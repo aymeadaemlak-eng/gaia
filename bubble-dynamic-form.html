@@ -359,7 +359,7 @@
 
     #bdf-root .label-text {
       font-weight: 500;
-      font-size: 13px;
+      font-size: 13.5px;
       color: #6b7280;
       line-height: 16px;
       margin: 0;
@@ -516,10 +516,10 @@
       min-height: var(--field-control-height);
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 16.5px;
       font-weight: 500;
       background: transparent;
-      color: #111827;
+      color: #334155;
       outline: none;
       line-height: 20px;
       margin: 0;
@@ -553,10 +553,10 @@
       padding: 8px 10px;
       line-height: 1.45;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 16.5px;
       font-weight: 500;
       background: transparent;
-      color: #111827;
+      color: #334155;
       outline: none;
       margin: 0;
       box-sizing: border-box;
@@ -1677,7 +1677,7 @@
       }
 
 #bdf-root .label-text {
-        font-size: 11.5px;
+        font-size: 12px;
         line-height: 14px;
       }
 
@@ -3276,10 +3276,12 @@ function renderSubmitOutputs(payload) {
       header.className = "picker-header";
       const prevBtn = document.createElement("button");
       prevBtn.type = "button";
+      prevBtn.tabIndex = -1;
       prevBtn.className = "picker-nav";
       prevBtn.textContent = "‹";
       const nextBtn = document.createElement("button");
       nextBtn.type = "button";
+      nextBtn.tabIndex = -1;
       nextBtn.className = "picker-nav";
       nextBtn.textContent = "›";
       const title = document.createElement("span");
@@ -3292,10 +3294,12 @@ function renderSubmitOutputs(payload) {
       actions.className = "picker-actions";
       const todayBtn = document.createElement("button");
       todayBtn.type = "button";
+      todayBtn.tabIndex = -1;
       todayBtn.className = "ghost";
       todayBtn.textContent = quickActionLabel;
       const closeBtn = document.createElement("button");
       closeBtn.type = "button";
+      closeBtn.tabIndex = -1;
       closeBtn.className = "ghost";
       closeBtn.textContent = "Kapat";
       actions.append(todayBtn, closeBtn);
@@ -3339,6 +3343,7 @@ function renderSubmitOutputs(payload) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "picker-day";
+          button.tabIndex = -1;
           button.textContent = String(day);
           if (dateValue === todayValue) button.classList.add("is-today");
           if (dateValue === selectedDate) button.classList.add("is-selected");
@@ -6821,14 +6826,7 @@ function renderSubmitOutputs(payload) {
             onClose: () => {}
           });
 
-          const iconBtn = document.createElement("button");
-          iconBtn.type = "button";
-          iconBtn.className = "field-icon-button";
-          iconBtn.setAttribute("aria-label", "Takvim aç");
-          iconBtn.textContent = "📅";
-
-          control.classList.add("has-icon");
-          control.append(dateInput, iconBtn, calendar.element);
+          control.append(dateInput, calendar.element);
 
           const handleOutside = (event) => {
             if (!control.contains(event.target)) {
@@ -6846,14 +6844,6 @@ function renderSubmitOutputs(payload) {
             document.removeEventListener("click", handleOutside);
           };
 
-          iconBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (calendar.element.classList.contains("open")) {
-              closePopover();
-            } else {
-              openPopover();
-            }
-          });
 
           const syncDate = (raw) => {
             if (!raw) {
@@ -6894,6 +6884,17 @@ function renderSubmitOutputs(payload) {
           dateInput.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             syncDate(event.target.value);
+          });
+          dateInput.addEventListener("focus", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          dateInput.addEventListener("pointerdown", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          dateInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === "Tab") {
+              closePopover();
+            }
           });
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
@@ -6964,8 +6965,10 @@ function renderSubmitOutputs(payload) {
           timeRow.className = "picker-time";
           const hourSelect = document.createElement("select");
           hourSelect.className = "field-input";
+          hourSelect.tabIndex = -1;
           const minuteSelect = document.createElement("select");
           minuteSelect.className = "field-input";
+          minuteSelect.tabIndex = -1;
 
           const buildTimeOptions = (select, max) => {
             select.innerHTML = "";
@@ -7007,14 +7010,7 @@ function renderSubmitOutputs(payload) {
           timeRow.append(hourSelect, minuteSelect);
           calendar.element.insertBefore(timeRow, calendar.element.lastElementChild);
 
-          const iconBtn = document.createElement("button");
-          iconBtn.type = "button";
-          iconBtn.className = "field-icon-button";
-          iconBtn.setAttribute("aria-label", "Takvim ve saat seç");
-          iconBtn.textContent = "🗓️";
-
-          control.classList.add("has-icon");
-          control.append(datetimeInput, iconBtn, calendar.element);
+          control.append(datetimeInput, calendar.element);
 
           const handleOutside = (event) => {
             if (!control.contains(event.target)) {
@@ -7032,14 +7028,6 @@ function renderSubmitOutputs(payload) {
             document.removeEventListener("click", handleOutside);
           };
 
-          iconBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (calendar.element.classList.contains("open")) {
-              closePopover();
-            } else {
-              openPopover();
-            }
-          });
 
           const syncDatetime = (raw) => {
             if (!raw) {
@@ -7079,6 +7067,17 @@ function renderSubmitOutputs(payload) {
           datetimeInput.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             syncDatetime(event.target.value);
+          });
+          datetimeInput.addEventListener("focus", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          datetimeInput.addEventListener("pointerdown", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          datetimeInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === "Tab") {
+              closePopover();
+            }
           });
         } else if (field.type === "time") {
           const timeInput = document.createElement("input");
