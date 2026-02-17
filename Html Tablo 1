@@ -747,6 +747,66 @@
   const UI_ACTIONS_COL_ID = '__dt_actions__';
   const BLANK_VALUE_TOKEN = '__DT_BLANK__';
   const COLUMN_WIDTH_MULTIPLIER = 1.25;
+  const HANDSONTABLE_SCRIPT_SOURCES = [
+    'https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js',
+    'https://unpkg.com/handsontable@latest/dist/handsontable.full.min.js'
+  ];
+
+  let handsontableReadyPromise = null;
+
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-dt-handsontable-src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded === 'true') {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error(`Script load failed: ${src}`)), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.defer = true;
+      script.dataset.dtHandsontableSrc = src;
+      script.addEventListener('load', () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error(`Script load failed: ${src}`)), { once: true });
+      document.head.appendChild(script);
+    });
+  }
+
+  function ensureHandsontableReady() {
+    if (typeof window.Handsontable === 'function') {
+      return Promise.resolve();
+    }
+    if (handsontableReadyPromise) {
+      return handsontableReadyPromise;
+    }
+
+    handsontableReadyPromise = (async () => {
+      let lastError = null;
+      for (const src of HANDSONTABLE_SCRIPT_SOURCES) {
+        try {
+          await loadScriptOnce(src);
+          if (typeof window.Handsontable === 'function') {
+            return;
+          }
+        } catch (error) {
+          lastError = error;
+          console.warn('[DynamicTable] Handsontable yüklenemedi, alternatif kaynak deneniyor.', { src, error });
+        }
+      }
+      throw lastError || new Error('Handsontable yüklenemedi.');
+    })();
+
+    return handsontableReadyPromise;
+  }
 
   function getUiActionsColumn() {
     return {
@@ -1205,9 +1265,16 @@
   }
 
 
-  function mountHandsontable() {
+  async function mountHandsontable() {
     if (!els.container) {
       console.warn('Handsontable container missing');
+      return;
+    }
+
+    try {
+      await ensureHandsontableReady();
+    } catch (error) {
+      console.error('[DynamicTable] Handsontable başlatılamadı.', error);
       return;
     }
 
@@ -1299,7 +1366,7 @@
 
   function loadDisplayRows(rows) {
     state.displayRows = rows;
-    mountHandsontable();
+    void mountHandsontable();
     updateFooter();
     state.selection.clear();
     state.selectionOrder = [];
@@ -2181,6 +2248,7 @@
   attachActionButtons();
   updateDeleteButtonVisibility();
   syncButtonTitles();
+  void ensureHandsontableReady();
   autoInitialize();
 })();
 </script>
