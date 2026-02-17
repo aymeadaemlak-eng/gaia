@@ -144,6 +144,31 @@
       box-sizing: border-box;
     }
 
+
+    /* Firefox */
+    #bdf-root * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100,116,139,.55) transparent;
+    }
+
+    /* Chrome / Edge / Safari */
+    #bdf-root *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    #bdf-root *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #bdf-root *::-webkit-scrollbar-thumb {
+      background-color: rgba(100,116,139,.45);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    #bdf-root *::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(100,116,139,.70);
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -279,10 +304,11 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
-      height: 680px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-right: 4px;
+      height: auto;
+      max-height: none;
+      overflow-y: visible;
+      overflow-x: visible;
+      padding-right: 0;
       margin-inline: auto;
     }
 
@@ -1033,6 +1059,25 @@
       gap: 8px;
       flex: 1;
       min-width: 0;
+    }
+
+#bdf-root .more-actions {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+#bdf-root .more-actions > .ghost {
+      min-width: 40px;
+      padding: 10px 12px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+#bdf-root .more-actions .action-menu {
+      right: 0;
+      left: auto;
+      min-width: 170px;
     }
 
 #bdf-root .action-split {
@@ -1811,6 +1856,13 @@
               <div id="actionMenu" class="action-menu"></div>
             </div>
             <button id="toggleInlineEdit" type="button" class="ghost" style="display:none;">Show more</button>
+            <div class="more-actions" id="moreActions" style="display:none;">
+              <button id="moreActionsBtn" type="button" class="ghost" aria-label="Diğer işlemler">⋯</button>
+              <div id="moreActionsMenu" class="action-menu">
+                <button id="addFieldBtn" type="button" class="action-menu-item">Add field</button>
+                <button id="manageFieldsBtn" type="button" class="action-menu-item">Manage fields</button>
+              </div>
+            </div>
             <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
             <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
           </div>
@@ -2367,6 +2419,11 @@
     const actionMenu = byId("actionMenu");
     const predictedActionBtn = byId("predictedActionBtn");
     const toggleInlineEditBtn = byId("toggleInlineEdit");
+    const moreActions = byId("moreActions");
+    const moreActionsBtn = byId("moreActionsBtn");
+    const moreActionsMenu = byId("moreActionsMenu");
+    const addFieldBtn = byId("addFieldBtn");
+    const manageFieldsBtn = byId("manageFieldsBtn");
     const actionEmptyMsg = byId("actionEmptyMsg");
     const consoleEl = byId("eventConsole");
     const submitOutputsEl = byId("submitOutputs");
@@ -2826,6 +2883,9 @@
       toggleInlineEditBtn.style.display = shouldShow ? "inline-flex" : "none";
       toggleInlineEditBtn.disabled = !canOpen && !isEditPanelOpen;
       toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
+      if (moreActions) {
+        moreActions.style.display = shouldShow ? "inline-flex" : "none";
+      }
     }
 
     function setInlineEditPanelOpen(nextOpen) {
@@ -4908,6 +4968,29 @@ function renderSubmitOutputs(payload) {
       );
     }
 
+    function getBubbleFnBySuffix(suffix) {
+      if (!suffix) return null;
+      const fnName = `bubble_fn_${suffix}`;
+      return (
+        (typeof window[fnName] === "function" && window[fnName]) ||
+        (window.parent && typeof window.parent[fnName] === "function" && window.parent[fnName]) ||
+        (window.top && typeof window.top[fnName] === "function" && window.top[fnName])
+      );
+    }
+
+    function triggerBubbleFnBySuffix(suffix) {
+      const fn = getBubbleFnBySuffix(suffix);
+      if (!fn) {
+        console.warn(`bubble_fn_${suffix} bulunamadı (window/parent/top)`);
+        return;
+      }
+      try {
+        fn();
+      } catch (error) {
+        console.error(`bubble_fn_${suffix} çalıştırılamadı`, error);
+      }
+    }
+
     function computeDirtyState() {
       if (!state.config) return false;
       return (
@@ -6268,7 +6351,7 @@ function renderSubmitOutputs(payload) {
       summaryBox.style.display = "none";
 
       const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
-      if (actionBar) actionBar.style.display = isEditUiActive ? "none" : "";
+      if (actionBar) actionBar.style.display = IS_EDITING_MODE ? "none" : "";
       if (formEl) formEl.style.display = isEditUiActive ? "none" : "grid";
 
       let previousGroup = null;
@@ -6286,6 +6369,7 @@ function renderSubmitOutputs(payload) {
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
         const isFileField = ["file", "multifile", "image"].includes(normalizedType);
         const isMultilineField = ["textarea", "json"].includes(normalizedType);
+        const isMultiDropdownField = normalizedType === "dropdown" && field.allowMultiple === true;
         const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
         if (currentGroup === "date" && previousGroup === "amount") {
           wrapper.classList.add("group-break-date");
@@ -6297,7 +6381,7 @@ function renderSubmitOutputs(payload) {
         if (isAmountField) row.classList.add("is-amount-field");
         if (isDateField) row.classList.add("is-date-field");
         if (isFileField) row.classList.add("is-file-field");
-        if (isMultilineField) row.classList.add("is-multiline-field");
+        if (isMultilineField || isMultiDropdownField) row.classList.add("is-multiline-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
@@ -7649,6 +7733,31 @@ function renderSubmitOutputs(payload) {
         });
       }
 
+      if (moreActionsBtn) {
+        moreActionsBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!moreActionsMenu) return;
+          moreActionsMenu.classList.toggle("open");
+        });
+      }
+
+      if (addFieldBtn) {
+        addFieldBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          triggerBubbleFnBySuffix("add_field");
+          if (moreActionsMenu) moreActionsMenu.classList.remove("open");
+        });
+      }
+
+      if (manageFieldsBtn) {
+        manageFieldsBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          triggerBubbleFnBySuffix("manage_field");
+          if (moreActionsMenu) moreActionsMenu.classList.remove("open");
+        });
+      }
+
       if (predictedActionBtn) {
         predictedActionBtn.addEventListener("click", (event) => {
           event.preventDefault();
@@ -7660,9 +7769,12 @@ function renderSubmitOutputs(payload) {
       }
 
       document.addEventListener("click", (event) => {
-        if (!actionSplit || !actionMenu) return;
-        if (actionSplit.contains(event.target)) return;
-        closeActionMenu();
+        if (actionSplit && actionMenu && !actionSplit.contains(event.target)) {
+          closeActionMenu();
+        }
+        if (moreActions && moreActionsMenu && !moreActions.contains(event.target)) {
+          moreActionsMenu.classList.remove("open");
+        }
       });
 
 
