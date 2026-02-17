@@ -2045,6 +2045,14 @@
       font-family: inherit;
     }
 
+    @supports (-webkit-touch-callout: none) {
+      .modal-form input,
+      .modal-form select,
+      .modal-form textarea {
+        font-size: 16px;
+      }
+    }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
