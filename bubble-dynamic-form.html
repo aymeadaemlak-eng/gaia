@@ -135,7 +135,7 @@
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
       --form-container-max-width: 464px;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--text);
     }
 
@@ -490,7 +490,7 @@
       min-height: var(--field-control-height);
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       background: transparent;
       color: #111827;
@@ -527,7 +527,7 @@
       padding: 8px 10px;
       line-height: 1.45;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
       background: transparent;
       color: #111827;
@@ -994,6 +994,36 @@
       background: #f8fafc;
       box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
       margin-bottom: 12px;
+    }
+
+#bdf-root #formContainer {
+      position: relative;
+    }
+
+#bdf-root .form-refresh-loading {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(2px);
+      z-index: 30;
+      padding: 16px;
+      text-align: center;
+    }
+
+#bdf-root .form-refresh-loading.open {
+      display: flex;
+    }
+
+#bdf-root .form-refresh-loading p {
+      margin: 0;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 600;
     }
 
 #bdf-root .action-main {
@@ -1508,8 +1538,11 @@
       }
 
 #bdf-root #formContainer {
-        height: 680px;
-        max-height: 85vh;
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+        -webkit-overflow-scrolling: touch;
       }
 
 #bdf-root .action-bar {
@@ -1766,6 +1799,10 @@
 
     <section class="card">
       <div id="formContainer">
+        <div id="formRefreshLoading" class="form-refresh-loading" aria-live="polite" aria-hidden="true">
+          <span class="edit-mode-spinner" aria-hidden="true"></span>
+          <p>İşlem kaydediliyor, güncel veriler bekleniyor…</p>
+        </div>
         <div id="actionBar" class="action-bar">
           <div class="action-main">
             <div class="action-split" id="actionSplit">
@@ -2018,6 +2055,8 @@
     const AUTOSAVE_DEBOUNCE_MS = 2000;
     let lastObservedUniqueId = "";
     let hasPendingUniqueIdSubmit = false;
+    let isWaitingForServerRefresh = false;
+    let submitRefreshSignature = "";
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
@@ -2317,6 +2356,7 @@
     const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
+    const formRefreshLoading = byId("formRefreshLoading");
     const summaryBox = byId("summaryBox");
     const formContainer = byId("formContainer");
     const formActions = byId("formActions");
@@ -2696,6 +2736,43 @@
       if (actionMenu) actionMenu.classList.remove("open");
     }
 
+    function openActionMenu() {
+      if (!actionMenu || !Array.isArray(actionOptions) || !actionOptions.length) return;
+      actionMenu.classList.add("open");
+    }
+
+    function requiresExplicitActionSelection() {
+      return hasExistingBubbleData() && Array.isArray(actionOptions) && actionOptions.length > 0;
+    }
+
+    function isActionSelectionValid() {
+      if (!requiresExplicitActionSelection()) return true;
+      return Boolean(String(selectedActionId || "").trim());
+    }
+
+    function setFormRefreshLoading(active, message = "") {
+      const nextActive = Boolean(active);
+      isWaitingForServerRefresh = nextActive;
+      if (formRefreshLoading) {
+        formRefreshLoading.classList.toggle("open", nextActive);
+        formRefreshLoading.setAttribute("aria-hidden", nextActive ? "false" : "true");
+        const textNode = formRefreshLoading.querySelector("p");
+        if (textNode && message) textNode.textContent = message;
+      }
+      if (submitBtn) submitBtn.disabled = nextActive;
+      if (clearBtn) clearBtn.disabled = nextActive;
+      if (actionTriggerBtn) actionTriggerBtn.disabled = nextActive;
+      if (actionChevronBtn) actionChevronBtn.disabled = nextActive || !(Array.isArray(actionOptions) && actionOptions.length > 0);
+    }
+
+    function canRefreshLoadingStop() {
+      if (!isWaitingForServerRefresh) return true;
+      const currentSignature = readCurrentBubbleDataSignature();
+      if (!currentSignature) return true;
+      if (!submitRefreshSignature) return true;
+      return currentSignature !== submitRefreshSignature;
+    }
+
     function canOpenInlineEditPanel() {
       const startSignal = readStartSignalValue();
       if (!startSignal) return false;
@@ -2782,11 +2859,11 @@
       syncDefaultActionLabelFromData();
       const safeSelectedName = String(selectedActionName || getDefaultActionLabel()).trim() || getDefaultActionLabel();
       if (actionTriggerBtn) {
-        actionTriggerBtn.disabled = false;
+        actionTriggerBtn.disabled = isWaitingForServerRefresh;
         actionTriggerBtn.textContent = safeSelectedName;
       }
       if (actionChevronBtn) {
-        actionChevronBtn.disabled = !hasOptions;
+        actionChevronBtn.disabled = isWaitingForServerRefresh || !hasOptions;
         actionChevronBtn.style.display = hasOptions ? "inline-flex" : "none";
       }
       if (actionEmptyMsg) {
@@ -2814,6 +2891,12 @@
     }
 
     function triggerSelectedAction() {
+      if (requiresExplicitActionSelection() && !isActionSelectionValid()) {
+        selectedActionName = DEFAULT_ACTION_PLACEHOLDER_LABEL;
+        updateActionBarUi();
+        openActionMenu();
+        return;
+      }
       triggeredActionUniqueId = selectedActionId || "";
       emit("onActionTrigger", {
         selectedActionId,
@@ -2897,7 +2980,8 @@ function renderSubmitOutputs(payload) {
     function buildSubmitOutputsPayload({ autosave = false, modeHint = "" } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
-      const baseOutput4 = buildOutput4String() || "";
+      const photoPayload = buildOutput4String();
+      const baseOutput4 = photoPayload === null ? "null" : String(photoPayload || "");
       const hasBubbleData = hasExistingBubbleData();
       const effectiveMode = String(modeHint || "").trim().toLowerCase();
       const configMode = String(state.config?.mode || "").trim().toLowerCase();
@@ -4510,6 +4594,10 @@ function renderSubmitOutputs(payload) {
         persistObservedUniqueId(uniqueId);
       }
       lastObservedDataSignature = readCurrentBubbleDataSignature();
+      if (canRefreshLoadingStop()) {
+        submitRefreshSignature = "";
+        setFormRefreshLoading(false);
+      }
       traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId, dataSignatureLen: lastObservedDataSignature.length });
     }
 
@@ -4931,6 +5019,9 @@ function renderSubmitOutputs(payload) {
       activeSubmitAttemptId = 0;
       isFormSaving = false;
       isFormDirty = !success;
+      if (success && !autosave && hasExistingBubbleData()) {
+        setFormRefreshLoading(true, "İşlem kaydedildi. Güncel veriler bekleniyor…");
+      }
       if (success && shouldResetAfterSubmit({ autosave })) {
         resetFormAfterSuccessfulSubmit();
       }
@@ -4939,9 +5030,13 @@ function renderSubmitOutputs(payload) {
       return true;
     }
     function handleBeforeUnload(event) {
-      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
+      const dirtyNow = reconcileDirtyTracking("beforeunload");
+      const hasUnsavedChanges = dirtyNow || hasChangesSinceStartOpen || changedFieldKeys.size > 0;
+      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && hasUnsavedChanges && !isFormSaving;
       logStartState("beforeunload", {
         shouldSubmitOnUnload,
+        hasUnsavedChanges,
+        dirtyNow,
         hasChangesSinceStartOpen,
         changedKeyCount: changedFieldKeys.size
       });
@@ -4949,8 +5044,8 @@ function renderSubmitOutputs(payload) {
         runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload", modeHint: getSubmitModeHint() });
       }
       persistStartFlowState();
-      if (!isFormDirty) return undefined;
-      if (!isFormSaving) {
+      if (!hasUnsavedChanges) return undefined;
+      if (!isFormSaving && !shouldSubmitOnUnload) {
         runSubmitFlow({ autosave: false, forceSubmit: true, trigger: "beforeunload-dirty-fallback" });
       }
       const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
@@ -4961,6 +5056,15 @@ function renderSubmitOutputs(payload) {
 
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      if (isWaitingForServerRefresh && !autosave && !forceSubmit) {
+        traceAutosave("runSubmitFlow:skip-waiting-server-refresh", { trigger });
+        return;
+      }
+      if (!autosave && !forceSubmit && requiresExplicitActionSelection() && !isActionSelectionValid()) {
+        traceAutosave("runSubmitFlow:blocked-missing-action", { trigger });
+        openActionMenu();
+        return;
+      }
       if (!state.config || !Array.isArray(state.config.fields)) {
         pendingSubmitUntilConfigReady = {
           autosave,
@@ -4987,6 +5091,9 @@ function renderSubmitOutputs(payload) {
       isFormSaving = true;
       activeSubmitAttemptId += 1;
       const submitAttemptId = activeSubmitAttemptId;
+      if (!autosave) {
+        submitRefreshSignature = readCurrentBubbleDataSignature();
+      }
       const resolvedModeHint = modeHint || (autosave ? lastChangedMode : "");
       armSubmitLockTimeout({ submitAttemptId, trigger, autosave });
       traceAutosave("runSubmitFlow:lock-armed", collectEditContextSnapshot({
@@ -5089,13 +5196,16 @@ function renderSubmitOutputs(payload) {
     }
 
     function shouldResetAfterSubmit({ autosave }) {
-      return true;
+      if (autosave) return true;
+      return !hasExistingBubbleData();
     }
 
     function resetFormAfterSuccessfulSubmit() {
       hasChangesSinceStartOpen = false;
       pendingStartCloseAutosave = null;
       pendingSubmitUntilConfigReady = null;
+      submitRefreshSignature = "";
+      setFormRefreshLoading(false);
       resetAllStores();
       persistStartFlowState();
       summaryBox.style.display = "none";
@@ -6585,9 +6695,7 @@ function renderSubmitOutputs(payload) {
               updateError(control, field);
               closePopover();
             },
-            onClose: () => {
-              dateInput.focus();
-            }
+            onClose: () => {}
           });
 
           const iconBtn = document.createElement("button");
@@ -6726,9 +6834,7 @@ function renderSubmitOutputs(payload) {
               setFieldValue(field.key, normalized, field, displayValue);
               updateError(control, field);
             },
-            onClose: () => {
-              datetimeInput.focus();
-            }
+            onClose: () => {}
           });
 
           const timeRow = document.createElement("div");
@@ -7483,6 +7589,8 @@ function renderSubmitOutputs(payload) {
       triggeredActionUniqueId = "";
       isFormDirty = false;
       isFormSaving = false;
+      submitRefreshSignature = "";
+      setFormRefreshLoading(false);
       clearChangedTracking();
       updateActionBarUi();
       if (columnJson) {
