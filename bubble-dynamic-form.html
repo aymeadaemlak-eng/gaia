@@ -246,9 +246,9 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: 2px;
-      padding: var(--form-vertical-padding) 0;
-      margin-bottom: 2px;
+      gap: 1px;
+      padding: 0;
+      margin-bottom: 0;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
@@ -262,20 +262,20 @@
     #bdf-root .field-row {
       display: flex;
       align-items: center;
-      gap: 12px;
-      height: 38px;
-      min-height: 38px;
-      padding: 0 10px;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      gap: 8px;
+      height: 34px;
+      min-height: 34px;
+      padding: 0 6px;
+      border-bottom: none;
     }
 
     #bdf-root .field-row.is-file-field {
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       align-items: stretch;
       height: auto;
       min-height: 0;
-      padding: 6px 0;
+      padding: 2px 0;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
@@ -566,8 +566,8 @@
       align-items: flex-start;
       height: auto;
       min-height: 0;
-      padding-top: 6px;
-      padding-bottom: 6px;
+      padding-top: 2px;
+      padding-bottom: 2px;
     }
 
 #bdf-root .field-row.is-multiline-field .field-label {
@@ -583,7 +583,7 @@
 
 #bdf-root .field-row.is-multiline-field .control-stack {
       align-items: stretch;
-      min-height: 72px;
+      min-height: 64px;
     }
 
 #bdf-root .field-icon-button {
@@ -1589,7 +1589,7 @@
       }
 
 #bdf-root .field-row {
-        gap: 8px;
+        gap: 6px;
       }
 
 #bdf-root .field-input,
@@ -1673,6 +1673,7 @@
 #bdf-root .field-row {
         padding-left: 0;
         padding-right: 0;
+        min-height: 30px;
       }
 
 #bdf-root .label-text {
