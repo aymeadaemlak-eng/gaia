@@ -246,9 +246,9 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: var(--field-gap-internal);
+      gap: 2px;
       padding: var(--form-vertical-padding) 0;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
@@ -263,9 +263,9 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      height: 40px;
-      min-height: 40px;
-      padding: 0 12px;
+      height: 38px;
+      min-height: 38px;
+      padding: 0 10px;
       border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
@@ -344,7 +344,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 18px;
+      line-height: 16px;
     }
 
     #bdf-root .label-top {
@@ -359,9 +359,9 @@
 
     #bdf-root .label-text {
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
       color: #6b7280;
-      line-height: 18px;
+      line-height: 16px;
       margin: 0;
       padding: 0;
       white-space: nowrap;
@@ -729,7 +729,17 @@
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
+      min-width: 0;
     }
+#bdf-root .inline-row > span {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
 
 #bdf-root button {
       border: none;
@@ -903,21 +913,36 @@
       cursor: pointer;
     }
 
+#bdf-root .conflict-inline-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      margin-top: 2px;
+    }
+
 #bdf-root .conflict-chip {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--danger);
+      background: #FEF2F2;
+      color: #DC2626;
       border-radius: 999px;
       padding: 2px 8px;
-      font-size: 0.7rem;
+      font-size: 12px;
       font-weight: 600;
+      opacity: 0.8;
       cursor: pointer;
+      line-height: 1.2;
+    }
+
+#bdf-root .conflict-chip:hover {
+      opacity: 1;
     }
 
 #bdf-root .conflict-popover {
       position: absolute;
-      top: 100%;
+      top: calc(100% + 6px);
       right: 0;
-      margin-top: 6px;
+      margin-top: 0;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -1564,7 +1589,7 @@
       }
 
 #bdf-root .field-row {
-        gap: 10px;
+        gap: 8px;
       }
 
 #bdf-root .field-input,
@@ -1642,7 +1667,7 @@
 #bdf-root .edit-mode-root,
 #bdf-root .edit-stage-panel,
 #bdf-root .field-row {
-        font-size: 12.5px;
+        font-size: 12px;
       }
 
 #bdf-root .field-row {
@@ -1650,9 +1675,14 @@
         padding-right: 0;
       }
 
+#bdf-root .label-text {
+        font-size: 11.5px;
+        line-height: 14px;
+      }
+
 #bdf-root .field-label {
-        flex-basis: clamp(122px, 38vw, 152px);
-        max-width: clamp(122px, 38vw, 152px);
+        flex-basis: clamp(116px, 36vw, 144px);
+        max-width: clamp(116px, 36vw, 144px);
       }
 
 #bdf-root .edit-stage-panel {
@@ -2779,7 +2809,7 @@
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
-    
+
     function getPredictedActionName() {
       const candidate =
         MANUAL_PREDICTED_JSON?.predictedAction
@@ -3082,6 +3112,13 @@ function renderSubmitOutputs(payload) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function truncateLabelText(value, maxChars = 36) {
+      const text = String(value ?? "").trim();
+      if (!text) return "";
+      if (text.length <= maxChars) return text;
+      return `${text.slice(0, maxChars - 1)}…`;
     }
 
     function getCurrentDateTime(config) {
@@ -6398,7 +6435,8 @@ function renderSubmitOutputs(payload) {
         const label = document.createElement("label");
         label.className = "label-text";
         label.htmlFor = `field-${field.key}`;
-        label.textContent = field.label;
+        label.textContent = truncateLabelText(field.label, 34);
+        label.title = String(field.label || "");
 
         labelTop.append(typeIcon, label);
 
@@ -6457,11 +6495,11 @@ function renderSubmitOutputs(payload) {
         labelMeta.append(revertAiBtn);
 
         const conflictWrap = document.createElement("div");
-        conflictWrap.style.position = "relative";
+        conflictWrap.className = "conflict-inline-wrap";
         const conflictChip = document.createElement("button");
         conflictChip.type = "button";
         conflictChip.className = "conflict-chip";
-        conflictChip.textContent = "Çakışma";
+        conflictChip.textContent = "⚠ Çakışma";
         conflictChip.style.display = "none";
         const conflictPopover = document.createElement("div");
         conflictPopover.className = "conflict-popover";
@@ -6490,7 +6528,7 @@ function renderSubmitOutputs(payload) {
           conflictPopover.classList.remove("open");
         });
         conflictWrap.append(conflictChip, conflictPopover);
-        labelMeta.append(conflictWrap);
+
 
         labelColumn.append(labelTop);
         if (labelMeta.childElementCount) {
@@ -7449,6 +7487,7 @@ function renderSubmitOutputs(payload) {
 
         const controlStack = document.createElement("div");
         controlStack.className = "control-stack";
+        controlStack.append(conflictWrap);
         controlStack.append(control);
         if (extraControls) {
           controlStack.append(extraControls);
