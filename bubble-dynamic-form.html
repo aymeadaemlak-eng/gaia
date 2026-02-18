@@ -1053,9 +1053,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 8px;
       min-height: 58px;
-      padding: 10px 12px;
+      height: 58px;
+      padding: 8px 10px;
       border: 1px solid #e4e8ee;
       border-radius: 12px;
       background: #f8fafc;
@@ -1097,9 +1098,11 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 8px;
+      gap: 6px;
       flex: 1;
       min-width: 0;
+      flex-wrap: nowrap;
+      overflow: hidden;
     }
 
 #bdf-root .more-actions {
@@ -1140,10 +1143,14 @@
 #bdf-root .action-trigger-btn {
       background: #ffffff;
       color: #0f172a;
-      min-width: 190px;
+      min-width: 150px;
+      max-width: 150px;
       text-align: left;
       font-weight: 600;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
 #bdf-root .action-chevron-btn {
@@ -1632,12 +1639,21 @@
       }
 
 #bdf-root .action-bar {
-        align-items: flex-start;
+        align-items: center;
+        height: 54px;
+        min-height: 54px;
+        padding: 6px 8px;
       }
 
 #bdf-root .action-main {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-start;
+        gap: 4px;
+      }
+
+#bdf-root .action-trigger-btn {
+        min-width: 130px;
+        max-width: 130px;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -1676,7 +1692,7 @@
 
 #bdf-root #formContainer {
         max-width: none;
-        margin-inline: 0;
+        margin-inline: auto;
         padding: 0;
       }
 
@@ -2786,7 +2802,7 @@
         setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
       if (actionBar) {
-        actionBar.style.display = isEditUiActive ? "none" : "";
+        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
       }
       if (formEl) {
         formEl.style.display = isEditUiActive ? "none" : "grid";
@@ -2927,7 +2943,7 @@
     function updateInlineEditToggleUi() {
       if (!toggleInlineEditBtn) return;
       const canOpen = canOpenInlineEditPanel();
-      const shouldShow = canOpen || isEditPanelOpen;
+      const shouldShow = canOpen || isEditPanelOpen || hasEnteredInlineEditPanel;
       toggleInlineEditBtn.style.display = shouldShow ? "inline-flex" : "none";
       toggleInlineEditBtn.disabled = !canOpen && !isEditPanelOpen;
       toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
