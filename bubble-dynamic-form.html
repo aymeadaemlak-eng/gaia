@@ -5085,6 +5085,17 @@ function renderSubmitOutputs(payload) {
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
       const incomingPredictedData = readCurrentPredictedDataObject();
       const predictedToApply = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
+      const pendingRemountAutosaveSnapshot = pendingSubmitUntilConfigReady
+        ? {
+            trigger: String(pendingSubmitUntilConfigReady.trigger || ""),
+            autosave: Boolean(pendingSubmitUntilConfigReady.autosave)
+          }
+        : null;
+      const hadPendingRemountAutosave = Boolean(
+        pendingRemountAutosaveSnapshot
+        && pendingRemountAutosaveSnapshot.autosave
+        && pendingRemountAutosaveSnapshot.trigger.includes("start-close-remount")
+      );
       traceAutosave("applyIncomingBubbleDataAsCurrentItem:start", {
         uniqueId,
         hasIncomingBubbleData: Boolean(incomingBubbleData),
@@ -5118,7 +5129,6 @@ function renderSubmitOutputs(payload) {
         initializeSourceByFieldFromAi();
         refreshAllFields();
         initialSnapshot = buildBaselineSnapshot(IS_EDITING_MODE ? getEditModeBaselinePayload() : incomingBubbleData);
-        flushPendingSubmitAfterConfigReady();
         logPredictDebug("incoming-item-rehydrated", {
           uniqueId,
           humanKeyCount: Object.keys(incomingBubbleData || {}).length,
@@ -5127,17 +5137,12 @@ function renderSubmitOutputs(payload) {
           sourceByFieldSnapshot: sourceByField
         });
       }
-      const pendingRemountAutosave = Boolean(
-        pendingSubmitUntilConfigReady
-        && pendingSubmitUntilConfigReady.autosave
-        && String(pendingSubmitUntilConfigReady.trigger || "").includes("start-close-remount")
-      );
-      if (pendingRemountAutosave) {
+      if (hadPendingRemountAutosave) {
         isFormDirty = computeDirtyState();
         hasChangesSinceStartOpen = isFormDirty;
         logPredictDebug("incoming-item-rehydrated:preserve-dirty-for-remount-autosave", {
-          pendingTrigger: pendingSubmitUntilConfigReady?.trigger || "",
-          pendingAutosave: Boolean(pendingSubmitUntilConfigReady?.autosave),
+          pendingTrigger: pendingRemountAutosaveSnapshot?.trigger || "",
+          pendingAutosave: Boolean(pendingRemountAutosaveSnapshot?.autosave),
           recomputedIsFormDirty: isFormDirty,
           ...buildSubmitChangeDiagnostics()
         });
@@ -5145,6 +5150,7 @@ function renderSubmitOutputs(payload) {
         clearChangedTracking();
         isFormDirty = false;
       }
+      flushPendingSubmitAfterConfigReady();
       taskStartTimestamp = null;
       hasPendingUniqueIdSubmit = false;
       if (uniqueId) {
