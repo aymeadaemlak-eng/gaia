@@ -5077,12 +5077,15 @@ function renderSubmitOutputs(payload) {
 
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
       const incomingPredictedData = readCurrentPredictedDataObject();
+      const predictedToApply = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
       traceAutosave("applyIncomingBubbleDataAsCurrentItem:start", {
         uniqueId,
         hasIncomingBubbleData: Boolean(incomingBubbleData),
         incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : [],
         hasIncomingPredictedData: Boolean(incomingPredictedData),
         incomingPredictedDataKeys: incomingPredictedData && typeof incomingPredictedData === "object" ? Object.keys(incomingPredictedData) : [],
+        hasPredictedFallback: Boolean(!incomingPredictedData && MANUAL_PREDICTED_JSON),
+        predictedToApplyKeys: predictedToApply && typeof predictedToApply === "object" ? Object.keys(predictedToApply) : [],
         hasIncomingColumns: Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns)),
         incomingColumnCount: Array.isArray(incomingColumnJson?.columns) ? incomingColumnJson.columns.length : 0
       });
@@ -5094,7 +5097,7 @@ function renderSubmitOutputs(payload) {
 
       if (incomingBubbleData && state.config) {
         MANUAL_DATA_JSON = incomingBubbleData;
-        MANUAL_PREDICTED_JSON = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
+        MANUAL_PREDICTED_JSON = predictedToApply;
         humanData = {};
         aiData = {};
         aiExplicitFieldKeys = new Set();
@@ -5102,8 +5105,8 @@ function renderSubmitOutputs(payload) {
         state.fileBuffers = {};
         state.fileStaging = {};
         loadJsonSafeToForm("human", incomingBubbleData);
-        if (incomingPredictedData) {
-          loadJsonSafeToForm("ai", incomingPredictedData);
+        if (predictedToApply) {
+          loadJsonSafeToForm("ai", predictedToApply);
         }
         initializeSourceByFieldFromAi();
         refreshAllFields();
@@ -5112,7 +5115,8 @@ function renderSubmitOutputs(payload) {
         logPredictDebug("incoming-item-rehydrated", {
           uniqueId,
           humanKeyCount: Object.keys(incomingBubbleData || {}).length,
-          predictedKeyCount: Object.keys(incomingPredictedData || {}).length,
+          predictedKeyCount: Object.keys(predictedToApply || {}).length,
+          predictedFromFallback: Boolean(!incomingPredictedData && predictedToApply),
           sourceByFieldSnapshot: sourceByField
         });
       }
