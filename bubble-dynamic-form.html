@@ -4282,14 +4282,28 @@ function renderSubmitOutputs(payload) {
 
     function parseJsonArrayString(value) {
       if (typeof value !== "string") return null;
-      const trimmed = value.trim();
-      if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return null;
-      try {
-        const parsed = JSON.parse(trimmed);
-        return Array.isArray(parsed) ? parsed : null;
-      } catch (error) {
+      let candidate = value.trim();
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        if (candidate.startsWith("[") && candidate.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(candidate);
+            if (Array.isArray(parsed)) return parsed;
+            if (typeof parsed === "string") {
+              candidate = parsed.trim();
+              continue;
+            }
+            return null;
+          } catch (error) {
+            return null;
+          }
+        }
+        if ((candidate.startsWith('"') && candidate.endsWith('"')) || (candidate.startsWith("'") && candidate.endsWith("'"))) {
+          candidate = candidate.slice(1, -1).trim();
+          continue;
+        }
         return null;
       }
+      return null;
     }
 
     function normalizeJsonValueForField(field, value, config) {
@@ -4316,13 +4330,17 @@ function renderSubmitOutputs(payload) {
         return Boolean(resolved);
       }
       if (field.type === "dropdown" && field.allowMultiple) {
-        if (Array.isArray(resolved)) return resolved;
+        if (Array.isArray(resolved)) {
+          return resolved.map((val) => decodeEscapedTextValue(String(val))).filter(Boolean);
+        }
         if (typeof resolved === "string") {
           const parsedArray = parseJsonArrayString(resolved);
           if (Array.isArray(parsedArray)) {
             return parsedArray.map((val) => String(val)).map((val) => decodeEscapedTextValue(val)).filter(Boolean);
           }
-          return resolved.split(",").map((val) => decodeEscapedTextValue(val.trim())).filter(Boolean);
+          const normalizedText = decodeEscapedTextValue(resolved).trim();
+          if (!normalizedText) return [];
+          return normalizedText.split(",").map((val) => decodeEscapedTextValue(val.trim())).filter(Boolean);
         }
       }
       if (["textarea", "json", "text"].includes(field.type) && typeof resolved === "string") {
@@ -4498,6 +4516,11 @@ function renderSubmitOutputs(payload) {
       refreshAllFields();
       if (state.config) {
         updateSubmitState(state.config);
+      }
+      const dirtyNow = reconcileDirtyTracking(`loadJsonSafeToForm:${kind}`);
+      if (hasSeenStartSignal && lastStartParamWasTrue && dirtyNow) {
+        hasChangesSinceStartOpen = true;
+        persistStartFlowState();
       }
 
     }
@@ -7433,7 +7456,7 @@ function renderSubmitOutputs(payload) {
           renderOptions();
           renderChips();
           setValue = (value) => {
-            selectedValues = Array.isArray(value) ? value : [];
+            selectedValues = normalizeMultiValue(value);
             renderOptions();
             renderChips();
           };
