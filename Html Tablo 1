@@ -136,12 +136,15 @@
   padding: 0 10px;
 }
 
-#dynamic-table-wrapper #dt-btn-import {
-  margin-right: -3px;
+#dynamic-table-wrapper #dt-btn-import,
+#dynamic-table-wrapper #dt-btn-download {
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
-#dynamic-table-wrapper #dt-btn-download {
-  margin-left: -3px;
+#dynamic-table-wrapper #dt-btn-import + #dt-btn-download {
+  margin-left: -2px;
 }
 
 #dynamic-table-wrapper .dt-search-wrap {
