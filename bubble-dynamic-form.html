@@ -142,6 +142,9 @@
       --row-extended-pad-y: 1.5px;
       font-size: 16px;
       color: var(--text);
+      min-height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
     }
 
     #bdf-root,
@@ -174,9 +177,12 @@
       background-color: rgba(100,116,139,.70);
     }
 
+    html,
     body {
       margin: 0;
       padding: 0;
+      height: 100%;
+      overflow: hidden;
     }
 
 
@@ -309,10 +315,10 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
-      height: auto;
-      max-height: none;
-      overflow-y: visible;
-      overflow-x: visible;
+      height: min(680px, calc(100dvh - 24px));
+      max-height: calc(100dvh - 24px);
+      overflow-y: auto;
+      overflow-x: hidden;
       padding-right: 0;
       margin-inline: auto;
     }
@@ -1631,9 +1637,10 @@
       }
 
 #bdf-root #formContainer {
-        height: auto;
-        max-height: none;
-        overflow-y: visible;
+        height: calc(100dvh - 12px);
+        max-height: calc(100dvh - 12px);
+        overflow-y: auto;
+        overflow-x: hidden;
         padding-right: 0;
         -webkit-overflow-scrolling: touch;
       }
@@ -1694,6 +1701,10 @@
         max-width: none;
         margin-inline: auto;
         padding: 0;
+        height: calc(100dvh - 10px);
+        max-height: calc(100dvh - 10px);
+        overflow-y: auto;
+        overflow-x: hidden;
       }
 
 #bdf-root .edit-mode-root,
