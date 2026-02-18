@@ -52,481 +52,311 @@ CSS ve statik stil ayarları bu notların altında duruyor.
 }
     </script>
     <style>
-        /* Genel tipografi ve zemin */
-        :root {
-            --bg1: #00c6ff;
-            --bg2: #006166;
-            --hover: #008ba7;
-        }
+/* =========================
+   GAIA PROMPT SCOPED STYLES
+   Sadece .gaia-prompt-scope içini etkiler
+   ========================= */
 
-        body {
-            margin: 0;
-            padding: 0 12px 16px;
-            font-family: "SF Pro Text", "Inter", "Segoe UI", sans-serif;
-            background: #f3f4f6;
-            color: #0f1115;
-        }
+.gaia-prompt-scope{
+  --bg1: #00c6ff;
+  --bg2: #006166;
+  --hover: #008ba7;
 
-        .icon {
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #111;
-            cursor: pointer;
-            transition: color 0.2s ease;
-        }
+  margin: 0;
+  padding: 0 12px 16px;
+  font-family: "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+  background: #f3f4f6;
+  color: #0f1115;
+}
 
-        .icon:hover {
-            color: #0F5DB6;
-        }
+.gaia-prompt-scope,
+.gaia-prompt-scope *{
+  box-sizing: border-box;
+}
 
-        .icon:active {
-            transform: scale(0.92);
-            color: #0C4790;
-        }
+.gaia-prompt-scope .icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.gaia-prompt-scope .icon:hover { color: #0F5DB6; }
+.gaia-prompt-scope .icon:active { transform: scale(0.92); color: #0C4790; }
 
-        .container {
-            width: 400px;
-            min-width: 400px;
-            max-width: 400px;
-            min-height: 400px;
-            max-height: 90vh;
-            margin: 16px auto;
-            padding: 18px 18px 26px;
-            background: linear-gradient(180deg, #ffffff 0%, #fdfefe 100%);
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            text-align: center;
-            position: relative;
-            resize: none;
-            overflow: auto;
-        }
+.gaia-prompt-scope .container {
+  width: 400px;
+  min-width: 400px;
+  max-width: 400px;
+  min-height: 400px;
+  max-height: 90vh;
+  margin: 16px auto;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  position: relative;
+  resize: none;
+  overflow: auto;
+}
 
-        /* AutoFlow Toggle Butonu */
-        #toggleAutoflow {
-            position: absolute;
-            top: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 18px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            border: 1px solid #1fc667;
-            color: #0a4a28;
-            background: linear-gradient(145deg, #f3fff7, #d8ffe8);
-            transition: background 0.25s ease, color 0.2s ease, box-shadow 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
+/* Keyframes global çakışmasın diye isim unique */
+@keyframes gaiaPromptGlow {
+  from { box-shadow: 0 0 10px #17DB4E; }
+  to   { box-shadow: 0 0 20px #17DB4E; }
+}
 
-        #toggleAutoflow.active {
-            background: linear-gradient(145deg, #1fc667, #16b35b);
-            color: #ffffff;
-            box-shadow: 0 8px 18px rgba(22, 179, 91, 0.25);
-            animation: glow 1.5s infinite alternate;
-        }
+.gaia-prompt-scope .action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+  gap: 10px;
+}
 
-        @keyframes glow {
-            from {
-                box-shadow: 0 0 10px #17DB4E;
-            }
-            to {
-                box-shadow: 0 0 20px #17DB4E;
-            }
-        }
+/* Global değil: sadece scope içindeki button/select */
+.gaia-prompt-scope button,
+.gaia-prompt-scope select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d6d8dc;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  margin: 10px 10px;
+  background-color: #fff;
+}
 
-        /* Sabit işlem barı (Add Custom Field & Add Action) */
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 10px 16px;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
-            margin-bottom: 16px;
-            gap: 10px;
-        }
+.gaia-prompt-scope button:hover,
+.gaia-prompt-scope select:hover {
+  background-color: #f7f9fb;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
 
-        /* Tüm butonlar ve dropdownlar için temel stil */
-        button,
-        select {
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid #d6d8dc;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            user-select: none;
-            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-            margin: 10px 10px;
-            background-color: #fff;
-        }
+.gaia-prompt-scope button:active,
+.gaia-prompt-scope select:active { transform: translateY(1px); }
 
-        button:hover,
-        select:hover {
-            background-color: #f7f9fb;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-        }
+/* Action Dropdown ve Token Uyumu */
+.gaia-prompt-scope #actionSelect,
+.gaia-prompt-scope .action {
+  border-color: #0f66c2;
+  background-color: #0f66c2;
+  color: white;
+}
 
-        button:active,
-        select:active {
-            transform: translateY(1px);
-        }
+/* Custom Field Dropdown ve Token Uyumu */
+.gaia-prompt-scope #customFieldSelect,
+.gaia-prompt-scope .custom-field {
+  border-color: #006166;
+  background-color: #006166;
+  color: white;
+}
 
-        /* Action Dropdown ve Token Uyumu */
-        #actionSelect,
-        .action {
-            border-color: #0f66c2;
-            background-color: #0f66c2;
-            color: white;
-        }
+.gaia-prompt-scope .token {
+  display: inline-block;
+  margin: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
 
-        /* Custom Field Dropdown ve Token Uyumu */
-        #customFieldSelect,
-        .custom-field {
-            border-color: #006166;
-            background-color: #006166;
-            color: white;
-        }
+.gaia-prompt-scope .mandatory { border-color:#ff4d4f; background:#fff5f5; color:#c62828; }
+.gaia-prompt-scope .optional  { border-color:#22a087; background:#e9faf6; color:#0f6a5c; }
+.gaia-prompt-scope .control   { border-color:#17DB4E; background:#edfff4; color:#0a512a; }
 
-        /* Token genel stil */
-        .token {
-            display: inline-block;
-            margin: 4px;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            user-select: none;
-        }
+.gaia-prompt-scope .editable-container {
+  border: 1px solid #dfe3e8;
+  border-radius: 12px;
+  padding: 20px 16px;
+  background-color: #fff;
+  min-height: 200px;
+  max-height: 62vh;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  line-height: 1.6;
+  text-align: left;
+  word-wrap: break-word;
+  width: 100%;
+  max-width: 820px;
+  margin: 18px auto;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 3px 12px rgba(0,0,0,0.08);
+}
 
-        /* Zorunlu - Kırmızı */
-        .mandatory {
-            border-color: #ff4d4f;
-            background-color: #fff5f5;
-            color: #c62828;
-        }
+.gaia-prompt-scope .dropdown-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0 14px;
+}
 
-        /* Opsiyonel - Mavi-Yeşil */
-        .optional {
-            border-color: #22a087;
-            background-color: #e9faf6;
-            color: #0f6a5c;
-        }
+.gaia-prompt-scope select { width: 180px; }
 
-        /* Kontrol - Yeşil */
-        .control {
-            border-color: #17DB4E;
-            background-color: #edfff4;
-            color: #0a512a;
-        }
+.gaia-prompt-scope .toggle-container { display:none; }
+.gaia-prompt-scope .resize-handle { display:none; }
+.gaia-prompt-scope #toggleMemory { display:none; }
 
-        /* Editlenebilir Alan */
-        .editable-container {
-            border: 1px solid #dfe3e8;
-            border-radius: 12px;
-            padding: 16px 16px 20px;
-            background-color: #fff;
-            min-height: 200px;
-            max-height: 62vh;
-            white-space: pre-wrap;
-            overflow-y: auto;
-            line-height: 1.6;
-            text-align: left;
-            word-wrap: break-word;
-            box-sizing: border-box;
-            width: 100%;
-            max-width: 820px;
-            margin: 18px auto 18px;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 3px 12px rgba(0, 0, 0, 0.08);
-        }
+.gaia-prompt-scope #saveButton,
+.gaia-prompt-scope #testButton {
+  background-color: #0f66c2;
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 8px rgba(15, 102, 194, 0.18);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+}
 
-        /* Dropdown Menüler */
-        .dropdown-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 8px 0 14px;
-        }
+.gaia-prompt-scope #saveButton:hover {
+  background-color: #0c549f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(15, 102, 194, 0.22);
+}
 
-        select {
-            width: 180px;
-        }
+.gaia-prompt-scope #saveButton.clean,
+.gaia-prompt-scope #saveButton:disabled {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  border: 1px dashed #cbd5e1;
+  box-shadow: none;
+  cursor: not-allowed;
+}
 
-        /* Toggle alanı */
-        .toggle-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            margin: 26px 0 14px;
-            flex-wrap: wrap;
-        }
+.gaia-prompt-scope #testButton { display:none; }
 
-        .toggle-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
+/* CSVBOX override SCOPED */
+.gaia-prompt-scope .csvbox-import-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 18px 24px;
+  font: 600 18px/1.1 "Inter", sans-serif;
+  letter-spacing: 0.25px;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  transition: 0.25s cubic-bezier(0.4, 0.8, 0.4, 1);
+}
 
-        .toggle {
-            padding: 8px 14px;
-            border-radius: 8px;
-            border: 1px solid #d8d8d8;
-            background: #f7f9fb;
-            color: #111;
-            min-width: 140px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
+.gaia-prompt-scope .csvbox-import-btn:hover {
+  background: var(--hover);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
 
-        .toggle.active {
-            border-color: #17DB4E;
-            background: #edfff1;
-            color: #006166;
-        }
+.gaia-prompt-scope .inline-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin: 4px 0 8px 2px;
+  justify-content: flex-start;
+}
 
-        .toggle-label {
-            font-weight: 700;
-            font-size: 13px;
-        }
+.gaia-prompt-scope .top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 10px;
+}
 
-        .toggle-value {
-            min-height: 16px;
-            font-size: 12px;
-            color: #666;
-        }
+.gaia-prompt-scope .palette { position: absolute; inset: 0; pointer-events: none; }
 
-        /* Buton Grubu */
-        .button-group {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
+.gaia-prompt-scope .palette-panel {
+  display: none;
+  position: absolute;
+  min-width: 280px;
+  width: 320px;
+  max-width: 320px;
+  max-height: 320px;
+  background: #ffffff;
+  border: 1px solid #e3e5e8;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  pointer-events: auto;
+  overflow-y: auto;
+}
 
-        /* Save ve Test Butonları */
-        #saveButton,
-        #testButton {
-            margin-top: 12px;
-            background-color: #0f66c2;
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-        }
+.gaia-prompt-scope .palette.active .palette-panel { display: block; }
 
-        #saveButton:hover {
-            background-color: #0c549f;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 14px rgba(15, 102, 194, 0.25);
-        }
+.gaia-prompt-scope .palette-item {
+  border: 1px solid #dce0e5;
+  background: #f7f9fb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #1b1d21;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  width: 100%;
+}
 
-        /* Test Prompt gizli */
-        #testButton {
-            display: none;
-        }
+.gaia-prompt-scope .palette-item:hover {
+  border-color: #0f66c2;
+  background: #eef3fb;
+  color: #0f66c2;
+}
 
-        /* Dropdownlar ve butonlar arasındaki mesafe */
-        button,
-        select {
-            margin: 10px 10px;
-        }
+.gaia-prompt-scope .palette-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d6d8dc;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  outline: none;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
 
-        /* Resize handle (manuel sürükleme) */
-        .resize-handle {
-            display: none;
-        }
-
-        /* Memory Toggle tamamen gizli */
-        #toggleMemory {
-            display: none;
-        }
-
-        /* === CSVBOX MODAL OVERRIDE ===================================== */
-        .csvbox-import-btn {
-            all: unset;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 100%;
-            max-width: 420px;
-            padding: 18px 24px;
-            font: 600 18px/1.1 "Inter", sans-serif;
-            letter-spacing: 0.25px;
-            color: #fff;
-            cursor: pointer;
-            border-radius: 14px;
-            background: linear-gradient(135deg, var(--bg1), var(--bg2));
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-            transition: 0.25s cubic-bezier(0.4, 0.8, 0.4, 1);
-        }
-
-        .csvbox-import-btn svg {
-            width: 24px;
-            height: 24px;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: transform 0.35s cubic-bezier(0.4, 0.8, 0.4, 1);
-        }
-
-        .csvbox-import-btn:hover {
-            background: var(--hover);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-        }
-
-        .csvbox-import-btn:hover svg {
-            transform: rotate(90deg) scale(1.08);
-        }
-
-        .csvbox-import-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-        }
-
-        .csvbox-import-btn:focus-visible {
-            outline: 3px solid rgba(0, 198, 255, 0.4);
-            outline-offset: 2px;
-        }
-
-    .inline-hint {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: #7a7c80;
-        margin-bottom: 6px;
-    }
-    .palette {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-    }
-    .palette-panel {
-        display: none;
-        position: absolute;
-        min-width: 240px;
-        max-width: 320px;
-        background: #ffffff;
-        border: 1px solid #e3e5e8;
-        border-radius: 12px;
-        padding: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-        z-index: 50;
-        pointer-events: auto;
-    }
-    .palette.active .palette-panel { display: block; }
-    .palette-title {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        color: #9aa0a6;
-        margin: 10px 0 6px;
-    }
-    .palette-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .palette-item {
-        border: 1px solid #dce0e5;
-        background: #f7f9fb;
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 12px;
-        color: #1b1d21;
-        cursor: pointer;
-        transition: all 0.12s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .palette-item:hover {
-        border-color: #0f66c2;
-        background: #eef3fb;
-        color: #0f66c2;
-    }
-    .palette-item.is-active {
-        outline: 2px solid #0f66c2;
-        outline-offset: 1px;
-        background: #eef3fb;
-        border-color: #0f66c2;
-        color: #0f66c2;
-    }
-    .palette-badge {
-        padding: 2px 6px;
-        border-radius: 999px;
-        font-size: 10px;
-        background: #e9ecf1;
-        color: #4a5568;
-        border: 1px solid #d5d9df;
-        text-transform: capitalize;
-    }
-    .palette-trigger {
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 1px solid #d6d8dc;
-        background: #f5f6f8;
-        color: #0f66c2;
-        font-size: 16px;
-        line-height: 1;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.15s ease;
-    }
-    .palette-trigger:hover {
-        background: #eef3fb;
-        border-color: #0f66c2;
-    }
-    .floating-trigger {
-        position: absolute;
-        z-index: 60;
-        display: none;
-        pointer-events: auto;
-    }
-    .palette-search {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #d6d8dc;
-        border-radius: 8px;
-        font-size: 12px;
-        margin-bottom: 10px;
-        outline: none;
-        transition: border 0.15s ease, box-shadow 0.15s ease;
-    }
-    .palette-search:focus {
-        border-color: #0f66c2;
-        box-shadow: 0 0 0 3px rgba(15, 102, 194, 0.12);
-    }
-    </style>
+.gaia-prompt-scope .palette-search:focus {
+  border-color: #0f66c2;
+  box-shadow: 0 0 0 3px rgba(15, 102, 194, 0.12);
+}
+</style>
 </head>
 <body>
+    <div class="gaia-prompt-scope">
     <div class="container">
         <!-- BUBBLE DYNAMIC: editableText (önce doldur) -->
         <div class="editable-container" contenteditable="true" id="editableText" spellcheck="false">
@@ -955,6 +785,7 @@ CSS ve statik stil ayarları bu notların altında duruyor.
     }, 200);
 })();
         </script>
+    </div>
     </div>
 </body>
 </html>
