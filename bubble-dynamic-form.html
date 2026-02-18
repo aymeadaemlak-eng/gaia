@@ -135,6 +135,11 @@
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
       --form-container-max-width: 464px;
+      --row-height: 32px;
+      --row-gap: 6px;
+      --row-pad-x: 6px;
+      --row-extended-gap: 4px;
+      --row-extended-pad-y: 3px;
       font-size: 16px;
       color: var(--text);
     }
@@ -246,7 +251,7 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: 1px;
+      gap: 0;
       padding: 0;
       margin-bottom: 0;
     }
@@ -262,20 +267,20 @@
     #bdf-root .field-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      height: 34px;
-      min-height: 34px;
-      padding: 0 6px;
+      gap: var(--row-gap);
+      height: var(--row-height);
+      min-height: var(--row-height);
+      padding: 0 var(--row-pad-x);
       border-bottom: none;
     }
 
     #bdf-root .field-row.is-file-field {
       flex-direction: column;
-      gap: 4px;
+      gap: var(--row-extended-gap);
       align-items: stretch;
       height: auto;
       min-height: 0;
-      padding: 2px 0;
+      padding: var(--row-extended-pad-y) 0;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
@@ -359,7 +364,7 @@
 
     #bdf-root .label-text {
       font-weight: 600;
-      font-size: 13.5px;
+      font-size: 14px;
       color: #6b7280;
       line-height: 16px;
       letter-spacing: 0.1px;
@@ -517,7 +522,7 @@
       min-height: var(--field-control-height);
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 16.5px;
+      font-size: 17px;
       font-weight: 500;
       background: transparent;
       color: #334155;
@@ -554,7 +559,7 @@
       padding: 8px 10px;
       line-height: 1.45;
       border-radius: 6px;
-      font-size: 16.5px;
+      font-size: 17px;
       font-weight: 500;
       background: transparent;
       color: #334155;
@@ -567,8 +572,8 @@
       align-items: flex-start;
       height: auto;
       min-height: 0;
-      padding-top: 2px;
-      padding-bottom: 2px;
+      padding-top: var(--row-extended-pad-y);
+      padding-bottom: var(--row-extended-pad-y);
     }
 
 #bdf-root .field-row.is-multiline-field .field-label {
@@ -739,6 +744,14 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       display: inline-block;
+    }
+
+#bdf-root .inline-row input[type="checkbox"] {
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      accent-color: #2563eb;
+      flex: 0 0 auto;
     }
 
 
@@ -1026,8 +1039,10 @@
     }
 
 #bdf-root .toggle input {
-      width: 40px;
-      height: 22px;
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      accent-color: #2563eb;
     }
 
 
@@ -1674,12 +1689,12 @@
 #bdf-root .field-row {
         padding-left: 0;
         padding-right: 0;
-        min-height: 30px;
+        min-height: 28px;
       }
 
 #bdf-root .label-text {
-        font-size: 12px;
-        line-height: 14.5px;
+        font-size: 12.5px;
+        line-height: 15px;
         letter-spacing: 0.08px;
       }
 
@@ -6664,9 +6679,7 @@ function renderSubmitOutputs(payload) {
           setValue = (value) => {
             inputEl.checked = Boolean(value);
           };
-          const toggleLabel = document.createElement("span");
-          toggleLabel.textContent = "Evet";
-          control.append(inputEl, toggleLabel);
+          control.append(inputEl);
           inputEl.addEventListener("change", () => {
             setFieldValue(field.key, inputEl.checked, field);
             updateError(control, field);
