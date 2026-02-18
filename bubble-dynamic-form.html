@@ -2147,7 +2147,7 @@
             </div>
             <div class="edit-search-input-wrap">
               <span class="field-search-icon" aria-hidden="true"></span>
-              <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara (ad / id / header)" />
+              <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
           </div>
@@ -4627,9 +4627,7 @@ function renderSubmitOutputs(payload) {
         if (byKey.has(field.key)) return;
         byKey.set(field.key, field);
       });
-      const uniqueFields = Array.from(byKey.values());
-      if (IS_EDITING_MODE) return uniqueFields;
-      return uniqueFields.filter((field) => changedFieldKeys.has(field.key));
+      return Array.from(byKey.values());
     }
 
     function buildKeyValueListFromSources() {
