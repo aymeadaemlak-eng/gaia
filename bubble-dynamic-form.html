@@ -4271,6 +4271,27 @@ function renderSubmitOutputs(payload) {
       return rawValue;
     }
 
+    function decodeEscapedTextValue(value) {
+      if (typeof value !== "string") return value;
+      return value
+        .replace(/\\r\\n/g, "\n")
+        .replace(/\\n/g, "\n")
+        .replace(/\\r/g, "\n")
+        .replace(/\\t/g, "\t");
+    }
+
+    function parseJsonArrayString(value) {
+      if (typeof value !== "string") return null;
+      const trimmed = value.trim();
+      if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return null;
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
     function normalizeJsonValueForField(field, value, config) {
       if (value === null || value === undefined) return "";
       let resolved = resolveTokenValue(value, field, config);
@@ -4296,7 +4317,16 @@ function renderSubmitOutputs(payload) {
       }
       if (field.type === "dropdown" && field.allowMultiple) {
         if (Array.isArray(resolved)) return resolved;
-        if (typeof resolved === "string") return resolved.split(",").map((val) => val.trim()).filter(Boolean);
+        if (typeof resolved === "string") {
+          const parsedArray = parseJsonArrayString(resolved);
+          if (Array.isArray(parsedArray)) {
+            return parsedArray.map((val) => String(val)).map((val) => decodeEscapedTextValue(val)).filter(Boolean);
+          }
+          return resolved.split(",").map((val) => decodeEscapedTextValue(val.trim())).filter(Boolean);
+        }
+      }
+      if (["textarea", "json", "text"].includes(field.type) && typeof resolved === "string") {
+        return decodeEscapedTextValue(resolved);
       }
       if (["file", "image", "multifile"].includes(field.type)) {
         if (Array.isArray(resolved)) return resolved.filter((val) => typeof val === "string");
@@ -4308,10 +4338,14 @@ function renderSubmitOutputs(payload) {
 
     function normalizeMultiValue(value) {
       if (Array.isArray(value)) {
-        return Array.from(new Set(value.map((entry) => String(entry)))).sort();
+        return Array.from(new Set(value.map((entry) => decodeEscapedTextValue(String(entry))))).sort();
       }
       if (typeof value === "string") {
-        const parts = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+        const parsedArray = parseJsonArrayString(value);
+        if (Array.isArray(parsedArray)) {
+          return Array.from(new Set(parsedArray.map((entry) => decodeEscapedTextValue(String(entry))))).sort();
+        }
+        const parts = value.split(",").map((entry) => decodeEscapedTextValue(entry.trim())).filter(Boolean);
         return Array.from(new Set(parts)).sort();
       }
       return [];
@@ -4666,7 +4700,9 @@ function renderSubmitOutputs(payload) {
       const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
-        if (!changedFieldKeys.has(field.key) && !changedFieldValuesByKey.has(field.key)) return;
+        const isUserTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
+        const isAiExplicitCandidate = aiExplicitFieldKeys.has(field.key);
+        if (!isUserTrackedChange && !isAiExplicitCandidate) return;
         if (byKey.has(field.key)) return;
         byKey.set(field.key, field);
       });
