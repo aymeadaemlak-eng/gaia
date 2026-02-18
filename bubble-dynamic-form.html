@@ -1393,16 +1393,10 @@
   height: 14px;
   transform: translateY(-50%);
   pointer-events: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--field-search-icon-color);
-  font-size: 14px;
-  line-height: 1;
-}
-
-#bdf-root .field-search-icon::before {
-  content: "⌕";
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
 }
 
 #bdf-root .field-search-input {
@@ -1439,6 +1433,10 @@
 
 #bdf-root .edit-search-input-wrap:focus-within {
   --field-search-icon-color: #2563EB;
+}
+
+#bdf-root .edit-search-input-wrap:focus-within .field-search-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
 }
 
 #bdf-root .edit-search-clear {
@@ -3198,7 +3196,12 @@
         if (editSearchInput && String(editSearchInput.value || "").trim()) {
           runColumnSearchRender(editSearchInput.value);
         }
-        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({}));
+        const dirtyNow = reconcileDirtyTracking("inline-toggle-close");
+        const shouldAutosaveOnInlineClose = (dirtyNow || hasChangesSinceStartOpen || changedFieldKeys.size > 0) && !isFormSaving;
+        if (shouldAutosaveOnInlineClose) {
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "inline-toggle-close", modeHint: getSubmitModeHint() });
+        }
+        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({ shouldAutosaveOnInlineClose, dirtyNow }));
       }
       evaluateEditingSignalTransition();
     }
