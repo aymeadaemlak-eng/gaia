@@ -1384,6 +1384,23 @@
   position: relative;
 }
 
+#bdf-root .field-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #64748B;
+}
+
+#bdf-root .field-search-icon svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
 #bdf-root .field-search-input {
   width: 100%;
   height: 40px;
@@ -1391,7 +1408,7 @@
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
   border-radius: 12px;
-  padding-left: 12px;
+  padding-left: 40px;
   padding-right: 34px;
   font-size: 13px;
   font-weight: 500;
@@ -2123,6 +2140,7 @@
               <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
             </div>
             <div class="edit-search-input-wrap">
+              <span class="field-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg></span>
               <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
@@ -4649,6 +4667,21 @@ function renderSubmitOutputs(payload) {
       });
     }
 
+    function buildSubmitChangeDiagnostics() {
+      const changedDetails = collectChangedFieldDebugDetails().filter((item) => item.changed);
+      const aiChangedDetails = changedDetails.filter((item) => item.source === "ai");
+      const humanChangedDetails = changedDetails.filter((item) => item.source === "human");
+      return {
+        changedFieldCount: changedDetails.length,
+        changedKeys: changedDetails.map((item) => item.key),
+        aiChangedFieldCount: aiChangedDetails.length,
+        aiChangedKeys: aiChangedDetails.map((item) => item.key),
+        humanChangedFieldCount: humanChangedDetails.length,
+        humanChangedKeys: humanChangedDetails.map((item) => item.key),
+        changedDetails
+      };
+    }
+
     function buildKeyValueListFromSources() {
       traceChangedFieldComputation("changed-field-evaluation:outputlist1");
       const entriesByKey = new Map();
@@ -5585,7 +5618,12 @@ function renderSubmitOutputs(payload) {
         outputlist1Count: Array.isArray(submitOutputsPayload.outputlist1) ? submitOutputsPayload.outputlist1.length : -1,
         outputlist2Count: Array.isArray(submitOutputsPayload.outputlist2) ? submitOutputsPayload.outputlist2.length : -1,
         outputlist3Count: Array.isArray(submitOutputsPayload.outputlist3) ? submitOutputsPayload.outputlist3.length : -1,
-        outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1
+        outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1,
+        outputlist1: submitOutputsPayload.outputlist1,
+        outputlist2: submitOutputsPayload.outputlist2,
+        outputlist3: submitOutputsPayload.outputlist3,
+        outputlist4: submitOutputsPayload.outputlist4,
+        ...buildSubmitChangeDiagnostics()
       });
 
 
@@ -5827,6 +5865,11 @@ function renderSubmitOutputs(payload) {
         reconcileDirtyTracking("evaluateStartSignalTransition:close");
         const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
+        traceAutosave("start-close-dirty-diagnostics", {
+          hasDirtyIndicators,
+          shouldSubmit,
+          ...buildSubmitChangeDiagnostics()
+        });
         logStartState("close", {
           startSignal,
           shouldSubmit,
