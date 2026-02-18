@@ -72,6 +72,16 @@
   padding-left: 0;
 }
 
+@media (min-width: 992px) {
+  #dynamic-table-wrapper .dt-toolbar-left {
+    padding-left: var(--dt-row-header-width);
+  }
+
+  #dynamic-table-wrapper .dt-toolbar-right {
+    padding-right: var(--dt-row-header-width);
+  }
+}
+
 #dynamic-table-wrapper .dt-icon-btn,
 #dynamic-table-wrapper .dt-action-btn {
   height: 40px;
