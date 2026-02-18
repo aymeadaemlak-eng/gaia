@@ -4291,12 +4291,14 @@ function renderSubmitOutputs(payload) {
         .replace(/^\\+"|"\\+$/g, "")
         .replace(/^\\+'|'\\+$/g, "")
         .trim();
-      if (token.startsWith("[") && token.endsWith("]")) {
-        token = token.slice(1, -1).trim();
-      }
+      token = token.replace(/^\[/, "").replace(/\]$/, "").trim();
       if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
         token = token.slice(1, -1).trim();
       }
+      token = token
+        .replace(/^\\+"|"\\+$/g, "")
+        .replace(/^\\+'|'\\+$/g, "")
+        .trim();
       return token;
     }
 
@@ -4548,6 +4550,27 @@ function renderSubmitOutputs(payload) {
       if (hasSeenStartSignal && lastStartParamWasTrue && dirtyNow) {
         hasChangesSinceStartOpen = true;
         persistStartFlowState();
+      }
+      const startSignalNow = readStartSignalValue();
+      const shouldSubmitWhileClosed = Boolean(
+        hasSeenStartSignal
+        && startSignalNow === false
+        && !lastStartParamWasTrue
+        && dirtyNow
+        && !isFormSaving
+      );
+      if (shouldSubmitWhileClosed) {
+        logStartState("load-json-trigger-submit-while-start-closed", {
+          kind,
+          dirtyNow,
+          trigger: `json-load:${kind}:start-closed`
+        });
+        runSubmitFlow({
+          autosave: true,
+          forceSubmit: true,
+          trigger: `json-load:${kind}:start-closed`,
+          modeHint: getSubmitModeHint()
+        });
       }
 
     }
