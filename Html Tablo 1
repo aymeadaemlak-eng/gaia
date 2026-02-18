@@ -49,12 +49,12 @@
 }
 
 #dynamic-table-wrapper .dt-toolbar {
-  min-height: 46px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 5px 4px;
+  gap: 8px;
+  padding: 3px 4px;
   border-top: 1px solid rgba(15, 23, 42, 0.04);
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   background: #fff;
@@ -64,12 +64,12 @@
 #dynamic-table-wrapper .dt-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 #dynamic-table-wrapper .dt-icon-btn,
 #dynamic-table-wrapper .dt-action-btn {
-  height: 40px;
+  height: 34px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
@@ -86,13 +86,13 @@
 }
 
 #dynamic-table-wrapper .dt-icon-btn {
-  width: 40px;
+  width: 34px;
   padding: 0;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 #dynamic-table-wrapper #dt-btn-search {
-  font-size: 21px;
+  font-size: 19px;
 }
 
 #dynamic-table-wrapper .dt-svg-icon {
@@ -463,7 +463,8 @@
   position: relative;
   overflow: visible !important;
   min-height: 40px !important;
-  padding: 10px 12px !important;
+  height: 40px !important;
+  padding: 6px 10px !important;
   background: #fff !important;
   z-index: 30 !important;
   font-weight: 500 !important;
@@ -511,7 +512,7 @@
 
 #dynamic-table-wrapper .handsontable thead th .colHeader {
   display: block;
-  line-height: 18px;
+  line-height: 16px;
   position: relative;
   z-index: 1;
   max-width: 100%;
@@ -535,25 +536,25 @@
   margin-left: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
 }
 
 #dynamic-table-wrapper .dt-colheader-content--actions {
   justify-content: flex-start;
   width: 100%;
-  min-width: 86px;
-  padding-left: 4px;
+  min-width: 78px;
+  padding-left: 2px;
 }
 
 #dynamic-table-wrapper .dt-header-action-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: #6b7280;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
 }
@@ -606,7 +607,6 @@
     <div class="dt-header">
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
-          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala" title="Sort">⇅</button>
           <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama" title="Search">⌕</button>
           <div id="dt-search-wrap" class="dt-search-wrap">
             <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
