@@ -519,6 +519,21 @@
       border-color: rgba(224, 90, 90, 0.55);
       box-shadow: none;
     }
+#bdf-root .field-control.toggle {
+      border: none;
+      background: transparent;
+      min-height: auto;
+      padding: 0;
+      box-shadow: none;
+    }
+
+#bdf-root .field-control.toggle:hover,
+#bdf-root .field-control.toggle:focus-within {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+
 
 #bdf-root .field-input:not(textarea),
 #bdf-root select {
@@ -1108,7 +1123,7 @@
       flex: 1;
       min-width: 0;
       flex-wrap: nowrap;
-      overflow: hidden;
+      overflow: visible;
     }
 
 #bdf-root .more-actions {
@@ -1128,6 +1143,19 @@
       right: 0;
       left: auto;
       min-width: 170px;
+    }
+
+#bdf-root .action-main > #actionSplit {
+      order: 3;
+      margin-left: auto;
+    }
+
+#bdf-root .action-main > #toggleInlineEdit {
+      order: 1;
+    }
+
+#bdf-root .action-main > #moreActions {
+      order: 2;
     }
 
 #bdf-root .action-split {
@@ -1656,6 +1684,7 @@
         flex-wrap: nowrap;
         justify-content: flex-start;
         gap: 4px;
+        overflow: visible;
       }
 
 #bdf-root .action-trigger-btn {
@@ -2212,6 +2241,7 @@
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
+    const ENABLE_RUNTIME_LOGS = false;
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -3109,7 +3139,7 @@ function renderSubmitOutputs(payload) {
         "outputlist4:",
         listToText(safePayload.outputlist4)
       ].join("\n");
-      console.info("submitOutputs rendered", safePayload);
+
     }
 
     function buildSubmitOutputsPayload({ autosave = false, modeHint = "" } = {}) {
@@ -4145,7 +4175,7 @@ function renderSubmitOutputs(payload) {
     function loadJsonSafeToForm(kind, jsonObj) {
       if (!jsonObj || !state.config) return;
       const keyMap = buildFieldKeyMap();
-      console.info("loadJsonSafeToForm:start", { kind, keys: Object.keys(jsonObj || {}) });
+
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
@@ -4167,7 +4197,7 @@ function renderSubmitOutputs(payload) {
       if (state.config) {
         updateSubmitState(state.config);
       }
-      console.info("loadJsonSafeToForm:done", { kind, values: buildExportJson() });
+
     }
 
     function applyScenario({ name, column, human, ai }) {
@@ -4966,6 +4996,7 @@ function renderSubmitOutputs(payload) {
 
 
     function traceAutosave(label, payload = {}) {
+      if (!ENABLE_RUNTIME_LOGS) return;
       const snapshot = {
         label,
         time: new Date().toISOString(),
@@ -4997,6 +5028,7 @@ function renderSubmitOutputs(payload) {
 
 
     function logStartState(label, extra = {}) {
+      if (!ENABLE_RUNTIME_LOGS) return;
       const startSnapshot = readStartSignalSnapshot();
       const snapshot = {
         label,
@@ -5254,7 +5286,7 @@ function renderSubmitOutputs(payload) {
         return;
       }
       if (isFormSaving && !forceSubmit) {
-        console.info("submit skipped: saving lock active", { autosave });
+
         return;
       }
 
@@ -5304,8 +5336,8 @@ function renderSubmitOutputs(payload) {
         outputlist3Count: Array.isArray(submitOutputsPayload.outputlist3) ? submitOutputsPayload.outputlist3.length : -1,
         outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1
       });
-      console.info("submitOutputs payload", submitOutputsPayload);
-      console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
+
+
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
       renderSubmitOutputs(submitOutputsPayload);
 
@@ -6451,7 +6483,7 @@ function renderSubmitOutputs(payload) {
         const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
         const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
-          || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
+          || (!["boolean", "checkbox"].includes(normalizedType) && /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower));
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
         const isFileField = ["file", "multifile", "image"].includes(normalizedType);
@@ -6934,7 +6966,7 @@ function renderSubmitOutputs(payload) {
             if (!calendar.element.classList.contains("open")) openPopover();
           });
           dateInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === "Tab") {
+            if (event.key === "Enter" || event.key === "Tab" || event.key === "Escape") {
               closePopover();
             }
           });
@@ -7117,7 +7149,7 @@ function renderSubmitOutputs(payload) {
             if (!calendar.element.classList.contains("open")) openPopover();
           });
           datetimeInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === "Tab") {
+            if (event.key === "Enter" || event.key === "Tab" || event.key === "Escape") {
               closePopover();
             }
           });
@@ -7648,7 +7680,6 @@ function renderSubmitOutputs(payload) {
     function updateError(control, field) {
       const errorText = formEl.querySelector(`[data-error-for="${CSS.escape(field.key)}"]`);
       if (!errorText) {
-        console.warn("error element missing", { fieldKey: field.key, field });
         return;
       }
       const error = state.errors[field.key] || "";
@@ -7662,7 +7693,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function updateSubmitState(config) {
-      console.info(`[updateSubmitState:start] ${JSON.stringify({ fieldCount: (config.fields || []).length })}`);
+
       const isValid = (config.fields || []).every((field) => {
         let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
@@ -7674,7 +7705,7 @@ function renderSubmitOutputs(payload) {
         if (isFieldRequired(field)) {
           const fieldOk = !isEmptyValue(validationValue);
           if (!fieldOk) {
-            console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
+
           }
           return fieldOk;
         }
@@ -7687,7 +7718,7 @@ function renderSubmitOutputs(payload) {
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
-      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy })}`);
+
     }
 
     function focusFirstInvalid() {
@@ -7907,7 +7938,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#submitBtn", "click", () => {
-        console.info("submit button clicked");
+
         const submitOutputsPayload = buildSubmitOutputsPayload();
         renderSubmitOutputs(submitOutputsPayload);
       });
