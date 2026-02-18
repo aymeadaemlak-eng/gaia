@@ -435,13 +435,15 @@
   background: #fff !important;
 }
 
-#dynamic-table-wrapper .handsontable thead tr th:nth-child(2) {
-  border-left: 0 !important;
-  border-right: 1px solid #edf1f5 !important;
+#dynamic-table-wrapper .handsontable .ht_master thead th:first-child,
+#dynamic-table-wrapper .handsontable .ht_clone_left thead th:first-child,
+#dynamic-table-wrapper .handsontable .ht_clone_top_left_corner thead th {
+  border: 0 !important;
 }
 
-#dynamic-table-wrapper .handsontable tbody tr td:nth-child(2) {
-  border-right: 1px solid #edf1f5 !important;
+#dynamic-table-wrapper .handsontable thead tr th:nth-child(2) {
+  border-left: 0 !important;
+  border-right: 0 !important;
 }
 
 #dynamic-table-wrapper .handsontable tbody th.rowHeader,
