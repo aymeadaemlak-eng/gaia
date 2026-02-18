@@ -453,8 +453,9 @@
 
 #bdf-root .field-status-group {
       position: absolute;
-      top: -6px;
-      right: 8px;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -474,6 +475,18 @@
 #bdf-root .field-status-group .conflict-popover {
       top: calc(100% + 6px);
       right: 0;
+    }
+
+
+#bdf-root .field-control.with-status-group .field-input:not(textarea),
+#bdf-root .field-control.with-status-group select,
+#bdf-root .field-control.with-status-group textarea.field-input {
+      padding-right: 64px;
+    }
+
+#bdf-root .field-control.with-status-group.has-icon .field-input,
+#bdf-root .field-control.with-status-group.has-icon .field-input.is-date-input {
+      padding-right: 86px;
     }
 
 #bdf-root .control-stack {
@@ -1332,6 +1345,11 @@
 #bdf-root .edit-mode-toolbar {
   display: grid;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: #fff;
+  padding-bottom: 6px;
 }
 
 #bdf-root .edit-stage-select-wrap {
@@ -1382,7 +1400,7 @@
   border: 1px solid #CBD5E1;
   border-radius: 12px;
   padding-left: 36px;
-  padding-right: 12px;
+  padding-right: 34px;
   font-size: 13px;
   font-weight: 500;
   color: #0B1220;
@@ -3154,6 +3172,7 @@
         }
         traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
       } else {
+        stopEditModePayloadPolling();
         if (columnJson) {
           applyColumnJson(columnJson);
         } else if (state.config) {
@@ -4299,6 +4318,7 @@ function renderSubmitOutputs(payload) {
       const humanValue = humanData[fieldKey];
       const hasHuman = !isEmptyValue(humanValue);
       const hasConflict = hasAi && hasHuman && areValuesDifferent(humanValue, aiValue);
+      ref._hasAi = hasAi;
       ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
       ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
       ref.aiBadge.classList.toggle("is-passive", activeSource !== "ai" && hasAi);
@@ -5758,6 +5778,7 @@ function renderSubmitOutputs(payload) {
       if (lastStartParamWasTrue && !startSignal) {
         if (isEditPanelOpen) {
           isEditPanelOpen = false;
+          stopEditModePayloadPolling();
           applyVersionVisibility();
         }
         reconcileDirtyTracking("evaluateStartSignalTransition:close");
@@ -6270,6 +6291,18 @@ function renderSubmitOutputs(payload) {
       return true;
     }
 
+    function stopEditModePayloadPolling() {
+      if (editModePayloadPollTimer) {
+        clearInterval(editModePayloadPollTimer);
+        editModePayloadPollTimer = null;
+      }
+      if (editModeSlowPollTimer) {
+        clearInterval(editModeSlowPollTimer);
+        editModeSlowPollTimer = null;
+      }
+      editModeStablePollCount = 0;
+    }
+
     function ensureEditModePayloadPolling(forceEditMode = false) {
       if (!IS_EDITING_MODE && !forceEditMode && !isEditPanelOpen) return;
       const startFastPolling = () => {
@@ -6497,12 +6530,11 @@ function renderSubmitOutputs(payload) {
       const hasAnyConflict = refs.some((ref) => ref && ref._hasConflict);
       refs.forEach((ref) => {
         if (!ref || !ref.conflictChip) return;
+        const hasAi = Boolean(ref._hasAi);
         if (ref._hasConflict) {
           ref.conflictChip.style.display = "inline-flex";
           ref.conflictChip.classList.remove("is-spacer");
-          return;
-        }
-        if (hasAnyConflict) {
+        } else if (hasAnyConflict && hasAi) {
           ref.conflictChip.style.display = "inline-flex";
           ref.conflictChip.classList.add("is-spacer");
           if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
@@ -6510,6 +6542,14 @@ function renderSubmitOutputs(payload) {
           ref.conflictChip.style.display = "none";
           ref.conflictChip.classList.remove("is-spacer");
           if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
+        }
+
+        const showGroup = hasAi || ref._hasConflict || (hasAnyConflict && hasAi);
+        if (ref.statusGroup) {
+          ref.statusGroup.style.display = showGroup ? "inline-flex" : "none";
+        }
+        if (ref.control) {
+          ref.control.classList.toggle("with-status-group", showGroup);
         }
       });
     }
@@ -7830,7 +7870,8 @@ function renderSubmitOutputs(payload) {
           applyAiBtn,
           revertAiBtn,
           conflictChip,
-          conflictPopover
+          conflictPopover,
+          statusGroup
         };
         updateAiVisuals(field.key);
 
