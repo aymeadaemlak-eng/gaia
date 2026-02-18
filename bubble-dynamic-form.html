@@ -5042,6 +5042,13 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+    function isRemountRehydrateReadyForAutosave() {
+      const predictedObj = readCurrentPredictedDataObject();
+      const predictedKeyCount = predictedObj && typeof predictedObj === "object" ? Object.keys(predictedObj).length : 0;
+      if (predictedKeyCount === 0) return true;
+      return aiExplicitFieldKeys.size > 0;
+    }
+
 
     function safeStringify(value) {
       try {
@@ -5639,6 +5646,25 @@ function renderSubmitOutputs(payload) {
           forceSubmit,
           hasConfig: Boolean(state.config),
           queuedForConfigReady: true
+        });
+        isFormSaving = false;
+        return;
+      }
+      const shouldEnforceRemountReady = autosave && String(trigger || "").includes("start-close-remount");
+      if (shouldEnforceRemountReady && !isRemountRehydrateReadyForAutosave()) {
+        pendingSubmitUntilConfigReady = {
+          autosave,
+          forceSubmit,
+          trigger,
+          modeHint,
+          requestedAt: new Date().toISOString()
+        };
+        logPredictDebug("submit-deferred-remount-rehydrate-not-ready", {
+          trigger,
+          autosave,
+          forceSubmit,
+          aiExplicitFieldCount: aiExplicitFieldKeys.size,
+          predictedKeyCount: Object.keys(readCurrentPredictedDataObject() || {}).length
         });
         isFormSaving = false;
         return;
