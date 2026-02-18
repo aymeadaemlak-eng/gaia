@@ -15,6 +15,7 @@
   --dt-text: #1f2328;
   --dt-muted: #70757f;
   --dt-highlight: #ecf3ff;
+  --dt-row-header-width: 44px;
 }
 
 #dynamic-table-wrapper,
@@ -55,8 +56,8 @@
   justify-content: space-between;
   gap: 10px;
   padding: 5px 4px;
-  border-top: 1px solid rgba(15, 23, 42, 0.04);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 0;
+  border-bottom: 0;
   background: #fff;
 }
 
@@ -65,6 +66,20 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+#dynamic-table-wrapper .dt-toolbar-left {
+  padding-left: 0;
+}
+
+@media (min-width: 992px) {
+  #dynamic-table-wrapper .dt-toolbar-left {
+    padding-left: var(--dt-row-header-width);
+  }
+
+  #dynamic-table-wrapper .dt-toolbar-right {
+    padding-right: var(--dt-row-header-width);
+  }
 }
 
 #dynamic-table-wrapper .dt-icon-btn,
@@ -92,7 +107,7 @@
 }
 
 #dynamic-table-wrapper #dt-btn-search {
-  font-size: 21px;
+  font-size: 24px;
 }
 
 #dynamic-table-wrapper .dt-svg-icon {
@@ -124,6 +139,22 @@
 #dynamic-table-wrapper .dt-action-btn-primary:hover {
   background: #1f75cc;
   color: #fff;
+}
+
+#dynamic-table-wrapper #dt-btn-new {
+  height: 30px;
+  padding: 0 10px;
+}
+
+#dynamic-table-wrapper #dt-btn-import,
+#dynamic-table-wrapper #dt-btn-download {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+#dynamic-table-wrapper #dt-btn-import + #dt-btn-download {
+  margin-left: -6px;
 }
 
 #dynamic-table-wrapper .dt-search-wrap {
@@ -383,9 +414,8 @@
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  border: 1px solid var(--dt-border);
-  border-top: 0;
-  border-radius: 0 0 12px 12px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
   background: var(--dt-surface);
 }
@@ -395,6 +425,27 @@
   height: 100% !important;
 }
 
+#dynamic-table-wrapper #hot-container .handsontable,
+#dynamic-table-wrapper #hot-container .wtHolder,
+#dynamic-table-wrapper #hot-container .wtHider,
+#dynamic-table-wrapper #hot-container .wtSpreader {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#dynamic-table-wrapper #hot-container .handsontable thead th:first-child,
+#dynamic-table-wrapper #hot-container .handsontable tbody td:first-child,
+#dynamic-table-wrapper #hot-container .handsontable tbody th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_top th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_left th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_top_left_corner th:first-child {
+  border-left: 0 !important;
+}
+
+#dynamic-table-wrapper #hot-container .wtBorder {
+  border-left-width: 0 !important;
+}
+
 #dynamic-table-wrapper .handsontable th {
   background: #fff !important;
   color: #374151 !important;
@@ -402,6 +453,84 @@
   border-right: 0 !important;
   border-top: 0 !important;
   border-bottom: 1px solid #eaecef !important;
+}
+
+#dynamic-table-wrapper .handsontable th.rowHeader {
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  background: #fff !important;
+}
+
+#dynamic-table-wrapper .handsontable .ht_master thead th:first-child,
+#dynamic-table-wrapper .handsontable .ht_clone_left thead th:first-child,
+#dynamic-table-wrapper .handsontable .ht_clone_top_left_corner thead th {
+  border: 0 !important;
+}
+
+#dynamic-table-wrapper .handsontable thead tr th:nth-child(2) {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody th.rowHeader,
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .relative,
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .rowHeader {
+  height: 34px !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .relative {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#dynamic-table-wrapper .handsontable th.rowHeader {
+  width: var(--dt-row-header-width) !important;
+  min-width: var(--dt-row-header-width) !important;
+  padding: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody tr > th {
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody tr > th .relative {
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody tr > th .rowHeader {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  height: 100%;
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .relative,
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .rowHeader {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+}
+
+#dynamic-table-wrapper .handsontable tbody th.rowHeader .rowHeader {
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+
+#dynamic-table-wrapper .handsontable .ht_clone_left th,
+#dynamic-table-wrapper .handsontable .ht_clone_top_left_corner th {
+  border-right: 0 !important;
+  border-bottom: 0 !important;
 }
 
 #dynamic-table-wrapper .handsontable td {
@@ -606,7 +735,6 @@
     <div class="dt-header">
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
-          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala" title="Sort">⇅</button>
           <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama" title="Search">⌕</button>
           <div id="dt-search-wrap" class="dt-search-wrap">
             <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
@@ -1323,6 +1451,7 @@
         return renderColumnHeader(col);
       },
       rowHeaders: true,
+      rowHeaderWidth: 44,
       height: getAdaptiveTableHeight(),
       width: '100%',
       manualColumnResize: true,
@@ -1331,7 +1460,7 @@
       filters: true,
       dropdownMenu: false,
       columnSorting: {
-        indicator: true,
+        indicator: false,
         headerAction: false
       },
       selectionMode: 'multiple',
