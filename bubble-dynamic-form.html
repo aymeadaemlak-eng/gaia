@@ -135,8 +135,16 @@
       --amount-input-max-width: 268px;
       --field-control-height: 32px;
       --form-container-max-width: 464px;
-      font-size: 14px;
+      --row-height: 30px;
+      --row-gap: 12px;
+      --row-pad-x: 6px;
+      --row-extended-gap: 4px;
+      --row-extended-pad-y: 1.5px;
+      font-size: 16px;
       color: var(--text);
+      min-height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
     }
 
     #bdf-root,
@@ -144,9 +152,37 @@
       box-sizing: border-box;
     }
 
+
+    /* Firefox */
+    #bdf-root * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100,116,139,.55) transparent;
+    }
+
+    /* Chrome / Edge / Safari */
+    #bdf-root *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    #bdf-root *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #bdf-root *::-webkit-scrollbar-thumb {
+      background-color: rgba(100,116,139,.45);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    #bdf-root *::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(100,116,139,.70);
+    }
+
+    html,
     body {
       margin: 0;
       padding: 0;
+      height: 100%;
+      overflow: hidden;
     }
 
 
@@ -221,9 +257,9 @@
 
     #bdf-root .field-wrapper {
       display: grid;
-      gap: var(--field-gap-internal);
-      padding: var(--form-vertical-padding) 0;
-      margin-bottom: 4px;
+      gap: 0;
+      padding: 0;
+      margin-bottom: 0;
     }
 
     #bdf-root .field-wrapper + .field-wrapper {
@@ -237,20 +273,20 @@
     #bdf-root .field-row {
       display: flex;
       align-items: center;
-      gap: 12px;
-      height: 40px;
-      min-height: 40px;
-      padding: 0 12px;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      gap: var(--row-gap);
+      height: var(--row-height);
+      min-height: var(--row-height);
+      padding: 0 var(--row-pad-x);
+      border-bottom: none;
     }
 
     #bdf-root .field-row.is-file-field {
       flex-direction: column;
-      gap: 6px;
+      gap: var(--row-extended-gap);
       align-items: stretch;
       height: auto;
       min-height: 0;
-      padding: 6px 0;
+      padding: var(--row-extended-pad-y) 0;
     }
 
     #bdf-root .field-row.is-file-field .field-label {
@@ -279,10 +315,11 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
-      height: 680px;
+      height: min(680px, calc(100dvh - 24px));
+      max-height: calc(100dvh - 24px);
       overflow-y: auto;
       overflow-x: hidden;
-      padding-right: 4px;
+      padding-right: 0;
       margin-inline: auto;
     }
 
@@ -318,7 +355,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 18px;
+      line-height: 16px;
     }
 
     #bdf-root .label-top {
@@ -332,10 +369,11 @@
     }
 
     #bdf-root .label-text {
-      font-weight: 500;
+      font-weight: 600;
       font-size: 14px;
       color: #6b7280;
-      line-height: 18px;
+      line-height: 16px;
+      letter-spacing: 0.1px;
       margin: 0;
       padding: 0;
       white-space: nowrap;
@@ -374,41 +412,94 @@
     }
 
 #bdf-root .ai-badge {
+      position: relative;
+      top: 0;
+      right: 0;
+      width: 22px;
+      height: 22px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      border: 1px solid rgba(37, 99, 235, 0.25);
-      background: rgba(37, 99, 235, 0.08);
+      justify-content: center;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(255, 255, 255, 0.94);
       border-radius: 999px;
-      padding: 1px 8px;
-      font-size: 0.68rem;
+      padding: 0;
       cursor: pointer;
-      color: var(--primary);
-      white-space: nowrap;
-      position: relative;
-      overflow: hidden;
+      color: #475569;
+      z-index: 3;
     }
 
 #bdf-root .ai-badge img {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       display: inline-block;
       object-fit: contain;
     }
 
 #bdf-root .ai-badge.is-active {
-      border-color: rgba(34, 197, 94, 0.4);
-      background: rgba(34, 197, 94, 0.12);
-      color: #15803d;
+      border-color: rgba(37, 99, 235, 0.35);
+      background: rgba(239, 246, 255, 0.96);
+      color: #1d4ed8;
     }
 
 #bdf-root .ai-badge.is-passive {
-      opacity: 0.7;
-      filter: grayscale(0.2);
+      opacity: 0.95;
+      filter: none;
     }
 
 #bdf-root .ai-badge::after {
       content: none;
+    }
+
+#bdf-root .field-status-group {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 4;
+    }
+
+#bdf-root .field-status-group .conflict-chip {
+      margin: 0;
+    }
+
+#bdf-root .field-status-group .conflict-chip.is-spacer {
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+#bdf-root .field-status-group .conflict-popover {
+      top: calc(100% + 6px);
+      right: 0;
+    }
+
+
+#bdf-root .field-control.with-status-group .field-input:not(textarea),
+#bdf-root .field-control.with-status-group select,
+#bdf-root .field-control.with-status-group textarea.field-input {
+      padding-right: 76px;
+    }
+
+#bdf-root .field-control.with-status-group.has-icon .field-input,
+#bdf-root .field-control.with-status-group.has-icon .field-input.is-date-input {
+      padding-right: 98px;
+    }
+
+#bdf-root .field-control.with-status-group select.field-input,
+#bdf-root .field-control.with-status-group select {
+      padding-right: 98px;
+    }
+
+#bdf-root .field-control.toggle.with-status-group .inline-row {
+      padding-right: 78px;
+    }
+
+#bdf-root .field-control.toggle .field-status-group {
+      right: 4px;
     }
 
 #bdf-root .control-stack {
@@ -450,7 +541,7 @@
 
 #bdf-root .field-control.ai-active .field-input {
       background: transparent;
-      padding-right: 50px;
+      padding-right: 36px;
     }
 
 #bdf-root .ai-pill {
@@ -481,6 +572,21 @@
       border-color: rgba(224, 90, 90, 0.55);
       box-shadow: none;
     }
+#bdf-root .field-control.toggle {
+      border: none;
+      background: transparent;
+      min-height: auto;
+      padding: 0;
+      box-shadow: none;
+    }
+
+#bdf-root .field-control.toggle:hover,
+#bdf-root .field-control.toggle:focus-within {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+
 
 #bdf-root .field-input:not(textarea),
 #bdf-root select {
@@ -493,7 +599,7 @@
       font-size: 14px;
       font-weight: 500;
       background: transparent;
-      color: #111827;
+      color: #334155;
       outline: none;
       line-height: 20px;
       margin: 0;
@@ -530,7 +636,7 @@
       font-size: 14px;
       font-weight: 500;
       background: transparent;
-      color: #111827;
+      color: #334155;
       outline: none;
       margin: 0;
       box-sizing: border-box;
@@ -540,8 +646,8 @@
       align-items: flex-start;
       height: auto;
       min-height: 0;
-      padding-top: 6px;
-      padding-bottom: 6px;
+      padding-top: var(--row-extended-pad-y);
+      padding-bottom: var(--row-extended-pad-y);
     }
 
 #bdf-root .field-row.is-multiline-field .field-label {
@@ -557,7 +663,7 @@
 
 #bdf-root .field-row.is-multiline-field .control-stack {
       align-items: stretch;
-      min-height: 72px;
+      min-height: 64px;
     }
 
 #bdf-root .field-icon-button {
@@ -703,7 +809,25 @@
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
+      min-width: 0;
     }
+#bdf-root .inline-row > span {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+#bdf-root .inline-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: #2563eb;
+      flex: 0 0 auto;
+    }
+
 
 #bdf-root button {
       border: none;
@@ -769,15 +893,45 @@
       border-radius: 999px;
       background: rgba(37, 99, 235, 0.1);
       color: var(--primary);
-      font-size: 0.7rem;
+      font-size: 0.88rem;
       font-weight: 600;
     }
 
 #bdf-root .chip button {
       padding: 2px 6px;
       border-radius: 999px;
-      font-size: 0.7rem;
+      font-size: 0.82rem;
       background: rgba(37, 99, 235, 0.2);
+    }
+
+#bdf-root .field-control.multiselect-control {
+      display: grid;
+      align-items: start;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+
+#bdf-root .multiselect-options {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+    }
+
+#bdf-root .multiselect-option {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+#bdf-root .multiselect-option > span {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      max-width: none;
     }
 
 #bdf-root .file-drop {
@@ -877,21 +1031,39 @@
       cursor: pointer;
     }
 
+#bdf-root .conflict-inline-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      margin-top: 2px;
+    }
+
 #bdf-root .conflict-chip {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--danger);
+      background: #FEF2F2;
+      color: #DC2626;
       border-radius: 999px;
-      padding: 2px 8px;
-      font-size: 0.7rem;
+      padding: 2px 6px;
+      width: 24px;
+      height: 24px;
+      justify-content: center;
+      font-size: 14px;
       font-weight: 600;
+      opacity: 0.8;
       cursor: pointer;
+      line-height: 1.2;
+    }
+
+#bdf-root .conflict-chip:hover {
+      opacity: 1;
     }
 
 #bdf-root .conflict-popover {
       position: absolute;
-      top: 100%;
+      top: calc(100% + 6px);
       right: 0;
-      margin-top: 6px;
+      margin-top: 0;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -969,13 +1141,15 @@
 #bdf-root .toggle {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 0;
       cursor: pointer;
     }
 
 #bdf-root .toggle input {
-      width: 40px;
-      height: 22px;
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: #2563eb;
     }
 
 
@@ -986,9 +1160,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 8px;
       min-height: 58px;
-      padding: 10px 12px;
+      height: 58px;
+      padding: 8px 10px;
       border: 1px solid #e4e8ee;
       border-radius: 12px;
       background: #f8fafc;
@@ -996,13 +1171,77 @@
       margin-bottom: 12px;
     }
 
+#bdf-root #formContainer {
+      position: relative;
+    }
+
+#bdf-root .form-refresh-loading {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(2px);
+      z-index: 999;
+      padding: 16px;
+      text-align: center;
+    }
+
+#bdf-root .form-refresh-loading.open {
+      display: flex;
+    }
+
+#bdf-root .form-refresh-loading p {
+      margin: 0;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
 #bdf-root .action-main {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 8px;
+      gap: 6px;
       flex: 1;
       min-width: 0;
+      flex-wrap: nowrap;
+      overflow: visible;
+    }
+
+#bdf-root .more-actions {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+#bdf-root .more-actions > .ghost {
+      min-width: 40px;
+      padding: 10px 12px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+#bdf-root .more-actions .action-menu {
+      right: 0;
+      left: auto;
+      min-width: 170px;
+    }
+
+#bdf-root .action-main > #actionSplit {
+      order: 1;
+    }
+
+#bdf-root .action-main > #toggleInlineEdit {
+      order: 2;
+      margin-left: auto;
+    }
+
+#bdf-root .action-main > #moreActions {
+      order: 3;
     }
 
 #bdf-root .action-split {
@@ -1024,10 +1263,14 @@
 #bdf-root .action-trigger-btn {
       background: #ffffff;
       color: #0f172a;
-      min-width: 190px;
+      min-width: 150px;
+      max-width: 150px;
       text-align: left;
       font-weight: 600;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
 #bdf-root .action-chevron-btn {
@@ -1115,6 +1358,11 @@
 #bdf-root .edit-mode-toolbar {
   display: grid;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: #fff;
+  padding-bottom: 6px;
 }
 
 #bdf-root .edit-stage-select-wrap {
@@ -1134,11 +1382,66 @@
 
 #bdf-root .edit-search-input-wrap {
   position: relative;
+  --field-search-icon-color: #64748B;
+}
+
+#bdf-root .field-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+}
+
+#bdf-root .field-search-input {
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+  padding-left: 40px;
+  padding-right: 34px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1220;
+  box-shadow: none;
+}
+
+#bdf-root .field-search-input::placeholder {
+  color: #94A3B8;
+  opacity: 1;
+}
+
+#bdf-root .edit-search-input-wrap:hover .field-search-input:not(:focus) {
+  border-color: #94A3B8;
+  background: #FFFFFF;
+}
+
+#bdf-root .field-search-input:focus {
+  outline: none;
+  border-color: #93C5FD;
+  box-shadow: 0 0 0 3px #DBEAFE;
+  background: #FFFFFF;
+}
+
+#bdf-root .edit-search-input-wrap:focus-within {
+  --field-search-icon-color: #2563EB;
+}
+
+#bdf-root .edit-search-input-wrap:focus-within .field-search-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
 }
 
 #bdf-root .edit-search-clear {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   border: 0;
@@ -1271,6 +1574,20 @@
 
 #bdf-root .edit-stage-fields.search-transition {
   animation: bdf-search-shift 160ms ease;
+}
+
+#bdf-root #dynamicForm.search-transition {
+  animation: bdf-search-shift 160ms ease;
+}
+
+#bdf-root .edit-mode-root.search-only .edit-stage-select-wrap,
+#bdf-root .edit-mode-root.search-only #editModeLoading,
+#bdf-root .edit-mode-root.search-only #editStageLayout {
+  display: none !important;
+}
+
+#bdf-root .edit-mode-root.search-only {
+  margin-bottom: 8px;
 }
 
 @keyframes bdf-search-shift {
@@ -1489,7 +1806,7 @@
       }
 
 #bdf-root .field-row {
-        gap: 10px;
+        gap: 12px;
       }
 
 #bdf-root .field-input,
@@ -1508,17 +1825,31 @@
       }
 
 #bdf-root #formContainer {
-        height: 680px;
-        max-height: 85vh;
+        height: calc(100dvh - 12px);
+        max-height: calc(100dvh - 12px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 0;
+        -webkit-overflow-scrolling: touch;
       }
 
 #bdf-root .action-bar {
-        align-items: flex-start;
+        align-items: center;
+        height: 54px;
+        min-height: 54px;
+        padding: 6px 8px;
       }
 
 #bdf-root .action-main {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-start;
+        gap: 4px;
+        overflow: visible;
+      }
+
+#bdf-root .action-trigger-btn {
+        min-width: 130px;
+        max-width: 130px;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -1557,24 +1888,43 @@
 
 #bdf-root #formContainer {
         max-width: none;
-        margin-inline: 0;
+        margin-inline: auto;
         padding: 0;
+        height: calc(100dvh - 10px);
+        max-height: calc(100dvh - 10px);
+        overflow-y: auto;
+        overflow-x: hidden;
       }
 
 #bdf-root .edit-mode-root,
 #bdf-root .edit-stage-panel,
 #bdf-root .field-row {
-        font-size: 12.5px;
+        font-size: 12px;
       }
 
 #bdf-root .field-row {
         padding-left: 0;
         padding-right: 0;
+        min-height: 26px;
+      }
+
+#bdf-root .label-text {
+        font-size: 12.5px;
+        line-height: 15px;
+        letter-spacing: 0.08px;
+      }
+
+#bdf-root .field-input:not(textarea),
+#bdf-root textarea.field-input,
+#bdf-root select,
+#bdf-root .multiselect-option,
+#bdf-root .chip {
+        font-size: 12.5px;
       }
 
 #bdf-root .field-label {
-        flex-basis: clamp(122px, 38vw, 152px);
-        max-width: clamp(122px, 38vw, 152px);
+        flex-basis: clamp(116px, 36vw, 144px);
+        max-width: clamp(116px, 36vw, 144px);
       }
 
 #bdf-root .edit-stage-panel {
@@ -1766,6 +2116,10 @@
 
     <section class="card">
       <div id="formContainer">
+        <div id="formRefreshLoading" class="form-refresh-loading" aria-live="polite" aria-hidden="true">
+          <span class="edit-mode-spinner" aria-hidden="true"></span>
+          <p>İşlem kaydediliyor, güncel veriler bekleniyor…</p>
+        </div>
         <div id="actionBar" class="action-bar">
           <div class="action-main">
             <div class="action-split" id="actionSplit">
@@ -1774,6 +2128,13 @@
               <div id="actionMenu" class="action-menu"></div>
             </div>
             <button id="toggleInlineEdit" type="button" class="ghost" style="display:none;">Show more</button>
+            <div class="more-actions" id="moreActions" style="display:none;">
+              <button id="moreActionsBtn" type="button" class="ghost" aria-label="Diğer işlemler">⋯</button>
+              <div id="moreActionsMenu" class="action-menu">
+                <button id="addFieldBtn" type="button" class="action-menu-item">Add field</button>
+                <button id="manageFieldsBtn" type="button" class="action-menu-item">Manage fields</button>
+              </div>
+            </div>
             <button id="predictedActionBtn" type="button" class="predicted-action-btn" style="display:none;"></button>
             <span id="actionEmptyMsg" class="action-empty-msg" style="display:none;">Aksiyon yok. Kullanıcıya lütfen sürece bir buton ekleyin uyarısı verilir.</span>
           </div>
@@ -1785,7 +2146,8 @@
               <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
             </div>
             <div class="edit-search-input-wrap">
-              <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
+              <span class="field-search-icon" aria-hidden="true"></span>
+              <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara (ad / id / header)" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
           </div>
@@ -2002,6 +2364,7 @@
     };
 
     let columnJson = null;
+    let restoreColumnJson = null;
     let humanData = {};
     let aiData = {};
     let sourceByField = {};
@@ -2018,6 +2381,8 @@
     const AUTOSAVE_DEBOUNCE_MS = 2000;
     let lastObservedUniqueId = "";
     let hasPendingUniqueIdSubmit = false;
+    let isWaitingForServerRefresh = false;
+    let submitRefreshSignature = "";
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
@@ -2046,6 +2411,7 @@
     const START_FLOW_STORAGE_KEY = "bdf:start-flow-state";
     const START_CHANGED_TRACKING_STORAGE_KEY = "bdf:start-changed-tracking";
     const UNIQUE_ID_STORAGE_KEY = "bdf:last-observed-uniqueid";
+    const ENABLE_RUNTIME_LOGS = false;
 
     const DEFAULT_CREATE_ACTION_LABEL = "Create";
     const DEFAULT_ACTION_PLACEHOLDER_LABEL = "Aksiyon seç";
@@ -2281,6 +2647,7 @@
       if (columnWarning) columnWarning.style.display = "none";
       if (formContainer) formContainer.style.display = "block";
       renderForm(state.config);
+      applyVersionVisibility();
       flushPendingSubmitAfterConfigReady();
     }
 
@@ -2317,6 +2684,7 @@
     const editStageFields = byId("editStageFields");
     const submitBtn = byId("submitBtn");
     const clearBtn = byId("clearBtn");
+    const formRefreshLoading = byId("formRefreshLoading");
     const summaryBox = byId("summaryBox");
     const formContainer = byId("formContainer");
     const formActions = byId("formActions");
@@ -2327,6 +2695,11 @@
     const actionMenu = byId("actionMenu");
     const predictedActionBtn = byId("predictedActionBtn");
     const toggleInlineEditBtn = byId("toggleInlineEdit");
+    const moreActions = byId("moreActions");
+    const moreActionsBtn = byId("moreActionsBtn");
+    const moreActionsMenu = byId("moreActionsMenu");
+    const addFieldBtn = byId("addFieldBtn");
+    const manageFieldsBtn = byId("manageFieldsBtn");
     const actionEmptyMsg = byId("actionEmptyMsg");
     const consoleEl = byId("eventConsole");
     const submitOutputsEl = byId("submitOutputs");
@@ -2626,7 +2999,8 @@
         rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
       if (editModeRoot) {
-        editModeRoot.style.display = isEditUiActive ? "grid" : "none";
+        editModeRoot.style.display = state.config ? "grid" : "none";
+        editModeRoot.classList.toggle("search-only", !isEditUiActive);
       }
       if (isEditUiActive && editSearchInput) {
         requestAnimationFrame(() => {
@@ -2641,7 +3015,7 @@
         setEditModeLoading(true, "Edit verileri yükleniyor…");
       }
       if (actionBar) {
-        actionBar.style.display = isEditUiActive ? "none" : "";
+        actionBar.style.display = IS_EDITING_MODE ? "none" : "";
       }
       if (formEl) {
         formEl.style.display = isEditUiActive ? "none" : "grid";
@@ -2682,7 +3056,7 @@
       consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 
-    
+
     function getPredictedActionName() {
       const candidate =
         MANUAL_PREDICTED_JSON?.predictedAction
@@ -2694,6 +3068,43 @@
 
     function closeActionMenu() {
       if (actionMenu) actionMenu.classList.remove("open");
+    }
+
+    function openActionMenu() {
+      if (!actionMenu || !Array.isArray(actionOptions) || !actionOptions.length) return;
+      actionMenu.classList.add("open");
+    }
+
+    function requiresExplicitActionSelection() {
+      return hasExistingBubbleData() && Array.isArray(actionOptions) && actionOptions.length > 0;
+    }
+
+    function isActionSelectionValid() {
+      if (!requiresExplicitActionSelection()) return true;
+      return Boolean(String(selectedActionId || "").trim());
+    }
+
+    function setFormRefreshLoading(active, message = "") {
+      const nextActive = Boolean(active);
+      isWaitingForServerRefresh = nextActive;
+      if (formRefreshLoading) {
+        formRefreshLoading.classList.toggle("open", nextActive);
+        formRefreshLoading.setAttribute("aria-hidden", nextActive ? "false" : "true");
+        const textNode = formRefreshLoading.querySelector("p");
+        if (textNode && message) textNode.textContent = message;
+      }
+      if (submitBtn) submitBtn.disabled = nextActive;
+      if (clearBtn) clearBtn.disabled = nextActive;
+      if (actionTriggerBtn) actionTriggerBtn.disabled = nextActive;
+      if (actionChevronBtn) actionChevronBtn.disabled = nextActive || !(Array.isArray(actionOptions) && actionOptions.length > 0);
+    }
+
+    function canRefreshLoadingStop() {
+      if (!isWaitingForServerRefresh) return true;
+      const currentSignature = readCurrentBubbleDataSignature();
+      if (!currentSignature) return true;
+      if (!submitRefreshSignature) return true;
+      return currentSignature !== submitRefreshSignature;
     }
 
     function canOpenInlineEditPanel() {
@@ -2745,10 +3156,13 @@
     function updateInlineEditToggleUi() {
       if (!toggleInlineEditBtn) return;
       const canOpen = canOpenInlineEditPanel();
-      const shouldShow = canOpen || isEditPanelOpen;
+      const shouldShow = canOpen || isEditPanelOpen || hasEnteredInlineEditPanel;
       toggleInlineEditBtn.style.display = shouldShow ? "inline-flex" : "none";
       toggleInlineEditBtn.disabled = !canOpen && !isEditPanelOpen;
       toggleInlineEditBtn.textContent = isEditPanelOpen ? "Show less" : "Show more";
+      if (moreActions) {
+        moreActions.style.display = shouldShow ? "inline-flex" : "none";
+      }
     }
 
     function setInlineEditPanelOpen(nextOpen) {
@@ -2772,7 +3186,22 @@
         }
         traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
       } else {
-        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({}));
+        stopEditModePayloadPolling();
+        const restoreJson = restoreColumnJson || columnJson;
+        if (restoreJson) {
+          applyColumnJson(restoreJson, { persistRestore: true });
+        } else if (state.config) {
+          renderForm(state.config);
+        }
+        if (editSearchInput && String(editSearchInput.value || "").trim()) {
+          runColumnSearchRender(editSearchInput.value);
+        }
+        const dirtyNow = reconcileDirtyTracking("inline-toggle-close");
+        const shouldAutosaveOnInlineClose = (dirtyNow || hasChangesSinceStartOpen || changedFieldKeys.size > 0) && !isFormSaving;
+        if (shouldAutosaveOnInlineClose) {
+          runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "inline-toggle-close", modeHint: getSubmitModeHint() });
+        }
+        traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({ shouldAutosaveOnInlineClose, dirtyNow }));
       }
       evaluateEditingSignalTransition();
     }
@@ -2782,11 +3211,11 @@
       syncDefaultActionLabelFromData();
       const safeSelectedName = String(selectedActionName || getDefaultActionLabel()).trim() || getDefaultActionLabel();
       if (actionTriggerBtn) {
-        actionTriggerBtn.disabled = false;
+        actionTriggerBtn.disabled = isWaitingForServerRefresh;
         actionTriggerBtn.textContent = safeSelectedName;
       }
       if (actionChevronBtn) {
-        actionChevronBtn.disabled = !hasOptions;
+        actionChevronBtn.disabled = isWaitingForServerRefresh || !hasOptions;
         actionChevronBtn.style.display = hasOptions ? "inline-flex" : "none";
       }
       if (actionEmptyMsg) {
@@ -2814,6 +3243,12 @@
     }
 
     function triggerSelectedAction() {
+      if (requiresExplicitActionSelection() && !isActionSelectionValid()) {
+        selectedActionName = DEFAULT_ACTION_PLACEHOLDER_LABEL;
+        updateActionBarUi();
+        openActionMenu();
+        return;
+      }
       triggeredActionUniqueId = selectedActionId || "";
       emit("onActionTrigger", {
         selectedActionId,
@@ -2891,13 +3326,14 @@ function renderSubmitOutputs(payload) {
         "outputlist4:",
         listToText(safePayload.outputlist4)
       ].join("\n");
-      console.info("submitOutputs rendered", safePayload);
+
     }
 
     function buildSubmitOutputsPayload({ autosave = false, modeHint = "" } = {}) {
       const endTimestamp = new Date().toISOString();
       const startTimestamp = taskStartTimestamp || endTimestamp;
-      const baseOutput4 = buildOutput4String() || "";
+      const photoPayload = buildOutput4String();
+      const baseOutput4 = photoPayload === null ? "null" : String(photoPayload || "");
       const hasBubbleData = hasExistingBubbleData();
       const effectiveMode = String(modeHint || "").trim().toLowerCase();
       const configMode = String(state.config?.mode || "").trim().toLowerCase();
@@ -2938,6 +3374,13 @@ function renderSubmitOutputs(payload) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function truncateLabelText(value, maxChars = 36) {
+      const text = String(value ?? "").trim();
+      if (!text) return "";
+      if (text.length <= maxChars) return text;
+      return `${text.slice(0, maxChars - 1)}…`;
     }
 
     function getCurrentDateTime(config) {
@@ -3094,10 +3537,12 @@ function renderSubmitOutputs(payload) {
       header.className = "picker-header";
       const prevBtn = document.createElement("button");
       prevBtn.type = "button";
+      prevBtn.tabIndex = -1;
       prevBtn.className = "picker-nav";
       prevBtn.textContent = "‹";
       const nextBtn = document.createElement("button");
       nextBtn.type = "button";
+      nextBtn.tabIndex = -1;
       nextBtn.className = "picker-nav";
       nextBtn.textContent = "›";
       const title = document.createElement("span");
@@ -3110,10 +3555,12 @@ function renderSubmitOutputs(payload) {
       actions.className = "picker-actions";
       const todayBtn = document.createElement("button");
       todayBtn.type = "button";
+      todayBtn.tabIndex = -1;
       todayBtn.className = "ghost";
       todayBtn.textContent = quickActionLabel;
       const closeBtn = document.createElement("button");
       closeBtn.type = "button";
+      closeBtn.tabIndex = -1;
       closeBtn.className = "ghost";
       closeBtn.textContent = "Kapat";
       actions.append(todayBtn, closeBtn);
@@ -3157,6 +3604,7 @@ function renderSubmitOutputs(payload) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "picker-day";
+          button.tabIndex = -1;
           button.textContent = String(day);
           if (dateValue === todayValue) button.classList.add("is-today");
           if (dateValue === selectedDate) button.classList.add("is-selected");
@@ -3499,8 +3947,8 @@ function renderSubmitOutputs(payload) {
     const typeMetaMap = {
       text: { iconKey: "text", label: "Text" },
       textarea: { iconKey: "text", label: "Textarea" },
-      email: { iconKey: "text", label: "Email" },
-      phone: { iconKey: "text", label: "Phone" },
+      email: { iconKey: "mail", label: "Email" },
+      phone: { iconKey: "phone", label: "Phone" },
       url: { iconKey: "text", label: "URL" },
       integer: { iconKey: "hash", label: "Integer" },
       number: { iconKey: "hash", label: "Number" },
@@ -3520,7 +3968,7 @@ function renderSubmitOutputs(payload) {
     const displayTypeMetaMap = {
       "text (long)": { iconKey: "text", label: "Text (long)" },
       "multiline text": { iconKey: "text", label: "Multiline text" },
-      "e-mail": { iconKey: "text", label: "E-mail" },
+      "e-mail": { iconKey: "mail", label: "E-mail" },
       "image&pdf": { iconKey: "paperclip", label: "Image&Pdf" },
       reference: { iconKey: "text", label: "Reference" },
       embed: { iconKey: "text", label: "Embed" },
@@ -3564,6 +4012,34 @@ function renderSubmitOutputs(payload) {
           circle.setAttribute("r", "9");
           svg.appendChild(circle);
           setPath("M12 7v5l3 3");
+          break;
+        case "phone":
+          setPath("M6.5 4.5h2.6l1.2 3.2-1.7 1.1a15.2 15.2 0 0 0 6.8 6.8l1.1-1.7 3.2 1.2v2.6a1.5 1.5 0 0 1-1.7 1.5A16.5 16.5 0 0 1 4.9 6.2 1.5 1.5 0 0 1 6.5 4.5z");
+          break;
+        case "mail":
+          setPath("M4 7h16v10H4z");
+          const mailPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          mailPath.setAttribute("d", "M4 8l8 6 8-6");
+          mailPath.setAttribute("stroke", "currentColor");
+          mailPath.setAttribute("stroke-width", "1.8");
+          mailPath.setAttribute("stroke-linecap", "round");
+          mailPath.setAttribute("stroke-linejoin", "round");
+          mailPath.setAttribute("fill", "none");
+          svg.appendChild(mailPath);
+          break;
+        case "user":
+          circle.setAttribute("cx", "12");
+          circle.setAttribute("cy", "8");
+          circle.setAttribute("r", "3");
+          svg.appendChild(circle);
+          const shoulder = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          shoulder.setAttribute("d", "M5 19c1.8-3 4.1-4.5 7-4.5S17.2 16 19 19");
+          shoulder.setAttribute("stroke", "currentColor");
+          shoulder.setAttribute("stroke-width", "1.8");
+          shoulder.setAttribute("stroke-linecap", "round");
+          shoulder.setAttribute("stroke-linejoin", "round");
+          shoulder.setAttribute("fill", "none");
+          svg.appendChild(shoulder);
           break;
         case "check":
           setPath("M5 12l4 4 10-10");
@@ -3862,19 +4338,31 @@ function renderSubmitOutputs(payload) {
       const humanValue = humanData[fieldKey];
       const hasHuman = !isEmptyValue(humanValue);
       const hasConflict = hasAi && hasHuman && areValuesDifferent(humanValue, aiValue);
+      ref._hasAi = hasAi;
       ref.aiBadge.style.display = hasAi ? "inline-flex" : "none";
       ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
       ref.aiBadge.classList.toggle("is-passive", activeSource !== "ai" && hasAi);
       ref.control.classList.toggle("ai-active", activeSource === "ai" && hasAi);
-      ref.aiPill.style.display = activeSource === "ai" && hasAi ? "inline-flex" : "none";
+      ref.aiPill.style.display = "none";
+      const badgeIcon = ref.aiBadge.querySelector("img, svg");
+      if (badgeIcon) {
+        if (activeSource === "ai") {
+          badgeIcon.outerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" />`;
+          ref.aiBadge.title = "İnsan moduna geç";
+        } else {
+          badgeIcon.outerHTML = "";
+          ref.aiBadge.append(renderIcon("user"));
+          ref.aiBadge.title = "AI'ye dön";
+        }
+      }
       if (ref.applyAiBtn) {
-        ref.applyAiBtn.style.display = !hasHuman && hasAi ? "inline-flex" : "none";
+        ref.applyAiBtn.style.display = "none";
       }
       if (ref.revertAiBtn) {
-        ref.revertAiBtn.style.display = hasHuman && hasAi && activeSource !== "ai" ? "inline-flex" : "none";
+        ref.revertAiBtn.style.display = "none";
       }
       if (ref.conflictChip) {
-        ref.conflictChip.style.display = hasConflict ? "inline-flex" : "none";
+        ref._hasConflict = hasConflict;
       }
       if (ref.conflictPopover) {
         if (hasConflict) {
@@ -3884,6 +4372,7 @@ function renderSubmitOutputs(payload) {
           ref.conflictPopover.classList.remove("open");
         }
       }
+      refreshConflictSlotLayout();
     }
 
     function updateFieldDisplayValue(fieldKey) {
@@ -3914,7 +4403,7 @@ function renderSubmitOutputs(payload) {
     function loadJsonSafeToForm(kind, jsonObj) {
       if (!jsonObj || !state.config) return;
       const keyMap = buildFieldKeyMap();
-      console.info("loadJsonSafeToForm:start", { kind, keys: Object.keys(jsonObj || {}) });
+
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
@@ -3936,7 +4425,7 @@ function renderSubmitOutputs(payload) {
       if (state.config) {
         updateSubmitState(state.config);
       }
-      console.info("loadJsonSafeToForm:done", { kind, values: buildExportJson() });
+
     }
 
     function applyScenario({ name, column, human, ai }) {
@@ -4069,13 +4558,14 @@ function renderSubmitOutputs(payload) {
       initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
-    function applyColumnJson(columnData) {
+    function applyColumnJson(columnData, { persistRestore = true } = {}) {
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
         hasColumnData: Boolean(columnData),
         columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
       });
       columnJson = columnData;
+      if (persistRestore && columnData) restoreColumnJson = columnData;
       if (!columnJson) {
         columnWarning.style.display = "block";
         formEl.innerHTML = "";
@@ -4087,6 +4577,7 @@ function renderSubmitOutputs(payload) {
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
       renderForm(state.config);
+      applyVersionVisibility();
       flushPendingSubmitAfterConfigReady();
     }
 
@@ -4510,6 +5001,10 @@ function renderSubmitOutputs(payload) {
         persistObservedUniqueId(uniqueId);
       }
       lastObservedDataSignature = readCurrentBubbleDataSignature();
+      if (canRefreshLoadingStop()) {
+        submitRefreshSignature = "";
+        setFormRefreshLoading(false);
+      }
       traceAutosave("applyIncomingBubbleDataAsCurrentItem:done", { uniqueId, dataSignatureLen: lastObservedDataSignature.length });
     }
 
@@ -4731,6 +5226,7 @@ function renderSubmitOutputs(payload) {
 
 
     function traceAutosave(label, payload = {}) {
+      if (!ENABLE_RUNTIME_LOGS) return;
       const snapshot = {
         label,
         time: new Date().toISOString(),
@@ -4762,6 +5258,7 @@ function renderSubmitOutputs(payload) {
 
 
     function logStartState(label, extra = {}) {
+      if (!ENABLE_RUNTIME_LOGS) return;
       const startSnapshot = readStartSignalSnapshot();
       const snapshot = {
         label,
@@ -4818,6 +5315,29 @@ function renderSubmitOutputs(payload) {
         (window.parent && typeof window.parent.bubble_fn_submit === "function" && window.parent.bubble_fn_submit) ||
         (window.top && typeof window.top.bubble_fn_submit === "function" && window.top.bubble_fn_submit)
       );
+    }
+
+    function getBubbleFnBySuffix(suffix) {
+      if (!suffix) return null;
+      const fnName = `bubble_fn_${suffix}`;
+      return (
+        (typeof window[fnName] === "function" && window[fnName]) ||
+        (window.parent && typeof window.parent[fnName] === "function" && window.parent[fnName]) ||
+        (window.top && typeof window.top[fnName] === "function" && window.top[fnName])
+      );
+    }
+
+    function triggerBubbleFnBySuffix(suffix) {
+      const fn = getBubbleFnBySuffix(suffix);
+      if (!fn) {
+        console.warn(`bubble_fn_${suffix} bulunamadı (window/parent/top)`);
+        return;
+      }
+      try {
+        fn();
+      } catch (error) {
+        console.error(`bubble_fn_${suffix} çalıştırılamadı`, error);
+      }
     }
 
     function computeDirtyState() {
@@ -4931,6 +5451,9 @@ function renderSubmitOutputs(payload) {
       activeSubmitAttemptId = 0;
       isFormSaving = false;
       isFormDirty = !success;
+      if (success && !autosave && hasExistingBubbleData()) {
+        setFormRefreshLoading(true, "İşlem kaydedildi. Güncel veriler bekleniyor…");
+      }
       if (success && shouldResetAfterSubmit({ autosave })) {
         resetFormAfterSuccessfulSubmit();
       }
@@ -4939,9 +5462,13 @@ function renderSubmitOutputs(payload) {
       return true;
     }
     function handleBeforeUnload(event) {
-      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && (hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0) && !isFormSaving;
+      const dirtyNow = reconcileDirtyTracking("beforeunload");
+      const hasUnsavedChanges = dirtyNow || hasChangesSinceStartOpen || changedFieldKeys.size > 0;
+      const shouldSubmitOnUnload = hasSeenStartSignal && lastStartParamWasTrue && hasUnsavedChanges && !isFormSaving;
       logStartState("beforeunload", {
         shouldSubmitOnUnload,
+        hasUnsavedChanges,
+        dirtyNow,
         hasChangesSinceStartOpen,
         changedKeyCount: changedFieldKeys.size
       });
@@ -4949,8 +5476,8 @@ function renderSubmitOutputs(payload) {
         runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "beforeunload", modeHint: getSubmitModeHint() });
       }
       persistStartFlowState();
-      if (!isFormDirty) return undefined;
-      if (!isFormSaving) {
+      if (!hasUnsavedChanges) return undefined;
+      if (!isFormSaving && !shouldSubmitOnUnload) {
         runSubmitFlow({ autosave: false, forceSubmit: true, trigger: "beforeunload-dirty-fallback" });
       }
       const warningMessage = "Kaydedilmemiş değişiklikler olabilir.";
@@ -4961,6 +5488,15 @@ function renderSubmitOutputs(payload) {
 
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      if (isWaitingForServerRefresh && !autosave && !forceSubmit) {
+        traceAutosave("runSubmitFlow:skip-waiting-server-refresh", { trigger });
+        return;
+      }
+      if (!autosave && !forceSubmit && requiresExplicitActionSelection() && !isActionSelectionValid()) {
+        traceAutosave("runSubmitFlow:blocked-missing-action", { trigger });
+        openActionMenu();
+        return;
+      }
       if (!state.config || !Array.isArray(state.config.fields)) {
         pendingSubmitUntilConfigReady = {
           autosave,
@@ -4980,13 +5516,16 @@ function renderSubmitOutputs(payload) {
         return;
       }
       if (isFormSaving && !forceSubmit) {
-        console.info("submit skipped: saving lock active", { autosave });
+
         return;
       }
 
       isFormSaving = true;
       activeSubmitAttemptId += 1;
       const submitAttemptId = activeSubmitAttemptId;
+      if (!autosave) {
+        submitRefreshSignature = readCurrentBubbleDataSignature();
+      }
       const resolvedModeHint = modeHint || (autosave ? lastChangedMode : "");
       armSubmitLockTimeout({ submitAttemptId, trigger, autosave });
       traceAutosave("runSubmitFlow:lock-armed", collectEditContextSnapshot({
@@ -5027,8 +5566,8 @@ function renderSubmitOutputs(payload) {
         outputlist3Count: Array.isArray(submitOutputsPayload.outputlist3) ? submitOutputsPayload.outputlist3.length : -1,
         outputlist4Count: Array.isArray(submitOutputsPayload.outputlist4) ? submitOutputsPayload.outputlist4.length : -1
       });
-      console.info("submitOutputs payload", submitOutputsPayload);
-      console.info("submitOutputs:panel", { exists: Boolean(submitOutputsEl), autosave });
+
+
       setConsole("debug:submit-outputs", JSON.stringify(submitOutputsPayload, null, 2));
       renderSubmitOutputs(submitOutputsPayload);
 
@@ -5089,13 +5628,16 @@ function renderSubmitOutputs(payload) {
     }
 
     function shouldResetAfterSubmit({ autosave }) {
-      return true;
+      if (autosave) return true;
+      return !hasExistingBubbleData();
     }
 
     function resetFormAfterSuccessfulSubmit() {
       hasChangesSinceStartOpen = false;
       pendingStartCloseAutosave = null;
       pendingSubmitUntilConfigReady = null;
+      submitRefreshSignature = "";
+      setFormRefreshLoading(false);
       resetAllStores();
       persistStartFlowState();
       summaryBox.style.display = "none";
@@ -5258,6 +5800,7 @@ function renderSubmitOutputs(payload) {
       if (lastStartParamWasTrue && !startSignal) {
         if (isEditPanelOpen) {
           isEditPanelOpen = false;
+          stopEditModePayloadPolling();
           applyVersionVisibility();
         }
         reconcileDirtyTracking("evaluateStartSignalTransition:close");
@@ -5744,21 +6287,6 @@ function renderSubmitOutputs(payload) {
         if (!sourceByField[key]) sourceByField[key] = "human";
       });
       state.config = config;
-      columnJson = {
-        columns: config.fields.map((field) => ({
-          fieldName: field.fieldName || field.key,
-          header: field.label,
-          type: field.type,
-          stageType: field.stageType || "optional",
-          required: Boolean(field.required),
-          multiple: Boolean(field.allowMultiple),
-          ui: field.ui || {}
-        })),
-        mode: "edit",
-        currentDateTimeISO: config.currentDateTimeISO,
-        locale: config.locale,
-        timezone: config.timezone
-      };
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
       hasEnteredEditSession = true;
@@ -5768,6 +6296,18 @@ function renderSubmitOutputs(payload) {
       renderForm(config);
       flushPendingSubmitAfterConfigReady();
       return true;
+    }
+
+    function stopEditModePayloadPolling() {
+      if (editModePayloadPollTimer) {
+        clearInterval(editModePayloadPollTimer);
+        editModePayloadPollTimer = null;
+      }
+      if (editModeSlowPollTimer) {
+        clearInterval(editModeSlowPollTimer);
+        editModeSlowPollTimer = null;
+      }
+      editModeStablePollCount = 0;
     }
 
     function ensureEditModePayloadPolling(forceEditMode = false) {
@@ -5958,6 +6498,86 @@ function renderSubmitOutputs(payload) {
       requestAnimationFrame(pump);
     }
 
+    function markPayloadAsChanged(payload, sourceKind = "human") {
+      if (!payload || !state.config) return;
+      const keyMap = buildFieldKeyMap();
+      Object.entries(payload).forEach(([jsonKey]) => {
+        const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
+        if (!fieldKey) return;
+        const field = state.config.fields.find((f) => f.key === fieldKey);
+        if (!field) return;
+        const effective = getEffectiveValue(fieldKey);
+        if (isEmptyValue(effective)) return;
+        if (sourceKind === "ai" && sourceByField[fieldKey] !== "ai") return;
+        markFieldAsChanged(fieldKey);
+        rememberChangedFieldValue(fieldKey, normalizeValueForComparison(field, effective, state.config));
+      });
+      isFormDirty = computeDirtyState();
+    }
+
+    function runColumnSearchRender(rawTerm = "") {
+      if (!formEl || !state.config) return;
+      const term = String(rawTerm || "").trim().toLocaleLowerCase("tr-TR");
+      const wrappersByKey = new Map();
+      Object.keys(state.fieldRefs || {}).forEach((fieldKey) => {
+        const wrapper = state.fieldRefs?.[fieldKey]?.wrapper;
+        if (wrapper) wrappersByKey.set(fieldKey, wrapper);
+      });
+      const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
+      const scored = fields
+        .map((field, index) => ({
+          field,
+          index,
+          score: term ? fieldSearchScore(field, term) : 1
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => term ? ((b.score - a.score) || (a.index - b.index)) : (a.index - b.index))
+        .map((item) => item.field);
+
+      formEl.innerHTML = "";
+      scored.forEach((field) => {
+        const wrapper = wrappersByKey.get(field.key);
+        if (!wrapper) return;
+        applySearchResultDecoration({ wrapper, field, term });
+        formEl.appendChild(wrapper);
+      });
+      if (editSearchEmpty) {
+        editSearchEmpty.style.display = term && scored.length === 0 ? "block" : "none";
+        editSearchEmpty.textContent = term && scored.length === 0 ? "Sonuç bulunamadı" : "";
+      }
+      formEl.classList.remove("search-transition");
+      requestAnimationFrame(() => formEl.classList.add("search-transition"));
+    }
+
+    function refreshConflictSlotLayout() {
+      const refs = Object.values(state.fieldRefs || {});
+      const hasAnyConflict = refs.some((ref) => ref && ref._hasConflict);
+      refs.forEach((ref) => {
+        if (!ref || !ref.conflictChip) return;
+        const hasAi = Boolean(ref._hasAi);
+        if (ref._hasConflict) {
+          ref.conflictChip.style.display = "inline-flex";
+          ref.conflictChip.classList.remove("is-spacer");
+        } else if (hasAnyConflict && hasAi) {
+          ref.conflictChip.style.display = "inline-flex";
+          ref.conflictChip.classList.add("is-spacer");
+          if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
+        } else {
+          ref.conflictChip.style.display = "none";
+          ref.conflictChip.classList.remove("is-spacer");
+          if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
+        }
+
+        const showGroup = hasAi || ref._hasConflict || (hasAnyConflict && hasAi);
+        if (ref.statusGroup) {
+          ref.statusGroup.style.display = showGroup ? "inline-flex" : "none";
+        }
+        if (ref.control) {
+          ref.control.classList.toggle("with-status-group", showGroup);
+        }
+      });
+    }
+
     function clearEditSearchState() {
       if (editModeDebounceTimer) {
         clearTimeout(editModeDebounceTimer);
@@ -5973,8 +6593,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function runEditModeFilterRender() {
-      if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
+      if (!state.config) return;
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
       const rawTerm = String(editModeSearchTerm || "").trim();
+      if (!isEditUiActive) {
+        runColumnSearchRender(rawTerm);
+        return;
+      }
       const term = rawTerm.toLocaleLowerCase("tr-TR");
       const searchMode = Boolean(term);
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
@@ -6158,7 +6783,7 @@ function renderSubmitOutputs(payload) {
       summaryBox.style.display = "none";
 
       const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
-      if (actionBar) actionBar.style.display = isEditUiActive ? "none" : "";
+      if (actionBar) actionBar.style.display = IS_EDITING_MODE ? "none" : "";
       if (formEl) formEl.style.display = isEditUiActive ? "none" : "grid";
 
       let previousGroup = null;
@@ -6171,11 +6796,13 @@ function renderSubmitOutputs(payload) {
         const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
         const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
-          || /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower);
+          || (!["boolean", "checkbox", "dropdown", "date", "datetime", "time", "file", "multifile", "image", "textarea", "json"].includes(normalizedType)
+            && /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower));
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
         const isFileField = ["file", "multifile", "image"].includes(normalizedType);
         const isMultilineField = ["textarea", "json"].includes(normalizedType);
+        const isMultiDropdownField = normalizedType === "dropdown" && field.allowMultiple === true;
         const currentGroup = isDateField ? "date" : (isAmountField ? "amount" : "other");
         if (currentGroup === "date" && previousGroup === "amount") {
           wrapper.classList.add("group-break-date");
@@ -6187,7 +6814,7 @@ function renderSubmitOutputs(payload) {
         if (isAmountField) row.classList.add("is-amount-field");
         if (isDateField) row.classList.add("is-date-field");
         if (isFileField) row.classList.add("is-file-field");
-        if (isMultilineField) row.classList.add("is-multiline-field");
+        if (isMultilineField || isMultiDropdownField) row.classList.add("is-multiline-field");
 
         const labelColumn = document.createElement("div");
         labelColumn.className = "field-label";
@@ -6204,7 +6831,8 @@ function renderSubmitOutputs(payload) {
         const label = document.createElement("label");
         label.className = "label-text";
         label.htmlFor = `field-${field.key}`;
-        label.textContent = field.label;
+        label.textContent = truncateLabelText(field.label, 34);
+        label.title = String(field.label || "");
 
         labelTop.append(typeIcon, label);
 
@@ -6218,8 +6846,8 @@ function renderSubmitOutputs(payload) {
         const aiBadge = document.createElement("button");
         aiBadge.type = "button";
         aiBadge.className = "ai-badge";
-        aiBadge.title = "AI önerisi var. Tıkla: İnsan moduna geç / AI moduna dön";
-        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT logo" /><span>ChatGPT</span>`;
+        aiBadge.title = "AI önerisi";
+        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" />`;
         aiBadge.addEventListener("click", () => {
           const currentSource = getActiveSource(field.key);
           const hasAi = !isEmptyValue(aiData[field.key]);
@@ -6232,7 +6860,6 @@ function renderSubmitOutputs(payload) {
             mode: nextSource
           });
         });
-        labelMeta.append(aiBadge);
 
         const applyAiBtn = document.createElement("button");
         applyAiBtn.type = "button";
@@ -6262,12 +6889,14 @@ function renderSubmitOutputs(payload) {
         });
         labelMeta.append(revertAiBtn);
 
-        const conflictWrap = document.createElement("div");
-        conflictWrap.style.position = "relative";
+        const statusGroup = document.createElement("div");
+        statusGroup.className = "field-status-group";
         const conflictChip = document.createElement("button");
         conflictChip.type = "button";
         conflictChip.className = "conflict-chip";
-        conflictChip.textContent = "Çakışma";
+        conflictChip.textContent = "⚠";
+        conflictChip.setAttribute("aria-label", "Çakışma detayı");
+        conflictChip.title = "Çakışma detayı";
         conflictChip.style.display = "none";
         const conflictPopover = document.createElement("div");
         conflictPopover.className = "conflict-popover";
@@ -6295,8 +6924,8 @@ function renderSubmitOutputs(payload) {
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
-        conflictWrap.append(conflictChip, conflictPopover);
-        labelMeta.append(conflictWrap);
+        statusGroup.append(conflictChip, aiBadge, conflictPopover);
+
 
         labelColumn.append(labelTop);
         if (labelMeta.childElementCount) {
@@ -6314,6 +6943,7 @@ function renderSubmitOutputs(payload) {
         aiPill.textContent = "AI";
         aiPill.style.display = "none";
         control.append(aiPill);
+        control.append(statusGroup);
 
         let inputEl = null;
         let extraControls = null;
@@ -6424,9 +7054,7 @@ function renderSubmitOutputs(payload) {
           setValue = (value) => {
             inputEl.checked = Boolean(value);
           };
-          const toggleLabel = document.createElement("span");
-          toggleLabel.textContent = "Evet";
-          control.append(inputEl, toggleLabel);
+          control.append(inputEl);
           inputEl.addEventListener("change", () => {
             setFieldValue(field.key, inputEl.checked, field);
             updateError(control, field);
@@ -6491,8 +7119,9 @@ function renderSubmitOutputs(payload) {
 
           control.append(select);
         } else if (field.type === "dropdown" && field.allowMultiple) {
+          control.classList.add("multiselect-control");
           const optionsWrapper = document.createElement("div");
-          optionsWrapper.className = "grid";
+          optionsWrapper.className = "multiselect-options";
 
           const chips = document.createElement("div");
           chips.className = "chip-row";
@@ -6503,7 +7132,7 @@ function renderSubmitOutputs(payload) {
             optionsWrapper.innerHTML = "";
             (field.options || []).forEach((opt) => {
               const optionRow = document.createElement("label");
-              optionRow.className = "inline-row";
+              optionRow.className = "multiselect-option";
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
               checkbox.checked = selectedValues.includes(opt.value);
@@ -6585,19 +7214,10 @@ function renderSubmitOutputs(payload) {
               updateError(control, field);
               closePopover();
             },
-            onClose: () => {
-              dateInput.focus();
-            }
+            onClose: () => {}
           });
 
-          const iconBtn = document.createElement("button");
-          iconBtn.type = "button";
-          iconBtn.className = "field-icon-button";
-          iconBtn.setAttribute("aria-label", "Takvim aç");
-          iconBtn.textContent = "📅";
-
-          control.classList.add("has-icon");
-          control.append(dateInput, iconBtn, calendar.element);
+          control.append(dateInput, calendar.element);
 
           const handleOutside = (event) => {
             if (!control.contains(event.target)) {
@@ -6615,14 +7235,6 @@ function renderSubmitOutputs(payload) {
             document.removeEventListener("click", handleOutside);
           };
 
-          iconBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (calendar.element.classList.contains("open")) {
-              closePopover();
-            } else {
-              openPopover();
-            }
-          });
 
           const syncDate = (raw) => {
             if (!raw) {
@@ -6663,6 +7275,17 @@ function renderSubmitOutputs(payload) {
           dateInput.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             syncDate(event.target.value);
+          });
+          dateInput.addEventListener("focus", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          dateInput.addEventListener("pointerdown", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          dateInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === "Tab" || event.key === "Escape") {
+              closePopover();
+            }
           });
         } else if (field.type === "datetime") {
           const datetimeInput = document.createElement("input");
@@ -6726,17 +7349,17 @@ function renderSubmitOutputs(payload) {
               setFieldValue(field.key, normalized, field, displayValue);
               updateError(control, field);
             },
-            onClose: () => {
-              datetimeInput.focus();
-            }
+            onClose: () => {}
           });
 
           const timeRow = document.createElement("div");
           timeRow.className = "picker-time";
           const hourSelect = document.createElement("select");
           hourSelect.className = "field-input";
+          hourSelect.tabIndex = -1;
           const minuteSelect = document.createElement("select");
           minuteSelect.className = "field-input";
+          minuteSelect.tabIndex = -1;
 
           const buildTimeOptions = (select, max) => {
             select.innerHTML = "";
@@ -6778,14 +7401,7 @@ function renderSubmitOutputs(payload) {
           timeRow.append(hourSelect, minuteSelect);
           calendar.element.insertBefore(timeRow, calendar.element.lastElementChild);
 
-          const iconBtn = document.createElement("button");
-          iconBtn.type = "button";
-          iconBtn.className = "field-icon-button";
-          iconBtn.setAttribute("aria-label", "Takvim ve saat seç");
-          iconBtn.textContent = "🗓️";
-
-          control.classList.add("has-icon");
-          control.append(datetimeInput, iconBtn, calendar.element);
+          control.append(datetimeInput, calendar.element);
 
           const handleOutside = (event) => {
             if (!control.contains(event.target)) {
@@ -6803,14 +7419,6 @@ function renderSubmitOutputs(payload) {
             document.removeEventListener("click", handleOutside);
           };
 
-          iconBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (calendar.element.classList.contains("open")) {
-              closePopover();
-            } else {
-              openPopover();
-            }
-          });
 
           const syncDatetime = (raw) => {
             if (!raw) {
@@ -6850,6 +7458,17 @@ function renderSubmitOutputs(payload) {
           datetimeInput.addEventListener("blur", (event) => {
             state.touched[field.key] = true;
             syncDatetime(event.target.value);
+          });
+          datetimeInput.addEventListener("focus", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          datetimeInput.addEventListener("pointerdown", () => {
+            if (!calendar.element.classList.contains("open")) openPopover();
+          });
+          datetimeInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === "Tab" || event.key === "Escape") {
+              closePopover();
+            }
           });
         } else if (field.type === "time") {
           const timeInput = document.createElement("input");
@@ -7276,7 +7895,8 @@ function renderSubmitOutputs(payload) {
           applyAiBtn,
           revertAiBtn,
           conflictChip,
-          conflictPopover
+          conflictPopover,
+          statusGroup
         };
         updateAiVisuals(field.key);
 
@@ -7377,7 +7997,6 @@ function renderSubmitOutputs(payload) {
     function updateError(control, field) {
       const errorText = formEl.querySelector(`[data-error-for="${CSS.escape(field.key)}"]`);
       if (!errorText) {
-        console.warn("error element missing", { fieldKey: field.key, field });
         return;
       }
       const error = state.errors[field.key] || "";
@@ -7391,7 +8010,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function updateSubmitState(config) {
-      console.info(`[updateSubmitState:start] ${JSON.stringify({ fieldCount: (config.fields || []).length })}`);
+
       const isValid = (config.fields || []).every((field) => {
         let validationValue = getMergedValidationValue(field);
         if (["file", "image", "multifile"].includes(field.type) && isEmptyValue(validationValue)) {
@@ -7403,7 +8022,7 @@ function renderSubmitOutputs(payload) {
         if (isFieldRequired(field)) {
           const fieldOk = !isEmptyValue(validationValue);
           if (!fieldOk) {
-            console.info(`[updateSubmitState:missing] ${JSON.stringify({ fieldKey: field.key, label: field.label })}`);
+
           }
           return fieldOk;
         }
@@ -7416,7 +8035,7 @@ function renderSubmitOutputs(payload) {
         submitBtn.disabled = false;
         submitBtn.title = "";
       }
-      console.info(`[updateSubmitState:done] ${JSON.stringify({ isValid, requiredPolicy: config.requiredPolicy })}`);
+
     }
 
     function focusFirstInvalid() {
@@ -7483,10 +8102,12 @@ function renderSubmitOutputs(payload) {
       triggeredActionUniqueId = "";
       isFormDirty = false;
       isFormSaving = false;
+      submitRefreshSignature = "";
+      setFormRefreshLoading(false);
       clearChangedTracking();
       updateActionBarUi();
       if (columnJson) {
-        applyColumnJson(columnJson);
+        applyColumnJson(columnJson, { persistRestore: true });
       } else {
         columnWarning.style.display = "block";
         formEl.innerHTML = "";
@@ -7541,6 +8162,31 @@ function renderSubmitOutputs(payload) {
         });
       }
 
+      if (moreActionsBtn) {
+        moreActionsBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!moreActionsMenu) return;
+          moreActionsMenu.classList.toggle("open");
+        });
+      }
+
+      if (addFieldBtn) {
+        addFieldBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          triggerBubbleFnBySuffix("add_field");
+          if (moreActionsMenu) moreActionsMenu.classList.remove("open");
+        });
+      }
+
+      if (manageFieldsBtn) {
+        manageFieldsBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          triggerBubbleFnBySuffix("manage_field");
+          if (moreActionsMenu) moreActionsMenu.classList.remove("open");
+        });
+      }
+
       if (predictedActionBtn) {
         predictedActionBtn.addEventListener("click", (event) => {
           event.preventDefault();
@@ -7552,9 +8198,12 @@ function renderSubmitOutputs(payload) {
       }
 
       document.addEventListener("click", (event) => {
-        if (!actionSplit || !actionMenu) return;
-        if (actionSplit.contains(event.target)) return;
-        closeActionMenu();
+        if (actionSplit && actionMenu && !actionSplit.contains(event.target)) {
+          closeActionMenu();
+        }
+        if (moreActions && moreActionsMenu && !moreActions.contains(event.target)) {
+          moreActionsMenu.classList.remove("open");
+        }
       });
 
 
@@ -7606,7 +8255,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#submitBtn", "click", () => {
-        console.info("submit button clicked");
+
         const submitOutputsPayload = buildSubmitOutputsPayload();
         renderSubmitOutputs(submitOutputsPayload);
       });
@@ -7673,16 +8322,17 @@ function renderSubmitOutputs(payload) {
       }
       emit("debug:predicted-json", payload);
       loadJsonSafeToForm("ai", payload);
-      updateActionBarUi();
       initializeSourceByFieldFromAi();
       refreshAllFields();
+      markPayloadAsChanged(payload, "ai");
+      updateActionBarUi();
       openExportModal("ai");
       });
 
       safeOn("#loadColumnJson", "click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
-      applyColumnJson(columnJson);
+      applyColumnJson(columnJson, { persistRestore: true });
       emit("debug:column-json", columnJson);
       openExportModal("column");
       });
@@ -7795,7 +8445,7 @@ function renderSubmitOutputs(payload) {
       }
       ensureEditModePayloadPolling(!IS_EDITING_MODE);
     } else if (columnJson) {
-      applyColumnJson(columnJson);
+      applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
           loadJsonSafeToForm("human", MANUAL_DATA_JSON);
