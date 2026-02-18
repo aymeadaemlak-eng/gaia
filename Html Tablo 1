@@ -383,9 +383,8 @@
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  border: 1px solid var(--dt-border);
-  border-top: 0;
-  border-radius: 0 0 12px 12px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
   background: var(--dt-surface);
 }
@@ -620,7 +619,6 @@
     <div class="dt-header">
       <div class="dt-toolbar">
         <div class="dt-toolbar-left">
-          <button id="dt-btn-sort" class="dt-icon-btn" type="button" aria-label="Sırala" title="Sort">⇅</button>
           <button id="dt-btn-search" class="dt-icon-btn" type="button" aria-label="Arama" title="Search">⌕</button>
           <div id="dt-search-wrap" class="dt-search-wrap">
             <input id="dt-search" class="dt-search" type="text" placeholder="Ara..." autocomplete="off" />
@@ -1345,7 +1343,7 @@
       filters: true,
       dropdownMenu: false,
       columnSorting: {
-        indicator: true,
+        indicator: false,
         headerAction: false
       },
       selectionMode: 'multiple',
