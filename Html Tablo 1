@@ -1550,12 +1550,11 @@
       licenseKey: 'non-commercial-and-evaluation',
       afterSelectionEnd: handleSelection,
       afterOnCellMouseDown: (event, coords, TD) => {
+        if (isMobileViewport()) return;
         if (!coords || coords.row !== -1 || coords.col < 0) return;
         if (coords.col >= state.columns.length) return;
         const target = event?.target;
-        if (!target) return;
-        if (target.closest('.dt-header-action-btn')) return;
-        if (!target.closest('.colHeader') && !target.closest('.dt-header-label') && !target.closest('.dt-header-text') && !target.closest('.dt-type-icon') && !target.closest('.dt-colheader-content')) return;
+        if (!isHeaderMenuTriggerTarget(target)) return;
         const headerLabel = state.columns[coords.col]?.header || '';
         openColumnMenu(coords.col, TD?.getBoundingClientRect?.() || target.getBoundingClientRect(), headerLabel);
       },
@@ -1847,8 +1846,9 @@
 
   function setBackdropOpen(isOpen) {
     if (!els.menuBackdrop) return;
-    els.menuBackdrop.classList.toggle('is-open', !!isOpen);
-    els.menuBackdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    const shouldOpen = Boolean(isOpen) && isMobileViewport();
+    els.menuBackdrop.classList.toggle('is-open', shouldOpen);
+    els.menuBackdrop.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
   }
 
   function openColumnMenu(columnIndex, anchorRect, headerLabel) {
@@ -1876,10 +1876,33 @@
     els.columnMenu.classList.remove('is-filter-mode', 'is-sort-mode');
     els.columnMenu.classList.add('is-open');
     els.columnMenu.setAttribute('aria-hidden', 'false');
-    setBackdropOpen(true);
+    setBackdropOpen(isMobileViewport());
   }
 
+  function isHeaderMenuTriggerTarget(target) {
+    if (!target) return false;
+    if (target.closest('.dt-header-action-btn')) return false;
+    return Boolean(
+      target.closest('.colHeader') ||
+      target.closest('.dt-header-label') ||
+      target.closest('.dt-header-text') ||
+      target.closest('.dt-type-icon') ||
+      target.closest('.dt-colheader-content')
+    );
+  }
 
+  function getHeaderCoordsFromEventTarget(target) {
+    if (!state.hot || !target) return null;
+    const headerCell = target.closest('.ht_clone_top thead th, .handsontable thead th');
+    if (!headerCell) return null;
+    try {
+      const coords = state.hot.getCoords(headerCell);
+      if (!coords || coords.row !== -1 || coords.col < 0 || coords.col >= state.columns.length) return null;
+      return { coords, headerCell };
+    } catch (err) {
+      return null;
+    }
+  }
 
   function clearSubmenuCloseTimer() {
     if (!state.submenuCloseTimer) return;
@@ -1920,7 +1943,7 @@
       els.columnMenu.classList.remove('is-sort-mode');
     }
     if (els.columnMenu?.classList.contains('is-open') && !els.filterPanel?.classList.contains('is-open')) {
-      setBackdropOpen(true);
+      setBackdropOpen(isMobileViewport());
     }
   }
 
@@ -1959,7 +1982,7 @@
     }
     state.filterDraft = null;
     if (els.columnMenu?.classList.contains('is-open') && !els.sortPanel?.classList.contains('is-open')) {
-      setBackdropOpen(true);
+      setBackdropOpen(isMobileViewport());
     }
   }
 
@@ -2506,6 +2529,49 @@
     setupSheetDismiss(els.filterPanel, hideFilterPanel);
     setupSheetDismiss(els.sortPanel, hideSortPanel);
     setupSheetDismiss(els.columnMenu, closeColumnMenu);
+
+    if (els.wrapper && els.wrapper.dataset.mobileHeaderTapAttached !== 'true') {
+      let touchStart = null;
+
+      els.wrapper.addEventListener('touchstart', event => {
+        if (!isMobileViewport()) return;
+        const target = event.target;
+        if (!isHeaderMenuTriggerTarget(target)) return;
+        const mapped = getHeaderCoordsFromEventTarget(target);
+        if (!mapped) return;
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        touchStart = {
+          x: touch.clientX,
+          y: touch.clientY,
+          col: mapped.coords.col,
+          rect: mapped.headerCell.getBoundingClientRect(),
+          label: state.columns[mapped.coords.col]?.header || ''
+        };
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }, { passive: false });
+
+      els.wrapper.addEventListener('touchend', event => {
+        if (!isMobileViewport() || !touchStart) return;
+        const touch = event.changedTouches?.[0];
+        if (!touch) {
+          touchStart = null;
+          return;
+        }
+        const moved = Math.hypot(touch.clientX - touchStart.x, touch.clientY - touchStart.y);
+        if (moved > 10) {
+          touchStart = null;
+          return;
+        }
+        openColumnMenu(touchStart.col, touchStart.rect, touchStart.label);
+        touchStart = null;
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }, { passive: false });
+
+      els.wrapper.dataset.mobileHeaderTapAttached = 'true';
+    }
 
     window.addEventListener('resize', () => {
       closeColumnMenu();
