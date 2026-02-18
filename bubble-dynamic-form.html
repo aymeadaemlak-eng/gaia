@@ -5023,6 +5023,21 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+    function readCurrentPredictedDataObject() {
+      const inputs = window.BUBBLE_INPUTS || {};
+      const candidates = [
+        inputs.PREDICTED_JSON,
+        inputs.predicted_json,
+        window.BUBBLE_PREDICTED_JSON,
+        MANUAL_PREDICTED_JSON
+      ];
+      for (const candidate of candidates) {
+        const obj = extractBubbleDataObject(candidate);
+        if (obj) return obj;
+      }
+      return null;
+    }
+
 
     function safeStringify(value) {
       try {
@@ -5057,10 +5072,13 @@ function renderSubmitOutputs(payload) {
 
 
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
+      const incomingPredictedData = readCurrentPredictedDataObject();
       traceAutosave("applyIncomingBubbleDataAsCurrentItem:start", {
         uniqueId,
         hasIncomingBubbleData: Boolean(incomingBubbleData),
         incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : [],
+        hasIncomingPredictedData: Boolean(incomingPredictedData),
+        incomingPredictedDataKeys: incomingPredictedData && typeof incomingPredictedData === "object" ? Object.keys(incomingPredictedData) : [],
         hasIncomingColumns: Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns)),
         incomingColumnCount: Array.isArray(incomingColumnJson?.columns) ? incomingColumnJson.columns.length : 0
       });
@@ -5072,15 +5090,25 @@ function renderSubmitOutputs(payload) {
 
       if (incomingBubbleData && state.config) {
         MANUAL_DATA_JSON = incomingBubbleData;
+        MANUAL_PREDICTED_JSON = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
         humanData = {};
         aiData = {};
         sourceByField = {};
         state.fileBuffers = {};
         state.fileStaging = {};
         loadJsonSafeToForm("human", incomingBubbleData);
+        if (incomingPredictedData) {
+          loadJsonSafeToForm("ai", incomingPredictedData);
+        }
         initializeSourceByFieldFromAi();
         refreshAllFields();
         initialSnapshot = buildBaselineSnapshot(IS_EDITING_MODE ? getEditModeBaselinePayload() : incomingBubbleData);
+        logPredictDebug("incoming-item-rehydrated", {
+          uniqueId,
+          humanKeyCount: Object.keys(incomingBubbleData || {}).length,
+          predictedKeyCount: Object.keys(incomingPredictedData || {}).length,
+          sourceByFieldSnapshot: sourceByField
+        });
       }
       clearChangedTracking();
       isFormDirty = false;
