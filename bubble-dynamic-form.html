@@ -4666,6 +4666,7 @@ function renderSubmitOutputs(payload) {
       const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
+        if (!changedFieldKeys.has(field.key) && !changedFieldValuesByKey.has(field.key)) return;
         if (byKey.has(field.key)) return;
         byKey.set(field.key, field);
       });
@@ -4732,8 +4733,8 @@ function renderSubmitOutputs(payload) {
         const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
-        const safeValue = isEmptyValue(currentValue) ? "" : currentValue;
-        entriesByKey.set(jsonKey, `"${jsonKey}": ${JSON.stringify(safeValue)}`);
+        if (isEmptyValue(currentValue)) return;
+        entriesByKey.set(jsonKey, `"${jsonKey}": ${JSON.stringify(currentValue)}`);
       });
       const entries = Array.from(entriesByKey.values());
       traceAutosave("buildKeyValueListFromSources", {
