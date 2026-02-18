@@ -5458,7 +5458,8 @@ function renderSubmitOutputs(payload) {
         trigger: pending.trigger,
         autosave: pending.autosave,
         forceSubmit: pending.forceSubmit,
-        requestedAt: pending.requestedAt
+        requestedAt: pending.requestedAt,
+        remountReadyRetryCount: Number(pending.remountReadyRetryCount || 0)
       });
       setTimeout(() => {
         runSubmitFlow({
@@ -5664,7 +5665,8 @@ function renderSubmitOutputs(payload) {
           forceSubmit,
           trigger,
           modeHint,
-          requestedAt: new Date().toISOString()
+          requestedAt: new Date().toISOString(),
+          remountReadyRetryCount: Number(pendingSubmitUntilConfigReady?.remountReadyRetryCount || 0)
         };
         logStartState("submit-skipped-no-config", {
           trigger,
@@ -5678,22 +5680,37 @@ function renderSubmitOutputs(payload) {
       }
       const shouldEnforceRemountReady = autosave && String(trigger || "").includes("start-close-remount");
       if (shouldEnforceRemountReady && !isRemountRehydrateReadyForAutosave()) {
+        const previousRetryCount = Number(pendingSubmitUntilConfigReady?.remountReadyRetryCount || 0);
+        const retryCount = previousRetryCount + 1;
+        const predictedObj = readCurrentPredictedDataObject() || {};
         pendingSubmitUntilConfigReady = {
           autosave,
           forceSubmit,
           trigger,
           modeHint,
-          requestedAt: new Date().toISOString()
+          requestedAt: new Date().toISOString(),
+          remountReadyRetryCount: retryCount
         };
-        logPredictDebug("submit-deferred-remount-rehydrate-not-ready", {
+        const deferSnapshot = {
           trigger,
           autosave,
           forceSubmit,
+          retryCount,
           aiExplicitFieldCount: aiExplicitFieldKeys.size,
-          predictedKeyCount: Object.keys(readCurrentPredictedDataObject() || {}).length
-        });
-        isFormSaving = false;
-        return;
+          predictedKeyCount: Object.keys(predictedObj).length,
+          predictedKeySample: Object.keys(predictedObj).slice(0, 40),
+          recomputedDirtyNow: computeDirtyState(),
+          ...buildSubmitChangeDiagnostics()
+        };
+        logPredictDebug("submit-deferred-remount-rehydrate-not-ready", deferSnapshot);
+        if (retryCount <= 20) {
+          setTimeout(() => {
+            flushPendingSubmitAfterConfigReady();
+          }, 60);
+          isFormSaving = false;
+          return;
+        }
+        logPredictDebug("submit-deferred-remount-rehydrate-giveup", deferSnapshot);
       }
       if (isFormSaving && !forceSubmit) {
 
