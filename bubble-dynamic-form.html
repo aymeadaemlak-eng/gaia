@@ -2402,6 +2402,7 @@
     let hasSeenStartSignal = false;
     let lastStartLoggedState = "";
     let hasChangesSinceStartOpen = false;
+    let hasAiHydratedData = false;
     let startOpenSequence = 0;
     let pendingSubmitUntilConfigReady = null;
     let pendingStartCloseAutosave = null;
@@ -3360,6 +3361,7 @@ function renderSubmitOutputs(payload) {
       const actionType = isEditAutosave ? "Edit" : (hasBubbleData ? "Process" : "Create");
       traceAutosave("build-submit-outputs-decision", collectEditContextSnapshot({ autosave, modeHint: effectiveMode, editContextActive, isEditAutosave, actionType, hasBubbleData }));
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
+      const fullSnapshot = buildExportJson();
       return {
         output1: startTimestamp,
         output2: endTimestamp,
@@ -3368,7 +3370,9 @@ function renderSubmitOutputs(payload) {
         outputlist1: buildKeyValueListFromSources(),
         outputlist2: buildAddedCustomFields(),
         outputlist3: buildDeletedFields(),
-        outputlist4: buildModifiedFields()
+        outputlist4: buildModifiedFields(),
+        output_full_obj: fullSnapshot,
+        output_full_json: JSON.stringify(fullSnapshot)
       };
     }
 
@@ -3898,15 +3902,19 @@ function renderSubmitOutputs(payload) {
 
     function getEffectiveValue(fieldKey) {
       const preferredSource = sourceByField[fieldKey];
+      const humanValue = humanData[fieldKey];
+      const aiValue = aiData[fieldKey];
       if (preferredSource === "human") {
-        return humanData[fieldKey] ?? "";
+        if (!isEmptyValue(humanValue)) return humanValue;
+        if (!isEmptyValue(aiValue)) return aiValue;
+        return humanValue ?? "";
       }
       if (preferredSource === "ai") {
-        return aiData[fieldKey] ?? "";
+        if (!isEmptyValue(aiValue)) return aiValue;
+        if (!isEmptyValue(humanValue)) return humanValue;
+        return aiValue ?? "";
       }
-      const humanValue = humanData[fieldKey];
       if (!isEmptyValue(humanValue)) return humanValue;
-      const aiValue = aiData[fieldKey];
       if (!isEmptyValue(aiValue)) return aiValue;
       return "";
     }
@@ -4533,6 +4541,9 @@ function renderSubmitOutputs(payload) {
         unmatchedKeys: unmatched,
         applied
       });
+      if (kind === "ai") {
+        hasAiHydratedData = applied.some((entry) => !isEmptyValue(aiData[entry.fieldKey])) || hasAiHydratedData;
+      }
       logPredictDebug("json-load-summary", {
         kind,
         incomingKeyCount: Object.keys(jsonObj || {}).length,
@@ -4571,6 +4582,10 @@ function renderSubmitOutputs(payload) {
           trigger: `json-load:${kind}:start-closed`,
           modeHint: getSubmitModeHint()
         });
+      }
+
+      if (kind === "ai") {
+        maybeRunAutosaveOnStartClose("ai-hydrate");
       }
 
     }
@@ -4774,12 +4789,18 @@ function renderSubmitOutputs(payload) {
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
         const isUserTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
-        const isAiExplicitCandidate = aiExplicitFieldKeys.has(field.key);
-        if (!isUserTrackedChange && !isAiExplicitCandidate) return;
+        if (!isUserTrackedChange) return;
         if (byKey.has(field.key)) return;
         byKey.set(field.key, field);
       });
       return Array.from(byKey.values());
+    }
+
+    function logDeltaComputation(kind, items) {
+      traceAutosave(`delta-computation:${kind}`, {
+        count: Array.isArray(items) ? items.length : 0,
+        first10: Array.isArray(items) ? items.slice(0, 10) : []
+      });
     }
 
     function collectChangedFieldDebugDetails() {
@@ -4899,7 +4920,9 @@ function renderSubmitOutputs(payload) {
           entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return Array.from(entriesByKey.values());
+      const deleted = Array.from(entriesByKey.values());
+      logDeltaComputation("deleted", deleted);
+      return deleted;
     }
 
     function buildModifiedFields() {
@@ -4934,7 +4957,9 @@ function renderSubmitOutputs(payload) {
           entriesByKey.set(jsonKey, jsonKey);
         }
       });
-      return Array.from(entriesByKey.values());
+      const modified = Array.from(entriesByKey.values());
+      logDeltaComputation("modified", modified);
+      return modified;
     }
 
     function toStringArray(value) {
@@ -5865,6 +5890,7 @@ function renderSubmitOutputs(payload) {
       logPredictDebug("submit-payload-checkpoint", {
         trigger,
         autosave,
+        output_full_json: submitOutputsPayload.output_full_json,
         outputlist1: submitOutputsPayload.outputlist1,
         outputlist2: submitOutputsPayload.outputlist2,
         outputlist3: submitOutputsPayload.outputlist3,
@@ -5903,7 +5929,9 @@ function renderSubmitOutputs(payload) {
         outputlist1: submitOutputsPayload.outputlist1,
         outputlist2: submitOutputsPayload.outputlist2,
         outputlist3: submitOutputsPayload.outputlist3,
-        outputlist4: submitOutputsPayload.outputlist4
+        outputlist4: submitOutputsPayload.outputlist4,
+        output_full_obj: submitOutputsPayload.output_full_obj,
+        output_full_json: submitOutputsPayload.output_full_json
       });
 
       const fn = getSubmitFn();
@@ -6009,7 +6037,8 @@ function renderSubmitOutputs(payload) {
       const editingSignal = readEditingSignalValue();
       const editContextActive = isEditAutosaveContextActive();
       reconcileDirtyTracking(`maybeRunAutosaveOnStartClose:${trigger}`);
-      if (!isFormDirty) return;
+      const hasAutosaveCandidate = isFormDirty || hasAiHydratedData;
+      if (!hasAutosaveCandidate) return;
       if (isFormSaving) return;
 
       const shouldDeferForSessionOpen = editContextActive
@@ -6035,7 +6064,13 @@ function renderSubmitOutputs(payload) {
         startSignal,
         editingSignal,
         editContextActive,
-        gate: editContextActive ? "editing" : "start"
+        gate: editContextActive ? "editing" : "start",
+        reason: trigger,
+        isFormDirty,
+        changedFieldKeyCount: changedFieldKeys.size,
+        aiExplicitFieldCount: aiExplicitFieldKeys.size,
+        hasChangesSinceStartOpen,
+        hasAiHydratedData
       });
       runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
@@ -6113,7 +6148,7 @@ function renderSubmitOutputs(payload) {
         clearChangedTracking();
         const prefilledDirty = computeDirtyState();
         isFormDirty = prefilledDirty;
-        hasChangesSinceStartOpen = prefilledDirty;
+        hasChangesSinceStartOpen = prefilledDirty || hasAiHydratedData;
         logStartState("open", {
           startSignal,
           startOpenSequence,
@@ -6132,7 +6167,7 @@ function renderSubmitOutputs(payload) {
           applyVersionVisibility();
         }
         reconcileDirtyTracking("evaluateStartSignalTransition:close");
-        const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
+        const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0 || hasAiHydratedData;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
         const closeDiagnostics = {
           hasDirtyIndicators,
@@ -6159,6 +6194,7 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size
           });
           hasChangesSinceStartOpen = false;
+          hasAiHydratedData = false;
           persistStartFlowState();
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close", modeHint: getSubmitModeHint() });
         } else {
@@ -6198,12 +6234,13 @@ function renderSubmitOutputs(payload) {
       if (lastEditingParamWasTrue && !editingSignal) {
         reconcileDirtyTracking("evaluateEditingSignalTransition:close");
         const hasDirtyIndicators = isFormDirty || changedFieldKeys.size > 0 || hasChangesSinceStartOpen;
-        const shouldSubmit = hasDirtyIndicators && !isFormSaving;
-        traceAutosave("editing-close", { editingSignal, hasDirtyIndicators, shouldSubmit });
+        const hasDirtyOrAiHydrate = hasDirtyIndicators || hasAiHydratedData;
+        const shouldSubmit = hasDirtyOrAiHydrate && !isFormSaving;
+        traceAutosave("editing-close", { editingSignal, hasDirtyIndicators: hasDirtyOrAiHydrate, shouldSubmit, hasAiHydratedData });
         lastEditingParamWasTrue = false;
         if (shouldSubmit) {
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "editing-close", modeHint: getSubmitModeHint() });
-        } else if (hasDirtyIndicators && isFormSaving) {
+        } else if (hasDirtyOrAiHydrate && isFormSaving) {
           queueStartCloseAutosave("editing-close", "saving-lock");
         }
         return;
@@ -8409,8 +8446,13 @@ function renderSubmitOutputs(payload) {
       });
     }
 
-    function applyAiValuesToHuman({ overwrite }) {
+    function applyAiValuesToHuman({ overwrite, reason = "manual-apply" }) {
       if (!state.config) return;
+      traceAutosave("apply-ai-values-to-human:start", {
+        reason,
+        overwrite,
+        changedFieldCount: changedFieldKeys.size
+      });
       state.config.fields.forEach((field) => {
         const aiValue = aiData[field.key];
         if (isEmptyValue(aiValue)) return;
@@ -8419,6 +8461,11 @@ function renderSubmitOutputs(payload) {
         sourceByField[field.key] = "human";
         markFieldAsChanged(field.key);
         rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
+      });
+      traceAutosave("apply-ai-values-to-human:done", {
+        reason,
+        overwrite,
+        changedFieldCount: changedFieldKeys.size
       });
       refreshAllFields();
     }
@@ -8442,6 +8489,7 @@ function renderSubmitOutputs(payload) {
       submitRefreshSignature = "";
       setFormRefreshLoading(false);
       clearChangedTracking();
+      hasAiHydratedData = false;
       updateActionBarUi();
       if (columnJson) {
         applyColumnJson(columnJson, { persistRestore: true });
@@ -8667,11 +8715,12 @@ function renderSubmitOutputs(payload) {
       loadJsonSafeToForm("ai", payload);
       initializeSourceByFieldFromAi();
       refreshAllFields();
-      markPayloadAsChanged(payload, "ai");
+      hasAiHydratedData = true;
       traceAutosave("predicted-json-load:applied", {
         aiKeys: Object.keys(aiData || {}),
         sourceByFieldSnapshot: sourceByField,
-        effectiveChangedDetails: collectChangedFieldDebugDetails()
+        effectiveChangedDetails: collectChangedFieldDebugDetails(),
+        hasAiHydratedData
       });
       updateActionBarUi();
       openExportModal("ai");
@@ -8686,13 +8735,13 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#applyAiToEmpty", "click", () => {
-        applyAiValuesToHuman({ overwrite: false });
+        applyAiValuesToHuman({ overwrite: false, reason: "button-apply-ai-to-empty" });
       });
 
       safeOn("#overwriteAiToAll", "click", () => {
         const confirmed = window.confirm("AI tüm alanları overwrite edecek. Devam edilsin mi?");
         if (!confirmed) return;
-        applyAiValuesToHuman({ overwrite: true });
+        applyAiValuesToHuman({ overwrite: true, reason: "button-overwrite-ai-to-all" });
       });
 
       safeOn("#resetStores", "click", () => {
