@@ -5127,8 +5127,24 @@ function renderSubmitOutputs(payload) {
           sourceByFieldSnapshot: sourceByField
         });
       }
-      clearChangedTracking();
-      isFormDirty = false;
+      const pendingRemountAutosave = Boolean(
+        pendingSubmitUntilConfigReady
+        && pendingSubmitUntilConfigReady.autosave
+        && String(pendingSubmitUntilConfigReady.trigger || "").includes("start-close-remount")
+      );
+      if (pendingRemountAutosave) {
+        isFormDirty = computeDirtyState();
+        hasChangesSinceStartOpen = isFormDirty;
+        logPredictDebug("incoming-item-rehydrated:preserve-dirty-for-remount-autosave", {
+          pendingTrigger: pendingSubmitUntilConfigReady?.trigger || "",
+          pendingAutosave: Boolean(pendingSubmitUntilConfigReady?.autosave),
+          recomputedIsFormDirty: isFormDirty,
+          ...buildSubmitChangeDiagnostics()
+        });
+      } else {
+        clearChangedTracking();
+        isFormDirty = false;
+      }
       taskStartTimestamp = null;
       hasPendingUniqueIdSubmit = false;
       if (uniqueId) {
@@ -5420,12 +5436,16 @@ function renderSubmitOutputs(payload) {
       const pending = pendingSubmitUntilConfigReady;
       pendingSubmitUntilConfigReady = null;
       if (pending.autosave && !reconcileDirtyTracking("flush-pending-submit-after-config")) {
-        logStartState("flush-pending-submit-after-config:skip-no-change", {
+        const skipSnapshot = {
           trigger: pending.trigger,
           autosave: pending.autosave,
           forceSubmit: pending.forceSubmit,
-          requestedAt: pending.requestedAt
-        });
+          requestedAt: pending.requestedAt,
+          aiExplicitFieldCount: aiExplicitFieldKeys.size,
+          ...buildSubmitChangeDiagnostics()
+        };
+        logStartState("flush-pending-submit-after-config:skip-no-change", skipSnapshot);
+        logPredictDebug("flush-pending-submit-after-config:skip-no-change", skipSnapshot);
         return;
       }
       logStartState("flush-pending-submit-after-config", {
