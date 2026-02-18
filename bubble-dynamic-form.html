@@ -412,9 +412,9 @@
     }
 
 #bdf-root .ai-badge {
-      position: absolute;
-      top: -6px;
-      right: 8px;
+      position: relative;
+      top: 0;
+      right: 0;
       width: 22px;
       height: 22px;
       display: inline-flex;
@@ -449,6 +449,31 @@
 
 #bdf-root .ai-badge::after {
       content: none;
+    }
+
+#bdf-root .field-status-group {
+      position: absolute;
+      top: -6px;
+      right: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 4;
+    }
+
+#bdf-root .field-status-group .conflict-chip {
+      margin: 0;
+    }
+
+#bdf-root .field-status-group .conflict-chip.is-spacer {
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+#bdf-root .field-status-group .conflict-popover {
+      top: calc(100% + 6px);
+      right: 0;
     }
 
 #bdf-root .control-stack {
@@ -1463,6 +1488,20 @@
 
 #bdf-root .edit-stage-fields.search-transition {
   animation: bdf-search-shift 160ms ease;
+}
+
+#bdf-root #dynamicForm.search-transition {
+  animation: bdf-search-shift 160ms ease;
+}
+
+#bdf-root .edit-mode-root.search-only .edit-stage-select-wrap,
+#bdf-root .edit-mode-root.search-only #editModeLoading,
+#bdf-root .edit-mode-root.search-only #editStageLayout {
+  display: none !important;
+}
+
+#bdf-root .edit-mode-root.search-only {
+  margin-bottom: 8px;
 }
 
 @keyframes bdf-search-shift {
@@ -2871,7 +2910,8 @@
         rootElement.classList.toggle("editing-mode", isEditUiActive);
       }
       if (editModeRoot) {
-        editModeRoot.style.display = isEditUiActive ? "grid" : "none";
+        editModeRoot.style.display = state.config ? "grid" : "none";
+        editModeRoot.classList.toggle("search-only", !isEditUiActive);
       }
       if (isEditUiActive && editSearchInput) {
         requestAnimationFrame(() => {
@@ -3057,6 +3097,14 @@
         }
         traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
       } else {
+        if (columnJson) {
+          applyColumnJson(columnJson);
+        } else if (state.config) {
+          renderForm(state.config);
+        }
+        if (editSearchInput && String(editSearchInput.value || "").trim()) {
+          runColumnSearchRender(editSearchInput.value);
+        }
         traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({}));
       }
       evaluateEditingSignalTransition();
@@ -4217,7 +4265,7 @@ function renderSubmitOutputs(payload) {
         ref.revertAiBtn.style.display = "none";
       }
       if (ref.conflictChip) {
-        ref.conflictChip.style.display = hasConflict ? "inline-flex" : "none";
+        ref._hasConflict = hasConflict;
       }
       if (ref.conflictPopover) {
         if (hasConflict) {
@@ -4227,6 +4275,7 @@ function renderSubmitOutputs(payload) {
           ref.conflictPopover.classList.remove("open");
         }
       }
+      refreshConflictSlotLayout();
     }
 
     function updateFieldDisplayValue(fieldKey) {
@@ -6352,6 +6401,62 @@ function renderSubmitOutputs(payload) {
       requestAnimationFrame(pump);
     }
 
+    function runColumnSearchRender(rawTerm = "") {
+      if (!formEl || !state.config) return;
+      const term = String(rawTerm || "").trim().toLocaleLowerCase("tr-TR");
+      const wrappersByKey = new Map();
+      Object.keys(state.fieldRefs || {}).forEach((fieldKey) => {
+        const wrapper = state.fieldRefs?.[fieldKey]?.wrapper;
+        if (wrapper) wrappersByKey.set(fieldKey, wrapper);
+      });
+      const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
+      const scored = fields
+        .map((field, index) => ({
+          field,
+          index,
+          score: term ? fieldSearchScore(field, term) : 1
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => term ? ((b.score - a.score) || (a.index - b.index)) : (a.index - b.index))
+        .map((item) => item.field);
+
+      formEl.innerHTML = "";
+      scored.forEach((field) => {
+        const wrapper = wrappersByKey.get(field.key);
+        if (!wrapper) return;
+        applySearchResultDecoration({ wrapper, field, term });
+        formEl.appendChild(wrapper);
+      });
+      if (editSearchEmpty) {
+        editSearchEmpty.style.display = term && scored.length === 0 ? "block" : "none";
+        editSearchEmpty.textContent = term && scored.length === 0 ? "Sonuç bulunamadı" : "";
+      }
+      formEl.classList.remove("search-transition");
+      requestAnimationFrame(() => formEl.classList.add("search-transition"));
+    }
+
+    function refreshConflictSlotLayout() {
+      const refs = Object.values(state.fieldRefs || {});
+      const hasAnyConflict = refs.some((ref) => ref && ref._hasConflict);
+      refs.forEach((ref) => {
+        if (!ref || !ref.conflictChip) return;
+        if (ref._hasConflict) {
+          ref.conflictChip.style.display = "inline-flex";
+          ref.conflictChip.classList.remove("is-spacer");
+          return;
+        }
+        if (hasAnyConflict) {
+          ref.conflictChip.style.display = "inline-flex";
+          ref.conflictChip.classList.add("is-spacer");
+          if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
+        } else {
+          ref.conflictChip.style.display = "none";
+          ref.conflictChip.classList.remove("is-spacer");
+          if (ref.conflictPopover) ref.conflictPopover.classList.remove("open");
+        }
+      });
+    }
+
     function clearEditSearchState() {
       if (editModeDebounceTimer) {
         clearTimeout(editModeDebounceTimer);
@@ -6367,8 +6472,13 @@ function renderSubmitOutputs(payload) {
     }
 
     function runEditModeFilterRender() {
-      if ((!IS_EDITING_MODE && !isEditPanelOpen) || !state.config) return;
+      if (!state.config) return;
+      const isEditUiActive = IS_EDITING_MODE || isEditPanelOpen;
       const rawTerm = String(editModeSearchTerm || "").trim();
+      if (!isEditUiActive) {
+        runColumnSearchRender(rawTerm);
+        return;
+      }
       const term = rawTerm.toLocaleLowerCase("tr-TR");
       const searchMode = Boolean(term);
       const fields = Array.isArray(state.config.fields) ? state.config.fields : [];
@@ -6657,8 +6767,8 @@ function renderSubmitOutputs(payload) {
         });
         labelMeta.append(revertAiBtn);
 
-        const conflictWrap = document.createElement("div");
-        conflictWrap.className = "conflict-inline-wrap";
+        const statusGroup = document.createElement("div");
+        statusGroup.className = "field-status-group";
         const conflictChip = document.createElement("button");
         conflictChip.type = "button";
         conflictChip.className = "conflict-chip";
@@ -6692,7 +6802,7 @@ function renderSubmitOutputs(payload) {
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
-        conflictWrap.append(conflictChip, conflictPopover);
+        statusGroup.append(conflictChip, aiBadge, conflictPopover);
 
 
         labelColumn.append(labelTop);
@@ -6711,7 +6821,7 @@ function renderSubmitOutputs(payload) {
         aiPill.textContent = "AI";
         aiPill.style.display = "none";
         control.append(aiPill);
-        control.append(aiBadge);
+        control.append(statusGroup);
 
         let inputEl = null;
         let extraControls = null;
@@ -7646,7 +7756,6 @@ function renderSubmitOutputs(payload) {
 
         const controlStack = document.createElement("div");
         controlStack.className = "control-stack";
-        controlStack.append(conflictWrap);
         controlStack.append(control);
         if (extraControls) {
           controlStack.append(extraControls);
