@@ -412,37 +412,39 @@
     }
 
 #bdf-root .ai-badge {
+      position: absolute;
+      top: -6px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      border: 1px solid rgba(37, 99, 235, 0.25);
-      background: rgba(37, 99, 235, 0.08);
+      justify-content: center;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(255, 255, 255, 0.94);
       border-radius: 999px;
-      padding: 1px 8px;
-      font-size: 0.68rem;
+      padding: 0;
       cursor: pointer;
-      color: var(--primary);
-      white-space: nowrap;
-      position: relative;
-      overflow: hidden;
+      color: #475569;
+      z-index: 3;
     }
 
 #bdf-root .ai-badge img {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       display: inline-block;
       object-fit: contain;
     }
 
 #bdf-root .ai-badge.is-active {
-      border-color: rgba(34, 197, 94, 0.4);
-      background: rgba(34, 197, 94, 0.12);
-      color: #15803d;
+      border-color: rgba(37, 99, 235, 0.35);
+      background: rgba(239, 246, 255, 0.96);
+      color: #1d4ed8;
     }
 
 #bdf-root .ai-badge.is-passive {
-      opacity: 0.7;
-      filter: grayscale(0.2);
+      opacity: 0.95;
+      filter: none;
     }
 
 #bdf-root .ai-badge::after {
@@ -488,7 +490,7 @@
 
 #bdf-root .field-control.ai-active .field-input {
       background: transparent;
-      padding-right: 50px;
+      padding-right: 36px;
     }
 
 #bdf-root .ai-pill {
@@ -543,7 +545,7 @@
       min-height: var(--field-control-height);
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 500;
       background: transparent;
       color: #334155;
@@ -580,7 +582,7 @@
       padding: 8px 10px;
       line-height: 1.45;
       border-radius: 6px;
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 500;
       background: transparent;
       color: #334155;
@@ -840,15 +842,45 @@
       border-radius: 999px;
       background: rgba(37, 99, 235, 0.1);
       color: var(--primary);
-      font-size: 0.7rem;
+      font-size: 0.88rem;
       font-weight: 600;
     }
 
 #bdf-root .chip button {
       padding: 2px 6px;
       border-radius: 999px;
-      font-size: 0.7rem;
+      font-size: 0.82rem;
       background: rgba(37, 99, 235, 0.2);
+    }
+
+#bdf-root .field-control.multiselect-control {
+      display: grid;
+      align-items: start;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+
+#bdf-root .multiselect-options {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+    }
+
+#bdf-root .multiselect-option {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+#bdf-root .multiselect-option > span {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      max-width: none;
     }
 
 #bdf-root .file-drop {
@@ -961,8 +993,11 @@
       background: #FEF2F2;
       color: #DC2626;
       border-radius: 999px;
-      padding: 2px 8px;
-      font-size: 12px;
+      padding: 2px 6px;
+      width: 24px;
+      height: 24px;
+      justify-content: center;
+      font-size: 14px;
       font-weight: 600;
       opacity: 0.8;
       cursor: pointer;
@@ -1146,16 +1181,16 @@
     }
 
 #bdf-root .action-main > #actionSplit {
-      order: 3;
-      margin-left: auto;
-    }
-
-#bdf-root .action-main > #toggleInlineEdit {
       order: 1;
     }
 
-#bdf-root .action-main > #moreActions {
+#bdf-root .action-main > #toggleInlineEdit {
       order: 2;
+      margin-left: auto;
+    }
+
+#bdf-root .action-main > #moreActions {
+      order: 3;
     }
 
 #bdf-root .action-split {
@@ -1752,6 +1787,14 @@
         font-size: 12.5px;
         line-height: 15px;
         letter-spacing: 0.08px;
+      }
+
+#bdf-root .field-input:not(textarea),
+#bdf-root textarea.field-input,
+#bdf-root select,
+#bdf-root .multiselect-option,
+#bdf-root .chip {
+        font-size: 12.5px;
       }
 
 #bdf-root .field-label {
@@ -3760,8 +3803,8 @@ function renderSubmitOutputs(payload) {
     const typeMetaMap = {
       text: { iconKey: "text", label: "Text" },
       textarea: { iconKey: "text", label: "Textarea" },
-      email: { iconKey: "text", label: "Email" },
-      phone: { iconKey: "text", label: "Phone" },
+      email: { iconKey: "mail", label: "Email" },
+      phone: { iconKey: "phone", label: "Phone" },
       url: { iconKey: "text", label: "URL" },
       integer: { iconKey: "hash", label: "Integer" },
       number: { iconKey: "hash", label: "Number" },
@@ -3781,7 +3824,7 @@ function renderSubmitOutputs(payload) {
     const displayTypeMetaMap = {
       "text (long)": { iconKey: "text", label: "Text (long)" },
       "multiline text": { iconKey: "text", label: "Multiline text" },
-      "e-mail": { iconKey: "text", label: "E-mail" },
+      "e-mail": { iconKey: "mail", label: "E-mail" },
       "image&pdf": { iconKey: "paperclip", label: "Image&Pdf" },
       reference: { iconKey: "text", label: "Reference" },
       embed: { iconKey: "text", label: "Embed" },
@@ -3825,6 +3868,34 @@ function renderSubmitOutputs(payload) {
           circle.setAttribute("r", "9");
           svg.appendChild(circle);
           setPath("M12 7v5l3 3");
+          break;
+        case "phone":
+          setPath("M6.5 4.5h2.6l1.2 3.2-1.7 1.1a15.2 15.2 0 0 0 6.8 6.8l1.1-1.7 3.2 1.2v2.6a1.5 1.5 0 0 1-1.7 1.5A16.5 16.5 0 0 1 4.9 6.2 1.5 1.5 0 0 1 6.5 4.5z");
+          break;
+        case "mail":
+          setPath("M4 7h16v10H4z");
+          const mailPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          mailPath.setAttribute("d", "M4 8l8 6 8-6");
+          mailPath.setAttribute("stroke", "currentColor");
+          mailPath.setAttribute("stroke-width", "1.8");
+          mailPath.setAttribute("stroke-linecap", "round");
+          mailPath.setAttribute("stroke-linejoin", "round");
+          mailPath.setAttribute("fill", "none");
+          svg.appendChild(mailPath);
+          break;
+        case "user":
+          circle.setAttribute("cx", "12");
+          circle.setAttribute("cy", "8");
+          circle.setAttribute("r", "3");
+          svg.appendChild(circle);
+          const shoulder = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          shoulder.setAttribute("d", "M5 19c1.8-3 4.1-4.5 7-4.5S17.2 16 19 19");
+          shoulder.setAttribute("stroke", "currentColor");
+          shoulder.setAttribute("stroke-width", "1.8");
+          shoulder.setAttribute("stroke-linecap", "round");
+          shoulder.setAttribute("stroke-linejoin", "round");
+          shoulder.setAttribute("fill", "none");
+          svg.appendChild(shoulder);
           break;
         case "check":
           setPath("M5 12l4 4 10-10");
@@ -4127,12 +4198,23 @@ function renderSubmitOutputs(payload) {
       ref.aiBadge.classList.toggle("is-active", activeSource === "ai");
       ref.aiBadge.classList.toggle("is-passive", activeSource !== "ai" && hasAi);
       ref.control.classList.toggle("ai-active", activeSource === "ai" && hasAi);
-      ref.aiPill.style.display = activeSource === "ai" && hasAi ? "inline-flex" : "none";
+      ref.aiPill.style.display = "none";
+      const badgeIcon = ref.aiBadge.querySelector("img, svg");
+      if (badgeIcon) {
+        if (activeSource === "ai") {
+          badgeIcon.outerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" />`;
+          ref.aiBadge.title = "İnsan moduna geç";
+        } else {
+          badgeIcon.outerHTML = "";
+          ref.aiBadge.append(renderIcon("user"));
+          ref.aiBadge.title = "AI'ye dön";
+        }
+      }
       if (ref.applyAiBtn) {
-        ref.applyAiBtn.style.display = !hasHuman && hasAi ? "inline-flex" : "none";
+        ref.applyAiBtn.style.display = "none";
       }
       if (ref.revertAiBtn) {
-        ref.revertAiBtn.style.display = hasHuman && hasAi && activeSource !== "ai" ? "inline-flex" : "none";
+        ref.revertAiBtn.style.display = "none";
       }
       if (ref.conflictChip) {
         ref.conflictChip.style.display = hasConflict ? "inline-flex" : "none";
@@ -6532,8 +6614,8 @@ function renderSubmitOutputs(payload) {
         const aiBadge = document.createElement("button");
         aiBadge.type = "button";
         aiBadge.className = "ai-badge";
-        aiBadge.title = "AI önerisi var. Tıkla: İnsan moduna geç / AI moduna dön";
-        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT logo" /><span>ChatGPT</span>`;
+        aiBadge.title = "AI önerisi";
+        aiBadge.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" />`;
         aiBadge.addEventListener("click", () => {
           const currentSource = getActiveSource(field.key);
           const hasAi = !isEmptyValue(aiData[field.key]);
@@ -6546,7 +6628,6 @@ function renderSubmitOutputs(payload) {
             mode: nextSource
           });
         });
-        labelMeta.append(aiBadge);
 
         const applyAiBtn = document.createElement("button");
         applyAiBtn.type = "button";
@@ -6581,7 +6662,9 @@ function renderSubmitOutputs(payload) {
         const conflictChip = document.createElement("button");
         conflictChip.type = "button";
         conflictChip.className = "conflict-chip";
-        conflictChip.textContent = "⚠ Çakışma";
+        conflictChip.textContent = "⚠";
+        conflictChip.setAttribute("aria-label", "Çakışma detayı");
+        conflictChip.title = "Çakışma detayı";
         conflictChip.style.display = "none";
         const conflictPopover = document.createElement("div");
         conflictPopover.className = "conflict-popover";
@@ -6628,6 +6711,7 @@ function renderSubmitOutputs(payload) {
         aiPill.textContent = "AI";
         aiPill.style.display = "none";
         control.append(aiPill);
+        control.append(aiBadge);
 
         let inputEl = null;
         let extraControls = null;
@@ -6803,8 +6887,9 @@ function renderSubmitOutputs(payload) {
 
           control.append(select);
         } else if (field.type === "dropdown" && field.allowMultiple) {
+          control.classList.add("multiselect-control");
           const optionsWrapper = document.createElement("div");
-          optionsWrapper.className = "grid";
+          optionsWrapper.className = "multiselect-options";
 
           const chips = document.createElement("div");
           chips.className = "chip-row";
@@ -6815,7 +6900,7 @@ function renderSubmitOutputs(payload) {
             optionsWrapper.innerHTML = "";
             (field.options || []).forEach((opt) => {
               const optionRow = document.createElement("label");
-              optionRow.className = "inline-row";
+              optionRow.className = "multiselect-option";
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
               checkbox.checked = selectedValues.includes(opt.value);
