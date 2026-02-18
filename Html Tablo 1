@@ -407,6 +407,25 @@
   box-shadow: none !important;
 }
 
+#dynamic-table-wrapper #hot-container .handsontable table,
+#dynamic-table-wrapper #hot-container .handsontable table th,
+#dynamic-table-wrapper #hot-container .handsontable table td {
+  border-left: 0 !important;
+}
+
+#dynamic-table-wrapper #hot-container .handsontable thead th:first-child,
+#dynamic-table-wrapper #hot-container .handsontable tbody td:first-child,
+#dynamic-table-wrapper #hot-container .handsontable tbody th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_top th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_left th:first-child,
+#dynamic-table-wrapper #hot-container .ht_clone_top_left_corner th:first-child {
+  border-left: 0 !important;
+}
+
+#dynamic-table-wrapper #hot-container .wtBorder {
+  border-left-width: 0 !important;
+}
+
 #dynamic-table-wrapper .handsontable th {
   background: #fff !important;
   color: #374151 !important;
