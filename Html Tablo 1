@@ -404,6 +404,20 @@
   border-bottom: 1px solid #eaecef !important;
 }
 
+#dynamic-table-wrapper .handsontable th.rowHeader,
+#dynamic-table-wrapper .handsontable thead th:first-child,
+#dynamic-table-wrapper .handsontable tbody th:first-child {
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  background: #fff !important;
+}
+
+#dynamic-table-wrapper .handsontable .ht_clone_left th,
+#dynamic-table-wrapper .handsontable .ht_clone_top_left_corner th {
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+}
+
 #dynamic-table-wrapper .handsontable td {
   border-right: 1px solid #edf1f5 !important;
   border-bottom: 1px solid #edf1f5 !important;
