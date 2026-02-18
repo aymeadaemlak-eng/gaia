@@ -222,6 +222,10 @@
   z-index: 250;
 }
 
+#dynamic-table-wrapper .dt-sheet-handle {
+  display: none;
+}
+
 #dynamic-table-wrapper .dt-column-menu.is-open {
   display: block;
 }
@@ -408,6 +412,80 @@
 
 #dynamic-table-wrapper .dt-sort-option:hover {
   background: #f8fafc;
+}
+
+#dynamic-table-wrapper .dt-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.36);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  z-index: 240;
+}
+
+#dynamic-table-wrapper .dt-menu-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  #dynamic-table-wrapper .dt-column-menu {
+    position: fixed;
+    left: 0 !important;
+    right: 0;
+    top: auto !important;
+    bottom: 0;
+    width: 100%;
+    min-width: 0;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    padding: 8px 10px 14px;
+    box-shadow: 0 -16px 44px rgba(15, 23, 42, 0.2);
+    transform: translateY(105%);
+    transition: transform 220ms ease;
+  }
+
+  #dynamic-table-wrapper .dt-column-menu.is-open {
+    display: block;
+    transform: translateY(0);
+  }
+
+  #dynamic-table-wrapper .dt-filter-panel,
+  #dynamic-table-wrapper .dt-sort-panel {
+    position: fixed;
+    left: 0 !important;
+    right: 0;
+    top: auto !important;
+    bottom: 0;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    box-shadow: 0 -16px 44px rgba(15, 23, 42, 0.25);
+    transform: translateY(105%);
+    transition: transform 220ms ease;
+    z-index: 280;
+    max-height: min(84vh, 640px);
+    overflow-y: auto;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  #dynamic-table-wrapper .dt-filter-panel.is-open,
+  #dynamic-table-wrapper .dt-sort-panel.is-open {
+    display: block;
+    transform: translateY(0);
+  }
+
+  #dynamic-table-wrapper .dt-sheet-handle {
+    display: block;
+    width: 54px;
+    height: 5px;
+    border-radius: 999px;
+    background: #d1d5db;
+    margin: 6px auto 10px;
+  }
 }
 
 #dynamic-table-wrapper #hot-container {
@@ -749,7 +827,9 @@
       </div>
     </div>
     <div id="hot-container"></div>
+    <div id="dt-menu-backdrop" class="dt-menu-backdrop" aria-hidden="true"></div>
     <div id="dt-column-menu" class="dt-column-menu" role="menu" aria-hidden="true">
+      <div class="dt-sheet-handle" data-sheet-handle="menu"></div>
       <div class="dt-column-menu-title" id="dt-column-menu-title">Field menu</div>
       <button id="dt-column-menu-add" class="dt-column-menu-item" type="button">Add field</button>
       <button id="dt-column-menu-manage" class="dt-column-menu-item" type="button">Manage field</button>
@@ -757,10 +837,12 @@
       <button id="dt-column-menu-filter" class="dt-column-menu-item" type="button"><span>Filter</span><span>›</span></button>
       <button id="dt-column-menu-sort" class="dt-column-menu-item" type="button"><span>Sort</span><span>›</span></button>
       <div id="dt-sort-panel" class="dt-sort-panel">
+        <div class="dt-sheet-handle" data-sheet-handle="sort"></div>
         <button id="dt-sort-asc" class="dt-sort-option" type="button">Sort ascending</button>
         <button id="dt-sort-desc" class="dt-sort-option" type="button">Sort descending</button>
       </div>
       <div id="dt-filter-panel" class="dt-filter-panel">
+        <div class="dt-sheet-handle" data-sheet-handle="filter"></div>
         <label class="dt-filter-label" for="dt-filter-condition">Filter by condition:</label>
         <select id="dt-filter-condition" class="dt-filter-select">
           <option value="none">None</option>
@@ -854,6 +936,7 @@
     sortAscButton: document.getElementById('dt-sort-asc'),
     sortDescButton: document.getElementById('dt-sort-desc'),
     filterPanel: document.getElementById('dt-filter-panel'),
+    menuBackdrop: document.getElementById('dt-menu-backdrop'),
     filterConditionSelect: document.getElementById('dt-filter-condition'),
     filterConditionValueInput: document.getElementById('dt-filter-condition-value'),
     filterOperatorRow: document.getElementById('dt-filter-operator-row'),
@@ -1754,7 +1837,18 @@
     hideSortPanel();
     els.columnMenu.classList.remove('is-open', 'is-filter-mode', 'is-sort-mode');
     els.columnMenu.setAttribute('aria-hidden', 'true');
+    setBackdropOpen(false);
     state.activeHeaderColumn = null;
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function setBackdropOpen(isOpen) {
+    if (!els.menuBackdrop) return;
+    els.menuBackdrop.classList.toggle('is-open', !!isOpen);
+    els.menuBackdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
   }
 
   function openColumnMenu(columnIndex, anchorRect, headerLabel) {
@@ -1782,6 +1876,7 @@
     els.columnMenu.classList.remove('is-filter-mode', 'is-sort-mode');
     els.columnMenu.classList.add('is-open');
     els.columnMenu.setAttribute('aria-hidden', 'false');
+    setBackdropOpen(true);
   }
 
 
@@ -1806,6 +1901,11 @@
 
   function positionSubmenu(panelEl, triggerEl) {
     if (!panelEl || !els.columnMenu) return;
+    if (isMobileViewport()) {
+      panelEl.style.left = '0px';
+      panelEl.style.top = 'auto';
+      return;
+    }
     const menuWidth = els.columnMenu.offsetWidth || 220;
     panelEl.style.left = `${menuWidth + 8}px`;
     const top = Math.max(0, (triggerEl?.offsetTop || 0) - 6);
@@ -1818,6 +1918,9 @@
     }
     if (els.columnMenu) {
       els.columnMenu.classList.remove('is-sort-mode');
+    }
+    if (els.columnMenu?.classList.contains('is-open') && !els.filterPanel?.classList.contains('is-open')) {
+      setBackdropOpen(true);
     }
   }
 
@@ -1855,6 +1958,66 @@
       els.columnMenu.classList.remove('is-filter-mode');
     }
     state.filterDraft = null;
+    if (els.columnMenu?.classList.contains('is-open') && !els.sortPanel?.classList.contains('is-open')) {
+      setBackdropOpen(true);
+    }
+  }
+
+  function closeTopMostMenu() {
+    if (els.filterPanel?.classList.contains('is-open')) {
+      hideFilterPanel();
+      return;
+    }
+    if (els.sortPanel?.classList.contains('is-open')) {
+      hideSortPanel();
+      return;
+    }
+    closeColumnMenu();
+  }
+
+  function setupSheetDismiss(element, onClose) {
+    if (!element || typeof onClose !== 'function') return;
+    const handle = element.querySelector('.dt-sheet-handle');
+    if (!handle) return;
+
+    let startY = 0;
+    let dragging = false;
+
+    const onTouchMove = event => {
+      if (!dragging || !isMobileViewport()) return;
+      const touch = event.touches[0];
+      const delta = Math.max(0, touch.clientY - startY);
+      element.style.transition = 'none';
+      element.style.transform = `translateY(${delta}px)`;
+      if (delta > 0) {
+        event.preventDefault();
+      }
+    };
+
+    const onTouchEnd = event => {
+      if (!dragging) return;
+      dragging = false;
+      const touch = event.changedTouches[0];
+      const delta = Math.max(0, touch.clientY - startY);
+      element.style.transition = '';
+      element.style.transform = '';
+      if (delta >= 70) {
+        onClose();
+      }
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchEnd);
+    };
+
+    handle.addEventListener('touchstart', event => {
+      if (!isMobileViewport()) return;
+      const touch = event.touches[0];
+      startY = touch.clientY;
+      dragging = true;
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd, { passive: true });
+      document.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    }, { passive: true });
   }
 
   function getColumnDistinctValues(columnIndex) {
@@ -1980,6 +2143,7 @@
       els.columnMenu.classList.add('is-filter-mode');
       els.columnMenu.classList.remove('is-sort-mode');
     }
+
   }
 
   function applyAllColumnFilters() {
@@ -2334,6 +2498,14 @@
       els.columnMenu.addEventListener('mousedown', event => event.stopPropagation());
       els.columnMenu.addEventListener('click', event => event.stopPropagation());
     }
+
+    if (els.menuBackdrop) {
+      els.menuBackdrop.addEventListener('click', closeTopMostMenu);
+    }
+
+    setupSheetDismiss(els.filterPanel, hideFilterPanel);
+    setupSheetDismiss(els.sortPanel, hideSortPanel);
+    setupSheetDismiss(els.columnMenu, closeColumnMenu);
 
     window.addEventListener('resize', () => {
       closeColumnMenu();
