@@ -2368,6 +2368,7 @@
     let restoreColumnJson = null;
     let humanData = {};
     let aiData = {};
+    let aiExplicitFieldKeys = new Set();
     let sourceByField = {};
     let taskStartTimestamp = null;
     let initialSnapshot = null;
@@ -4436,6 +4437,7 @@ function renderSubmitOutputs(payload) {
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
+          aiExplicitFieldKeys.add(fieldKey);
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
@@ -4471,6 +4473,7 @@ function renderSubmitOutputs(payload) {
       applyColumnJson(column);
       humanData = {};
       aiData = {};
+      aiExplicitFieldKeys = new Set();
       sourceByField = {};
       if (human) {
         loadJsonSafeToForm("human", human);
@@ -4495,7 +4498,8 @@ function renderSubmitOutputs(payload) {
       if (!state.config) return;
       state.config.fields.forEach((field) => {
         const aiValue = aiData[field.key];
-        sourceByField[field.key] = !isEmptyValue(aiValue) ? "ai" : "human";
+        const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
+        sourceByField[field.key] = (hasExplicitAi || !isEmptyValue(aiValue)) ? "ai" : "human";
       });
     }
 
@@ -4596,7 +4600,7 @@ function renderSubmitOutputs(payload) {
       initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
-    function applyColumnJson(columnData, { persistRestore = true } = {}) {
+    function applyColumnJson(columnData, { persistRestore = true, deferPendingSubmitFlush = false } = {}) {
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
         hasColumnData: Boolean(columnData),
@@ -4616,7 +4620,7 @@ function renderSubmitOutputs(payload) {
       if (!state.config) return;
       renderForm(state.config);
       applyVersionVisibility();
-      flushPendingSubmitAfterConfigReady();
+      if (!deferPendingSubmitFlush) flushPendingSubmitAfterConfigReady();
     }
 
     function buildExportJson() {
@@ -5085,7 +5089,7 @@ function renderSubmitOutputs(payload) {
       const hasIncomingColumns = Boolean(incomingColumnJson && Array.isArray(incomingColumnJson.columns));
       if (hasIncomingColumns) {
         MANUAL_COLUMN_JSON = incomingColumnJson;
-        applyColumnJson(incomingColumnJson);
+        applyColumnJson(incomingColumnJson, { deferPendingSubmitFlush: true });
       }
 
       if (incomingBubbleData && state.config) {
@@ -5093,6 +5097,7 @@ function renderSubmitOutputs(payload) {
         MANUAL_PREDICTED_JSON = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
         humanData = {};
         aiData = {};
+        aiExplicitFieldKeys = new Set();
         sourceByField = {};
         state.fileBuffers = {};
         state.fileStaging = {};
@@ -5103,6 +5108,7 @@ function renderSubmitOutputs(payload) {
         initializeSourceByFieldFromAi();
         refreshAllFields();
         initialSnapshot = buildBaselineSnapshot(IS_EDITING_MODE ? getEditModeBaselinePayload() : incomingBubbleData);
+        flushPendingSubmitAfterConfigReady();
         logPredictDebug("incoming-item-rehydrated", {
           uniqueId,
           humanKeyCount: Object.keys(incomingBubbleData || {}).length,
@@ -8229,6 +8235,7 @@ function renderSubmitOutputs(payload) {
     function resetAllStores() {
       humanData = {};
       aiData = {};
+      aiExplicitFieldKeys = new Set();
       sourceByField = {};
       state.fileBuffers = {};
       state.fileStaging = {};
@@ -8455,6 +8462,7 @@ function renderSubmitOutputs(payload) {
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
         aiData = {};
+        aiExplicitFieldKeys = new Set();
         initializeSourceByFieldFromAi();
         refreshAllFields();
         return;
