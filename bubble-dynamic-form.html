@@ -489,6 +489,14 @@
       padding-right: 86px;
     }
 
+#bdf-root .field-control.toggle.with-status-group .inline-row {
+      padding-right: 64px;
+    }
+
+#bdf-root .field-control.toggle .field-status-group {
+      right: 6px;
+    }
+
 #bdf-root .control-stack {
       display: grid;
       gap: 0;
@@ -6487,6 +6495,23 @@ function renderSubmitOutputs(payload) {
       requestAnimationFrame(pump);
     }
 
+    function markPayloadAsChanged(payload, sourceKind = "human") {
+      if (!payload || !state.config) return;
+      const keyMap = buildFieldKeyMap();
+      Object.entries(payload).forEach(([jsonKey]) => {
+        const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
+        if (!fieldKey) return;
+        const field = state.config.fields.find((f) => f.key === fieldKey);
+        if (!field) return;
+        const effective = getEffectiveValue(fieldKey);
+        if (isEmptyValue(effective)) return;
+        if (sourceKind === "ai" && sourceByField[fieldKey] !== "ai") return;
+        markFieldAsChanged(fieldKey);
+        rememberChangedFieldValue(fieldKey, normalizeValueForComparison(field, effective, state.config));
+      });
+      isFormDirty = computeDirtyState();
+    }
+
     function runColumnSearchRender(rawTerm = "") {
       if (!formEl || !state.config) return;
       const term = String(rawTerm || "").trim().toLocaleLowerCase("tr-TR");
@@ -6768,7 +6793,8 @@ function renderSubmitOutputs(payload) {
         const normalizedType = String(field.type || "").toLowerCase();
         const fieldLabelLower = String(field.label || field.key || "").toLowerCase();
         const isAmountField = ["integer", "number", "currency", "percent", "duration"].includes(normalizedType)
-          || (!["boolean", "checkbox"].includes(normalizedType) && /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower));
+          || (!["boolean", "checkbox", "dropdown", "date", "datetime", "time", "file", "multifile", "image", "textarea", "json"].includes(normalizedType)
+            && /(tutar|bedel|ücret|ucret|fiyat|amount|price)/i.test(fieldLabelLower));
         const isDateField = ["date", "datetime", "time"].includes(normalizedType)
           || /(tarih|date|saat|time)/i.test(fieldLabelLower);
         const isFileField = ["file", "multifile", "image"].includes(normalizedType);
@@ -8293,9 +8319,10 @@ function renderSubmitOutputs(payload) {
       }
       emit("debug:predicted-json", payload);
       loadJsonSafeToForm("ai", payload);
-      updateActionBarUi();
       initializeSourceByFieldFromAi();
       refreshAllFields();
+      markPayloadAsChanged(payload, "ai");
+      updateActionBarUi();
       openExportModal("ai");
       });
 
