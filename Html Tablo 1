@@ -144,7 +144,7 @@
 }
 
 #dynamic-table-wrapper #dt-btn-import + #dt-btn-download {
-  margin-left: -2px;
+  margin-left: -6px;
 }
 
 #dynamic-table-wrapper .dt-search-wrap {
