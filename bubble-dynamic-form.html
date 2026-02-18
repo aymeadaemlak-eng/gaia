@@ -4280,10 +4280,30 @@ function renderSubmitOutputs(payload) {
         .replace(/\\t/g, "\t");
     }
 
+    function normalizeMultiSelectToken(value) {
+      if (value === null || value === undefined) return "";
+      let token = decodeEscapedTextValue(String(value)).trim();
+      if (!token) return "";
+      if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+        token = token.slice(1, -1).trim();
+      }
+      token = token
+        .replace(/^\\+"|"\\+$/g, "")
+        .replace(/^\\+'|'\\+$/g, "")
+        .trim();
+      if (token.startsWith("[") && token.endsWith("]")) {
+        token = token.slice(1, -1).trim();
+      }
+      if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+        token = token.slice(1, -1).trim();
+      }
+      return token;
+    }
+
     function parseJsonArrayString(value) {
       if (typeof value !== "string") return null;
       let candidate = value.trim();
-      for (let attempt = 0; attempt < 3; attempt += 1) {
+      for (let attempt = 0; attempt < 4; attempt += 1) {
         if (candidate.startsWith("[") && candidate.endsWith("]")) {
           try {
             const parsed = JSON.parse(candidate);
@@ -4294,6 +4314,13 @@ function renderSubmitOutputs(payload) {
             }
             return null;
           } catch (error) {
+            const unescaped = candidate
+              .replace(/\\"/g, '"')
+              .replace(/\\'/g, "'");
+            if (unescaped !== candidate) {
+              candidate = unescaped.trim();
+              continue;
+            }
             return null;
           }
         }
@@ -4331,16 +4358,16 @@ function renderSubmitOutputs(payload) {
       }
       if (field.type === "dropdown" && field.allowMultiple) {
         if (Array.isArray(resolved)) {
-          return resolved.map((val) => decodeEscapedTextValue(String(val))).filter(Boolean);
+          return Array.from(new Set(resolved.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
         }
         if (typeof resolved === "string") {
           const parsedArray = parseJsonArrayString(resolved);
           if (Array.isArray(parsedArray)) {
-            return parsedArray.map((val) => String(val)).map((val) => decodeEscapedTextValue(val)).filter(Boolean);
+            return Array.from(new Set(parsedArray.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
           }
           const normalizedText = decodeEscapedTextValue(resolved).trim();
           if (!normalizedText) return [];
-          return normalizedText.split(",").map((val) => decodeEscapedTextValue(val.trim())).filter(Boolean);
+          return Array.from(new Set(normalizedText.split(",").map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
         }
       }
       if (["textarea", "json", "text"].includes(field.type) && typeof resolved === "string") {
@@ -4356,14 +4383,14 @@ function renderSubmitOutputs(payload) {
 
     function normalizeMultiValue(value) {
       if (Array.isArray(value)) {
-        return Array.from(new Set(value.map((entry) => decodeEscapedTextValue(String(entry))))).sort();
+        return Array.from(new Set(value.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
       }
       if (typeof value === "string") {
         const parsedArray = parseJsonArrayString(value);
         if (Array.isArray(parsedArray)) {
-          return Array.from(new Set(parsedArray.map((entry) => decodeEscapedTextValue(String(entry))))).sort();
+          return Array.from(new Set(parsedArray.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
         }
-        const parts = value.split(",").map((entry) => decodeEscapedTextValue(entry.trim())).filter(Boolean);
+        const parts = value.split(",").map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean);
         return Array.from(new Set(parts)).sort();
       }
       return [];
@@ -6061,9 +6088,16 @@ function renderSubmitOutputs(payload) {
         lastStartParamWasTrue = true;
         startOpenSequence += 1;
         clearChangedTracking();
-        isFormDirty = false;
-        hasChangesSinceStartOpen = false;
-        logStartState("open", { startSignal, startOpenSequence, changedKeyCount: changedFieldKeys.size });
+        const prefilledDirty = computeDirtyState();
+        isFormDirty = prefilledDirty;
+        hasChangesSinceStartOpen = prefilledDirty;
+        logStartState("open", {
+          startSignal,
+          startOpenSequence,
+          changedKeyCount: changedFieldKeys.size,
+          prefilledDirty,
+          aiExplicitFieldCount: aiExplicitFieldKeys.size
+        });
         persistStartFlowState();
         return;
       }
@@ -7413,16 +7447,17 @@ function renderSubmitOutputs(payload) {
               optionRow.className = "multiselect-option";
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
-              checkbox.checked = selectedValues.includes(opt.value);
+              const normalizedOptValue = normalizeMultiSelectToken(opt.value);
+              checkbox.checked = selectedValues.includes(normalizedOptValue);
               checkbox.disabled = opt.disabled || false;
               const text = document.createElement("span");
               text.textContent = opt.label;
               optionRow.append(checkbox, text);
               checkbox.addEventListener("change", () => {
                 if (checkbox.checked) {
-                  selectedValues = [...new Set([...selectedValues, opt.value])];
+                  selectedValues = [...new Set([...selectedValues, normalizedOptValue])];
                 } else {
-                  selectedValues = selectedValues.filter((val) => val !== opt.value);
+                  selectedValues = selectedValues.filter((val) => val !== normalizedOptValue);
                 }
                 renderChips();
                 setFieldValue(field.key, selectedValues, field);
@@ -7435,7 +7470,7 @@ function renderSubmitOutputs(payload) {
           const renderChips = () => {
             chips.innerHTML = "";
             selectedValues.forEach((val) => {
-              const opt = (field.options || []).find((o) => o.value === val);
+              const opt = (field.options || []).find((o) => normalizeMultiSelectToken(o.value) === normalizeMultiSelectToken(val));
               const chip = document.createElement("span");
               chip.className = "chip";
               chip.textContent = opt ? opt.label : val;
