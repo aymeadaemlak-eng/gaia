@@ -1382,21 +1382,6 @@
 
 #bdf-root .edit-search-input-wrap {
   position: relative;
-  --field-search-icon-color: #64748B;
-}
-
-#bdf-root .field-search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  transform: translateY(-50%);
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 14px 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
 }
 
 #bdf-root .field-search-input {
@@ -1406,7 +1391,7 @@
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
   border-radius: 12px;
-  padding-left: 40px;
+  padding-left: 12px;
   padding-right: 34px;
   font-size: 13px;
   font-weight: 500;
@@ -1429,14 +1414,6 @@
   border-color: #93C5FD;
   box-shadow: 0 0 0 3px #DBEAFE;
   background: #FFFFFF;
-}
-
-#bdf-root .edit-search-input-wrap:focus-within {
-  --field-search-icon-color: #2563EB;
-}
-
-#bdf-root .edit-search-input-wrap:focus-within .field-search-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
 }
 
 #bdf-root .edit-search-clear {
@@ -2146,7 +2123,6 @@
               <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
             </div>
             <div class="edit-search-input-wrap">
-              <span class="field-search-icon" aria-hidden="true"></span>
               <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
@@ -4404,6 +4380,7 @@ function renderSubmitOutputs(payload) {
       if (!jsonObj || !state.config) return;
       const keyMap = buildFieldKeyMap();
 
+      const applied = [];
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
@@ -4420,6 +4397,13 @@ function renderSubmitOutputs(payload) {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
         }
+        applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
+      });
+      traceAutosave("loadJsonSafeToForm", {
+        kind,
+        incomingKeyCount: Object.keys(jsonObj || {}).length,
+        appliedKeyCount: applied.length,
+        applied
       });
       refreshAllFields();
       if (state.config) {
@@ -4630,7 +4614,43 @@ function renderSubmitOutputs(payload) {
       return Array.from(byKey.values());
     }
 
+    function collectChangedFieldDebugDetails() {
+      const base = initialSnapshot || {};
+      const details = [];
+      getUniqueChangedFieldDescriptors().forEach((field) => {
+        const jsonKey = field.key;
+        const rememberedValue = getRememberedChangedValue(field.key);
+        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const baselineValue = base[jsonKey] ?? "";
+        const changed = areValuesDifferent(baselineValue, currentValue);
+        details.push({
+          key: jsonKey,
+          label: field.label || jsonKey,
+          source: getActiveSource(field.key),
+          baselineValue,
+          currentValue,
+          remembered: rememberedValue !== undefined,
+          changed,
+          includedValue: changed ? (isEmptyValue(currentValue) ? "" : currentValue) : undefined
+        });
+      });
+      return details;
+    }
+
+    function traceChangedFieldComputation(label) {
+      const details = collectChangedFieldDebugDetails();
+      const changedOnly = details.filter((item) => item.changed);
+      traceAutosave(label, {
+        evaluatedFieldCount: details.length,
+        changedFieldCount: changedOnly.length,
+        changedKeys: changedOnly.map((item) => item.key),
+        changedDetails: changedOnly,
+        evaluationDetails: details
+      });
+    }
+
     function buildKeyValueListFromSources() {
+      traceChangedFieldComputation("changed-field-evaluation:outputlist1");
       const entriesByKey = new Map();
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
@@ -4652,6 +4672,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function buildAddedCustomFields() {
+      traceChangedFieldComputation("changed-field-evaluation:outputlist2");
       const entriesByKey = new Map();
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
@@ -4683,6 +4704,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function buildDeletedFields() {
+      traceChangedFieldComputation("changed-field-evaluation:outputlist3");
       const entriesByKey = new Map();
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
@@ -4698,6 +4720,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function buildModifiedFields() {
+      traceChangedFieldComputation("changed-field-evaluation:outputlist4");
       const entriesByKey = new Map();
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
@@ -8319,10 +8342,20 @@ function renderSubmitOutputs(payload) {
         return;
       }
       emit("debug:predicted-json", payload);
+      traceAutosave("predicted-json-load:start", {
+        predictedKeyCount: Object.keys(payload || {}).length,
+        predictedKeys: Object.keys(payload || {}),
+        payload
+      });
       loadJsonSafeToForm("ai", payload);
       initializeSourceByFieldFromAi();
       refreshAllFields();
       markPayloadAsChanged(payload, "ai");
+      traceAutosave("predicted-json-load:applied", {
+        aiKeys: Object.keys(aiData || {}),
+        sourceByFieldSnapshot: sourceByField,
+        effectiveChangedDetails: collectChangedFieldDebugDetails()
+      });
       updateActionBarUi();
       openExportModal("ai");
       });
