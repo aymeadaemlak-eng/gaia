@@ -1372,8 +1372,7 @@
   --field-search-icon-color: #64748B;
 }
 
-#bdf-root .edit-search-input-wrap::before {
-  content: "";
+#bdf-root .field-search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -1381,15 +1380,21 @@
   height: 16px;
   transform: translateY(-50%);
   pointer-events: none;
-  background-color: var(--field-search-icon-color);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 3a7.5 7.5 0 0 1 5.965 12.053l4.241 4.24a1 1 0 0 1-1.414 1.415l-4.24-4.241A7.5 7.5 0 1 1 10.5 3m0 2a5.5 5.5 0 1 0 0 11a5.5 5.5 0 0 0 0-11'/%3E%3C/svg%3E");
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: 16px 16px;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 3a7.5 7.5 0 0 1 5.965 12.053l4.241 4.24a1 1 0 0 1-1.414 1.415l-4.24-4.241A7.5 7.5 0 1 1 10.5 3m0 2a5.5 5.5 0 1 0 0 11a5.5 5.5 0 0 0 0-11'/%3E%3C/svg%3E");
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: 16px 16px;
+  border: 1.8px solid var(--field-search-icon-color);
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+#bdf-root .field-search-icon::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 1.8px;
+  background: var(--field-search-icon-color);
+  right: -4px;
+  bottom: 0px;
+  transform: rotate(45deg);
+  border-radius: 999px;
 }
 
 #bdf-root .field-search-input {
@@ -2135,6 +2140,7 @@
               <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
             </div>
             <div class="edit-search-input-wrap">
+              <span class="field-search-icon" aria-hidden="true"></span>
               <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara (ad / id / header)" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
@@ -2352,6 +2358,7 @@
     };
 
     let columnJson = null;
+    let restoreColumnJson = null;
     let humanData = {};
     let aiData = {};
     let sourceByField = {};
@@ -2634,6 +2641,7 @@
       if (columnWarning) columnWarning.style.display = "none";
       if (formContainer) formContainer.style.display = "block";
       renderForm(state.config);
+      applyVersionVisibility();
       flushPendingSubmitAfterConfigReady();
     }
 
@@ -3173,8 +3181,9 @@
         traceAutosave("inline-toggle-open-result", collectInlineEditDiagnostics({ payloadAppliedNow }));
       } else {
         stopEditModePayloadPolling();
-        if (columnJson) {
-          applyColumnJson(columnJson);
+        const restoreJson = restoreColumnJson || columnJson;
+        if (restoreJson) {
+          applyColumnJson(restoreJson, { persistRestore: true });
         } else if (state.config) {
           renderForm(state.config);
         }
@@ -4538,13 +4547,14 @@ function renderSubmitOutputs(payload) {
       initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
-    function applyColumnJson(columnData) {
+    function applyColumnJson(columnData, { persistRestore = true } = {}) {
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
         hasColumnData: Boolean(columnData),
         columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
       });
       columnJson = columnData;
+      if (persistRestore && columnData) restoreColumnJson = columnData;
       if (!columnJson) {
         columnWarning.style.display = "block";
         formEl.innerHTML = "";
@@ -4556,6 +4566,7 @@ function renderSubmitOutputs(payload) {
       state.config = buildConfigFromColumnJson(columnJson);
       if (!state.config) return;
       renderForm(state.config);
+      applyVersionVisibility();
       flushPendingSubmitAfterConfigReady();
     }
 
@@ -6265,21 +6276,6 @@ function renderSubmitOutputs(payload) {
         if (!sourceByField[key]) sourceByField[key] = "human";
       });
       state.config = config;
-      columnJson = {
-        columns: config.fields.map((field) => ({
-          fieldName: field.fieldName || field.key,
-          header: field.label,
-          type: field.type,
-          stageType: field.stageType || "optional",
-          required: Boolean(field.required),
-          multiple: Boolean(field.allowMultiple),
-          ui: field.ui || {}
-        })),
-        mode: "edit",
-        currentDateTimeISO: config.currentDateTimeISO,
-        locale: config.locale,
-        timezone: config.timezone
-      };
       lastEditModePayloadSignature = signature;
       editModePayloadLoaded = true;
       hasEnteredEditSession = true;
@@ -8082,7 +8078,7 @@ function renderSubmitOutputs(payload) {
       clearChangedTracking();
       updateActionBarUi();
       if (columnJson) {
-        applyColumnJson(columnJson);
+        applyColumnJson(columnJson, { persistRestore: true });
       } else {
         columnWarning.style.display = "block";
         formEl.innerHTML = "";
@@ -8306,7 +8302,7 @@ function renderSubmitOutputs(payload) {
       safeOn("#loadColumnJson", "click", () => {
       syncManualJsonInputs();
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
-      applyColumnJson(columnJson);
+      applyColumnJson(columnJson, { persistRestore: true });
       emit("debug:column-json", columnJson);
       openExportModal("column");
       });
@@ -8419,7 +8415,7 @@ function renderSubmitOutputs(payload) {
       }
       ensureEditModePayloadPolling(!IS_EDITING_MODE);
     } else if (columnJson) {
-      applyColumnJson(columnJson);
+      applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
           loadJsonSafeToForm("human", MANUAL_DATA_JSON);
