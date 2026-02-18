@@ -1351,11 +1351,68 @@
 
 #bdf-root .edit-search-input-wrap {
   position: relative;
+  --field-search-icon-color: #64748B;
+}
+
+#bdf-root .edit-search-input-wrap::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background-color: var(--field-search-icon-color);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 3a7.5 7.5 0 0 1 5.965 12.053l4.241 4.24a1 1 0 0 1-1.414 1.415l-4.24-4.241A7.5 7.5 0 1 1 10.5 3m0 2a5.5 5.5 0 1 0 0 11a5.5 5.5 0 0 0 0-11'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 16px 16px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.5 3a7.5 7.5 0 0 1 5.965 12.053l4.241 4.24a1 1 0 0 1-1.414 1.415l-4.24-4.241A7.5 7.5 0 1 1 10.5 3m0 2a5.5 5.5 0 1 0 0 11a5.5 5.5 0 0 0 0-11'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 16px 16px;
+}
+
+#bdf-root .field-search-input {
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+  padding-left: 36px;
+  padding-right: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1220;
+  box-shadow: none;
+}
+
+#bdf-root .field-search-input::placeholder {
+  color: #94A3B8;
+  opacity: 1;
+}
+
+#bdf-root .edit-search-input-wrap:hover .field-search-input:not(:focus) {
+  border-color: #94A3B8;
+  background: #FFFFFF;
+}
+
+#bdf-root .field-search-input:focus {
+  outline: none;
+  border-color: #93C5FD;
+  box-shadow: 0 0 0 3px #DBEAFE;
+  background: #FFFFFF;
+}
+
+#bdf-root .edit-search-input-wrap:focus-within {
+  --field-search-icon-color: #2563EB;
 }
 
 #bdf-root .edit-search-clear {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   border: 0;
@@ -2060,7 +2117,7 @@
               <select id="editStageSelect" class="edit-stage-select" aria-label="Aşama seç"></select>
             </div>
             <div class="edit-search-input-wrap">
-              <input id="editSearchInput" class="field-input" type="text" placeholder="Alan ara (ad / id / header)" />
+              <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara (ad / id / header)" />
               <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
             </div>
           </div>
