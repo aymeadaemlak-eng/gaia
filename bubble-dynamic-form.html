@@ -1381,18 +1381,17 @@
 }
 
 #bdf-root .edit-search-input-wrap {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 #bdf-root .field-search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
   width: 14px;
   height: 14px;
-  transform: translateY(-50%);
-  pointer-events: none;
   color: #64748B;
+  flex: 0 0 auto;
 }
 
 #bdf-root .field-search-icon svg {
@@ -1401,14 +1400,20 @@
   height: 14px;
 }
 
+#bdf-root .edit-search-input-shell {
+  position: relative;
+  width: clamp(200px, 24vw, 280px);
+  min-width: 180px;
+}
+
 #bdf-root .field-search-input {
   width: 100%;
-  height: 40px;
-  min-height: 40px;
+  height: 36px;
+  min-height: 36px;
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
   border-radius: 12px;
-  padding-left: 40px;
+  padding-left: 10px;
   padding-right: 34px;
   font-size: 13px;
   font-weight: 500;
@@ -2141,8 +2146,10 @@
             </div>
             <div class="edit-search-input-wrap">
               <span class="field-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg></span>
-              <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara" />
-              <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
+              <div class="edit-search-input-shell">
+                <input id="editSearchInput" class="field-input field-search-input" type="text" placeholder="Alan ara" />
+                <button id="editSearchClear" class="edit-search-clear" type="button" aria-label="Aramayı temizle">×</button>
+              </div>
             </div>
           </div>
           <div id="editSearchEmpty" class="edit-search-empty"></div>
@@ -3048,6 +3055,22 @@
       const timestamp = new Date().toLocaleTimeString("tr-TR");
       consoleEl.textContent += `[${timestamp}] ${message}` + (payload ? `\n${payload}` : "") + "\n";
       consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+
+    function logPredictDebug(label, payload = {}) {
+      const snapshot = {
+        label,
+        time: new Date().toISOString(),
+        currentUniqueId: readCurrentUniqueId(),
+        startSignal: readStartSignalValue(),
+        mode: String(state.config?.mode || ""),
+        ...payload
+      };
+      console.info(`[BDF_PREDICT_DEBUG] ${JSON.stringify(snapshot)}`);
+      if (!IS_VERSION_MODE && BDF.DEBUG_MODE) {
+        setConsole(`predict:${label}`, JSON.stringify(snapshot, null, 2));
+      }
     }
 
 
@@ -4399,11 +4422,13 @@ function renderSubmitOutputs(payload) {
       const keyMap = buildFieldKeyMap();
 
       const applied = [];
+      const unmatched = [];
+      const availableAliases = Array.from(keyMap.keys());
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
+          unmatched.push(jsonKey);
           console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
-          setConsole("Eşleşmeyen JSON key", jsonKey);
           return;
         }
         const field = state.config.fields.find((f) => f.key === fieldKey);
@@ -4421,6 +4446,17 @@ function renderSubmitOutputs(payload) {
         kind,
         incomingKeyCount: Object.keys(jsonObj || {}).length,
         appliedKeyCount: applied.length,
+        unmatchedKeyCount: unmatched.length,
+        unmatchedKeys: unmatched,
+        applied
+      });
+      logPredictDebug("json-load-summary", {
+        kind,
+        incomingKeyCount: Object.keys(jsonObj || {}).length,
+        appliedKeyCount: applied.length,
+        unmatchedKeyCount: unmatched.length,
+        unmatchedKeys: unmatched,
+        availableAliasSample: availableAliases.slice(0, 80),
         applied
       });
       refreshAllFields();
@@ -5609,6 +5645,15 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
+      logPredictDebug("submit-payload-checkpoint", {
+        trigger,
+        autosave,
+        outputlist1: submitOutputsPayload.outputlist1,
+        outputlist2: submitOutputsPayload.outputlist2,
+        outputlist3: submitOutputsPayload.outputlist3,
+        outputlist4: submitOutputsPayload.outputlist4,
+        ...buildSubmitChangeDiagnostics()
+      });
       traceAutosave("runSubmitFlow:payload-built", {
         trigger,
         output1: submitOutputsPayload.output1,
@@ -5865,11 +5910,13 @@ function renderSubmitOutputs(payload) {
         reconcileDirtyTracking("evaluateStartSignalTransition:close");
         const hasDirtyIndicators = hasChangesSinceStartOpen || isFormDirty || changedFieldKeys.size > 0;
         const shouldSubmit = hasDirtyIndicators && !isFormSaving;
-        traceAutosave("start-close-dirty-diagnostics", {
+        const closeDiagnostics = {
           hasDirtyIndicators,
           shouldSubmit,
           ...buildSubmitChangeDiagnostics()
-        });
+        };
+        traceAutosave("start-close-dirty-diagnostics", closeDiagnostics);
+        logPredictDebug("start-close-checkpoint", closeDiagnostics);
         logStartState("close", {
           startSignal,
           shouldSubmit,
