@@ -131,6 +131,19 @@
   color: #fff;
 }
 
+#dynamic-table-wrapper #dt-btn-new {
+  height: 30px;
+  padding: 0 10px;
+}
+
+#dynamic-table-wrapper #dt-btn-import {
+  margin-right: -3px;
+}
+
+#dynamic-table-wrapper #dt-btn-download {
+  margin-left: -3px;
+}
+
 #dynamic-table-wrapper .dt-search-wrap {
   display: flex;
   align-items: center;
