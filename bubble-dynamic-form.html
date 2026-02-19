@@ -4619,8 +4619,13 @@ function renderSubmitOutputs(payload) {
     function initializeSourceByFieldFromAi() {
       if (!state.config) return;
       state.config.fields.forEach((field) => {
+        const humanValue = humanData[field.key];
         const aiValue = aiData[field.key];
         const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
+        if (!isEmptyValue(humanValue)) {
+          sourceByField[field.key] = "human";
+          return;
+        }
         sourceByField[field.key] = (hasExplicitAi || !isEmptyValue(aiValue)) ? "ai" : "human";
       });
     }
