@@ -5603,6 +5603,35 @@ function renderSubmitOutputs(payload) {
 
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
       const incomingPredictedData = readCurrentPredictedDataObject();
+      const hasLocalUserEdits = Boolean(
+        humanTouchedFieldKeys.size > 0
+        || changedFieldKeys.size > 0
+        || changedFieldValuesByKey.size > 0
+        || isFormDirty
+      );
+      const startSignalNow = readStartSignalValue();
+      const sameUniqueId = !uniqueId || !currentUniqueId || String(uniqueId) === String(currentUniqueId);
+      if (sameUniqueId && startSignalNow === true && hasLocalUserEdits) {
+        logPredictDebug("incoming-item-rehydrate-skipped-local-edits", {
+          uniqueId,
+          currentUniqueId,
+          startSignalNow,
+          hasLocalUserEdits,
+          userTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+          changedKeys: Array.from(changedFieldKeys || []),
+          rememberedChangedKeys: Array.from((changedFieldValuesByKey || new Map()).keys()),
+          incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
+        });
+        traceAutosave("incoming-item-rehydrate-skipped-local-edits", {
+          uniqueId,
+          currentUniqueId,
+          startSignalNow,
+          hasLocalUserEdits,
+          changedKeyCount: changedFieldKeys.size,
+          rememberedChangedCount: changedFieldValuesByKey.size
+        });
+        return;
+      }
       const predictedToApply = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
       const pendingRemountAutosaveSnapshot = pendingSubmitUntilConfigReady
         ? {
