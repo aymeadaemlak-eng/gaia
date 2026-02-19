@@ -2370,6 +2370,7 @@
     let aiData = {};
     let aiExplicitFieldKeys = new Set();
     let sourceByField = {};
+    let fieldLastWriterByKey = {};
     let taskStartTimestamp = null;
     let initialSnapshot = null;
     const ACTION_OUTPUT_SPLITTER = "_-@SPLİTTER@-_";
@@ -3900,22 +3901,44 @@ function renderSubmitOutputs(payload) {
       return source === "ai" ? aiData[fieldKey] : humanData[fieldKey];
     }
 
+    function noteFieldWrite(fieldKey, source) {
+      if (!fieldKey) return;
+      fieldLastWriterByKey[fieldKey] = source;
+    }
+
     function getEffectiveValue(fieldKey) {
       const preferredSource = sourceByField[fieldKey];
       const humanValue = humanData[fieldKey];
       const aiValue = aiData[fieldKey];
+      const hasHuman = !isEmptyValue(humanValue);
+      const hasAi = !isEmptyValue(aiValue);
+      const hasHumanWrite = Object.prototype.hasOwnProperty.call(humanData, fieldKey);
+      const hasAiWrite = Object.prototype.hasOwnProperty.call(aiData, fieldKey);
+      const lastWriter = fieldLastWriterByKey[fieldKey];
+
+      if (lastWriter === "human" && hasHumanWrite) {
+        return humanValue ?? "";
+      }
+      if (lastWriter === "ai" && hasAiWrite) {
+        return aiValue ?? "";
+      }
+
+      if (hasHuman && hasAi) {
+        if (lastWriter === "human") return humanValue;
+        if (lastWriter === "ai") return aiValue;
+      }
       if (preferredSource === "human") {
-        if (!isEmptyValue(humanValue)) return humanValue;
-        if (!isEmptyValue(aiValue)) return aiValue;
+        if (hasHuman) return humanValue;
+        if (hasAi) return aiValue;
         return humanValue ?? "";
       }
       if (preferredSource === "ai") {
-        if (!isEmptyValue(aiValue)) return aiValue;
-        if (!isEmptyValue(humanValue)) return humanValue;
+        if (hasAi) return aiValue;
+        if (hasHuman) return humanValue;
         return aiValue ?? "";
       }
-      if (!isEmptyValue(humanValue)) return humanValue;
-      if (!isEmptyValue(aiValue)) return aiValue;
+      if (hasHuman) return humanValue;
+      if (hasAi) return aiValue;
       return "";
     }
 
@@ -3929,7 +3952,9 @@ function renderSubmitOutputs(payload) {
       ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
       sourceByField[fieldKey] = "human";
+      noteFieldWrite(fieldKey, "human");
       updateEffectiveState(fieldKey, field, displayValue);
+      logAutoflowValueMutation({ fieldKey, field, source: "human", rawValue: value, normalizedValue: value, displayValue, origin: "setHumanValue" });
       updateAiVisuals(fieldKey);
       updateToolbarStatus();
     }
@@ -3959,6 +3984,41 @@ function renderSubmitOutputs(payload) {
         updateSubmitState(state.config);
       }
       debounceFormChange();
+    }
+
+    function logAutoflowValueMutation({
+      fieldKey,
+      field,
+      source,
+      rawValue,
+      normalizedValue,
+      displayValue,
+      origin = "unknown"
+    } = {}) {
+      const fieldType = String(field?.type || "").toLowerCase();
+      const diagnostics = {
+        origin,
+        fieldKey,
+        fieldLabel: field?.label || fieldKey || "",
+        fieldType,
+        source,
+        rawValue,
+        normalizedValue,
+        effectiveValue: fieldKey ? getEffectiveValue(fieldKey) : undefined,
+        displayValue,
+        hasAiHydratedData,
+        isFormDirty,
+        changedFieldKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        startSignal: readStartSignalValue(),
+        editingSignal: readEditingSignalValue(),
+        isFormSaving,
+        pendingStartCloseAutosave: Boolean(pendingStartCloseAutosave),
+        pendingSubmitQueued: Boolean(pendingSubmitUntilConfigReady),
+        modeHint: getSubmitModeHint()
+      };
+      traceAutosave("autoflow:value-mutation", diagnostics);
+      logPredictDebug("autoflow:value-mutation", diagnostics);
     }
 
     function updateToolbarStatus() {
@@ -4527,10 +4587,15 @@ function renderSubmitOutputs(payload) {
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
+          sourceByField[fieldKey] = "ai";
+          noteFieldWrite(fieldKey, "ai");
+          markFieldAsChanged(fieldKey);
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
+          noteFieldWrite(fieldKey, "human");
         }
+        logAutoflowValueMutation({ fieldKey, field, source: kind, rawValue, normalizedValue: normalized, origin: "loadJsonSafeToForm" });
         applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
       });
       traceAutosave("loadJsonSafeToForm", {
@@ -4564,7 +4629,8 @@ function renderSubmitOutputs(payload) {
       }
       const startSignalNow = readStartSignalValue();
       const shouldSubmitWhileClosed = Boolean(
-        hasSeenStartSignal
+        kind === "ai"
+        && hasSeenStartSignal
         && startSignalNow === false
         && !lastStartParamWasTrue
         && dirtyNow
@@ -4597,6 +4663,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      fieldLastWriterByKey = {};
       if (human) {
         loadJsonSafeToForm("human", human);
       }
@@ -4784,13 +4851,53 @@ function renderSubmitOutputs(payload) {
       return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
     }
 
+    function reapplyRememberedChangedValues(reason = "") {
+      if (!state.config || !Array.isArray(state.config.fields)) return 0;
+      if (!(changedFieldValuesByKey instanceof Map) || changedFieldValuesByKey.size === 0) return 0;
+      const fieldByKey = buildFieldKeyMap();
+      let appliedCount = 0;
+      changedFieldValuesByKey.forEach((rememberedValue, fieldKey) => {
+        const resolvedFieldKey = fieldByKey.get(fieldKey) || fieldKey;
+        const field = state.config.fields.find((entry) => entry.key === resolvedFieldKey);
+        if (!field) return;
+        const normalizedType = String(field.type || "").toLowerCase();
+        if (["file", "image", "multifile"].includes(normalizedType)) return;
+        humanData[fieldKey] = rememberedValue;
+        sourceByField[fieldKey] = "human";
+        noteFieldWrite(fieldKey, "human");
+        state.values[fieldKey] = getEffectiveValue(fieldKey);
+        appliedCount += 1;
+      });
+      if (appliedCount > 0) {
+        refreshAllFields();
+        updateToolbarStatus();
+        traceAutosave("reapply-remembered-changed-values", {
+          reason,
+          appliedCount,
+          rememberedCount: changedFieldValuesByKey.size,
+          rememberedKeys: Array.from(changedFieldValuesByKey.keys()).slice(0, 100)
+        });
+      }
+      return appliedCount;
+    }
+
     function getUniqueChangedFieldDescriptors() {
       const byKey = new Map();
+      const hasTrackedKeys = changedFieldKeys.size > 0 || changedFieldValuesByKey.size > 0;
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
-        const isUserTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
-        if (!isUserTrackedChange) return;
         if (byKey.has(field.key)) return;
+
+        const isTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
+        const hasExplicitHumanWrite = Object.prototype.hasOwnProperty.call(humanData, field.key);
+        const hasExplicitAiWrite = Object.prototype.hasOwnProperty.call(aiData, field.key);
+        const hasExplicitSource = Object.prototype.hasOwnProperty.call(sourceByField, field.key);
+
+        const shouldInclude = hasTrackedKeys
+          ? isTrackedChange
+          : (hasExplicitHumanWrite || hasExplicitAiWrite || hasExplicitSource);
+        if (!shouldInclude) return;
+
         byKey.set(field.key, field);
       });
       return Array.from(byKey.values());
@@ -4808,8 +4915,7 @@ function renderSubmitOutputs(payload) {
       const details = [];
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         const changed = areValuesDifferent(baselineValue, currentValue);
         details.push({
@@ -4818,7 +4924,7 @@ function renderSubmitOutputs(payload) {
           source: getActiveSource(field.key),
           baselineValue,
           currentValue,
-          remembered: rememberedValue !== undefined,
+          remembered: false,
           changed,
           includedValue: changed ? (isEmptyValue(currentValue) ? "" : currentValue) : undefined
         });
@@ -4859,8 +4965,7 @@ function renderSubmitOutputs(payload) {
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
         if (isEmptyValue(currentValue)) return;
@@ -4882,8 +4987,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -4914,8 +5018,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
           entriesByKey.set(jsonKey, jsonKey);
         }
@@ -4932,8 +5035,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -5089,8 +5191,19 @@ function renderSubmitOutputs(payload) {
     function setFieldValue(key, value, field, displayValue) {
       setHumanValue(key, value, field, displayValue);
       markFieldAsChanged(key);
-      rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
+      const normalizedForTracking = normalizeValueForComparison(field, getEffectiveValue(key), state.config);
+      rememberChangedFieldValue(key, normalizedForTracking);
       isFormDirty = computeDirtyState();
+      logAutoflowValueMutation({ fieldKey: key, field, source: "human", rawValue: value, normalizedValue: normalizedForTracking, displayValue, origin: "setFieldValue" });
+      traceAutosave("autoflow:dirty-after-value-mutation", {
+        fieldKey: key,
+        source: "human",
+        isFormDirty,
+        changedFieldKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        trigger: "setFieldValue",
+        modeHint: getSubmitModeHint()
+      });
     }
 
     function parseDataJsonSource(rawValue) {
@@ -5255,6 +5368,7 @@ function renderSubmitOutputs(payload) {
         aiData = {};
         aiExplicitFieldKeys = new Set();
         sourceByField = {};
+        fieldLastWriterByKey = {};
         state.fileBuffers = {};
         state.fileStaging = {};
         loadJsonSafeToForm("human", incomingBubbleData);
@@ -6316,6 +6430,7 @@ function renderSubmitOutputs(payload) {
           && (Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking);
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
+          const reappliedRememberedCount = reapplyRememberedChangedValues("start-close-remount");
           hasChangesSinceStartOpen = false;
           lastStartParamWasTrue = false;
           persistStartFlowState();
@@ -6327,7 +6442,8 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size,
             trigger: "start-close-remount",
             hadChangesBeforeRemount,
-            hasPersistedDirtyTracking
+            hasPersistedDirtyTracking,
+            reappliedRememberedCount
           });
           traceAutosave("remount-close-context", collectEditContextSnapshot({
             trigger: "start-close-remount",
@@ -6335,7 +6451,8 @@ function renderSubmitOutputs(payload) {
             persistedHasChanges: Boolean(persistedStartFlowState?.hasChangesSinceStartOpen),
             hasPersistedDirtyTracking,
             hadChangesBeforeRemount,
-            changedKeyCount: changedFieldKeys.size
+            changedKeyCount: changedFieldKeys.size,
+            reappliedRememberedCount
           }));
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
         }
@@ -6622,6 +6739,7 @@ function renderSubmitOutputs(payload) {
         if (!direct) return;
         humanData[direct] = rawValue;
         sourceByField[direct] = "human";
+        noteFieldWrite(direct, "human");
       });
     }
 
@@ -7226,6 +7344,7 @@ function renderSubmitOutputs(payload) {
           if (!hasAi) return;
           const nextSource = currentSource === "ai" ? "human" : "ai";
           sourceByField[field.key] = nextSource;
+          noteFieldWrite(field.key, nextSource);
           updateFieldDisplayValue(field.key);
           emit("onPredictedToggle", {
             key: field.key,
@@ -7243,6 +7362,7 @@ function renderSubmitOutputs(payload) {
           if (isEmptyValue(aiValue)) return;
           humanData[field.key] = aiValue;
           sourceByField[field.key] = "human";
+          noteFieldWrite(field.key, "human");
           markFieldAsChanged(field.key);
           rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
           updateFieldDisplayValue(field.key);
@@ -7257,6 +7377,7 @@ function renderSubmitOutputs(payload) {
         revertAiBtn.addEventListener("click", () => {
           if (isEmptyValue(aiData[field.key])) return;
           sourceByField[field.key] = "ai";
+          noteFieldWrite(field.key, "ai");
           updateFieldDisplayValue(field.key);
         });
         labelMeta.append(revertAiBtn);
@@ -7288,11 +7409,13 @@ function renderSubmitOutputs(payload) {
         const applyAiBtnInPopover = conflictPopover.querySelector("[data-apply-ai]");
         safeOn(applyHumanBtn, "click", () => {
           sourceByField[field.key] = "human";
+          noteFieldWrite(field.key, "human");
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
         safeOn(applyAiBtnInPopover, "click", () => {
           sourceByField[field.key] = "ai";
+          noteFieldWrite(field.key, "ai");
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
@@ -8059,6 +8182,7 @@ function renderSubmitOutputs(payload) {
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
                 sourceByField[field.key] = "human";
+                noteFieldWrite(field.key, "human");
                 markFieldAsChanged(field.key);
                 rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
                 updateEffectiveState(field.key, field);
@@ -8166,6 +8290,7 @@ function renderSubmitOutputs(payload) {
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
             humanData[field.key] = "";
             sourceByField[field.key] = "human";
+            noteFieldWrite(field.key, "human");
             markFieldAsChanged(field.key);
             rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
             updateEffectiveState(field.key, field);
@@ -8459,6 +8584,7 @@ function renderSubmitOutputs(payload) {
         if (!overwrite && !isEmptyValue(humanData[field.key])) return;
         humanData[field.key] = aiValue;
         sourceByField[field.key] = "human";
+        noteFieldWrite(field.key, "human");
         markFieldAsChanged(field.key);
         rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
       });
@@ -8475,6 +8601,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      fieldLastWriterByKey = {};
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
