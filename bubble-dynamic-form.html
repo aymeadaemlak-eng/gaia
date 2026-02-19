@@ -140,10 +140,12 @@
       --row-pad-x: 6px;
       --row-extended-gap: 4px;
       --row-extended-pad-y: 1.5px;
+      --bdf-vh: 100dvh;
+      --bdf-keyboard-inset: 0px;
       font-size: 16px;
       color: var(--text);
-      min-height: 100dvh;
-      max-height: 100dvh;
+      min-height: var(--bdf-vh);
+      max-height: var(--bdf-vh);
       overflow: hidden;
     }
 
@@ -315,8 +317,8 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
-      height: min(680px, calc(100dvh - 24px));
-      max-height: calc(100dvh - 24px);
+      height: min(680px, calc(var(--bdf-vh) - 24px));
+      max-height: calc(var(--bdf-vh) - 24px);
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 0;
@@ -1073,7 +1075,7 @@
       width: max-content;
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
       display: none;
-      z-index: 20;
+      z-index: 40;
     }
 
 #bdf-root .conflict-popover.open {
@@ -1173,6 +1175,7 @@
 
 #bdf-root #formContainer {
       position: relative;
+      padding-bottom: var(--bdf-keyboard-inset);
     }
 
 #bdf-root .form-refresh-loading {
@@ -1209,7 +1212,7 @@
       flex: 1;
       min-width: 0;
       flex-wrap: nowrap;
-      overflow: visible;
+      overflow-x: hidden;
     }
 
 #bdf-root .more-actions {
@@ -1263,8 +1266,9 @@
 #bdf-root .action-trigger-btn {
       background: #ffffff;
       color: #0f172a;
-      min-width: 150px;
-      max-width: 150px;
+      min-width: 0;
+      width: clamp(120px, 34vw, 220px);
+      max-width: 100%;
       text-align: left;
       font-weight: 600;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
@@ -1296,7 +1300,8 @@
       position: absolute;
       top: calc(100% + 4px);
       right: 0;
-      min-width: 220px;
+      min-width: 180px;
+      max-width: min(92vw, 360px);
       max-height: 240px;
       overflow: auto;
       border: 1px solid var(--border);
@@ -1306,7 +1311,7 @@
       display: none;
       padding: 4px;
       pointer-events: none;
-      z-index: 20;
+      z-index: 260;
     }
 
 #bdf-root .action-menu.open {
@@ -1824,8 +1829,8 @@
       }
 
 #bdf-root #formContainer {
-        height: calc(100dvh - 12px);
-        max-height: calc(100dvh - 12px);
+        height: calc(var(--bdf-vh) - 12px);
+        max-height: calc(var(--bdf-vh) - 12px);
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 0;
@@ -1843,12 +1848,13 @@
         flex-wrap: nowrap;
         justify-content: flex-start;
         gap: 4px;
-        overflow: visible;
+        overflow-x: hidden;
       }
 
 #bdf-root .action-trigger-btn {
-        min-width: 130px;
-        max-width: 130px;
+        min-width: 0;
+        width: clamp(108px, 42vw, 180px);
+        max-width: 100%;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -1889,8 +1895,8 @@
         max-width: none;
         margin-inline: auto;
         padding: 0;
-        height: calc(100dvh - 10px);
-        max-height: calc(100dvh - 10px);
+        height: calc(var(--bdf-vh) - 10px);
+        max-height: calc(var(--bdf-vh) - 10px);
         overflow-y: auto;
         overflow-x: hidden;
       }
@@ -2212,9 +2218,9 @@
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
       const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true || INITIAL_INPUTS?.editing === 1 || String(INITIAL_INPUTS?.editing || "").trim().toLowerCase() === "true";
 
-    let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
-    let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
-    let MANUAL_PREDICTED_JSON = INITIAL_INPUTS.PREDICTED_JSON || null;
+    let MANUAL_COLUMN_JSON = parseDataJsonSource(INITIAL_INPUTS.COLUMN_JSON) || null;
+    let MANUAL_DATA_JSON = parseDataJsonSource(INITIAL_INPUTS.BUBBLE_DATA_JSON) || null;
+    let MANUAL_PREDICTED_JSON = parseDataJsonSource(INITIAL_INPUTS.PREDICTED_JSON) || null;
 
     const SAMPLE_COLUMN_JSON = {
       columns: [
@@ -2388,6 +2394,7 @@
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
+    let humanTouchedFieldKeys = new Set();
     let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
     let lastChangedMode = "";
@@ -2518,6 +2525,28 @@
     const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
     const byId = (id) => qs(`#${id}`);
 
+    function updateViewportMetrics() {
+      const vv = window.visualViewport;
+      const viewportHeight = vv && Number.isFinite(vv.height) ? vv.height : window.innerHeight;
+      const keyboardInset = vv && Number.isFinite(vv.height)
+        ? Math.max(0, Math.round(window.innerHeight - (vv.height + (vv.offsetTop || 0))))
+        : 0;
+      if (rootElement) {
+        rootElement.style.setProperty("--bdf-vh", `${Math.max(0, viewportHeight)}px`);
+        rootElement.style.setProperty("--bdf-keyboard-inset", `${keyboardInset}px`);
+      }
+    }
+
+    function focusFieldIntoView(target) {
+      if (!target || typeof target.scrollIntoView !== "function") return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          notifyParentHeight();
+        });
+      });
+    }
+
     function notifyParentHeight() {
       if (window.parent === window) return;
       requestAnimationFrame(() => {
@@ -2537,8 +2566,19 @@
     }
 
     function initParentHeightSync() {
+      updateViewportMetrics();
       notifyParentHeight();
-      window.addEventListener("resize", notifyParentHeight);
+      window.addEventListener("resize", () => {
+        updateViewportMetrics();
+        notifyParentHeight();
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", () => {
+          updateViewportMetrics();
+          notifyParentHeight();
+        });
+        window.visualViewport.addEventListener("scroll", updateViewportMetrics);
+      }
       if (rootElement && "MutationObserver" in window) {
         const mo = new MutationObserver(() => notifyParentHeight());
         mo.observe(rootElement, { childList: true, subtree: true, attributes: true, characterData: true });
@@ -2951,25 +2991,48 @@
     };
 
     function parseJsonInput(value, errorEl) {
-      const trimmed = value.trim();
+      const trimmed = String(value || "").trim();
       if (!trimmed) {
         if (errorEl) errorEl.textContent = "";
         return null;
       }
-      try {
-        const parsed = JSON.parse(trimmed);
+      const parsed = parseDataJsonSource(trimmed);
+      if (parsed !== null) {
         if (errorEl) errorEl.textContent = "";
         return parsed;
-      } catch (error) {
-        if (errorEl) errorEl.textContent = "JSON formatı hatalı.";
-        return null;
       }
+      if (errorEl) errorEl.textContent = "JSON formatı hatalı.";
+      return null;
     }
 
-    function syncManualJsonInputs() {
-      MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
-      MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
-      MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
+    function syncManualJsonInputs(meta = {}) {
+      const nextManualColumnJson = columnJsonInput
+        ? parseJsonInput(columnJsonInput.value || "", columnJsonError)
+        : MANUAL_COLUMN_JSON;
+      const nextManualDataJson = humanJsonInput
+        ? parseJsonInput(humanJsonInput.value || "", humanJsonError)
+        : MANUAL_DATA_JSON;
+      const nextManualPredictedJson = predictedJsonInput
+        ? parseJsonInput(predictedJsonInput.value || "", predictedJsonError)
+        : MANUAL_PREDICTED_JSON;
+      MANUAL_COLUMN_JSON = nextManualColumnJson;
+      MANUAL_DATA_JSON = nextManualDataJson;
+      MANUAL_PREDICTED_JSON = nextManualPredictedJson;
+      const summaryPayload = {
+        meta,
+        hasColumnJson: Boolean(MANUAL_COLUMN_JSON),
+        hasHumanJson: Boolean(MANUAL_DATA_JSON),
+        hasPredictedJson: Boolean(MANUAL_PREDICTED_JSON),
+        columnShape: summarizeDataShape(MANUAL_COLUMN_JSON),
+        humanShape: summarizeDataShape(MANUAL_DATA_JSON),
+        predictedShape: summarizeDataShape(MANUAL_PREDICTED_JSON),
+        humanKeyCount: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).length : 0,
+        predictedKeyCount: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).length : 0,
+        humanKeySample: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).slice(0, 30) : [],
+        predictedKeySample: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).slice(0, 30) : []
+      };
+      logPredictDebug("manual-json-sync", summaryPayload);
+      traceAutosave("manual-json-sync", summaryPayload);
       syncActionOptions();
     }
 
@@ -3092,6 +3155,15 @@
     function openActionMenu() {
       if (!actionMenu || !Array.isArray(actionOptions) || !actionOptions.length) return;
       actionMenu.classList.add("open");
+      const splitRect = actionSplit ? actionSplit.getBoundingClientRect() : null;
+      const menuRect = actionMenu.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      if (!splitRect || !viewportWidth) return;
+      const menuWidth = menuRect.width || 240;
+      const leftPreferred = splitRect.right - menuWidth;
+      const left = Math.max(8, Math.min(leftPreferred, viewportWidth - menuWidth - 8));
+      actionMenu.style.left = `${left - splitRect.left}px`;
+      actionMenu.style.right = "auto";
     }
 
     function requiresExplicitActionSelection() {
@@ -3223,6 +3295,11 @@
         traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({ shouldAutosaveOnInlineClose, dirtyNow }));
       }
       evaluateEditingSignalTransition();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          notifyParentHeight();
+        });
+      });
     }
 
     function updateActionBarUi() {
@@ -3362,7 +3439,7 @@ function renderSubmitOutputs(payload) {
       traceAutosave("build-submit-outputs-decision", collectEditContextSnapshot({ autosave, modeHint: effectiveMode, editContextActive, isEditAutosave, actionType, hasBubbleData }));
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       const fullSnapshot = buildExportJson();
-      return {
+      const payload = {
         output1: startTimestamp,
         output2: endTimestamp,
         output3: readCurrentUniqueId(),
@@ -3374,6 +3451,8 @@ function renderSubmitOutputs(payload) {
         output_full_obj: fullSnapshot,
         output_full_json: JSON.stringify(fullSnapshot)
       };
+      traceSubmitPayloadPhase("assembled", payload, { autosave, modeHint: effectiveMode, actionType });
+      return payload;
     }
 
     function emit(eventName, detail) {
@@ -3387,6 +3466,23 @@ function renderSubmitOutputs(payload) {
       } catch (error) {
         return null;
       }
+    }
+
+
+    function summarizeDataShape(value) {
+      if (Array.isArray(value)) {
+        return { type: "array", length: value.length };
+      }
+      if (!value || typeof value !== "object") {
+        return { type: typeof value };
+      }
+      const keys = Object.keys(value);
+      return { type: "object", keyCount: keys.length, keySample: keys.slice(0, 30) };
+    }
+
+    function logDataFlowPhase(label, payload = {}) {
+      logPredictDebug(`data-flow:${label}`, payload);
+      traceAutosave(`data-flow:${label}`, payload);
     }
 
     function escapeHtml(value) {
@@ -3726,8 +3822,17 @@ function renderSubmitOutputs(payload) {
 
     function normalizeNumberInput(raw) {
       if (raw === null || raw === undefined || raw === "") return "";
-      const normalized = String(raw).replace(/\./g, "").replace(",", ".");
+      const normalized = String(raw).trim().replace(/\./g, "").replace(",", ".");
       return normalized;
+    }
+
+    function normalizeBooleanInput(raw) {
+      if (typeof raw === "boolean") return raw;
+      if (typeof raw === "number") return raw !== 0;
+      const normalized = String(raw ?? "").trim().toLowerCase();
+      if (["true", "1", "evet", "yes", "on"].includes(normalized)) return true;
+      if (["false", "0", "hayır", "hayir", "no", "off"].includes(normalized)) return false;
+      return Boolean(normalized);
     }
 
     function sanitizeNumberTyping(raw, { integer = false } = {}) {
@@ -3837,7 +3942,7 @@ function renderSubmitOutputs(payload) {
       return false;
     }
 
-    function markFieldAsChanged(fieldKey) {
+    function markFieldAsChanged(fieldKey, options = {}) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
       dirtyFields[fieldKey] = true;
@@ -3858,6 +3963,7 @@ function renderSubmitOutputs(payload) {
 
     function clearChangedFieldKeys() {
       changedFieldKeys = new Set();
+      humanTouchedFieldKeys = new Set();
       dirtyFields = {};
     }
 
@@ -3884,6 +3990,37 @@ function renderSubmitOutputs(payload) {
 
     function getRememberedChangedValue(fieldKey) {
       return changedFieldValuesByKey.get(fieldKey);
+    }
+
+    function reapplyPersistedChangedValues(reason = "") {
+      const config = state?.config;
+      if (!config || !Array.isArray(config.fields) || config.fields.length === 0) return 0;
+      if (!(changedFieldValuesByKey instanceof Map) || changedFieldValuesByKey.size === 0) return 0;
+
+      const fieldMap = buildFieldKeyMap();
+      let replayCount = 0;
+      changedFieldValuesByKey.forEach((rememberedValue, fieldKey) => {
+        const field = fieldMap.get(fieldKey);
+        if (!field) return;
+        const currentNormalized = getCurrentNormalizedValue(field);
+        if (!areValuesDifferent(currentNormalized, rememberedValue)) return;
+        setFieldValue(fieldKey, rememberedValue, field, undefined, { origin: "human-restore" });
+        replayCount += 1;
+      });
+
+      if (replayCount > 0) {
+        logPredictDebug("reapply-persisted-changed-values", {
+          reason,
+          replayCount,
+          keys: Array.from(changedFieldValuesByKey.keys())
+        });
+        traceAutosave("reapply-persisted-changed-values", {
+          reason,
+          replayCount,
+          keys: Array.from(changedFieldValuesByKey.keys())
+        });
+      }
+      return replayCount;
     }
 
     function getActiveSource(fieldKey) {
@@ -3925,9 +4062,28 @@ function renderSubmitOutputs(payload) {
       }
     }
 
-    function setHumanValue(fieldKey, value, field, displayValue) {
+
+    function buildFieldSourceDebugSnapshot(fieldKey) {
+      return {
+        fieldKey,
+        sourceByField: sourceByField[fieldKey] || "",
+        activeSource: getActiveSource(fieldKey),
+        humanValue: humanData[fieldKey],
+        aiValue: aiData[fieldKey],
+        effectiveValue: getEffectiveValue(fieldKey),
+        humanTouched: humanTouchedFieldKeys.has(fieldKey),
+        changedKey: changedFieldKeys.has(fieldKey),
+        rememberedChanged: changedFieldValuesByKey.has(fieldKey),
+        aiExplicit: aiExplicitFieldKeys.has(fieldKey)
+      };
+    }
+
+    function setHumanValue(fieldKey, value, field, displayValue, options = {}) {
       ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
+      if (String(options?.reason || "").toLowerCase() === "user-edit") {
+        humanTouchedFieldKeys.add(fieldKey);
+      }
       sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
       updateAiVisuals(fieldKey);
@@ -4343,6 +4499,25 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+
+    function parseFlexibleMultiSelect(value) {
+      if (Array.isArray(value)) {
+        return Array.from(new Set(value.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean)));
+      }
+      if (typeof value !== "string") return [];
+      const trimmed = decodeEscapedTextValue(value).trim();
+      if (!trimmed) return [];
+      const parsedArray = parseJsonArrayString(trimmed);
+      if (Array.isArray(parsedArray)) {
+        return Array.from(new Set(parsedArray.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean)));
+      }
+      return Array.from(new Set(
+        trimmed
+          .split(/[;,|\n]/g)
+          .map((entry) => normalizeMultiSelectToken(entry))
+          .filter(Boolean)
+      ));
+    }
     function normalizeJsonValueForField(field, value, config) {
       if (value === null || value === undefined) return "";
       let resolved = resolveTokenValue(value, field, config);
@@ -4361,24 +4536,10 @@ function renderSubmitOutputs(payload) {
         return normalizeNumberInput(resolved);
       }
       if (field.type === "boolean") {
-        if (typeof resolved === "string") {
-          return resolved.toLowerCase() === "true";
-        }
-        return Boolean(resolved);
+        return normalizeBooleanInput(resolved);
       }
       if (field.type === "dropdown" && field.allowMultiple) {
-        if (Array.isArray(resolved)) {
-          return Array.from(new Set(resolved.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-        }
-        if (typeof resolved === "string") {
-          const parsedArray = parseJsonArrayString(resolved);
-          if (Array.isArray(parsedArray)) {
-            return Array.from(new Set(parsedArray.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-          }
-          const normalizedText = decodeEscapedTextValue(resolved).trim();
-          if (!normalizedText) return [];
-          return Array.from(new Set(normalizedText.split(",").map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-        }
+        return parseFlexibleMultiSelect(resolved);
       }
       if (["textarea", "json", "text"].includes(field.type) && typeof resolved === "string") {
         return decodeEscapedTextValue(resolved);
@@ -4396,12 +4557,7 @@ function renderSubmitOutputs(payload) {
         return Array.from(new Set(value.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
       }
       if (typeof value === "string") {
-        const parsedArray = parseJsonArrayString(value);
-        if (Array.isArray(parsedArray)) {
-          return Array.from(new Set(parsedArray.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
-        }
-        const parts = value.split(",").map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean);
-        return Array.from(new Set(parts)).sort();
+        return parseFlexibleMultiSelect(value).sort();
       }
       return [];
     }
@@ -4431,7 +4587,7 @@ function renderSubmitOutputs(payload) {
         return typeof value === "string" ? value : "";
       }
       if (field.type === "boolean") {
-        return Boolean(value);
+        return normalizeBooleanInput(value);
       }
       return value;
     }
@@ -4507,31 +4663,86 @@ function renderSubmitOutputs(payload) {
       }
     }
 
-    function loadJsonSafeToForm(kind, jsonObj) {
+    function shouldPreserveFieldAgainstJsonLoad(fieldKey, meta = {}) {
+      if (!fieldKey) return false;
+      if (meta && meta.preserveUserEdits === false) return false;
+      return humanTouchedFieldKeys.has(fieldKey)
+        || changedFieldKeys.has(fieldKey)
+        || changedFieldValuesByKey.has(fieldKey);
+    }
+
+    function loadJsonSafeToForm(kind, jsonObj, meta = {}) {
       if (!jsonObj || !state.config) return;
+      const invocationStack = String(new Error().stack || "")
+        .split("\n")
+        .slice(1, 6)
+        .map((line) => line.trim());
+      logPredictDebug("load-json-invocation", {
+        kind,
+        meta,
+        payloadKeyCount: Object.keys(jsonObj || {}).length,
+        payloadKeySample: Object.keys(jsonObj || {}).slice(0, 30),
+        invocationStack,
+        startSignal: readStartSignalValue(),
+        isFormSaving,
+        hasSeenStartSignal,
+        lastStartParamWasTrue,
+        sourceByFieldSample: Object.entries(sourceByField || {}).slice(0, 30),
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || [])
+      });
       const keyMap = buildFieldKeyMap();
 
       const applied = [];
       const unmatched = [];
+      const actionLog = [];
       const availableAliases = Array.from(keyMap.keys());
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
           unmatched.push(jsonKey);
-          console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
+          const unmatchedKeyText = String(jsonKey || "").trim().toLowerCase();
+          const suppressWarn = unmatchedKeyText === "uniquieid" || unmatchedKeyText === "uniqueid" || unmatchedKeyText === "stage";
+          actionLog.push({ type: "unmatched-key", jsonKey, suppressWarn });
+          if (!suppressWarn) {
+            console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
+          }
           return;
         }
         const field = state.config.fields.find((f) => f.key === fieldKey);
         if (!field) return;
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
+        const currentNormalized = getCurrentNormalizedValue(field);
+        const baselineValue = initialSnapshot ? (initialSnapshot[fieldKey] ?? "") : "";
+        const preserveUserValue = shouldPreserveFieldAgainstJsonLoad(fieldKey, meta);
+        const preserveByBaselineDrift = (
+          areValuesDifferent(currentNormalized, baselineValue)
+          && areValuesDifferent(currentNormalized, normalized)
+        );
+        if (preserveUserValue || preserveByBaselineDrift) {
+          actionLog.push({
+            type: preserveUserValue ? "skip-user-override" : "skip-baseline-drift",
+            jsonKey,
+            fieldKey,
+            kind,
+            incoming: normalized,
+            existing: getEffectiveValue(fieldKey),
+            currentNormalized,
+            baselineValue,
+            meta
+          });
+          return;
+        }
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
+          actionLog.push({ type: "apply-ai", jsonKey, fieldKey, normalized });
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
+          actionLog.push({ type: "apply-human", jsonKey, fieldKey, normalized });
         }
-        applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
+        applied.push({ jsonKey, fieldKey, kind, rawValue, normalized, sourceSnapshot: buildFieldSourceDebugSnapshot(fieldKey) });
       });
       traceAutosave("loadJsonSafeToForm", {
         kind,
@@ -4546,14 +4757,32 @@ function renderSubmitOutputs(payload) {
       }
       logPredictDebug("json-load-summary", {
         kind,
+        meta,
         incomingKeyCount: Object.keys(jsonObj || {}).length,
         appliedKeyCount: applied.length,
         unmatchedKeyCount: unmatched.length,
         unmatchedKeys: unmatched,
         availableAliasSample: availableAliases.slice(0, 80),
-        applied
+        actionLog,
+        applied,
+        sourceSummary: (state.config?.fields || []).map((field) => buildFieldSourceDebugSnapshot(field.key))
+      });
+      logDataFlowPhase("json-load:actions", {
+        kind,
+        meta,
+        actionCount: actionLog.length,
+        firstActions: actionLog.slice(0, 50),
+        appliedCount: applied.length,
+        unmatchedCount: unmatched.length
       });
       refreshAllFields();
+      logDataFlowPhase("json-load:post-refresh", {
+        kind,
+        meta,
+        sourceSummarySample: (state.config?.fields || []).slice(0, 40).map((field) => buildFieldSourceDebugSnapshot(field.key)),
+        changedKeys: Array.from(changedFieldKeys || []),
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || [])
+      });
       if (state.config) {
         updateSubmitState(state.config);
       }
@@ -4597,11 +4826,12 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      humanTouchedFieldKeys = new Set();
       if (human) {
-        loadJsonSafeToForm("human", human);
+        loadJsonSafeToForm("human", human, { source: "applyScenario", stage: "human", preserveUserEdits: false });
       }
       if (ai) {
-        loadJsonSafeToForm("ai", ai);
+        loadJsonSafeToForm("ai", ai, { source: "applyScenario", stage: "ai", preserveUserEdits: false });
       }
       initializeSourceByFieldFromAi();
       refreshAllFields();
@@ -4618,10 +4848,25 @@ function renderSubmitOutputs(payload) {
 
     function initializeSourceByFieldFromAi() {
       if (!state.config) return;
+      const sourceInitDetails = [];
       state.config.fields.forEach((field) => {
         const aiValue = aiData[field.key];
         const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
+        const hasHumanPriority =
+          humanTouchedFieldKeys.has(field.key)
+          || changedFieldKeys.has(field.key)
+          || changedFieldValuesByKey.has(field.key);
+        if (hasHumanPriority) {
+          sourceByField[field.key] = "human";
+          sourceInitDetails.push({ ...buildFieldSourceDebugSnapshot(field.key), reason: "human-priority" });
+          return;
+        }
         sourceByField[field.key] = (hasExplicitAi || !isEmptyValue(aiValue)) ? "ai" : "human";
+        sourceInitDetails.push({ ...buildFieldSourceDebugSnapshot(field.key), reason: "ai-default-or-empty" });
+      });
+      logPredictDebug("initialize-source-by-ai:result", {
+        fieldCount: sourceInitDetails.length,
+        details: sourceInitDetails
       });
     }
 
@@ -4722,11 +4967,83 @@ function renderSubmitOutputs(payload) {
       initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
+    function readFieldValueFromDom(field) {
+      const ref = state.fieldRefs[field.key];
+      if (!ref) return getEffectiveValue(field.key);
+
+      if (["file", "image", "multifile"].includes(field.type)) {
+        return getCurrentValueForField(field);
+      }
+
+      if (field.type === "dropdown" && field.allowMultiple) {
+        const checked = Array.from(ref.control.querySelectorAll('.multiselect-options input[type="checkbox"]:checked'));
+        return checked.map((el) => normalizeMultiSelectToken(el.value || el.dataset.value || "")).filter(Boolean);
+      }
+
+      const input = ref.inputEl || ref.control.querySelector("input, textarea, select");
+      if (!input) return getCurrentValueForField(field);
+
+      if (field.type === "boolean") {
+        return Boolean(input.checked);
+      }
+
+      if (field.type === "date") {
+        return normalizeDateInput(String(input.value || ""), state.config || {});
+      }
+
+      if (field.type === "time") {
+        return parseTimeDisplay(String(input.value || "")) || String(input.value || "");
+      }
+
+      return input.value;
+    }
+
+    function buildLiveFormSnapshotFromDom() {
+      const payload = {};
+      const fieldDebug = [];
+      (state.config?.fields || []).forEach((field) => {
+        const uiValue = readFieldValueFromDom(field);
+        const normalizedUiValue = normalizeValueForComparison(field, uiValue, state.config);
+        const effectiveValueFromState = getCurrentValueForField(field);
+        const normalizedEffectiveValue = normalizeValueForComparison(field, effectiveValueFromState, state.config);
+        const useEffectiveFallback = false;
+        const finalValue = normalizedUiValue;
+        payload[field.key] = finalValue;
+        fieldDebug.push({
+          fieldKey: field.key,
+          uiValue,
+          normalizedUiValue,
+          effectiveValueFromState,
+          normalizedEffectiveValue,
+          useEffectiveFallback,
+          finalValue,
+          ...buildFieldSourceDebugSnapshot(field.key)
+        });
+      });
+      logPredictDebug("build-live-form-snapshot", {
+        fieldCount: fieldDebug.length,
+        fields: fieldDebug
+      });
+      return payload;
+    }
+
     function applyColumnJson(columnData, { persistRestore = true, deferPendingSubmitFlush = false } = {}) {
+      const incomingColumnCount = Array.isArray(columnData?.columns) ? columnData.columns.length : 0;
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
         hasColumnData: Boolean(columnData),
-        columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
+        columnCount: incomingColumnCount
+      });
+      logDataFlowPhase("column-json:received", {
+        hasColumnData: Boolean(columnData),
+        columnCount: incomingColumnCount,
+        persistRestore,
+        deferPendingSubmitFlush,
+        firstColumns: Array.isArray(columnData?.columns) ? columnData.columns.slice(0, 20).map((col) => ({
+          key: col?.key || col?.name || "",
+          label: col?.label || "",
+          type: col?.type || col?.["display-type"] || ""
+        })) : []
       });
       columnJson = columnData;
       if (persistRestore && columnData) restoreColumnJson = columnData;
@@ -4739,20 +5056,22 @@ function renderSubmitOutputs(payload) {
       columnWarning.style.display = "none";
       formContainer.style.display = "block";
       state.config = buildConfigFromColumnJson(columnJson);
-      if (!state.config) return;
+      if (!state.config) {
+        logDataFlowPhase("column-json:build-config-failed", { incomingColumnCount });
+        return;
+      }
+      logDataFlowPhase("column-json:config-built", {
+        incomingColumnCount,
+        renderedFieldCount: Array.isArray(state.config.fields) ? state.config.fields.length : 0,
+        fieldSample: Array.isArray(state.config.fields) ? state.config.fields.slice(0, 40).map((field) => ({ key: field.key, type: field.type })) : []
+      });
       renderForm(state.config);
       applyVersionVisibility();
       if (!deferPendingSubmitFlush) flushPendingSubmitAfterConfigReady();
     }
 
     function buildExportJson() {
-      const payload = {};
-      (state.config?.fields || []).forEach((field) => {
-        const value = getEffectiveValue(field.key);
-        const jsonKey = field.key;
-        payload[jsonKey] = normalizeValueForComparison(field, value, state.config);
-      });
-      return payload;
+      return buildLiveFormSnapshotFromDom();
     }
 
     function buildBaselineSnapshot(baselineData) {
@@ -4781,7 +5100,8 @@ function renderSubmitOutputs(payload) {
     }
 
     function getCurrentNormalizedValue(field) {
-      return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
+      const domValue = readFieldValueFromDom(field);
+      return normalizeValueForComparison(field, domValue, state.config);
     }
 
     function getUniqueChangedFieldDescriptors() {
@@ -5086,11 +5406,59 @@ function renderSubmitOutputs(payload) {
       return "";
     }
 
-    function setFieldValue(key, value, field, displayValue) {
-      setHumanValue(key, value, field, displayValue);
-      markFieldAsChanged(key);
+    function setFieldValue(key, value, field, displayValue, options = {}) {
+      const origin = String(options?.origin || "human").trim().toLowerCase();
+      traceInputAssignmentPhase("start", key, field, {
+        origin,
+        incomingValue: value,
+        displayValue
+      });
+      logPredictDebug("set-field-value:start", {
+        key,
+        origin,
+        incomingValue: value,
+        displayValue,
+        domValueBefore: readFieldValueFromDom(field),
+        stateValueBefore: getCurrentValueForField(field),
+        before: buildFieldSourceDebugSnapshot(key)
+      });
+      if (origin === "ai-hydrate") {
+        aiData[key] = value;
+        aiExplicitFieldKeys.add(key);
+        if (sourceByField[key] !== "human" && !changedFieldKeys.has(key) && !changedFieldValuesByKey.has(key)) {
+          sourceByField[key] = "ai";
+        }
+        updateEffectiveState(key, field, displayValue);
+        traceInputAssignmentPhase("ai-hydrate-applied", key, field, {
+          origin,
+          incomingValue: value,
+          displayValue
+        });
+        logPredictDebug("set-field-value:ai-hydrate-applied", {
+          key,
+          origin,
+          after: buildFieldSourceDebugSnapshot(key)
+        });
+        return;
+      }
+      setHumanValue(key, value, field, displayValue, { reason: "user-edit" });
+      markFieldAsChanged(key, { origin: "human" });
       rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
+      traceInputAssignmentPhase("human-applied", key, field, {
+        origin,
+        incomingValue: value,
+        displayValue,
+        dirtyAfter: isFormDirty,
+        changedKeysCount: changedFieldKeys.size
+      });
+      logPredictDebug("set-field-value:human-applied", {
+        key,
+        origin,
+        domValueAfter: readFieldValueFromDom(field),
+        stateValueAfter: getCurrentValueForField(field),
+        after: buildFieldSourceDebugSnapshot(key)
+      });
     }
 
     function parseDataJsonSource(rawValue) {
@@ -5098,14 +5466,60 @@ function renderSubmitOutputs(payload) {
       if (typeof rawValue === "string") {
         const trimmed = rawValue.trim();
         if (!trimmed) return null;
-        try {
-          return JSON.parse(trimmed);
-        } catch (error) {
-          return null;
-        }
+        if (trimmed.startsWith("<")) return null;
+        const directParsed = tryParseLooseJsonString(trimmed);
+        return normalizeParsedJsonValue(directParsed);
       }
       if (typeof rawValue === "object") return rawValue;
       return null;
+    }
+
+    function normalizeParsedJsonValue(parsedValue) {
+      let current = parsedValue;
+      for (let depth = 0; depth < 3; depth += 1) {
+        if (current === null || current === undefined) return null;
+        if (typeof current !== "string") return current;
+        const trimmed = current.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith("<")) return null;
+        const reparsed = tryParseLooseJsonString(trimmed);
+        if (reparsed === null) return current;
+        current = reparsed;
+      }
+      return current;
+    }
+
+    function tryParseLooseJsonString(rawText) {
+      const text = String(rawText || "").trim();
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        const firstObjectStart = text.indexOf("{");
+        const objectEnd = text.lastIndexOf("}");
+        if (firstObjectStart >= 0 && objectEnd > firstObjectStart) {
+          const objectCandidate = text.slice(firstObjectStart, objectEnd + 1).trim();
+          if (objectCandidate) {
+            try {
+              return JSON.parse(objectCandidate);
+            } catch (nestedObjectError) {
+              // no-op, array fallback below
+            }
+          }
+        }
+        const firstArrayStart = text.indexOf("[");
+        const arrayEnd = text.lastIndexOf("]");
+        if (firstArrayStart >= 0 && arrayEnd > firstArrayStart) {
+          const arrayCandidate = text.slice(firstArrayStart, arrayEnd + 1).trim();
+          if (!arrayCandidate) return null;
+          try {
+            return JSON.parse(arrayCandidate);
+          } catch (nestedArrayError) {
+            return null;
+          }
+        }
+        return null;
+      }
     }
 
     function extractUniqueIdFromObject(candidate) {
@@ -5155,10 +5569,21 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_DATA_JSON,
         MANUAL_DATA_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const obj = extractBubbleDataObject(candidate);
-        if (obj) return obj;
+        if (obj) {
+          logPredictDebug("read-current-bubble-data-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.BUBBLE_DATA_JSON", "inputs.bubble_data_json", "window.BUBBLE_DATA_JSON", "MANUAL_DATA_JSON"][index] || "unknown",
+            candidateType: typeof candidate,
+            keyCount: Object.keys(obj || {}).length,
+            keySample: Object.keys(obj || {}).slice(0, 30)
+          });
+          return obj;
+        }
       }
+      logPredictDebug("read-current-bubble-data-object", { keyCount: 0, keySample: [] });
       return null;
     }
 
@@ -5170,10 +5595,21 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_PREDICTED_JSON,
         MANUAL_PREDICTED_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const obj = extractBubbleDataObject(candidate);
-        if (obj) return obj;
+        if (obj) {
+          logPredictDebug("read-current-predicted-data-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.PREDICTED_JSON", "inputs.predicted_json", "window.BUBBLE_PREDICTED_JSON", "MANUAL_PREDICTED_JSON"][index] || "unknown",
+            candidateType: typeof candidate,
+            keyCount: Object.keys(obj || {}).length,
+            keySample: Object.keys(obj || {}).slice(0, 30)
+          });
+          return obj;
+        }
       }
+      logPredictDebug("read-current-predicted-data-object", { keyCount: 0, keySample: [] });
       return null;
     }
 
@@ -5208,17 +5644,56 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_COLUMN_JSON,
         MANUAL_COLUMN_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const parsed = parseDataJsonSource(candidate);
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
-        if (Array.isArray(parsed.columns)) return parsed;
+        if (Array.isArray(parsed.columns)) {
+          logPredictDebug("read-current-column-json-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.COLUMN_JSON", "inputs.column_json", "window.BUBBLE_COLUMN_JSON", "MANUAL_COLUMN_JSON"][index] || "unknown",
+            columnCount: parsed.columns.length,
+            columnKeySample: parsed.columns.slice(0, 20).map((item) => item?.name || item?.key || "")
+          });
+          return parsed;
+        }
       }
+      logPredictDebug("read-current-column-json-object", { columnCount: 0 });
       return null;
     }
 
 
     function applyIncomingBubbleDataAsCurrentItem(incomingBubbleData, uniqueId, incomingColumnJson) {
       const incomingPredictedData = readCurrentPredictedDataObject();
+      const hasLocalUserEdits = Boolean(
+        humanTouchedFieldKeys.size > 0
+        || changedFieldKeys.size > 0
+        || changedFieldValuesByKey.size > 0
+        || isFormDirty
+      );
+      const startSignalNow = readStartSignalValue();
+      const sameUniqueId = !uniqueId || !currentUniqueId || String(uniqueId) === String(currentUniqueId);
+      if (sameUniqueId && startSignalNow === true && hasLocalUserEdits) {
+        logPredictDebug("incoming-item-rehydrate-skipped-local-edits", {
+          uniqueId,
+          currentUniqueId,
+          startSignalNow,
+          hasLocalUserEdits,
+          userTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+          changedKeys: Array.from(changedFieldKeys || []),
+          rememberedChangedKeys: Array.from((changedFieldValuesByKey || new Map()).keys()),
+          incomingBubbleDataKeys: incomingBubbleData && typeof incomingBubbleData === "object" ? Object.keys(incomingBubbleData) : []
+        });
+        traceAutosave("incoming-item-rehydrate-skipped-local-edits", {
+          uniqueId,
+          currentUniqueId,
+          startSignalNow,
+          hasLocalUserEdits,
+          changedKeyCount: changedFieldKeys.size,
+          rememberedChangedCount: changedFieldValuesByKey.size
+        });
+        return;
+      }
       const predictedToApply = incomingPredictedData || MANUAL_PREDICTED_JSON || null;
       const pendingRemountAutosaveSnapshot = pendingSubmitUntilConfigReady
         ? {
@@ -5255,11 +5730,12 @@ function renderSubmitOutputs(payload) {
         aiData = {};
         aiExplicitFieldKeys = new Set();
         sourceByField = {};
+        humanTouchedFieldKeys = new Set();
         state.fileBuffers = {};
         state.fileStaging = {};
-        loadJsonSafeToForm("human", incomingBubbleData);
+        loadJsonSafeToForm("human", incomingBubbleData, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "bubble-data", preserveUserEdits: false });
         if (predictedToApply) {
-          loadJsonSafeToForm("ai", predictedToApply);
+          loadJsonSafeToForm("ai", predictedToApply, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "predicted-data", preserveUserEdits: false });
         }
         initializeSourceByFieldFromAi();
         refreshAllFields();
@@ -5548,6 +6024,46 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function computeTraceSignature(value) {
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return String(value ?? "");
+      }
+    }
+
+    function traceInputAssignmentPhase(label, fieldKey, field, extra = {}) {
+      const domValue = readFieldValueFromDom(field);
+      const stateValue = getCurrentValueForField(field);
+      const effectiveValue = getEffectiveValue(fieldKey);
+      traceAutosave(`input-assignment:${label}`, {
+        fieldKey,
+        fieldType: field?.type || "",
+        domValue,
+        stateValue,
+        effectiveValue,
+        domStateMatch: computeTraceSignature(domValue) === computeTraceSignature(stateValue),
+        stateEffectiveMatch: computeTraceSignature(stateValue) === computeTraceSignature(effectiveValue),
+        source: sourceByField[fieldKey] || "",
+        ...extra
+      });
+    }
+
+    function traceSubmitPayloadPhase(label, payload, extra = {}) {
+      const outputFullJson = payload?.output_full_json || "";
+      traceAutosave(`submit-payload:${label}`, {
+        output3: payload?.output3 || "",
+        output4: payload?.output4 || "",
+        outputlist1Count: Array.isArray(payload?.outputlist1) ? payload.outputlist1.length : -1,
+        outputlist2Count: Array.isArray(payload?.outputlist2) ? payload.outputlist2.length : -1,
+        outputlist3Count: Array.isArray(payload?.outputlist3) ? payload.outputlist3.length : -1,
+        outputlist4Count: Array.isArray(payload?.outputlist4) ? payload.outputlist4.length : -1,
+        outputFullJsonLength: outputFullJson.length,
+        outputFullJsonSample: outputFullJson.slice(0, 500),
+        ...extra
+      });
+    }
+
 
     function logStartState(label, extra = {}) {
       if (!ENABLE_RUNTIME_LOGS) return;
@@ -5785,6 +6301,19 @@ function renderSubmitOutputs(payload) {
 
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      logPredictDebug("run-submit-flow:start", {
+        autosave,
+        forceSubmit,
+        trigger,
+        modeHint,
+        currentSourceByField: { ...sourceByField },
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || []),
+        currentStateValues: (state.config?.fields || []).reduce((acc, field) => {
+          acc[field.key] = getCurrentValueForField(field);
+          return acc;
+        }, {})
+      });
       if (isWaitingForServerRefresh && !autosave && !forceSubmit) {
         traceAutosave("runSubmitFlow:skip-waiting-server-refresh", { trigger });
         return;
@@ -5887,6 +6416,44 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
+      logPredictDebug("submit-export-payload-checkpoint", {
+        trigger,
+        autosave,
+        exportPayload,
+        exportPayloadJson: JSON.stringify(exportPayload),
+        currentStateValues: (state.config?.fields || []).reduce((acc, field) => {
+          acc[field.key] = getCurrentValueForField(field);
+          return acc;
+        }, {}),
+        currentSourceByField: { ...sourceByField },
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || [])
+      });
+      const isAiHydrateAutosave =
+        autosave === true &&
+        trigger &&
+        String(trigger).toLowerCase().includes("ai");
+
+      if (isAiHydrateAutosave) {
+        const isDeltaEmpty =
+          !submitOutputsPayload.outputlist1?.length &&
+          !submitOutputsPayload.outputlist2?.length &&
+          !submitOutputsPayload.outputlist3?.length &&
+          !submitOutputsPayload.outputlist4?.length;
+
+        if (isDeltaEmpty) {
+          const fullObj = submitOutputsPayload.output_full_obj || {};
+          const fallbackEntries = Object.entries(fullObj);
+          const nonEmptyKeys = fallbackEntries
+            .filter(([, value]) => !isEmptyValue(value))
+            .map(([key]) => key);
+
+          submitOutputsPayload.outputlist1 = fallbackEntries.map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
+          submitOutputsPayload.outputlist2 = nonEmptyKeys.slice();
+          submitOutputsPayload.outputlist3 = [];
+          submitOutputsPayload.outputlist4 = nonEmptyKeys.slice();
+        }
+      }
       logPredictDebug("submit-payload-checkpoint", {
         trigger,
         autosave,
@@ -5942,21 +6509,38 @@ function renderSubmitOutputs(payload) {
       }
 
       const payload = submitOutputsPayload;
+      traceSubmitPayloadPhase("before-submit-fn", payload, {
+        trigger,
+        autosave,
+        invalidCount,
+        firstInvalidKey,
+        submitAttemptId,
+        modeHint: resolvedModeHint,
+        domVsStateMismatches: (state.config?.fields || []).filter((field) => {
+          const domValue = readFieldValueFromDom(field);
+          const stateValue = getCurrentValueForField(field);
+          return computeTraceSignature(domValue) !== computeTraceSignature(stateValue);
+        }).map((field) => field.key)
+      });
       try {
         const maybePromise = fn(payload);
         if (maybePromise && typeof maybePromise.then === "function") {
           maybePromise
             .then(() => {
+              traceSubmitPayloadPhase("submit-success", payload, { trigger, autosave, submitAttemptId });
               settleSubmitAttempt({ submitAttemptId, autosave, success: true });
             })
             .catch((error) => {
+              traceSubmitPayloadPhase("submit-failed", payload, { trigger, autosave, submitAttemptId, error: error?.message || String(error) });
               settleSubmitAttempt({ submitAttemptId, autosave, success: false });
               console.error("submit failed", error);
             });
           return;
         }
+        traceSubmitPayloadPhase("submit-success", payload, { trigger, autosave, submitAttemptId });
         settleSubmitAttempt({ submitAttemptId, autosave, success: true });
       } catch (error) {
+        traceSubmitPayloadPhase("submit-failed", payload, { trigger, autosave, submitAttemptId, error: error?.message || String(error) });
         settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.error("submit failed", error);
       }
@@ -6038,8 +6622,25 @@ function renderSubmitOutputs(payload) {
       const editContextActive = isEditAutosaveContextActive();
       reconcileDirtyTracking(`maybeRunAutosaveOnStartClose:${trigger}`);
       const hasAutosaveCandidate = isFormDirty || hasAiHydratedData;
-      if (!hasAutosaveCandidate) return;
-      if (isFormSaving) return;
+      traceAutosave("autosave-decision:evaluated", collectEditContextSnapshot({
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        hasAutosaveCandidate,
+        isFormDirty,
+        isFormSaving,
+        hasAiHydratedData,
+        changedKeysCount: changedFieldKeys.size
+      }));
+      if (!hasAutosaveCandidate) {
+        traceAutosave("autosave-decision:skip-no-candidate", collectEditContextSnapshot({ trigger, startSignal, editingSignal }));
+        return;
+      }
+      if (isFormSaving) {
+        traceAutosave("autosave-decision:skip-saving", collectEditContextSnapshot({ trigger, startSignal, editingSignal }));
+        return;
+      }
 
       const shouldDeferForSessionOpen = editContextActive
         ? editingSignal === true
@@ -6057,7 +6658,16 @@ function renderSubmitOutputs(payload) {
         return;
       }
 
-      if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
+      if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) {
+        traceAutosave("autosave-decision:skip-debounce", {
+          trigger,
+          now,
+          lastAutosaveAt,
+          elapsedMs: now - lastAutosaveAt,
+          debounceMs: AUTOSAVE_DEBOUNCE_MS
+        });
+        return;
+      }
       lastAutosaveAt = now;
       traceAutosave("autosave-allowed-session-gate", {
         trigger,
@@ -6072,6 +6682,16 @@ function renderSubmitOutputs(payload) {
         hasChangesSinceStartOpen,
         hasAiHydratedData
       });
+      traceAutosave("autosave-decision:submit", collectEditContextSnapshot({
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        modeHint: getSubmitModeHint(),
+        isFormDirty,
+        hasAiHydratedData,
+        changedKeysCount: changedFieldKeys.size
+      }));
       runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
 
@@ -6288,6 +6908,12 @@ function renderSubmitOutputs(payload) {
           changedKeyCount: changedFieldKeys.size,
           persistedAt: persistedChangedTracking.time || ""
         });
+        const replayNow = reapplyPersistedChangedValues("initAutosaveStartWatcher:hydrate");
+        if (replayNow === 0) {
+          setTimeout(() => {
+            reapplyPersistedChangedValues("initAutosaveStartWatcher:deferred");
+          }, 0);
+        }
       }
       if (persistedStartFlowState) {
         startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
@@ -7306,6 +7932,7 @@ function renderSubmitOutputs(payload) {
 
         const control = document.createElement("div");
         control.className = "field-control";
+        control.dataset.fieldKey = field.key;
         const stageClass = normalizeStageType(field.stageType);
         if (stageClass) {
           control.classList.add(`stage-${stageClass}`);
@@ -7327,10 +7954,7 @@ function renderSubmitOutputs(payload) {
           humanData[field.key] = initialValue;
         }
         if (!sourceByField[field.key]) {
-          sourceByField[field.key] = "human";
-        }
-        if (isEmptyValue(humanData[field.key]) && !isEmptyValue(aiData[field.key])) {
-          sourceByField[field.key] = "ai";
+          sourceByField[field.key] = (!isEmptyValue(aiData[field.key]) || aiExplicitFieldKeys.has(field.key)) ? "ai" : "human";
         }
         const effectiveInitial = getEffectiveValue(field.key);
         state.values[field.key] = effectiveInitial;
@@ -7508,6 +8132,8 @@ function renderSubmitOutputs(payload) {
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
               const normalizedOptValue = normalizeMultiSelectToken(opt.value);
+              checkbox.value = normalizedOptValue;
+              checkbox.dataset.value = normalizedOptValue;
               checkbox.checked = selectedValues.includes(normalizedOptValue);
               checkbox.disabled = opt.disabled || false;
               const text = document.createElement("span");
@@ -8230,6 +8856,9 @@ function renderSubmitOutputs(payload) {
         }
 
         if (inputEl) {
+          if (!inputEl.dataset.fieldKey) {
+            inputEl.dataset.fieldKey = field.key;
+          }
           if (!control.contains(inputEl)) {
             control.append(inputEl);
           }
@@ -8416,7 +9045,7 @@ function renderSubmitOutputs(payload) {
       if (!firstInvalid) return null;
       const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field="${CSS.escape(firstInvalid)}"]`);
       if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        focusFieldIntoView(target);
         if (target.focus) target.focus();
       }
       return firstInvalid;
@@ -8475,6 +9104,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      humanTouchedFieldKeys = new Set();
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
@@ -8591,6 +9221,19 @@ function renderSubmitOutputs(payload) {
         }
       });
 
+      if (formContainer) {
+        formContainer.addEventListener("focusin", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const isMobileLike = (window.matchMedia && window.matchMedia("(max-width: 900px)").matches)
+            || (window.visualViewport && window.visualViewport.height < window.innerHeight - 120);
+          const delayMs = isMobileLike ? 0 : 220;
+          setTimeout(() => {
+            if (document.activeElement !== target) return;
+            focusFieldIntoView(target);
+          }, delayMs);
+        });
+      }
 
       if (editSearchInput) {
         const applySearchTerm = (nextTerm) => {
@@ -8671,12 +9314,12 @@ function renderSubmitOutputs(payload) {
 
       ["#columnJsonInput", "#humanJsonInput", "#predictedJsonInput"].forEach((selector) => {
         safeOn(selector, "input", () => {
-          syncManualJsonInputs();
+          syncManualJsonInputs({ source: "json-input-change" });
         });
       });
 
       safeOn("#loadHumanJson", "click", () => {
-        syncManualJsonInputs();
+        syncManualJsonInputs({ source: "loadHumanJsonBtn" });
         initialSnapshot = null;
         if (state.config) {
           initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
@@ -8689,7 +9332,7 @@ function renderSubmitOutputs(payload) {
           return;
         }
         emit("debug:human-json", payload);
-        loadJsonSafeToForm("human", payload);
+        loadJsonSafeToForm("human", payload, { source: "loadHumanJsonBtn", stage: "manual-human-load" });
         clearChangedTracking();
         isFormDirty = computeDirtyState();
         updateActionBarUi();
@@ -8697,7 +9340,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#loadPredictedJson", "click", () => {
-      syncManualJsonInputs();
+      syncManualJsonInputs({ source: "loadPredictedJsonBtn" });
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
         aiData = {};
@@ -8712,7 +9355,7 @@ function renderSubmitOutputs(payload) {
         predictedKeys: Object.keys(payload || {}),
         payload
       });
-      loadJsonSafeToForm("ai", payload);
+      loadJsonSafeToForm("ai", payload, { source: "loadPredictedJsonBtn", stage: "manual-ai-load" });
       initializeSourceByFieldFromAi();
       refreshAllFields();
       hasAiHydratedData = true;
@@ -8727,7 +9370,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#loadColumnJson", "click", () => {
-      syncManualJsonInputs();
+      syncManualJsonInputs({ source: "loadColumnJsonBtn" });
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson, { persistRestore: true });
       emit("debug:column-json", columnJson);
@@ -8813,7 +9456,7 @@ function renderSubmitOutputs(payload) {
 
     if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     if (schemaInput) schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-    syncManualJsonInputs();
+    syncManualJsonInputs({ source: "initializeApp" });
     if (MANUAL_COLUMN_JSON) {
       columnJson = MANUAL_COLUMN_JSON;
     }
@@ -8844,14 +9487,29 @@ function renderSubmitOutputs(payload) {
     } else if (columnJson) {
       applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
+        logPredictDebug("initializeApp:hydrate-start", {
+          hasManualHumanJson: Boolean(MANUAL_DATA_JSON),
+          hasManualPredictedJson: Boolean(MANUAL_PREDICTED_JSON),
+          manualHumanKeyCount: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).length : 0,
+          manualPredictedKeyCount: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).length : 0,
+          manualHumanKeySample: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).slice(0, 30) : [],
+          manualPredictedKeySample: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).slice(0, 30) : []
+        });
         if (MANUAL_DATA_JSON) {
-          loadJsonSafeToForm("human", MANUAL_DATA_JSON);
+          loadJsonSafeToForm("human", MANUAL_DATA_JSON, { source: "initializeApp", stage: "initial-human-json", preserveUserEdits: false });
         }
         if (MANUAL_PREDICTED_JSON) {
-          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON);
-          initializeSourceByFieldFromAi();
-          refreshAllFields();
+          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON, { source: "initializeApp", stage: "initial-predicted-json", preserveUserEdits: false });
         }
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        logPredictDebug("initializeApp:hydrate-done", {
+          humanDataKeyCount: Object.keys(humanData || {}).length,
+          aiDataKeyCount: Object.keys(aiData || {}).length,
+          sourceByFieldCount: Object.keys(sourceByField || {}).length,
+          humanDataKeySample: Object.keys(humanData || {}).slice(0, 30),
+          aiDataKeySample: Object.keys(aiData || {}).slice(0, 30)
+        });
       }, 0);
     } else {
       formEl.innerHTML = "";
