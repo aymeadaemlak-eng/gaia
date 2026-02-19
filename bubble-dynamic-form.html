@@ -9487,14 +9487,29 @@ function renderSubmitOutputs(payload) {
     } else if (columnJson) {
       applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
+        logPredictDebug("initializeApp:hydrate-start", {
+          hasManualHumanJson: Boolean(MANUAL_DATA_JSON),
+          hasManualPredictedJson: Boolean(MANUAL_PREDICTED_JSON),
+          manualHumanKeyCount: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).length : 0,
+          manualPredictedKeyCount: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).length : 0,
+          manualHumanKeySample: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).slice(0, 30) : [],
+          manualPredictedKeySample: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).slice(0, 30) : []
+        });
         if (MANUAL_DATA_JSON) {
           loadJsonSafeToForm("human", MANUAL_DATA_JSON, { source: "initializeApp", stage: "initial-human-json", preserveUserEdits: false });
         }
         if (MANUAL_PREDICTED_JSON) {
           loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON, { source: "initializeApp", stage: "initial-predicted-json", preserveUserEdits: false });
-          initializeSourceByFieldFromAi();
-          refreshAllFields();
         }
+        initializeSourceByFieldFromAi();
+        refreshAllFields();
+        logPredictDebug("initializeApp:hydrate-done", {
+          humanDataKeyCount: Object.keys(humanData || {}).length,
+          aiDataKeyCount: Object.keys(aiData || {}).length,
+          sourceByFieldCount: Object.keys(sourceByField || {}).length,
+          humanDataKeySample: Object.keys(humanData || {}).slice(0, 30),
+          aiDataKeySample: Object.keys(aiData || {}).slice(0, 30)
+        });
       }, 0);
     } else {
       formEl.innerHTML = "";
