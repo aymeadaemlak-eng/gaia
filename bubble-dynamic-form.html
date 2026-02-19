@@ -140,10 +140,12 @@
       --row-pad-x: 6px;
       --row-extended-gap: 4px;
       --row-extended-pad-y: 1.5px;
+      --bdf-vh: 100dvh;
+      --bdf-keyboard-inset: 0px;
       font-size: 16px;
       color: var(--text);
-      min-height: 100dvh;
-      max-height: 100dvh;
+      min-height: var(--bdf-vh);
+      max-height: var(--bdf-vh);
       overflow: hidden;
     }
 
@@ -315,8 +317,8 @@
 #bdf-root #formContainer {
       width: 100%;
       max-width: var(--form-container-max-width, 464px);
-      height: min(680px, calc(100dvh - 24px));
-      max-height: calc(100dvh - 24px);
+      height: min(680px, calc(var(--bdf-vh) - 24px));
+      max-height: calc(var(--bdf-vh) - 24px);
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 0;
@@ -1173,6 +1175,7 @@
 
 #bdf-root #formContainer {
       position: relative;
+      padding-bottom: var(--bdf-keyboard-inset);
     }
 
 #bdf-root .form-refresh-loading {
@@ -1209,7 +1212,7 @@
       flex: 1;
       min-width: 0;
       flex-wrap: nowrap;
-      overflow: visible;
+      overflow-x: hidden;
     }
 
 #bdf-root .more-actions {
@@ -1263,8 +1266,9 @@
 #bdf-root .action-trigger-btn {
       background: #ffffff;
       color: #0f172a;
-      min-width: 150px;
-      max-width: 150px;
+      min-width: 0;
+      width: clamp(120px, 34vw, 220px);
+      max-width: 100%;
       text-align: left;
       font-weight: 600;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
@@ -1296,7 +1300,8 @@
       position: absolute;
       top: calc(100% + 4px);
       right: 0;
-      min-width: 220px;
+      min-width: 180px;
+      max-width: min(92vw, 360px);
       max-height: 240px;
       overflow: auto;
       border: 1px solid var(--border);
@@ -1824,8 +1829,8 @@
       }
 
 #bdf-root #formContainer {
-        height: calc(100dvh - 12px);
-        max-height: calc(100dvh - 12px);
+        height: calc(var(--bdf-vh) - 12px);
+        max-height: calc(var(--bdf-vh) - 12px);
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 0;
@@ -1843,12 +1848,13 @@
         flex-wrap: nowrap;
         justify-content: flex-start;
         gap: 4px;
-        overflow: visible;
+        overflow-x: hidden;
       }
 
 #bdf-root .action-trigger-btn {
-        min-width: 130px;
-        max-width: 130px;
+        min-width: 0;
+        width: clamp(108px, 42vw, 180px);
+        max-width: 100%;
       }
 
 #bdf-root .field-row.is-amount-field .control-stack {
@@ -1889,8 +1895,8 @@
         max-width: none;
         margin-inline: auto;
         padding: 0;
-        height: calc(100dvh - 10px);
-        max-height: calc(100dvh - 10px);
+        height: calc(var(--bdf-vh) - 10px);
+        max-height: calc(var(--bdf-vh) - 10px);
         overflow-y: auto;
         overflow-x: hidden;
       }
@@ -2518,6 +2524,28 @@
     const qsa = (selector) => (rootScope && rootScope.querySelectorAll ? rootScope.querySelectorAll(selector) : []);
     const byId = (id) => qs(`#${id}`);
 
+    function updateViewportMetrics() {
+      const vv = window.visualViewport;
+      const viewportHeight = vv && Number.isFinite(vv.height) ? vv.height : window.innerHeight;
+      const keyboardInset = vv && Number.isFinite(vv.height)
+        ? Math.max(0, Math.round(window.innerHeight - (vv.height + (vv.offsetTop || 0))))
+        : 0;
+      if (rootElement) {
+        rootElement.style.setProperty("--bdf-vh", `${Math.max(0, viewportHeight)}px`);
+        rootElement.style.setProperty("--bdf-keyboard-inset", `${keyboardInset}px`);
+      }
+    }
+
+    function focusFieldIntoView(target) {
+      if (!target || typeof target.scrollIntoView !== "function") return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          notifyParentHeight();
+        });
+      });
+    }
+
     function notifyParentHeight() {
       if (window.parent === window) return;
       requestAnimationFrame(() => {
@@ -2537,8 +2565,19 @@
     }
 
     function initParentHeightSync() {
+      updateViewportMetrics();
       notifyParentHeight();
-      window.addEventListener("resize", notifyParentHeight);
+      window.addEventListener("resize", () => {
+        updateViewportMetrics();
+        notifyParentHeight();
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", () => {
+          updateViewportMetrics();
+          notifyParentHeight();
+        });
+        window.visualViewport.addEventListener("scroll", updateViewportMetrics);
+      }
       if (rootElement && "MutationObserver" in window) {
         const mo = new MutationObserver(() => notifyParentHeight());
         mo.observe(rootElement, { childList: true, subtree: true, attributes: true, characterData: true });
@@ -3092,6 +3131,15 @@
     function openActionMenu() {
       if (!actionMenu || !Array.isArray(actionOptions) || !actionOptions.length) return;
       actionMenu.classList.add("open");
+      const splitRect = actionSplit ? actionSplit.getBoundingClientRect() : null;
+      const menuRect = actionMenu.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      if (!splitRect || !viewportWidth) return;
+      const menuWidth = menuRect.width || 240;
+      const leftPreferred = splitRect.right - menuWidth;
+      const left = Math.max(8, Math.min(leftPreferred, viewportWidth - menuWidth - 8));
+      actionMenu.style.left = `${left - splitRect.left}px`;
+      actionMenu.style.right = "auto";
     }
 
     function requiresExplicitActionSelection() {
@@ -3223,6 +3271,11 @@
         traceAutosave("inline-toggle-close-result", collectInlineEditDiagnostics({ shouldAutosaveOnInlineClose, dirtyNow }));
       }
       evaluateEditingSignalTransition();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          notifyParentHeight();
+        });
+      });
     }
 
     function updateActionBarUi() {
@@ -4352,6 +4405,25 @@ function renderSubmitOutputs(payload) {
       return null;
     }
 
+
+    function parseFlexibleMultiSelect(value) {
+      if (Array.isArray(value)) {
+        return Array.from(new Set(value.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean)));
+      }
+      if (typeof value !== "string") return [];
+      const trimmed = decodeEscapedTextValue(value).trim();
+      if (!trimmed) return [];
+      const parsedArray = parseJsonArrayString(trimmed);
+      if (Array.isArray(parsedArray)) {
+        return Array.from(new Set(parsedArray.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean)));
+      }
+      return Array.from(new Set(
+        trimmed
+          .split(/[;,|\n]/g)
+          .map((entry) => normalizeMultiSelectToken(entry))
+          .filter(Boolean)
+      ));
+    }
     function normalizeJsonValueForField(field, value, config) {
       if (value === null || value === undefined) return "";
       let resolved = resolveTokenValue(value, field, config);
@@ -4373,18 +4445,7 @@ function renderSubmitOutputs(payload) {
         return normalizeBooleanInput(resolved);
       }
       if (field.type === "dropdown" && field.allowMultiple) {
-        if (Array.isArray(resolved)) {
-          return Array.from(new Set(resolved.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-        }
-        if (typeof resolved === "string") {
-          const parsedArray = parseJsonArrayString(resolved);
-          if (Array.isArray(parsedArray)) {
-            return Array.from(new Set(parsedArray.map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-          }
-          const normalizedText = decodeEscapedTextValue(resolved).trim();
-          if (!normalizedText) return [];
-          return Array.from(new Set(normalizedText.split(",").map((val) => normalizeMultiSelectToken(val)).filter(Boolean)));
-        }
+        return parseFlexibleMultiSelect(resolved);
       }
       if (["textarea", "json", "text"].includes(field.type) && typeof resolved === "string") {
         return decodeEscapedTextValue(resolved);
@@ -4402,12 +4463,7 @@ function renderSubmitOutputs(payload) {
         return Array.from(new Set(value.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
       }
       if (typeof value === "string") {
-        const parsedArray = parseJsonArrayString(value);
-        if (Array.isArray(parsedArray)) {
-          return Array.from(new Set(parsedArray.map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean))).sort();
-        }
-        const parts = value.split(",").map((entry) => normalizeMultiSelectToken(entry)).filter(Boolean);
-        return Array.from(new Set(parts)).sort();
+        return parseFlexibleMultiSelect(value).sort();
       }
       return [];
     }
@@ -8466,7 +8522,7 @@ function renderSubmitOutputs(payload) {
       if (!firstInvalid) return null;
       const target = qs(`#field-${CSS.escape(firstInvalid)}`) || qs(`[data-field="${CSS.escape(firstInvalid)}"]`);
       if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        focusFieldIntoView(target);
         if (target.focus) target.focus();
       }
       return firstInvalid;
@@ -8641,6 +8697,15 @@ function renderSubmitOutputs(payload) {
         }
       });
 
+      if (formContainer) {
+        formContainer.addEventListener("focusin", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          requestAnimationFrame(() => {
+            focusFieldIntoView(target);
+          });
+        });
+      }
 
       if (editSearchInput) {
         const applySearchTerm = (nextTerm) => {
