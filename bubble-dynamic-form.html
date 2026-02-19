@@ -1075,7 +1075,7 @@
       width: max-content;
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
       display: none;
-      z-index: 20;
+      z-index: 40;
     }
 
 #bdf-root .conflict-popover.open {
@@ -1311,7 +1311,7 @@
       display: none;
       padding: 4px;
       pointer-events: none;
-      z-index: 20;
+      z-index: 260;
     }
 
 #bdf-root .action-menu.open {
@@ -2394,6 +2394,7 @@
     let pendingIncomingBubbleData = null;
     let pendingIncomingUniqueId = "";
     let changedFieldKeys = new Set();
+    let humanTouchedFieldKeys = new Set();
     let dirtyFields = {};
     let changedFieldValuesByKey = new Map();
     let lastChangedMode = "";
@@ -3920,6 +3921,7 @@ function renderSubmitOutputs(payload) {
 
     function clearChangedFieldKeys() {
       changedFieldKeys = new Set();
+      humanTouchedFieldKeys = new Set();
       dirtyFields = {};
     }
 
@@ -3987,9 +3989,12 @@ function renderSubmitOutputs(payload) {
       }
     }
 
-    function setHumanValue(fieldKey, value, field, displayValue) {
+    function setHumanValue(fieldKey, value, field, displayValue, options = {}) {
       ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
+      if (String(options?.reason || "").toLowerCase() === "user-edit") {
+        humanTouchedFieldKeys.add(fieldKey);
+      }
       sourceByField[fieldKey] = "human";
       updateEffectiveState(fieldKey, field, displayValue);
       updateAiVisuals(fieldKey);
@@ -4659,6 +4664,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      humanTouchedFieldKeys = new Set();
       if (human) {
         loadJsonSafeToForm("human", human);
       }
@@ -4681,14 +4687,13 @@ function renderSubmitOutputs(payload) {
     function initializeSourceByFieldFromAi() {
       if (!state.config) return;
       state.config.fields.forEach((field) => {
-        const humanValue = humanData[field.key];
         const aiValue = aiData[field.key];
         const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
         const hasHumanPriority =
-          sourceByField[field.key] === "human"
+          humanTouchedFieldKeys.has(field.key)
           || changedFieldKeys.has(field.key)
           || changedFieldValuesByKey.has(field.key);
-        if (hasHumanPriority || !isEmptyValue(humanValue)) {
+        if (hasHumanPriority) {
           sourceByField[field.key] = "human";
           return;
         }
@@ -5202,7 +5207,7 @@ function renderSubmitOutputs(payload) {
         updateEffectiveState(key, field, displayValue);
         return;
       }
-      setHumanValue(key, value, field, displayValue);
+      setHumanValue(key, value, field, displayValue, { reason: "user-edit" });
       markFieldAsChanged(key, { origin: "human" });
       rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
@@ -5370,6 +5375,7 @@ function renderSubmitOutputs(payload) {
         aiData = {};
         aiExplicitFieldKeys = new Set();
         sourceByField = {};
+        humanTouchedFieldKeys = new Set();
         state.fileBuffers = {};
         state.fileStaging = {};
         loadJsonSafeToForm("human", incomingBubbleData);
@@ -7468,10 +7474,7 @@ function renderSubmitOutputs(payload) {
           humanData[field.key] = initialValue;
         }
         if (!sourceByField[field.key]) {
-          sourceByField[field.key] = "human";
-        }
-        if (isEmptyValue(humanData[field.key]) && !isEmptyValue(aiData[field.key])) {
-          sourceByField[field.key] = "ai";
+          sourceByField[field.key] = (!isEmptyValue(aiData[field.key]) || aiExplicitFieldKeys.has(field.key)) ? "ai" : "human";
         }
         const effectiveInitial = getEffectiveValue(field.key);
         state.values[field.key] = effectiveInitial;
@@ -8621,6 +8624,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      humanTouchedFieldKeys = new Set();
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
@@ -8741,9 +8745,13 @@ function renderSubmitOutputs(payload) {
         formContainer.addEventListener("focusin", (event) => {
           const target = event.target;
           if (!(target instanceof HTMLElement)) return;
-          requestAnimationFrame(() => {
+          const isMobileLike = (window.matchMedia && window.matchMedia("(max-width: 900px)").matches)
+            || (window.visualViewport && window.visualViewport.height < window.innerHeight - 120);
+          const delayMs = isMobileLike ? 0 : 220;
+          setTimeout(() => {
+            if (document.activeElement !== target) return;
             focusFieldIntoView(target);
-          });
+          }, delayMs);
         });
       }
 
