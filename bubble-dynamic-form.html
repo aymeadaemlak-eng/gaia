@@ -5901,7 +5901,15 @@ function renderSubmitOutputs(payload) {
 
         if (isDeltaEmpty) {
           const fullObj = submitOutputsPayload.output_full_obj || {};
-          submitOutputsPayload.outputlist1 = Object.entries(fullObj).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
+          const fallbackEntries = Object.entries(fullObj);
+          const nonEmptyKeys = fallbackEntries
+            .filter(([, value]) => !isEmptyValue(value))
+            .map(([key]) => key);
+
+          submitOutputsPayload.outputlist1 = fallbackEntries.map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
+          submitOutputsPayload.outputlist2 = nonEmptyKeys.slice();
+          submitOutputsPayload.outputlist3 = [];
+          submitOutputsPayload.outputlist4 = nonEmptyKeys.slice();
         }
       }
       logPredictDebug("submit-payload-checkpoint", {
