@@ -4846,8 +4846,6 @@ function renderSubmitOutputs(payload) {
       const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
-        const isUserTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
-        if (!isUserTrackedChange) return;
         if (byKey.has(field.key)) return;
         byKey.set(field.key, field);
       });
