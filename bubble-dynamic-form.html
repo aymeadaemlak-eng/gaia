@@ -4820,7 +4820,8 @@ function renderSubmitOutputs(payload) {
       const fieldByKey = buildFieldKeyMap();
       let appliedCount = 0;
       changedFieldValuesByKey.forEach((rememberedValue, fieldKey) => {
-        const field = fieldByKey[fieldKey];
+        const resolvedFieldKey = fieldByKey.get(fieldKey) || fieldKey;
+        const field = state.config.fields.find((entry) => entry.key === resolvedFieldKey);
         if (!field) return;
         const normalizedType = String(field.type || "").toLowerCase();
         if (["file", "image", "multifile"].includes(normalizedType)) return;
@@ -4845,9 +4846,21 @@ function renderSubmitOutputs(payload) {
 
     function getUniqueChangedFieldDescriptors() {
       const byKey = new Map();
+      const hasTrackedKeys = changedFieldKeys.size > 0 || changedFieldValuesByKey.size > 0;
       (state.config?.fields || []).forEach((field) => {
         if (!field?.key) return;
         if (byKey.has(field.key)) return;
+
+        const isTrackedChange = changedFieldKeys.has(field.key) || changedFieldValuesByKey.has(field.key);
+        const hasExplicitHumanWrite = Object.prototype.hasOwnProperty.call(humanData, field.key);
+        const hasExplicitAiWrite = Object.prototype.hasOwnProperty.call(aiData, field.key);
+        const hasExplicitSource = Object.prototype.hasOwnProperty.call(sourceByField, field.key);
+
+        const shouldInclude = hasTrackedKeys
+          ? isTrackedChange
+          : (hasExplicitHumanWrite || hasExplicitAiWrite || hasExplicitSource);
+        if (!shouldInclude) return;
+
         byKey.set(field.key, field);
       });
       return Array.from(byKey.values());
