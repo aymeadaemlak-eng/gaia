@@ -2218,9 +2218,9 @@
       const INITIAL_INPUTS = window.BUBBLE_INPUTS || {};
       const IS_EDITING_MODE = INITIAL_INPUTS?.editing === true || INITIAL_INPUTS?.editing === 1 || String(INITIAL_INPUTS?.editing || "").trim().toLowerCase() === "true";
 
-    let MANUAL_COLUMN_JSON = INITIAL_INPUTS.COLUMN_JSON || null;
-    let MANUAL_DATA_JSON = INITIAL_INPUTS.BUBBLE_DATA_JSON || null;
-    let MANUAL_PREDICTED_JSON = INITIAL_INPUTS.PREDICTED_JSON || null;
+    let MANUAL_COLUMN_JSON = parseDataJsonSource(INITIAL_INPUTS.COLUMN_JSON) || null;
+    let MANUAL_DATA_JSON = parseDataJsonSource(INITIAL_INPUTS.BUBBLE_DATA_JSON) || null;
+    let MANUAL_PREDICTED_JSON = parseDataJsonSource(INITIAL_INPUTS.PREDICTED_JSON) || null;
 
     const SAMPLE_COLUMN_JSON = {
       columns: [
@@ -2991,19 +2991,18 @@
     };
 
     function parseJsonInput(value, errorEl) {
-      const trimmed = value.trim();
+      const trimmed = String(value || "").trim();
       if (!trimmed) {
         if (errorEl) errorEl.textContent = "";
         return null;
       }
-      try {
-        const parsed = JSON.parse(trimmed);
+      const parsed = parseDataJsonSource(trimmed);
+      if (parsed !== null) {
         if (errorEl) errorEl.textContent = "";
         return parsed;
-      } catch (error) {
-        if (errorEl) errorEl.textContent = "JSON formatı hatalı.";
-        return null;
       }
+      if (errorEl) errorEl.textContent = "JSON formatı hatalı.";
+      return null;
     }
 
     function syncManualJsonInputs(meta = {}) {
@@ -5458,14 +5457,40 @@ function renderSubmitOutputs(payload) {
       if (typeof rawValue === "string") {
         const trimmed = rawValue.trim();
         if (!trimmed) return null;
-        try {
-          return JSON.parse(trimmed);
-        } catch (error) {
-          return null;
-        }
+        if (trimmed.startsWith("<")) return null;
+        const directParsed = tryParseLooseJsonString(trimmed);
+        if (directParsed !== null) return directParsed;
+        return null;
       }
       if (typeof rawValue === "object") return rawValue;
       return null;
+    }
+
+    function tryParseLooseJsonString(rawText) {
+      const text = String(rawText || "").trim();
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        const firstObjectStart = text.indexOf("{");
+        const firstArrayStart = text.indexOf("[");
+        let start = -1;
+        if (firstObjectStart === -1) start = firstArrayStart;
+        else if (firstArrayStart === -1) start = firstObjectStart;
+        else start = Math.min(firstObjectStart, firstArrayStart);
+        if (start < 0) return null;
+        const objectEnd = text.lastIndexOf("}");
+        const arrayEnd = text.lastIndexOf("]");
+        const end = Math.max(objectEnd, arrayEnd);
+        if (end <= start) return null;
+        const candidate = text.slice(start, end + 1).trim();
+        if (!candidate) return null;
+        try {
+          return JSON.parse(candidate);
+        } catch (nestedError) {
+          return null;
+        }
+      }
     }
 
     function extractUniqueIdFromObject(candidate) {
