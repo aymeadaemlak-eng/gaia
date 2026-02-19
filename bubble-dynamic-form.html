@@ -5901,10 +5901,7 @@ function renderSubmitOutputs(payload) {
 
         if (isDeltaEmpty) {
           const fullObj = submitOutputsPayload.output_full_obj || {};
-          submitOutputsPayload.outputlist1 = Object.entries(fullObj).map(([key, value]) => ({
-            key,
-            value
-          }));
+          submitOutputsPayload.outputlist1 = Object.entries(fullObj).map(([key, value]) => `"${key}": ${JSON.stringify(value)}`);
         }
       }
       logPredictDebug("submit-payload-checkpoint", {
