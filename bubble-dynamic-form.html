@@ -3954,6 +3954,7 @@ function renderSubmitOutputs(payload) {
       sourceByField[fieldKey] = "human";
       noteFieldWrite(fieldKey, "human");
       updateEffectiveState(fieldKey, field, displayValue);
+      logAutoflowValueMutation({ fieldKey, field, source: "human", rawValue: value, normalizedValue: value, displayValue, origin: "setHumanValue" });
       updateAiVisuals(fieldKey);
       updateToolbarStatus();
     }
@@ -3983,6 +3984,41 @@ function renderSubmitOutputs(payload) {
         updateSubmitState(state.config);
       }
       debounceFormChange();
+    }
+
+    function logAutoflowValueMutation({
+      fieldKey,
+      field,
+      source,
+      rawValue,
+      normalizedValue,
+      displayValue,
+      origin = "unknown"
+    } = {}) {
+      const fieldType = String(field?.type || "").toLowerCase();
+      const diagnostics = {
+        origin,
+        fieldKey,
+        fieldLabel: field?.label || fieldKey || "",
+        fieldType,
+        source,
+        rawValue,
+        normalizedValue,
+        effectiveValue: fieldKey ? getEffectiveValue(fieldKey) : undefined,
+        displayValue,
+        hasAiHydratedData,
+        isFormDirty,
+        changedFieldKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        startSignal: readStartSignalValue(),
+        editingSignal: readEditingSignalValue(),
+        isFormSaving,
+        pendingStartCloseAutosave: Boolean(pendingStartCloseAutosave),
+        pendingSubmitQueued: Boolean(pendingSubmitUntilConfigReady),
+        modeHint: getSubmitModeHint()
+      };
+      traceAutosave("autoflow:value-mutation", diagnostics);
+      logPredictDebug("autoflow:value-mutation", diagnostics);
     }
 
     function updateToolbarStatus() {
@@ -4559,6 +4595,7 @@ function renderSubmitOutputs(payload) {
           sourceByField[fieldKey] = "human";
           noteFieldWrite(fieldKey, "human");
         }
+        logAutoflowValueMutation({ fieldKey, field, source: kind, rawValue, normalizedValue: normalized, origin: "loadJsonSafeToForm" });
         applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
       });
       traceAutosave("loadJsonSafeToForm", {
@@ -5154,8 +5191,19 @@ function renderSubmitOutputs(payload) {
     function setFieldValue(key, value, field, displayValue) {
       setHumanValue(key, value, field, displayValue);
       markFieldAsChanged(key);
-      rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
+      const normalizedForTracking = normalizeValueForComparison(field, getEffectiveValue(key), state.config);
+      rememberChangedFieldValue(key, normalizedForTracking);
       isFormDirty = computeDirtyState();
+      logAutoflowValueMutation({ fieldKey: key, field, source: "human", rawValue: value, normalizedValue: normalizedForTracking, displayValue, origin: "setFieldValue" });
+      traceAutosave("autoflow:dirty-after-value-mutation", {
+        fieldKey: key,
+        source: "human",
+        isFormDirty,
+        changedFieldKeyCount: changedFieldKeys.size,
+        hasChangesSinceStartOpen,
+        trigger: "setFieldValue",
+        modeHint: getSubmitModeHint()
+      });
     }
 
     function parseDataJsonSource(rawValue) {
