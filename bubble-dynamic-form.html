@@ -3006,9 +3006,18 @@
     }
 
     function syncManualJsonInputs(meta = {}) {
-      MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
-      MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
-      MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
+      const nextManualColumnJson = columnJsonInput
+        ? parseJsonInput(columnJsonInput.value || "", columnJsonError)
+        : MANUAL_COLUMN_JSON;
+      const nextManualDataJson = humanJsonInput
+        ? parseJsonInput(humanJsonInput.value || "", humanJsonError)
+        : MANUAL_DATA_JSON;
+      const nextManualPredictedJson = predictedJsonInput
+        ? parseJsonInput(predictedJsonInput.value || "", predictedJsonError)
+        : MANUAL_PREDICTED_JSON;
+      MANUAL_COLUMN_JSON = nextManualColumnJson;
+      MANUAL_DATA_JSON = nextManualDataJson;
+      MANUAL_PREDICTED_JSON = nextManualPredictedJson;
       const summaryPayload = {
         meta,
         hasColumnJson: Boolean(MANUAL_COLUMN_JSON),
