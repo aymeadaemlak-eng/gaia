@@ -4631,7 +4631,11 @@ function renderSubmitOutputs(payload) {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
         if (!fieldKey) {
           unmatched.push(jsonKey);
-          console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
+          const unmatchedKeyText = String(jsonKey || "").trim().toLowerCase();
+          const suppressWarn = unmatchedKeyText === "uniquieid" || unmatchedKeyText === "uniqueid" || unmatchedKeyText === "stage";
+          if (!suppressWarn) {
+            console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
+          }
           return;
         }
         const field = state.config.fields.find((f) => f.key === fieldKey);
@@ -4892,8 +4896,8 @@ function renderSubmitOutputs(payload) {
         const normalizedUiValue = normalizeValueForComparison(field, uiValue, state.config);
         const effectiveValueFromState = getCurrentValueForField(field);
         const normalizedEffectiveValue = normalizeValueForComparison(field, effectiveValueFromState, state.config);
-        const useEffectiveFallback = isEmptyValue(normalizedUiValue) && !isEmptyValue(normalizedEffectiveValue);
-        const finalValue = useEffectiveFallback ? normalizedEffectiveValue : normalizedUiValue;
+        const useEffectiveFallback = false;
+        const finalValue = normalizedUiValue;
         payload[field.key] = finalValue;
         fieldDebug.push({
           fieldKey: field.key,
@@ -4966,7 +4970,8 @@ function renderSubmitOutputs(payload) {
     }
 
     function getCurrentNormalizedValue(field) {
-      return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
+      const domValue = readFieldValueFromDom(field);
+      return normalizeValueForComparison(field, domValue, state.config);
     }
 
     function getUniqueChangedFieldDescriptors() {
