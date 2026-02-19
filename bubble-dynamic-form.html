@@ -4704,15 +4704,23 @@ function renderSubmitOutputs(payload) {
         const field = state.config.fields.find((f) => f.key === fieldKey);
         if (!field) return;
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
+        const currentNormalized = getCurrentNormalizedValue(field);
+        const baselineValue = initialSnapshot ? (initialSnapshot[fieldKey] ?? "") : "";
         const preserveUserValue = shouldPreserveFieldAgainstJsonLoad(fieldKey, meta);
-        if (preserveUserValue) {
+        const preserveByBaselineDrift = (
+          areValuesDifferent(currentNormalized, baselineValue)
+          && areValuesDifferent(currentNormalized, normalized)
+        );
+        if (preserveUserValue || preserveByBaselineDrift) {
           actionLog.push({
-            type: "skip-user-override",
+            type: preserveUserValue ? "skip-user-override" : "skip-baseline-drift",
             jsonKey,
             fieldKey,
             kind,
             incoming: normalized,
             existing: getEffectiveValue(fieldKey),
+            currentNormalized,
+            baselineValue,
             meta
           });
           return;
