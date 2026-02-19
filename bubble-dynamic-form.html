@@ -4592,7 +4592,8 @@ function renderSubmitOutputs(payload) {
       }
       const startSignalNow = readStartSignalValue();
       const shouldSubmitWhileClosed = Boolean(
-        hasSeenStartSignal
+        kind === "ai"
+        && hasSeenStartSignal
         && startSignalNow === false
         && !lastStartParamWasTrue
         && dirtyNow
