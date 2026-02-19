@@ -3006,10 +3006,20 @@
       }
     }
 
-    function syncManualJsonInputs() {
+    function syncManualJsonInputs(meta = {}) {
       MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
       MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
       MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
+      logPredictDebug("manual-json-sync", {
+        meta,
+        hasColumnJson: Boolean(MANUAL_COLUMN_JSON),
+        hasHumanJson: Boolean(MANUAL_DATA_JSON),
+        hasPredictedJson: Boolean(MANUAL_PREDICTED_JSON),
+        humanKeyCount: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).length : 0,
+        predictedKeyCount: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).length : 0,
+        humanKeySample: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).slice(0, 30) : [],
+        predictedKeySample: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).slice(0, 30) : []
+      });
       syncActionOptions();
     }
 
@@ -5361,8 +5371,16 @@ function renderSubmitOutputs(payload) {
       ];
       for (const candidate of candidates) {
         const obj = extractBubbleDataObject(candidate);
-        if (obj) return obj;
+        if (obj) {
+          logPredictDebug("read-current-bubble-data-object", {
+            candidateType: typeof candidate,
+            keyCount: Object.keys(obj || {}).length,
+            keySample: Object.keys(obj || {}).slice(0, 30)
+          });
+          return obj;
+        }
       }
+      logPredictDebug("read-current-bubble-data-object", { keyCount: 0, keySample: [] });
       return null;
     }
 
@@ -5376,8 +5394,16 @@ function renderSubmitOutputs(payload) {
       ];
       for (const candidate of candidates) {
         const obj = extractBubbleDataObject(candidate);
-        if (obj) return obj;
+        if (obj) {
+          logPredictDebug("read-current-predicted-data-object", {
+            candidateType: typeof candidate,
+            keyCount: Object.keys(obj || {}).length,
+            keySample: Object.keys(obj || {}).slice(0, 30)
+          });
+          return obj;
+        }
       }
+      logPredictDebug("read-current-predicted-data-object", { keyCount: 0, keySample: [] });
       return null;
     }
 
@@ -5990,6 +6016,19 @@ function renderSubmitOutputs(payload) {
 
     function runSubmitFlow({ autosave = false, forceSubmit = false, trigger = "unknown", modeHint = "" } = {}) {
       traceAutosave("runSubmitFlow:start", { autosave, forceSubmit, trigger });
+      logPredictDebug("run-submit-flow:start", {
+        autosave,
+        forceSubmit,
+        trigger,
+        modeHint,
+        currentSourceByField: { ...sourceByField },
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || []),
+        currentStateValues: (state.config?.fields || []).reduce((acc, field) => {
+          acc[field.key] = getCurrentValueForField(field);
+          return acc;
+        }, {})
+      });
       if (isWaitingForServerRefresh && !autosave && !forceSubmit) {
         traceAutosave("runSubmitFlow:skip-waiting-server-refresh", { trigger });
         return;
@@ -8931,12 +8970,12 @@ function renderSubmitOutputs(payload) {
 
       ["#columnJsonInput", "#humanJsonInput", "#predictedJsonInput"].forEach((selector) => {
         safeOn(selector, "input", () => {
-          syncManualJsonInputs();
+          syncManualJsonInputs({ source: "json-input-change" });
         });
       });
 
       safeOn("#loadHumanJson", "click", () => {
-        syncManualJsonInputs();
+        syncManualJsonInputs({ source: "loadHumanJsonBtn" });
         initialSnapshot = null;
         if (state.config) {
           initialSnapshot = buildBaselineSnapshot(MANUAL_DATA_JSON);
@@ -8957,7 +8996,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#loadPredictedJson", "click", () => {
-      syncManualJsonInputs();
+      syncManualJsonInputs({ source: "loadPredictedJsonBtn" });
       const payload = MANUAL_PREDICTED_JSON || SAMPLE_PREDICTED_JSON;
       if (!payload) {
         aiData = {};
@@ -8987,7 +9026,7 @@ function renderSubmitOutputs(payload) {
       });
 
       safeOn("#loadColumnJson", "click", () => {
-      syncManualJsonInputs();
+      syncManualJsonInputs({ source: "loadColumnJsonBtn" });
       columnJson = MANUAL_COLUMN_JSON || SAMPLE_COLUMN_JSON;
       applyColumnJson(columnJson, { persistRestore: true });
       emit("debug:column-json", columnJson);
@@ -9073,7 +9112,7 @@ function renderSubmitOutputs(payload) {
 
     if (currentDateTimeInput) currentDateTimeInput.value = defaultSchema.currentDateTimeISO;
     if (schemaInput) schemaInput.value = JSON.stringify(defaultSchema, null, 2);
-    syncManualJsonInputs();
+    syncManualJsonInputs({ source: "initializeApp" });
     if (MANUAL_COLUMN_JSON) {
       columnJson = MANUAL_COLUMN_JSON;
     }
