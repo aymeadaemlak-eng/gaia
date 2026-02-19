@@ -3984,6 +3984,37 @@ function renderSubmitOutputs(payload) {
       return changedFieldValuesByKey.get(fieldKey);
     }
 
+    function reapplyPersistedChangedValues(reason = "") {
+      const config = state?.config;
+      if (!config || !Array.isArray(config.fields) || config.fields.length === 0) return 0;
+      if (!(changedFieldValuesByKey instanceof Map) || changedFieldValuesByKey.size === 0) return 0;
+
+      const fieldMap = buildFieldKeyMap();
+      let replayCount = 0;
+      changedFieldValuesByKey.forEach((rememberedValue, fieldKey) => {
+        const field = fieldMap.get(fieldKey);
+        if (!field) return;
+        const currentNormalized = getCurrentNormalizedValue(field);
+        if (!areValuesDifferent(currentNormalized, rememberedValue)) return;
+        setFieldValue(fieldKey, rememberedValue, field, undefined, { origin: "human-restore" });
+        replayCount += 1;
+      });
+
+      if (replayCount > 0) {
+        logPredictDebug("reapply-persisted-changed-values", {
+          reason,
+          replayCount,
+          keys: Array.from(changedFieldValuesByKey.keys())
+        });
+        traceAutosave("reapply-persisted-changed-values", {
+          reason,
+          replayCount,
+          keys: Array.from(changedFieldValuesByKey.keys())
+        });
+      }
+      return replayCount;
+    }
+
     function getActiveSource(fieldKey) {
       const preferredSource = sourceByField[fieldKey];
       if (preferredSource === "human" || preferredSource === "ai") {
@@ -6765,6 +6796,12 @@ function renderSubmitOutputs(payload) {
           changedKeyCount: changedFieldKeys.size,
           persistedAt: persistedChangedTracking.time || ""
         });
+        const replayNow = reapplyPersistedChangedValues("initAutosaveStartWatcher:hydrate");
+        if (replayNow === 0) {
+          setTimeout(() => {
+            reapplyPersistedChangedValues("initAutosaveStartWatcher:deferred");
+          }, 0);
+        }
       }
       if (persistedStartFlowState) {
         startOpenSequence = Math.max(startOpenSequence, persistedStartFlowState.startOpenSequence || 0);
