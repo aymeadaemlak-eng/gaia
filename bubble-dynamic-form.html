@@ -3989,6 +3989,22 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+
+    function buildFieldSourceDebugSnapshot(fieldKey) {
+      return {
+        fieldKey,
+        sourceByField: sourceByField[fieldKey] || "",
+        activeSource: getActiveSource(fieldKey),
+        humanValue: humanData[fieldKey],
+        aiValue: aiData[fieldKey],
+        effectiveValue: getEffectiveValue(fieldKey),
+        humanTouched: humanTouchedFieldKeys.has(fieldKey),
+        changedKey: changedFieldKeys.has(fieldKey),
+        rememberedChanged: changedFieldValuesByKey.has(fieldKey),
+        aiExplicit: aiExplicitFieldKeys.has(fieldKey)
+      };
+    }
+
     function setHumanValue(fieldKey, value, field, displayValue, options = {}) {
       ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
@@ -4598,7 +4614,7 @@ function renderSubmitOutputs(payload) {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
         }
-        applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
+        applied.push({ jsonKey, fieldKey, kind, rawValue, normalized, sourceSnapshot: buildFieldSourceDebugSnapshot(fieldKey) });
       });
       traceAutosave("loadJsonSafeToForm", {
         kind,
@@ -4618,7 +4634,8 @@ function renderSubmitOutputs(payload) {
         unmatchedKeyCount: unmatched.length,
         unmatchedKeys: unmatched,
         availableAliasSample: availableAliases.slice(0, 80),
-        applied
+        applied,
+        sourceSummary: (state.config?.fields || []).map((field) => buildFieldSourceDebugSnapshot(field.key))
       });
       refreshAllFields();
       if (state.config) {
@@ -4686,6 +4703,7 @@ function renderSubmitOutputs(payload) {
 
     function initializeSourceByFieldFromAi() {
       if (!state.config) return;
+      const sourceInitDetails = [];
       state.config.fields.forEach((field) => {
         const aiValue = aiData[field.key];
         const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
@@ -4695,9 +4713,15 @@ function renderSubmitOutputs(payload) {
           || changedFieldValuesByKey.has(field.key);
         if (hasHumanPriority) {
           sourceByField[field.key] = "human";
+          sourceInitDetails.push({ ...buildFieldSourceDebugSnapshot(field.key), reason: "human-priority" });
           return;
         }
         sourceByField[field.key] = (hasExplicitAi || !isEmptyValue(aiValue)) ? "ai" : "human";
+        sourceInitDetails.push({ ...buildFieldSourceDebugSnapshot(field.key), reason: "ai-default-or-empty" });
+      });
+      logPredictDebug("initialize-source-by-ai:result", {
+        fieldCount: sourceInitDetails.length,
+        details: sourceInitDetails
       });
     }
 
@@ -4831,9 +4855,21 @@ function renderSubmitOutputs(payload) {
 
     function buildLiveFormSnapshotFromDom() {
       const payload = {};
+      const fieldDebug = [];
       (state.config?.fields || []).forEach((field) => {
         const uiValue = readFieldValueFromDom(field);
-        payload[field.key] = normalizeValueForComparison(field, uiValue, state.config);
+        const normalizedUiValue = normalizeValueForComparison(field, uiValue, state.config);
+        payload[field.key] = normalizedUiValue;
+        fieldDebug.push({
+          fieldKey: field.key,
+          uiValue,
+          normalizedUiValue,
+          ...buildFieldSourceDebugSnapshot(field.key)
+        });
+      });
+      logPredictDebug("build-live-form-snapshot", {
+        fieldCount: fieldDebug.length,
+        fields: fieldDebug
       });
       return payload;
     }
@@ -5198,6 +5234,13 @@ function renderSubmitOutputs(payload) {
 
     function setFieldValue(key, value, field, displayValue, options = {}) {
       const origin = String(options?.origin || "human").trim().toLowerCase();
+      logPredictDebug("set-field-value:start", {
+        key,
+        origin,
+        incomingValue: value,
+        displayValue,
+        before: buildFieldSourceDebugSnapshot(key)
+      });
       if (origin === "ai-hydrate") {
         aiData[key] = value;
         aiExplicitFieldKeys.add(key);
@@ -5205,12 +5248,22 @@ function renderSubmitOutputs(payload) {
           sourceByField[key] = "ai";
         }
         updateEffectiveState(key, field, displayValue);
+        logPredictDebug("set-field-value:ai-hydrate-applied", {
+          key,
+          origin,
+          after: buildFieldSourceDebugSnapshot(key)
+        });
         return;
       }
       setHumanValue(key, value, field, displayValue, { reason: "user-edit" });
       markFieldAsChanged(key, { origin: "human" });
       rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
+      logPredictDebug("set-field-value:human-applied", {
+        key,
+        origin,
+        after: buildFieldSourceDebugSnapshot(key)
+      });
     }
 
     function parseDataJsonSource(rawValue) {
