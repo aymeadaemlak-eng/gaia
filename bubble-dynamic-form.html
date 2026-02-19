@@ -4878,11 +4878,19 @@ function renderSubmitOutputs(payload) {
       (state.config?.fields || []).forEach((field) => {
         const uiValue = readFieldValueFromDom(field);
         const normalizedUiValue = normalizeValueForComparison(field, uiValue, state.config);
-        payload[field.key] = normalizedUiValue;
+        const effectiveValueFromState = getCurrentValueForField(field);
+        const normalizedEffectiveValue = normalizeValueForComparison(field, effectiveValueFromState, state.config);
+        const useEffectiveFallback = isEmptyValue(normalizedUiValue) && !isEmptyValue(normalizedEffectiveValue);
+        const finalValue = useEffectiveFallback ? normalizedEffectiveValue : normalizedUiValue;
+        payload[field.key] = finalValue;
         fieldDebug.push({
           fieldKey: field.key,
           uiValue,
           normalizedUiValue,
+          effectiveValueFromState,
+          normalizedEffectiveValue,
+          useEffectiveFallback,
+          finalValue,
           ...buildFieldSourceDebugSnapshot(field.key)
         });
       });
@@ -5258,6 +5266,8 @@ function renderSubmitOutputs(payload) {
         origin,
         incomingValue: value,
         displayValue,
+        domValueBefore: readFieldValueFromDom(field),
+        stateValueBefore: getCurrentValueForField(field),
         before: buildFieldSourceDebugSnapshot(key)
       });
       if (origin === "ai-hydrate") {
@@ -5281,6 +5291,8 @@ function renderSubmitOutputs(payload) {
       logPredictDebug("set-field-value:human-applied", {
         key,
         origin,
+        domValueAfter: readFieldValueFromDom(field),
+        stateValueAfter: getCurrentValueForField(field),
         after: buildFieldSourceDebugSnapshot(key)
       });
     }
@@ -6080,6 +6092,19 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
+      logPredictDebug("submit-export-payload-checkpoint", {
+        trigger,
+        autosave,
+        exportPayload,
+        exportPayloadJson: JSON.stringify(exportPayload),
+        currentStateValues: (state.config?.fields || []).reduce((acc, field) => {
+          acc[field.key] = getCurrentValueForField(field);
+          return acc;
+        }, {}),
+        currentSourceByField: { ...sourceByField },
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || [])
+      });
       const isAiHydrateAutosave =
         autosave === true &&
         trigger &&
