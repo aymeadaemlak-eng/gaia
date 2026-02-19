@@ -2370,6 +2370,7 @@
     let aiData = {};
     let aiExplicitFieldKeys = new Set();
     let sourceByField = {};
+    let fieldLastWriterByKey = {};
     let taskStartTimestamp = null;
     let initialSnapshot = null;
     const ACTION_OUTPUT_SPLITTER = "_-@SPLİTTER@-_";
@@ -3900,22 +3901,34 @@ function renderSubmitOutputs(payload) {
       return source === "ai" ? aiData[fieldKey] : humanData[fieldKey];
     }
 
+    function noteFieldWrite(fieldKey, source) {
+      if (!fieldKey) return;
+      fieldLastWriterByKey[fieldKey] = source;
+    }
+
     function getEffectiveValue(fieldKey) {
       const preferredSource = sourceByField[fieldKey];
       const humanValue = humanData[fieldKey];
       const aiValue = aiData[fieldKey];
+      const hasHuman = !isEmptyValue(humanValue);
+      const hasAi = !isEmptyValue(aiValue);
+      if (hasHuman && hasAi) {
+        const lastWriter = fieldLastWriterByKey[fieldKey];
+        if (lastWriter === "human") return humanValue;
+        if (lastWriter === "ai") return aiValue;
+      }
       if (preferredSource === "human") {
-        if (!isEmptyValue(humanValue)) return humanValue;
-        if (!isEmptyValue(aiValue)) return aiValue;
+        if (hasHuman) return humanValue;
+        if (hasAi) return aiValue;
         return humanValue ?? "";
       }
       if (preferredSource === "ai") {
-        if (!isEmptyValue(aiValue)) return aiValue;
-        if (!isEmptyValue(humanValue)) return humanValue;
+        if (hasAi) return aiValue;
+        if (hasHuman) return humanValue;
         return aiValue ?? "";
       }
-      if (!isEmptyValue(humanValue)) return humanValue;
-      if (!isEmptyValue(aiValue)) return aiValue;
+      if (hasHuman) return humanValue;
+      if (hasAi) return aiValue;
       return "";
     }
 
@@ -3929,6 +3942,7 @@ function renderSubmitOutputs(payload) {
       ensureTaskStartTimestamp();
       humanData[fieldKey] = value;
       sourceByField[fieldKey] = "human";
+      noteFieldWrite(fieldKey, "human");
       updateEffectiveState(fieldKey, field, displayValue);
       updateAiVisuals(fieldKey);
       updateToolbarStatus();
@@ -4528,10 +4542,12 @@ function renderSubmitOutputs(payload) {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
           sourceByField[fieldKey] = "ai";
+          noteFieldWrite(fieldKey, "ai");
           markFieldAsChanged(fieldKey);
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
+          noteFieldWrite(fieldKey, "human");
         }
         applied.push({ jsonKey, fieldKey, kind, rawValue, normalized });
       });
@@ -4599,6 +4615,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      fieldLastWriterByKey = {};
       if (human) {
         loadJsonSafeToForm("human", human);
       }
@@ -5252,6 +5269,7 @@ function renderSubmitOutputs(payload) {
         aiData = {};
         aiExplicitFieldKeys = new Set();
         sourceByField = {};
+        fieldLastWriterByKey = {};
         state.fileBuffers = {};
         state.fileStaging = {};
         loadJsonSafeToForm("human", incomingBubbleData);
@@ -6619,6 +6637,7 @@ function renderSubmitOutputs(payload) {
         if (!direct) return;
         humanData[direct] = rawValue;
         sourceByField[direct] = "human";
+        noteFieldWrite(direct, "human");
       });
     }
 
@@ -7223,6 +7242,7 @@ function renderSubmitOutputs(payload) {
           if (!hasAi) return;
           const nextSource = currentSource === "ai" ? "human" : "ai";
           sourceByField[field.key] = nextSource;
+          noteFieldWrite(field.key, nextSource);
           updateFieldDisplayValue(field.key);
           emit("onPredictedToggle", {
             key: field.key,
@@ -7240,6 +7260,7 @@ function renderSubmitOutputs(payload) {
           if (isEmptyValue(aiValue)) return;
           humanData[field.key] = aiValue;
           sourceByField[field.key] = "human";
+          noteFieldWrite(field.key, "human");
           markFieldAsChanged(field.key);
           rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
           updateFieldDisplayValue(field.key);
@@ -7254,6 +7275,7 @@ function renderSubmitOutputs(payload) {
         revertAiBtn.addEventListener("click", () => {
           if (isEmptyValue(aiData[field.key])) return;
           sourceByField[field.key] = "ai";
+          noteFieldWrite(field.key, "ai");
           updateFieldDisplayValue(field.key);
         });
         labelMeta.append(revertAiBtn);
@@ -7285,11 +7307,13 @@ function renderSubmitOutputs(payload) {
         const applyAiBtnInPopover = conflictPopover.querySelector("[data-apply-ai]");
         safeOn(applyHumanBtn, "click", () => {
           sourceByField[field.key] = "human";
+          noteFieldWrite(field.key, "human");
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
         safeOn(applyAiBtnInPopover, "click", () => {
           sourceByField[field.key] = "ai";
+          noteFieldWrite(field.key, "ai");
           updateFieldDisplayValue(field.key);
           conflictPopover.classList.remove("open");
         });
@@ -8056,6 +8080,7 @@ function renderSubmitOutputs(payload) {
                 }));
                 state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((f) => f.raw).filter(Boolean);
                 sourceByField[field.key] = "human";
+                noteFieldWrite(field.key, "human");
                 markFieldAsChanged(field.key);
                 rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
                 updateEffectiveState(field.key, field);
@@ -8163,6 +8188,7 @@ function renderSubmitOutputs(payload) {
             state.fileStaging[field.key] = (state.fileBuffers[field.key] || []).map((file) => file.raw).filter(Boolean);
             humanData[field.key] = "";
             sourceByField[field.key] = "human";
+            noteFieldWrite(field.key, "human");
             markFieldAsChanged(field.key);
             rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
             updateEffectiveState(field.key, field);
@@ -8456,6 +8482,7 @@ function renderSubmitOutputs(payload) {
         if (!overwrite && !isEmptyValue(humanData[field.key])) return;
         humanData[field.key] = aiValue;
         sourceByField[field.key] = "human";
+        noteFieldWrite(field.key, "human");
         markFieldAsChanged(field.key);
         rememberChangedFieldValue(field.key, normalizeValueForComparison(field, getEffectiveValue(field.key), state.config));
       });
@@ -8472,6 +8499,7 @@ function renderSubmitOutputs(payload) {
       aiData = {};
       aiExplicitFieldKeys = new Set();
       sourceByField = {};
+      fieldLastWriterByKey = {};
       state.fileBuffers = {};
       state.fileStaging = {};
       state.values = {};
