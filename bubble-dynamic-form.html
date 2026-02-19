@@ -4803,6 +4803,35 @@ function renderSubmitOutputs(payload) {
       return normalizeValueForComparison(field, getCurrentValueForField(field), state.config);
     }
 
+    function reapplyRememberedChangedValues(reason = "") {
+      if (!state.config || !Array.isArray(state.config.fields)) return 0;
+      if (!(changedFieldValuesByKey instanceof Map) || changedFieldValuesByKey.size === 0) return 0;
+      const fieldByKey = buildFieldKeyMap();
+      let appliedCount = 0;
+      changedFieldValuesByKey.forEach((rememberedValue, fieldKey) => {
+        const field = fieldByKey[fieldKey];
+        if (!field) return;
+        const normalizedType = String(field.type || "").toLowerCase();
+        if (["file", "image", "multifile"].includes(normalizedType)) return;
+        humanData[fieldKey] = rememberedValue;
+        sourceByField[fieldKey] = "human";
+        noteFieldWrite(fieldKey, "human");
+        state.values[fieldKey] = getEffectiveValue(fieldKey);
+        appliedCount += 1;
+      });
+      if (appliedCount > 0) {
+        refreshAllFields();
+        updateToolbarStatus();
+        traceAutosave("reapply-remembered-changed-values", {
+          reason,
+          appliedCount,
+          rememberedCount: changedFieldValuesByKey.size,
+          rememberedKeys: Array.from(changedFieldValuesByKey.keys()).slice(0, 100)
+        });
+      }
+      return appliedCount;
+    }
+
     function getUniqueChangedFieldDescriptors() {
       const byKey = new Map();
       (state.config?.fields || []).forEach((field) => {
@@ -6331,6 +6360,7 @@ function renderSubmitOutputs(payload) {
           && (Boolean(persistedStartFlowState?.hasChangesSinceStartOpen) || hasPersistedDirtyTracking);
         const shouldSubmitRemountClose = wasOpenBeforeRemount && !startSignal && hadChangesBeforeRemount && !isFormSaving;
         if (shouldSubmitRemountClose) {
+          const reappliedRememberedCount = reapplyRememberedChangedValues("start-close-remount");
           hasChangesSinceStartOpen = false;
           lastStartParamWasTrue = false;
           persistStartFlowState();
@@ -6342,7 +6372,8 @@ function renderSubmitOutputs(payload) {
             changedKeyCount: changedFieldKeys.size,
             trigger: "start-close-remount",
             hadChangesBeforeRemount,
-            hasPersistedDirtyTracking
+            hasPersistedDirtyTracking,
+            reappliedRememberedCount
           });
           traceAutosave("remount-close-context", collectEditContextSnapshot({
             trigger: "start-close-remount",
@@ -6350,7 +6381,8 @@ function renderSubmitOutputs(payload) {
             persistedHasChanges: Boolean(persistedStartFlowState?.hasChangesSinceStartOpen),
             hasPersistedDirtyTracking,
             hadChangesBeforeRemount,
-            changedKeyCount: changedFieldKeys.size
+            changedKeyCount: changedFieldKeys.size,
+            reappliedRememberedCount
           }));
           runSubmitFlow({ autosave: true, forceSubmit: true, trigger: "start-close-remount", modeHint: getSubmitModeHint() });
         }
