@@ -4590,8 +4590,26 @@ function renderSubmitOutputs(payload) {
       }
     }
 
-    function loadJsonSafeToForm(kind, jsonObj) {
+    function loadJsonSafeToForm(kind, jsonObj, meta = {}) {
       if (!jsonObj || !state.config) return;
+      const invocationStack = String(new Error().stack || "")
+        .split("\n")
+        .slice(1, 6)
+        .map((line) => line.trim());
+      logPredictDebug("load-json-invocation", {
+        kind,
+        meta,
+        payloadKeyCount: Object.keys(jsonObj || {}).length,
+        payloadKeySample: Object.keys(jsonObj || {}).slice(0, 30),
+        invocationStack,
+        startSignal: readStartSignalValue(),
+        isFormSaving,
+        hasSeenStartSignal,
+        lastStartParamWasTrue,
+        sourceByFieldSample: Object.entries(sourceByField || {}).slice(0, 30),
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+        changedKeys: Array.from(changedFieldKeys || [])
+      });
       const keyMap = buildFieldKeyMap();
 
       const applied = [];
@@ -4629,6 +4647,7 @@ function renderSubmitOutputs(payload) {
       }
       logPredictDebug("json-load-summary", {
         kind,
+        meta,
         incomingKeyCount: Object.keys(jsonObj || {}).length,
         appliedKeyCount: applied.length,
         unmatchedKeyCount: unmatched.length,
@@ -4683,10 +4702,10 @@ function renderSubmitOutputs(payload) {
       sourceByField = {};
       humanTouchedFieldKeys = new Set();
       if (human) {
-        loadJsonSafeToForm("human", human);
+        loadJsonSafeToForm("human", human, { source: "applyScenario", stage: "human" });
       }
       if (ai) {
-        loadJsonSafeToForm("ai", ai);
+        loadJsonSafeToForm("ai", ai, { source: "applyScenario", stage: "ai" });
       }
       initializeSourceByFieldFromAi();
       refreshAllFields();
@@ -5431,9 +5450,9 @@ function renderSubmitOutputs(payload) {
         humanTouchedFieldKeys = new Set();
         state.fileBuffers = {};
         state.fileStaging = {};
-        loadJsonSafeToForm("human", incomingBubbleData);
+        loadJsonSafeToForm("human", incomingBubbleData, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "bubble-data" });
         if (predictedToApply) {
-          loadJsonSafeToForm("ai", predictedToApply);
+          loadJsonSafeToForm("ai", predictedToApply, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "predicted-data" });
         }
         initializeSourceByFieldFromAi();
         refreshAllFields();
@@ -8905,7 +8924,7 @@ function renderSubmitOutputs(payload) {
           return;
         }
         emit("debug:human-json", payload);
-        loadJsonSafeToForm("human", payload);
+        loadJsonSafeToForm("human", payload, { source: "loadHumanJsonBtn", stage: "manual-human-load" });
         clearChangedTracking();
         isFormDirty = computeDirtyState();
         updateActionBarUi();
@@ -8928,7 +8947,7 @@ function renderSubmitOutputs(payload) {
         predictedKeys: Object.keys(payload || {}),
         payload
       });
-      loadJsonSafeToForm("ai", payload);
+      loadJsonSafeToForm("ai", payload, { source: "loadPredictedJsonBtn", stage: "manual-ai-load" });
       initializeSourceByFieldFromAi();
       refreshAllFields();
       hasAiHydratedData = true;
@@ -9061,10 +9080,10 @@ function renderSubmitOutputs(payload) {
       applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
-          loadJsonSafeToForm("human", MANUAL_DATA_JSON);
+          loadJsonSafeToForm("human", MANUAL_DATA_JSON, { source: "initializeApp", stage: "initial-human-json" });
         }
         if (MANUAL_PREDICTED_JSON) {
-          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON);
+          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON, { source: "initializeApp", stage: "initial-predicted-json" });
           initializeSourceByFieldFromAi();
           refreshAllFields();
         }
