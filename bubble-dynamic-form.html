@@ -3426,7 +3426,7 @@ function renderSubmitOutputs(payload) {
       traceAutosave("build-submit-outputs-decision", collectEditContextSnapshot({ autosave, modeHint: effectiveMode, editContextActive, isEditAutosave, actionType, hasBubbleData }));
       const output4 = `${baseOutput4}${ACTION_OUTPUT_SPLITTER}${triggeredActionUniqueId || ""}${ACTION_OUTPUT_SPLITTER}${actionType}`;
       const fullSnapshot = buildExportJson();
-      return {
+      const payload = {
         output1: startTimestamp,
         output2: endTimestamp,
         output3: readCurrentUniqueId(),
@@ -3438,6 +3438,8 @@ function renderSubmitOutputs(payload) {
         output_full_obj: fullSnapshot,
         output_full_json: JSON.stringify(fullSnapshot)
       };
+      traceSubmitPayloadPhase("assembled", payload, { autosave, modeHint: effectiveMode, actionType });
+      return payload;
     }
 
     function emit(eventName, detail) {
@@ -5271,6 +5273,11 @@ function renderSubmitOutputs(payload) {
 
     function setFieldValue(key, value, field, displayValue, options = {}) {
       const origin = String(options?.origin || "human").trim().toLowerCase();
+      traceInputAssignmentPhase("start", key, field, {
+        origin,
+        incomingValue: value,
+        displayValue
+      });
       logPredictDebug("set-field-value:start", {
         key,
         origin,
@@ -5287,6 +5294,11 @@ function renderSubmitOutputs(payload) {
           sourceByField[key] = "ai";
         }
         updateEffectiveState(key, field, displayValue);
+        traceInputAssignmentPhase("ai-hydrate-applied", key, field, {
+          origin,
+          incomingValue: value,
+          displayValue
+        });
         logPredictDebug("set-field-value:ai-hydrate-applied", {
           key,
           origin,
@@ -5298,6 +5310,13 @@ function renderSubmitOutputs(payload) {
       markFieldAsChanged(key, { origin: "human" });
       rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
+      traceInputAssignmentPhase("human-applied", key, field, {
+        origin,
+        incomingValue: value,
+        displayValue,
+        dirtyAfter: isFormDirty,
+        changedKeysCount: changedFieldKeys.size
+      });
       logPredictDebug("set-field-value:human-applied", {
         key,
         origin,
@@ -5779,6 +5798,46 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function computeTraceSignature(value) {
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return String(value ?? "");
+      }
+    }
+
+    function traceInputAssignmentPhase(label, fieldKey, field, extra = {}) {
+      const domValue = readFieldValueFromDom(field);
+      const stateValue = getCurrentValueForField(field);
+      const effectiveValue = getEffectiveValue(fieldKey);
+      traceAutosave(`input-assignment:${label}`, {
+        fieldKey,
+        fieldType: field?.type || "",
+        domValue,
+        stateValue,
+        effectiveValue,
+        domStateMatch: computeTraceSignature(domValue) === computeTraceSignature(stateValue),
+        stateEffectiveMatch: computeTraceSignature(stateValue) === computeTraceSignature(effectiveValue),
+        source: sourceByField[fieldKey] || "",
+        ...extra
+      });
+    }
+
+    function traceSubmitPayloadPhase(label, payload, extra = {}) {
+      const outputFullJson = payload?.output_full_json || "";
+      traceAutosave(`submit-payload:${label}`, {
+        output3: payload?.output3 || "",
+        output4: payload?.output4 || "",
+        outputlist1Count: Array.isArray(payload?.outputlist1) ? payload.outputlist1.length : -1,
+        outputlist2Count: Array.isArray(payload?.outputlist2) ? payload.outputlist2.length : -1,
+        outputlist3Count: Array.isArray(payload?.outputlist3) ? payload.outputlist3.length : -1,
+        outputlist4Count: Array.isArray(payload?.outputlist4) ? payload.outputlist4.length : -1,
+        outputFullJsonLength: outputFullJson.length,
+        outputFullJsonSample: outputFullJson.slice(0, 500),
+        ...extra
+      });
+    }
+
 
     function logStartState(label, extra = {}) {
       if (!ENABLE_RUNTIME_LOGS) return;
@@ -6224,21 +6283,38 @@ function renderSubmitOutputs(payload) {
       }
 
       const payload = submitOutputsPayload;
+      traceSubmitPayloadPhase("before-submit-fn", payload, {
+        trigger,
+        autosave,
+        invalidCount,
+        firstInvalidKey,
+        submitAttemptId,
+        modeHint: resolvedModeHint,
+        domVsStateMismatches: (state.config?.fields || []).filter((field) => {
+          const domValue = readFieldValueFromDom(field);
+          const stateValue = getCurrentValueForField(field);
+          return computeTraceSignature(domValue) !== computeTraceSignature(stateValue);
+        }).map((field) => field.key)
+      });
       try {
         const maybePromise = fn(payload);
         if (maybePromise && typeof maybePromise.then === "function") {
           maybePromise
             .then(() => {
+              traceSubmitPayloadPhase("submit-success", payload, { trigger, autosave, submitAttemptId });
               settleSubmitAttempt({ submitAttemptId, autosave, success: true });
             })
             .catch((error) => {
+              traceSubmitPayloadPhase("submit-failed", payload, { trigger, autosave, submitAttemptId, error: error?.message || String(error) });
               settleSubmitAttempt({ submitAttemptId, autosave, success: false });
               console.error("submit failed", error);
             });
           return;
         }
+        traceSubmitPayloadPhase("submit-success", payload, { trigger, autosave, submitAttemptId });
         settleSubmitAttempt({ submitAttemptId, autosave, success: true });
       } catch (error) {
+        traceSubmitPayloadPhase("submit-failed", payload, { trigger, autosave, submitAttemptId, error: error?.message || String(error) });
         settleSubmitAttempt({ submitAttemptId, autosave, success: false });
         console.error("submit failed", error);
       }
@@ -6320,8 +6396,25 @@ function renderSubmitOutputs(payload) {
       const editContextActive = isEditAutosaveContextActive();
       reconcileDirtyTracking(`maybeRunAutosaveOnStartClose:${trigger}`);
       const hasAutosaveCandidate = isFormDirty || hasAiHydratedData;
-      if (!hasAutosaveCandidate) return;
-      if (isFormSaving) return;
+      traceAutosave("autosave-decision:evaluated", collectEditContextSnapshot({
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        hasAutosaveCandidate,
+        isFormDirty,
+        isFormSaving,
+        hasAiHydratedData,
+        changedKeysCount: changedFieldKeys.size
+      }));
+      if (!hasAutosaveCandidate) {
+        traceAutosave("autosave-decision:skip-no-candidate", collectEditContextSnapshot({ trigger, startSignal, editingSignal }));
+        return;
+      }
+      if (isFormSaving) {
+        traceAutosave("autosave-decision:skip-saving", collectEditContextSnapshot({ trigger, startSignal, editingSignal }));
+        return;
+      }
 
       const shouldDeferForSessionOpen = editContextActive
         ? editingSignal === true
@@ -6339,7 +6432,16 @@ function renderSubmitOutputs(payload) {
         return;
       }
 
-      if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) return;
+      if (now - lastAutosaveAt < AUTOSAVE_DEBOUNCE_MS) {
+        traceAutosave("autosave-decision:skip-debounce", {
+          trigger,
+          now,
+          lastAutosaveAt,
+          elapsedMs: now - lastAutosaveAt,
+          debounceMs: AUTOSAVE_DEBOUNCE_MS
+        });
+        return;
+      }
       lastAutosaveAt = now;
       traceAutosave("autosave-allowed-session-gate", {
         trigger,
@@ -6354,6 +6456,16 @@ function renderSubmitOutputs(payload) {
         hasChangesSinceStartOpen,
         hasAiHydratedData
       });
+      traceAutosave("autosave-decision:submit", collectEditContextSnapshot({
+        trigger,
+        startSignal,
+        editingSignal,
+        editContextActive,
+        modeHint: getSubmitModeHint(),
+        isFormDirty,
+        hasAiHydratedData,
+        changedKeysCount: changedFieldKeys.size
+      }));
       runSubmitFlow({ autosave: true, trigger, modeHint: getSubmitModeHint() });
     }
 
