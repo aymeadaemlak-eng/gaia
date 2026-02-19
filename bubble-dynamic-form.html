@@ -3726,8 +3726,17 @@ function renderSubmitOutputs(payload) {
 
     function normalizeNumberInput(raw) {
       if (raw === null || raw === undefined || raw === "") return "";
-      const normalized = String(raw).replace(/\./g, "").replace(",", ".");
+      const normalized = String(raw).trim().replace(/\./g, "").replace(",", ".");
       return normalized;
+    }
+
+    function normalizeBooleanInput(raw) {
+      if (typeof raw === "boolean") return raw;
+      if (typeof raw === "number") return raw !== 0;
+      const normalized = String(raw ?? "").trim().toLowerCase();
+      if (["true", "1", "evet", "yes", "on"].includes(normalized)) return true;
+      if (["false", "0", "hayır", "hayir", "no", "off"].includes(normalized)) return false;
+      return Boolean(normalized);
     }
 
     function sanitizeNumberTyping(raw, { integer = false } = {}) {
@@ -3837,7 +3846,7 @@ function renderSubmitOutputs(payload) {
       return false;
     }
 
-    function markFieldAsChanged(fieldKey) {
+    function markFieldAsChanged(fieldKey, options = {}) {
       if (!fieldKey) return;
       changedFieldKeys.add(fieldKey);
       dirtyFields[fieldKey] = true;
@@ -4361,10 +4370,7 @@ function renderSubmitOutputs(payload) {
         return normalizeNumberInput(resolved);
       }
       if (field.type === "boolean") {
-        if (typeof resolved === "string") {
-          return resolved.toLowerCase() === "true";
-        }
-        return Boolean(resolved);
+        return normalizeBooleanInput(resolved);
       }
       if (field.type === "dropdown" && field.allowMultiple) {
         if (Array.isArray(resolved)) {
@@ -4431,7 +4437,7 @@ function renderSubmitOutputs(payload) {
         return typeof value === "string" ? value : "";
       }
       if (field.type === "boolean") {
-        return Boolean(value);
+        return normalizeBooleanInput(value);
       }
       return value;
     }
@@ -4622,7 +4628,11 @@ function renderSubmitOutputs(payload) {
         const humanValue = humanData[field.key];
         const aiValue = aiData[field.key];
         const hasExplicitAi = aiExplicitFieldKeys.has(field.key);
-        if (!isEmptyValue(humanValue)) {
+        const hasHumanPriority =
+          sourceByField[field.key] === "human"
+          || changedFieldKeys.has(field.key)
+          || changedFieldValuesByKey.has(field.key);
+        if (hasHumanPriority || !isEmptyValue(humanValue)) {
           sourceByField[field.key] = "human";
           return;
         }
@@ -5091,9 +5101,19 @@ function renderSubmitOutputs(payload) {
       return "";
     }
 
-    function setFieldValue(key, value, field, displayValue) {
+    function setFieldValue(key, value, field, displayValue, options = {}) {
+      const origin = String(options?.origin || "human").trim().toLowerCase();
+      if (origin === "ai-hydrate") {
+        aiData[key] = value;
+        aiExplicitFieldKeys.add(key);
+        if (sourceByField[key] !== "human" && !changedFieldKeys.has(key) && !changedFieldValuesByKey.has(key)) {
+          sourceByField[key] = "ai";
+        }
+        updateEffectiveState(key, field, displayValue);
+        return;
+      }
       setHumanValue(key, value, field, displayValue);
-      markFieldAsChanged(key);
+      markFieldAsChanged(key, { origin: "human" });
       rememberChangedFieldValue(key, normalizeValueForComparison(field, getEffectiveValue(key), state.config));
       isFormDirty = computeDirtyState();
     }
