@@ -3010,16 +3010,21 @@
       MANUAL_COLUMN_JSON = parseJsonInput(columnJsonInput?.value || "", columnJsonError);
       MANUAL_DATA_JSON = parseJsonInput(humanJsonInput?.value || "", humanJsonError);
       MANUAL_PREDICTED_JSON = parseJsonInput(predictedJsonInput?.value || "", predictedJsonError);
-      logPredictDebug("manual-json-sync", {
+      const summaryPayload = {
         meta,
         hasColumnJson: Boolean(MANUAL_COLUMN_JSON),
         hasHumanJson: Boolean(MANUAL_DATA_JSON),
         hasPredictedJson: Boolean(MANUAL_PREDICTED_JSON),
+        columnShape: summarizeDataShape(MANUAL_COLUMN_JSON),
+        humanShape: summarizeDataShape(MANUAL_DATA_JSON),
+        predictedShape: summarizeDataShape(MANUAL_PREDICTED_JSON),
         humanKeyCount: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).length : 0,
         predictedKeyCount: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).length : 0,
         humanKeySample: MANUAL_DATA_JSON && typeof MANUAL_DATA_JSON === "object" ? Object.keys(MANUAL_DATA_JSON).slice(0, 30) : [],
         predictedKeySample: MANUAL_PREDICTED_JSON && typeof MANUAL_PREDICTED_JSON === "object" ? Object.keys(MANUAL_PREDICTED_JSON).slice(0, 30) : []
-      });
+      };
+      logPredictDebug("manual-json-sync", summaryPayload);
+      traceAutosave("manual-json-sync", summaryPayload);
       syncActionOptions();
     }
 
@@ -3453,6 +3458,23 @@ function renderSubmitOutputs(payload) {
       } catch (error) {
         return null;
       }
+    }
+
+
+    function summarizeDataShape(value) {
+      if (Array.isArray(value)) {
+        return { type: "array", length: value.length };
+      }
+      if (!value || typeof value !== "object") {
+        return { type: typeof value };
+      }
+      const keys = Object.keys(value);
+      return { type: "object", keyCount: keys.length, keySample: keys.slice(0, 30) };
+    }
+
+    function logDataFlowPhase(label, payload = {}) {
+      logPredictDebug(`data-flow:${label}`, payload);
+      traceAutosave(`data-flow:${label}`, payload);
     }
 
     function escapeHtml(value) {
@@ -4626,6 +4648,7 @@ function renderSubmitOutputs(payload) {
 
       const applied = [];
       const unmatched = [];
+      const actionLog = [];
       const availableAliases = Array.from(keyMap.keys());
       Object.entries(jsonObj).forEach(([jsonKey, rawValue]) => {
         const fieldKey = getFieldKeyFromJsonKey(jsonKey, keyMap);
@@ -4633,6 +4656,7 @@ function renderSubmitOutputs(payload) {
           unmatched.push(jsonKey);
           const unmatchedKeyText = String(jsonKey || "").trim().toLowerCase();
           const suppressWarn = unmatchedKeyText === "uniquieid" || unmatchedKeyText === "uniqueid" || unmatchedKeyText === "stage";
+          actionLog.push({ type: "unmatched-key", jsonKey, suppressWarn });
           if (!suppressWarn) {
             console.warn(`Eşleşmeyen JSON key: ${jsonKey}`);
           }
@@ -4644,9 +4668,11 @@ function renderSubmitOutputs(payload) {
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
+          actionLog.push({ type: "apply-ai", jsonKey, fieldKey, normalized });
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
+          actionLog.push({ type: "apply-human", jsonKey, fieldKey, normalized });
         }
         applied.push({ jsonKey, fieldKey, kind, rawValue, normalized, sourceSnapshot: buildFieldSourceDebugSnapshot(fieldKey) });
       });
@@ -4669,10 +4695,26 @@ function renderSubmitOutputs(payload) {
         unmatchedKeyCount: unmatched.length,
         unmatchedKeys: unmatched,
         availableAliasSample: availableAliases.slice(0, 80),
+        actionLog,
         applied,
         sourceSummary: (state.config?.fields || []).map((field) => buildFieldSourceDebugSnapshot(field.key))
       });
+      logDataFlowPhase("json-load:actions", {
+        kind,
+        meta,
+        actionCount: actionLog.length,
+        firstActions: actionLog.slice(0, 50),
+        appliedCount: applied.length,
+        unmatchedCount: unmatched.length
+      });
       refreshAllFields();
+      logDataFlowPhase("json-load:post-refresh", {
+        kind,
+        meta,
+        sourceSummarySample: (state.config?.fields || []).slice(0, 40).map((field) => buildFieldSourceDebugSnapshot(field.key)),
+        changedKeys: Array.from(changedFieldKeys || []),
+        humanTouchedKeys: Array.from(humanTouchedFieldKeys || [])
+      });
       if (state.config) {
         updateSubmitState(state.config);
       }
@@ -4918,10 +4960,22 @@ function renderSubmitOutputs(payload) {
     }
 
     function applyColumnJson(columnData, { persistRestore = true, deferPendingSubmitFlush = false } = {}) {
+      const incomingColumnCount = Array.isArray(columnData?.columns) ? columnData.columns.length : 0;
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
         hasColumnData: Boolean(columnData),
-        columnCount: Array.isArray(columnData?.columns) ? columnData.columns.length : 0
+        columnCount: incomingColumnCount
+      });
+      logDataFlowPhase("column-json:received", {
+        hasColumnData: Boolean(columnData),
+        columnCount: incomingColumnCount,
+        persistRestore,
+        deferPendingSubmitFlush,
+        firstColumns: Array.isArray(columnData?.columns) ? columnData.columns.slice(0, 20).map((col) => ({
+          key: col?.key || col?.name || "",
+          label: col?.label || "",
+          type: col?.type || col?.["display-type"] || ""
+        })) : []
       });
       columnJson = columnData;
       if (persistRestore && columnData) restoreColumnJson = columnData;
@@ -4934,7 +4988,15 @@ function renderSubmitOutputs(payload) {
       columnWarning.style.display = "none";
       formContainer.style.display = "block";
       state.config = buildConfigFromColumnJson(columnJson);
-      if (!state.config) return;
+      if (!state.config) {
+        logDataFlowPhase("column-json:build-config-failed", { incomingColumnCount });
+        return;
+      }
+      logDataFlowPhase("column-json:config-built", {
+        incomingColumnCount,
+        renderedFieldCount: Array.isArray(state.config.fields) ? state.config.fields.length : 0,
+        fieldSample: Array.isArray(state.config.fields) ? state.config.fields.slice(0, 40).map((field) => ({ key: field.key, type: field.type })) : []
+      });
       renderForm(state.config);
       applyVersionVisibility();
       if (!deferPendingSubmitFlush) flushPendingSubmitAfterConfigReady();
@@ -5393,10 +5455,13 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_DATA_JSON,
         MANUAL_DATA_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const obj = extractBubbleDataObject(candidate);
         if (obj) {
           logPredictDebug("read-current-bubble-data-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.BUBBLE_DATA_JSON", "inputs.bubble_data_json", "window.BUBBLE_DATA_JSON", "MANUAL_DATA_JSON"][index] || "unknown",
             candidateType: typeof candidate,
             keyCount: Object.keys(obj || {}).length,
             keySample: Object.keys(obj || {}).slice(0, 30)
@@ -5416,10 +5481,13 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_PREDICTED_JSON,
         MANUAL_PREDICTED_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const obj = extractBubbleDataObject(candidate);
         if (obj) {
           logPredictDebug("read-current-predicted-data-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.PREDICTED_JSON", "inputs.predicted_json", "window.BUBBLE_PREDICTED_JSON", "MANUAL_PREDICTED_JSON"][index] || "unknown",
             candidateType: typeof candidate,
             keyCount: Object.keys(obj || {}).length,
             keySample: Object.keys(obj || {}).slice(0, 30)
@@ -5462,11 +5530,21 @@ function renderSubmitOutputs(payload) {
         window.BUBBLE_COLUMN_JSON,
         MANUAL_COLUMN_JSON
       ];
-      for (const candidate of candidates) {
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
         const parsed = parseDataJsonSource(candidate);
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
-        if (Array.isArray(parsed.columns)) return parsed;
+        if (Array.isArray(parsed.columns)) {
+          logPredictDebug("read-current-column-json-object", {
+            selectedCandidateIndex: index,
+            selectedCandidateName: ["inputs.COLUMN_JSON", "inputs.column_json", "window.BUBBLE_COLUMN_JSON", "MANUAL_COLUMN_JSON"][index] || "unknown",
+            columnCount: parsed.columns.length,
+            columnKeySample: parsed.columns.slice(0, 20).map((item) => item?.name || item?.key || "")
+          });
+          return parsed;
+        }
       }
+      logPredictDebug("read-current-column-json-object", { columnCount: 0 });
       return null;
     }
 
