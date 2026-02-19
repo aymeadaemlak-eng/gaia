@@ -3912,8 +3912,18 @@ function renderSubmitOutputs(payload) {
       const aiValue = aiData[fieldKey];
       const hasHuman = !isEmptyValue(humanValue);
       const hasAi = !isEmptyValue(aiValue);
+      const hasHumanWrite = Object.prototype.hasOwnProperty.call(humanData, fieldKey);
+      const hasAiWrite = Object.prototype.hasOwnProperty.call(aiData, fieldKey);
+      const lastWriter = fieldLastWriterByKey[fieldKey];
+
+      if (lastWriter === "human" && hasHumanWrite) {
+        return humanValue ?? "";
+      }
+      if (lastWriter === "ai" && hasAiWrite) {
+        return aiValue ?? "";
+      }
+
       if (hasHuman && hasAi) {
-        const lastWriter = fieldLastWriterByKey[fieldKey];
         if (lastWriter === "human") return humanValue;
         if (lastWriter === "ai") return aiValue;
       }
