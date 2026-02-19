@@ -4655,6 +4655,14 @@ function renderSubmitOutputs(payload) {
       }
     }
 
+    function shouldPreserveFieldAgainstJsonLoad(fieldKey, meta = {}) {
+      if (!fieldKey) return false;
+      if (meta && meta.preserveUserEdits === false) return false;
+      return humanTouchedFieldKeys.has(fieldKey)
+        || changedFieldKeys.has(fieldKey)
+        || changedFieldValuesByKey.has(fieldKey);
+    }
+
     function loadJsonSafeToForm(kind, jsonObj, meta = {}) {
       if (!jsonObj || !state.config) return;
       const invocationStack = String(new Error().stack || "")
@@ -4696,6 +4704,19 @@ function renderSubmitOutputs(payload) {
         const field = state.config.fields.find((f) => f.key === fieldKey);
         if (!field) return;
         const normalized = normalizeJsonValueForField(field, rawValue, state.config);
+        const preserveUserValue = shouldPreserveFieldAgainstJsonLoad(fieldKey, meta);
+        if (preserveUserValue) {
+          actionLog.push({
+            type: "skip-user-override",
+            jsonKey,
+            fieldKey,
+            kind,
+            incoming: normalized,
+            existing: getEffectiveValue(fieldKey),
+            meta
+          });
+          return;
+        }
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
