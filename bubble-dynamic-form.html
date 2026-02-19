@@ -4820,10 +4820,10 @@ function renderSubmitOutputs(payload) {
       sourceByField = {};
       humanTouchedFieldKeys = new Set();
       if (human) {
-        loadJsonSafeToForm("human", human, { source: "applyScenario", stage: "human" });
+        loadJsonSafeToForm("human", human, { source: "applyScenario", stage: "human", preserveUserEdits: false });
       }
       if (ai) {
-        loadJsonSafeToForm("ai", ai, { source: "applyScenario", stage: "ai" });
+        loadJsonSafeToForm("ai", ai, { source: "applyScenario", stage: "ai", preserveUserEdits: false });
       }
       initializeSourceByFieldFromAi();
       refreshAllFields();
@@ -5679,9 +5679,9 @@ function renderSubmitOutputs(payload) {
         humanTouchedFieldKeys = new Set();
         state.fileBuffers = {};
         state.fileStaging = {};
-        loadJsonSafeToForm("human", incomingBubbleData, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "bubble-data" });
+        loadJsonSafeToForm("human", incomingBubbleData, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "bubble-data", preserveUserEdits: false });
         if (predictedToApply) {
-          loadJsonSafeToForm("ai", predictedToApply, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "predicted-data" });
+          loadJsonSafeToForm("ai", predictedToApply, { source: "applyIncomingBubbleDataAsCurrentItem", stage: "predicted-data", preserveUserEdits: false });
         }
         initializeSourceByFieldFromAi();
         refreshAllFields();
@@ -9434,10 +9434,10 @@ function renderSubmitOutputs(payload) {
       applyColumnJson(columnJson, { persistRestore: true });
       setTimeout(() => {
         if (MANUAL_DATA_JSON) {
-          loadJsonSafeToForm("human", MANUAL_DATA_JSON, { source: "initializeApp", stage: "initial-human-json" });
+          loadJsonSafeToForm("human", MANUAL_DATA_JSON, { source: "initializeApp", stage: "initial-human-json", preserveUserEdits: false });
         }
         if (MANUAL_PREDICTED_JSON) {
-          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON, { source: "initializeApp", stage: "initial-predicted-json" });
+          loadJsonSafeToForm("ai", MANUAL_PREDICTED_JSON, { source: "initializeApp", stage: "initial-predicted-json", preserveUserEdits: false });
           initializeSourceByFieldFromAi();
           refreshAllFields();
         }
