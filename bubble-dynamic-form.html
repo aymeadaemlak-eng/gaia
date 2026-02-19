@@ -5459,11 +5459,25 @@ function renderSubmitOutputs(payload) {
         if (!trimmed) return null;
         if (trimmed.startsWith("<")) return null;
         const directParsed = tryParseLooseJsonString(trimmed);
-        if (directParsed !== null) return directParsed;
-        return null;
+        return normalizeParsedJsonValue(directParsed);
       }
       if (typeof rawValue === "object") return rawValue;
       return null;
+    }
+
+    function normalizeParsedJsonValue(parsedValue) {
+      let current = parsedValue;
+      for (let depth = 0; depth < 3; depth += 1) {
+        if (current === null || current === undefined) return null;
+        if (typeof current !== "string") return current;
+        const trimmed = current.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith("<")) return null;
+        const reparsed = tryParseLooseJsonString(trimmed);
+        if (reparsed === null) return current;
+        current = reparsed;
+      }
+      return current;
     }
 
     function tryParseLooseJsonString(rawText) {
@@ -5473,23 +5487,29 @@ function renderSubmitOutputs(payload) {
         return JSON.parse(text);
       } catch (error) {
         const firstObjectStart = text.indexOf("{");
-        const firstArrayStart = text.indexOf("[");
-        let start = -1;
-        if (firstObjectStart === -1) start = firstArrayStart;
-        else if (firstArrayStart === -1) start = firstObjectStart;
-        else start = Math.min(firstObjectStart, firstArrayStart);
-        if (start < 0) return null;
         const objectEnd = text.lastIndexOf("}");
-        const arrayEnd = text.lastIndexOf("]");
-        const end = Math.max(objectEnd, arrayEnd);
-        if (end <= start) return null;
-        const candidate = text.slice(start, end + 1).trim();
-        if (!candidate) return null;
-        try {
-          return JSON.parse(candidate);
-        } catch (nestedError) {
-          return null;
+        if (firstObjectStart >= 0 && objectEnd > firstObjectStart) {
+          const objectCandidate = text.slice(firstObjectStart, objectEnd + 1).trim();
+          if (objectCandidate) {
+            try {
+              return JSON.parse(objectCandidate);
+            } catch (nestedObjectError) {
+              // no-op, array fallback below
+            }
+          }
         }
+        const firstArrayStart = text.indexOf("[");
+        const arrayEnd = text.lastIndexOf("]");
+        if (firstArrayStart >= 0 && arrayEnd > firstArrayStart) {
+          const arrayCandidate = text.slice(firstArrayStart, arrayEnd + 1).trim();
+          if (!arrayCandidate) return null;
+          try {
+            return JSON.parse(arrayCandidate);
+          } catch (nestedArrayError) {
+            return null;
+          }
+        }
+        return null;
       }
     }
 
