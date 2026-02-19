@@ -4527,6 +4527,9 @@ function renderSubmitOutputs(payload) {
         if (kind === "ai") {
           aiData[fieldKey] = normalized;
           aiExplicitFieldKeys.add(fieldKey);
+          sourceByField[fieldKey] = "ai";
+          markFieldAsChanged(fieldKey);
+          rememberChangedFieldValue(fieldKey, normalizeValueForComparison(field, normalized, state.config));
         } else {
           humanData[fieldKey] = normalized;
           sourceByField[fieldKey] = "human";
