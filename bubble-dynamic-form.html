@@ -4665,6 +4665,40 @@ function renderSubmitOutputs(payload) {
 
     function loadJsonSafeToForm(kind, jsonObj, meta = {}) {
       if (!jsonObj || !state.config) return;
+      const skipInitializeHumanReload = Boolean(
+        kind === "human"
+        && meta
+        && meta.source === "initializeApp"
+        && Array.isArray(state.config?.fields)
+        && state.config.fields.length > 0
+        && (
+          humanTouchedFieldKeys.size > 0
+          || changedFieldKeys.size > 0
+          || changedFieldValuesByKey.size > 0
+          || isFormDirty
+        )
+      );
+      if (skipInitializeHumanReload) {
+        logPredictDebug("load-json-skipped", {
+          kind,
+          meta,
+          reason: "initialize-human-reload-blocked-by-user-edits",
+          userTouchedKeys: Array.from(humanTouchedFieldKeys || []),
+          changedKeys: Array.from(changedFieldKeys || []),
+          rememberedChangedKeys: Array.from((changedFieldValuesByKey || new Map()).keys()),
+          isFormDirty
+        });
+        logDataFlowPhase("json-load:skipped", {
+          kind,
+          meta,
+          reason: "initialize-human-reload-blocked-by-user-edits",
+          userTouchedCount: humanTouchedFieldKeys.size,
+          changedCount: changedFieldKeys.size,
+          rememberedChangedCount: changedFieldValuesByKey.size,
+          isFormDirty
+        });
+        return;
+      }
       const invocationStack = String(new Error().stack || "")
         .split("\n")
         .slice(1, 6)
