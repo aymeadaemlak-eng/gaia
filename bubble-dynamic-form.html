@@ -4810,8 +4810,7 @@ function renderSubmitOutputs(payload) {
       const details = [];
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         const changed = areValuesDifferent(baselineValue, currentValue);
         details.push({
@@ -4820,7 +4819,7 @@ function renderSubmitOutputs(payload) {
           source: getActiveSource(field.key),
           baselineValue,
           currentValue,
-          remembered: rememberedValue !== undefined,
+          remembered: false,
           changed,
           includedValue: changed ? (isEmptyValue(currentValue) ? "" : currentValue) : undefined
         });
@@ -4861,8 +4860,7 @@ function renderSubmitOutputs(payload) {
       const base = initialSnapshot || {};
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const baselineValue = base[jsonKey] ?? "";
         if (!areValuesDifferent(baselineValue, currentValue)) return;
         if (isEmptyValue(currentValue)) return;
@@ -4884,8 +4882,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
@@ -4916,8 +4913,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         if (!isEmptyValue(initialValue) && isEmptyValue(currentValue)) {
           entriesByKey.set(jsonKey, jsonKey);
         }
@@ -4934,8 +4930,7 @@ function renderSubmitOutputs(payload) {
       getUniqueChangedFieldDescriptors().forEach((field) => {
         const jsonKey = field.key;
         const initialValue = base[jsonKey];
-        const rememberedValue = getRememberedChangedValue(field.key);
-        const currentValue = rememberedValue !== undefined ? rememberedValue : getCurrentNormalizedValue(field);
+        const currentValue = getCurrentNormalizedValue(field);
         const isFileField = ["file", "image", "multifile"].includes(String(field.type || "").toLowerCase());
 
         if (isFileField) {
