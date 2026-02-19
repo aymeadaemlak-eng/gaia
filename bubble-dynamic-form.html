@@ -5887,6 +5887,26 @@ function renderSubmitOutputs(payload) {
 
       const exportPayload = buildExportJson();
       const submitOutputsPayload = buildSubmitOutputsPayload({ autosave, modeHint: resolvedModeHint });
+      const isAiHydrateAutosave =
+        autosave === true &&
+        trigger &&
+        String(trigger).toLowerCase().includes("ai");
+
+      if (isAiHydrateAutosave) {
+        const isDeltaEmpty =
+          !submitOutputsPayload.outputlist1?.length &&
+          !submitOutputsPayload.outputlist2?.length &&
+          !submitOutputsPayload.outputlist3?.length &&
+          !submitOutputsPayload.outputlist4?.length;
+
+        if (isDeltaEmpty) {
+          const fullObj = submitOutputsPayload.output_full_obj || {};
+          submitOutputsPayload.outputlist1 = Object.entries(fullObj).map(([key, value]) => ({
+            key,
+            value
+          }));
+        }
+      }
       logPredictDebug("submit-payload-checkpoint", {
         trigger,
         autosave,
