@@ -4793,6 +4793,46 @@ function renderSubmitOutputs(payload) {
       initialSnapshot = buildBaselineSnapshot(baselinePayload);
     }
 
+    function readFieldValueFromDom(field) {
+      const ref = state.fieldRefs[field.key];
+      if (!ref) return getEffectiveValue(field.key);
+
+      if (["file", "image", "multifile"].includes(field.type)) {
+        return getCurrentValueForField(field);
+      }
+
+      if (field.type === "dropdown" && field.allowMultiple) {
+        const checked = Array.from(ref.control.querySelectorAll('.multiselect-options input[type="checkbox"]:checked'));
+        return checked.map((el) => normalizeMultiSelectToken(el.value || el.dataset.value || "")).filter(Boolean);
+      }
+
+      const input = ref.inputEl || ref.control.querySelector("input, textarea, select");
+      if (!input) return getCurrentValueForField(field);
+
+      if (field.type === "boolean") {
+        return Boolean(input.checked);
+      }
+
+      if (field.type === "date") {
+        return normalizeDateInput(String(input.value || ""), state.config || {});
+      }
+
+      if (field.type === "time") {
+        return parseTimeDisplay(String(input.value || "")) || String(input.value || "");
+      }
+
+      return input.value;
+    }
+
+    function buildLiveFormSnapshotFromDom() {
+      const payload = {};
+      (state.config?.fields || []).forEach((field) => {
+        const uiValue = readFieldValueFromDom(field);
+        payload[field.key] = normalizeValueForComparison(field, uiValue, state.config);
+      });
+      return payload;
+    }
+
     function applyColumnJson(columnData, { persistRestore = true, deferPendingSubmitFlush = false } = {}) {
       traceAutosave("apply-column-json", {
         isEditingMode: IS_EDITING_MODE,
@@ -4817,13 +4857,7 @@ function renderSubmitOutputs(payload) {
     }
 
     function buildExportJson() {
-      const payload = {};
-      (state.config?.fields || []).forEach((field) => {
-        const value = getEffectiveValue(field.key);
-        const jsonKey = field.key;
-        payload[jsonKey] = normalizeValueForComparison(field, value, state.config);
-      });
-      return payload;
+      return buildLiveFormSnapshotFromDom();
     }
 
     function buildBaselineSnapshot(baselineData) {
@@ -7412,6 +7446,7 @@ function renderSubmitOutputs(payload) {
 
         const control = document.createElement("div");
         control.className = "field-control";
+        control.dataset.fieldKey = field.key;
         const stageClass = normalizeStageType(field.stageType);
         if (stageClass) {
           control.classList.add(`stage-${stageClass}`);
@@ -7614,6 +7649,8 @@ function renderSubmitOutputs(payload) {
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
               const normalizedOptValue = normalizeMultiSelectToken(opt.value);
+              checkbox.value = normalizedOptValue;
+              checkbox.dataset.value = normalizedOptValue;
               checkbox.checked = selectedValues.includes(normalizedOptValue);
               checkbox.disabled = opt.disabled || false;
               const text = document.createElement("span");
@@ -8336,6 +8373,9 @@ function renderSubmitOutputs(payload) {
         }
 
         if (inputEl) {
+          if (!inputEl.dataset.fieldKey) {
+            inputEl.dataset.fieldKey = field.key;
+          }
           if (!control.contains(inputEl)) {
             control.append(inputEl);
           }
